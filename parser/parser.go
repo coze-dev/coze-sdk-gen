@@ -111,8 +111,10 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 		doc.Components.Schemas = make(map[string]*openapi3.SchemaRef)
 	}
 
+	responseSchemas := map[string]map[string]bool{}
+
 	// Generate response data models from operations
-	for _, pathItem := range doc.Paths.Map() {
+	for path, pathItem := range doc.Paths.Map() {
 		for _, op := range pathItem.Operations() {
 			if response, ok := op.Responses.Map()["200"]; ok && response.Value.Content != nil {
 				for _, content := range response.Value.Content {
@@ -124,6 +126,17 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 								content.Schema.Value.Items.Value != nil && content.Schema.Value.Items.Value.Properties != nil) {
 							// Add to components schemas to be generated
 							doc.Components.Schemas[op.OperationID+"Resp"] = content.Schema
+
+							// Extract module name from path (second segment)
+							segments := strings.Split(strings.Trim(path, "/"), "/")
+							if len(segments) < 2 {
+								continue
+							}
+							moduleName := segments[1]
+							if responseSchemas[moduleName] == nil {
+								responseSchemas[moduleName] = map[string]bool{}
+							}
+							responseSchemas[moduleName][op.OperationID+"Resp"] = true
 						}
 					}
 				}
@@ -218,6 +231,12 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 		for _, class := range classes {
 			if modelSet[class.Name] {
 				moduleClassList = append(moduleClassList, class)
+				continue
+			}
+
+			if responseSchemas[moduleName][class.Name] {
+				moduleClassList = append(moduleClassList, class)
+				continue
 			}
 		}
 
