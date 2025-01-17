@@ -160,10 +160,22 @@ func (g Generator) convertClass(class parser.Class) PythonClass {
 		return pythonClass
 	}
 
+	// Track required fields
+	requiredFields := make(map[string]bool)
+	for _, fieldName := range class.Fields {
+		if fieldName.Required {
+			requiredFields[fieldName.Name] = true
+		}
+	}
+
 	for _, field := range class.Fields {
+		fieldType := g.getFieldType(field.Schema)
+		if !field.Required {
+			fieldType = fmt.Sprintf("Optional[%s]", fieldType)
+		}
 		pythonField := PythonField{
 			Name:        g.toPythonVarName(field.Name),
-			Type:        g.getFieldType(field.Schema),
+			Type:        fieldType,
 			Description: g.formatDescription(field.Description),
 		}
 		pythonClass.Fields = append(pythonClass.Fields, pythonField)
@@ -192,15 +204,19 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 			continue
 		}
 
+		pythonType := g.getFieldType(param.Schema)
+		if !param.Required {
+			pythonType = fmt.Sprintf("Optional[%s]", pythonType)
+		}
+
 		pythonParam := PythonParam{
 			Name:        g.toPythonVarName(param.Name),
 			JsonName:    param.JsonName,
-			Type:        g.getFieldType(param.Schema),
+			Type:        pythonType,
 			Description: param.Description,
 		}
 
 		if !param.Required {
-			pythonParam.Type = fmt.Sprintf("Optional[%s]", pythonParam.Type)
 			pythonParam.DefaultValue = "None"
 		}
 
@@ -222,12 +238,28 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 	if op.RequestBody != nil {
 		operation.HasBody = true
 		for name, prop := range op.RequestBody.Schema.Properties {
+			pythonType := g.getFieldType(prop)
+			// Request body fields are optional unless explicitly required
+			isRequired := false
+			for _, req := range op.RequestBody.Schema.Required {
+				if req == name {
+					isRequired = true
+					break
+				}
+			}
+			if !isRequired {
+				pythonType = fmt.Sprintf("Optional[%s]", pythonType)
+			}
+
 			pythonParam := PythonParam{
 				Name:        g.toPythonVarName(name),
 				JsonName:    name,
-				Type:        g.getFieldType(prop),
+				Type:        pythonType,
 				Description: prop.Description,
 				IsModel:     prop.Ref != "" || (prop.Type == parser.SchemaTypeArray && prop.Items != nil && prop.Items.Ref != ""),
+			}
+			if !isRequired {
+				pythonParam.DefaultValue = "None"
 			}
 			operation.Params = append(operation.Params, pythonParam)
 			operation.BodyParams = append(operation.BodyParams, pythonParam)
