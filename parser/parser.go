@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -15,52 +14,48 @@ type Class struct {
 	Name        string
 	Description string
 	Fields      []Field
-	BaseClass   string
 	IsEnum      bool
 	EnumValues  []EnumValue
+	RawSchema   *openapi3.SchemaRef // Store raw schema for language-specific processing
 }
 
 // EnumValue represents a value in an enum
 type EnumValue struct {
 	Name        string
-	Value       string
+	Value       interface{} // Keep the raw value for language-specific processing
 	Description string
 }
 
 // Field represents a field in a class
 type Field struct {
 	Name        string
-	Type        string
+	JsonName    string // Original name from API
 	Description string
+	Required    bool
+	Schema      *openapi3.SchemaRef // Store raw schema for language-specific processing
 }
 
 // Operation represents an API operation
 type Operation struct {
 	Name                string
+	OperationID         string // Original operation ID from API
 	Description         string
 	Path                string
 	Method              string
-	Params              []Param
-	BodyParams          []Param
-	QueryParams         []Param
-	ResponseType        string
+	Parameters          []Parameter
+	RequestBody         *openapi3.RequestBody
+	ResponseSchema      *openapi3.SchemaRef
 	ResponseDescription string
-	HasBody             bool
-	HasQueryParams      bool
-	ModuleName          string
-	HeaderParams        []Param
-	HasHeaders          bool
-	StaticHeaders       map[string]string
 }
 
-// Param represents a parameter in an operation
-type Param struct {
-	Name         string
-	JsonName     string
-	Type         string
-	Description  string
-	DefaultValue string
-	IsModel      bool
+// Parameter represents a parameter in an operation
+type Parameter struct {
+	Name        string
+	JsonName    string // Original name from API
+	Description string
+	Required    bool
+	Schema      *openapi3.SchemaRef
+	In          string // query, header, path, etc.
 }
 
 // Module represents a group of operations
@@ -104,13 +99,9 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 				for _, content := range response.Value.Content {
 					if content.Schema != nil && content.Schema.Value != nil && content.Schema.Value.Properties != nil {
 						// Create response data model
-						responseClass := p.convertSchemaToClass(op.OperationID+"Resp", &openapi3.SchemaRef{
-							Value: content.Schema.Value,
-						})
+						responseClass := p.convertSchemaToClass(op.OperationID+"Resp", content.Schema)
 						// Add to components schemas to be generated
-						doc.Components.Schemas[responseClass.Name] = &openapi3.SchemaRef{
-							Value: content.Schema.Value,
-						}
+						doc.Components.Schemas[responseClass.Name] = content.Schema
 					}
 				}
 			}
@@ -143,7 +134,6 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 
 		for method, op := range pathItem.Operations() {
 			operation := p.convertOperation(path, method, op)
-			operation.ModuleName = moduleName
 			moduleOperations[moduleName] = append(moduleOperations[moduleName], operation)
 		}
 	}
@@ -153,49 +143,49 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 	for moduleName, operations := range moduleOperations {
 		// Find all model dependencies for each module
 		modelSet := make(map[string]bool)
-		var findDependentClasses func(className string)
-		findDependentClasses = func(className string) {
-			if modelSet[className] {
+		var findDependentClasses func(schema *openapi3.SchemaRef)
+		findDependentClasses = func(schema *openapi3.SchemaRef) {
+			if schema == nil {
 				return
 			}
-			modelSet[className] = true
-			// Find the class
-			for _, class := range classes {
-				if class.Name == className {
-					// Add dependencies from fields
-					for _, field := range class.Fields {
-						if strings.Contains(field.Type, "List[") {
-							depName := strings.TrimSuffix(strings.TrimPrefix(field.Type, "List["), "]")
-							findDependentClasses(depName)
-						} else if !strings.Contains(field.Type, "Optional[") && !strings.Contains(field.Type, "Dict[") &&
-							field.Type != "str" && field.Type != "int" && field.Type != "float" && field.Type != "bool" && field.Type != "Any" {
-							findDependentClasses(field.Type)
-						}
-					}
-					break
+			if schema.Ref != "" {
+				parts := strings.Split(schema.Ref, "/")
+				className := parts[len(parts)-1]
+				if modelSet[className] {
+					return
+				}
+				modelSet[className] = true
+				// Find the schema
+				if refSchema, ok := doc.Components.Schemas[className]; ok {
+					findDependentClasses(refSchema)
+				}
+			}
+			if schema.Value != nil {
+				if schema.Value.Items != nil {
+					findDependentClasses(schema.Value.Items)
+				}
+				for _, prop := range schema.Value.Properties {
+					findDependentClasses(prop)
 				}
 			}
 		}
 
 		// Start with direct dependencies
 		for _, op := range operations {
-			// Add response type if it's a model
-			if strings.Contains(op.ResponseType, "List[") {
-				modelName := strings.TrimSuffix(strings.TrimPrefix(op.ResponseType, "List["), "]")
-				findDependentClasses(modelName)
-			} else if op.ResponseType != "Any" {
-				findDependentClasses(op.ResponseType)
+			// Add response schema dependencies
+			if op.ResponseSchema != nil {
+				findDependentClasses(op.ResponseSchema)
 			}
 
-			// Add parameter types if they're models
-			for _, param := range op.Params {
-				if param.IsModel {
-					if strings.Contains(param.Type, "List[") {
-						modelName := strings.TrimSuffix(strings.TrimPrefix(param.Type, "List["), "]")
-						findDependentClasses(modelName)
-					} else {
-						findDependentClasses(param.Type)
-					}
+			// Add parameter dependencies
+			for _, param := range op.Parameters {
+				findDependentClasses(param.Schema)
+			}
+
+			// Add request body dependencies
+			if op.RequestBody != nil && op.RequestBody.Content != nil {
+				for _, content := range op.RequestBody.Content {
+					findDependentClasses(content.Schema)
 				}
 			}
 		}
@@ -282,80 +272,37 @@ func (p Parser) analyzeDependencies(schemas map[string]*openapi3.SchemaRef) []st
 
 func (p Parser) convertOperation(path string, method string, op *openapi3.Operation) Operation {
 	operation := Operation{
-		Name:        p.toMethodName(op.OperationID),
+		Name:        op.OperationID,
+		OperationID: op.OperationID,
 		Description: op.Description,
 		Path:        path,
 		Method:      strings.ToUpper(method),
+		RequestBody: nil,
+	}
+
+	// Set request body if exists
+	if op.RequestBody != nil {
+		operation.RequestBody = op.RequestBody.Value
 	}
 
 	// Handle parameters
-	var headerParams []Param
-	var staticHeaders = make(map[string]string)
 	for _, param := range op.Parameters {
-		// Check if it's a header parameter with single enum value
-		if param.Value.In == "header" && param.Value.Schema != nil && param.Value.Schema.Value != nil &&
-			param.Value.Schema.Value.Enum != nil && len(param.Value.Schema.Value.Enum) == 1 {
-			// Use the single enum value directly
-			staticHeaders[param.Value.Name] = fmt.Sprintf("%v", param.Value.Schema.Value.Enum[0])
-			continue
-		}
-
-		pythonParam := Param{
-			Name:        p.toVarName(param.Value.Name),
+		parameter := Parameter{
+			Name:        param.Value.Name,
 			JsonName:    param.Value.Name,
-			Type:        p.getFieldType(param.Value.Schema),
 			Description: param.Value.Description,
+			Required:    param.Value.Required,
+			Schema:      param.Value.Schema,
+			In:          param.Value.In,
 		}
-
-		if param.Value.Required {
-			pythonParam.Type = p.getFieldType(param.Value.Schema)
-		} else {
-			pythonParam.Type = fmt.Sprintf("Optional[%s]", p.getFieldType(param.Value.Schema))
-			pythonParam.DefaultValue = "None"
-		}
-
-		// Check if parameter is a model type
-		if param.Value.Schema != nil && param.Value.Schema.Ref != "" {
-			pythonParam.IsModel = true
-		}
-
-		operation.Params = append(operation.Params, pythonParam)
-		if param.Value.In == "query" {
-			operation.QueryParams = append(operation.QueryParams, pythonParam)
-			operation.HasQueryParams = true
-		} else if param.Value.In == "header" {
-			headerParams = append(headerParams, pythonParam)
-		}
-	}
-
-	// Handle request body
-	if op.RequestBody != nil && op.RequestBody.Value.Content != nil {
-		for _, content := range op.RequestBody.Value.Content {
-			if content.Schema != nil {
-				operation.HasBody = true
-				if content.Schema.Value.Properties != nil {
-					for name, prop := range content.Schema.Value.Properties {
-						pythonParam := Param{
-							Name:        p.toVarName(name),
-							JsonName:    name,
-							Type:        p.getFieldType(prop),
-							Description: prop.Value.Description,
-							IsModel:     prop.Ref != "" || (prop.Value != nil && prop.Value.Items != nil && prop.Value.Items.Ref != ""),
-						}
-						operation.Params = append(operation.Params, pythonParam)
-						operation.BodyParams = append(operation.BodyParams, pythonParam)
-					}
-				}
-			}
-		}
+		operation.Parameters = append(operation.Parameters, parameter)
 	}
 
 	// Handle response
 	if response, ok := op.Responses.Map()["200"]; ok && response.Value.Content != nil {
 		for mediaType, content := range response.Value.Content {
 			if strings.Contains(mediaType, "application/json") && content.Schema != nil {
-				// Set response type to OperationID + "Resp"
-				operation.ResponseType = op.OperationID + "Resp"
+				operation.ResponseSchema = content.Schema
 				if response.Value.Description != nil {
 					operation.ResponseDescription = *response.Value.Description
 				}
@@ -363,61 +310,33 @@ func (p Parser) convertOperation(path string, method string, op *openapi3.Operat
 			}
 		}
 	}
-	if operation.ResponseType == "" {
-		operation.ResponseType = "Any"
-	}
-
-	// Update template to include headers
-	if len(headerParams) > 0 || len(staticHeaders) > 0 {
-		operation.HeaderParams = headerParams
-		operation.StaticHeaders = staticHeaders
-		operation.HasHeaders = true
-	}
 
 	return operation
-}
-
-func (p Parser) toMethodName(name string) string {
-	// Convert method names like GetBot to get_bot
-	var result strings.Builder
-	for i, r := range name {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result.WriteRune('_')
-		}
-		result.WriteRune(r)
-	}
-	return strings.ToLower(result.String())
 }
 
 func (p Parser) convertSchemaToClass(name string, schema *openapi3.SchemaRef) Class {
 	class := Class{
 		Name:        name,
-		Description: p.formatDescription(schema.Value.Description),
-		Fields:      []Field{},
-		BaseClass:   "CozeModel",
+		Description: schema.Value.Description,
+		RawSchema:   schema,
 	}
 
 	if schema.Value.Title != "" {
-		class.Description = p.formatDescription(schema.Value.Title)
+		class.Description = schema.Value.Title
 	}
 
 	// Handle enum types
-	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 && (*schema.Value.Type)[0] == "integer" && schema.Value.Enum != nil {
+	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 && schema.Value.Enum != nil {
 		class.IsEnum = true
-		class.BaseClass = "IntEnum"
 		for _, value := range schema.Value.Enum {
-			// Convert value to int
-			intValue := int(value.(float64))
-			enumName := fmt.Sprintf("VALUE_%d", intValue)
-			enumDesc := fmt.Sprintf("Value %d", intValue)
+			enumName := fmt.Sprintf("VALUE_%v", value)
+			enumDesc := fmt.Sprintf("Value %v", value)
 
-			if enumName != "" {
-				class.EnumValues = append(class.EnumValues, EnumValue{
-					Name:        enumName,
-					Value:       fmt.Sprintf("%d", intValue),
-					Description: enumDesc,
-				})
-			}
+			class.EnumValues = append(class.EnumValues, EnumValue{
+				Name:        enumName,
+				Value:       value,
+				Description: enumDesc,
+			})
 		}
 		return class
 	}
@@ -425,12 +344,14 @@ func (p Parser) convertSchemaToClass(name string, schema *openapi3.SchemaRef) Cl
 	if schema.Value.Properties != nil {
 		for propName, prop := range schema.Value.Properties {
 			field := Field{
-				Name:        p.toVarName(propName),
-				Type:        p.getFieldType(prop),
-				Description: p.formatDescription(prop.Value.Description),
+				Name:        propName,
+				JsonName:    propName,
+				Description: prop.Value.Description,
+				Required:    p.isFieldRequired(propName, schema),
+				Schema:      prop,
 			}
 			if prop.Value.Title != "" {
-				field.Description = p.formatDescription(prop.Value.Title)
+				field.Description = prop.Value.Title
 			}
 			class.Fields = append(class.Fields, field)
 		}
@@ -439,94 +360,14 @@ func (p Parser) convertSchemaToClass(name string, schema *openapi3.SchemaRef) Cl
 	return class
 }
 
-func (p Parser) formatDescription(desc string) string {
-	if desc == "" {
-		return desc
+func (p Parser) isFieldRequired(fieldName string, schema *openapi3.SchemaRef) bool {
+	if schema.Value.Required == nil {
+		return false
 	}
-	// Remove escape characters
-	desc = strings.ReplaceAll(desc, "\\", "")
-	// Convert consecutive newlines to single newline
-	desc = regexp.MustCompile(`\n\s*\n+`).ReplaceAllString(desc, "\n")
-	// Add indentation after each newline
-	desc = regexp.MustCompile(`\n`).ReplaceAllString(desc, "\n    ")
-	// Trim leading/trailing whitespace
-	desc = strings.TrimSpace(desc)
-	return desc
-}
-
-func (p Parser) getFieldType(schema *openapi3.SchemaRef) string {
-	if schema.Value == nil {
-		return "Any"
-	}
-
-	// If it's a reference, use the referenced type name
-	if schema.Ref != "" {
-		parts := strings.Split(schema.Ref, "/")
-		return parts[len(parts)-1]
-	}
-
-	// Handle arrays
-	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 && (*schema.Value.Type)[0] == "array" && schema.Value.Items != nil {
-		itemType := p.getFieldType(schema.Value.Items)
-		return fmt.Sprintf("List[%s]", itemType)
-	}
-
-	// Handle optional fields
-	isOptional := len(schema.Value.Required) == 0
-	var baseType string
-	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 {
-		baseType = p.getBaseType((*schema.Value.Type)[0])
-	}
-	if baseType == "" {
-		if schema.Value.Properties != nil {
-			// If it has properties but no type, it's an object
-			baseType = "dict"
-		} else {
-			baseType = "Any"
+	for _, required := range schema.Value.Required {
+		if required == fieldName {
+			return true
 		}
 	}
-
-	if isOptional {
-		return fmt.Sprintf("Optional[%s]", baseType)
-	}
-	return baseType
-}
-
-func (p Parser) getBaseType(openAPIType string) string {
-	typeMapping := map[string]string{
-		"string":  "str",
-		"integer": "int",
-		"number":  "float",
-		"boolean": "bool",
-		"array":   "List",
-		"object":  "dict",
-	}
-	return typeMapping[openAPIType]
-}
-
-func (p Parser) toVarName(name string) string {
-	// Replace any non-alphanumeric characters with underscore
-	reg := regexp.MustCompile(`[^a-zA-Z0-9]+`)
-	name = reg.ReplaceAllString(name, "_")
-
-	// Add underscore before capital letters (camelCase to snake_case)
-	reg = regexp.MustCompile(`([a-z0-9])([A-Z])`)
-	name = reg.ReplaceAllString(name, "${1}_${2}")
-
-	// Convert to lowercase
-	name = strings.ToLower(name)
-
-	// Remove consecutive underscores
-	reg = regexp.MustCompile(`_+`)
-	name = reg.ReplaceAllString(name, "_")
-
-	// Trim leading and trailing underscores
-	name = strings.Trim(name, "_")
-
-	// If empty or starts with a number, prefix with underscore
-	if name == "" || regexp.MustCompile(`^[0-9]`).MatchString(name) {
-		name = "_" + name
-	}
-
-	return name
+	return false
 }
