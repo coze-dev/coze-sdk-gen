@@ -1,0 +1,3346 @@
+components:
+  schemas:
+    ResponseDetail:
+      properties:
+        logid:
+          title: The log ID for this request. If you encounter an error scenario and
+            continue to receive errors after repeated attempts, you can contact the
+            Coze team for assistance using this log ID and error code. For detailed
+            instructions, please refer to [Help and technical support](https://www.coze.com/docs/guides/help_and_support).
+          type: string
+      required:
+      - logid
+      type: object
+    CaptionType:
+      enum:
+      - 0
+      - 1
+      format: int
+      type: integer
+    ChunkStrategy:
+      properties:
+        chunk_type:
+          $ref: '#/components/schemas/ChunkType'
+        max_tokens:
+          format: i64
+          title: Description
+          type: integer
+        remove_extra_spaces:
+          format: bool
+          title: Is it a semantic match column?
+          type: boolean
+        remove_urls_emails:
+          format: bool
+          title: Column type
+          type: boolean
+        separator:
+          title: 1 Link Reader (cici Long Text)
+          type: string
+      type: object
+    ChunkType:
+      enum:
+      - 0
+      - 1
+      format: int
+      title: |-
+        Segmentation setting. Values include:
+        0: Automatic segmentation and cleaning. Use preset rules for data segmentation and processing.
+        1: Custom. At this time, you need to specify segmentation rule details through separator, max_tokens, remove_extra_spaces, and remove_urls_emails.
+      type: integer
+    ColumnType:
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      format: int
+      type: integer
+    ContentSchema:
+      enum:
+      - 0
+      - 1
+      format: int
+      type: integer
+    CrawlContent:
+      properties:
+        content:
+          description: 抓取到的完整信息
+          format: list
+          items:
+            additionalProperties:
+              type: string
+            format: map
+            type: object
+          title: Complete information captured
+          type: array
+        headers:
+          description: 表头
+          format: list
+          items:
+            type: string
+          title: Header
+          type: array
+        marks:
+          additionalProperties:
+            type: string
+          description: 抓取信息的 XPATH
+          format: map
+          title: XPath for extracting information
+          type: object
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        sub_marks:
+          additionalProperties:
+            additionalProperties:
+              type: string
+            format: map
+            type: object
+          description: 子页面抓取信息的 XPATH, key 对应于 marks 中的 key
+          format: map
+          title: The XPATH for extracting information from subpages, where the key
+            corresponds to the key in marks.
+          type: object
+        tags:
+          description: 存储标记的类型，类型是 Array<'text' | 'image' | 'link'>，与 headers 一一对应
+          format: list
+          items:
+            type: string
+          title: The types of stored tags, which are Array<'text' | 'image' | 'link'>,
+            correspond one-to-one with the headers.
+          type: array
+        title:
+          description: 标题
+          title: Title
+          type: string
+        url:
+          description: 抓取页面的 URL
+          title: Capture the URL of the page.
+          type: string
+      type: object
+    DocumentBase:
+      properties:
+        name:
+          title: File name.
+          type: string
+        source_info:
+          $ref: '#/components/schemas/SourceInfo'
+        update_rule:
+          $ref: '#/components/schemas/UpdateRule'
+      type: object
+      x-coze-order:
+      - name
+      - source_info
+      - update_rule
+      - table_meta
+      - table_sheet
+      - filter_strategy
+    DocumentInfo:
+      properties:
+        char_count:
+          description: 字符数
+          format: i32
+          title: The size of the file, in bytes.
+          type: integer
+        chunk_strategy:
+          $ref: '#/components/schemas/ChunkStrategy'
+        create_time:
+          description: 创建时间
+          format: i32
+          title: Local file formats, i.e., file extensions, such as txt. Formats supported
+            include pdf, txt, doc, docx types.
+          type: integer
+        doc_outline:
+          description: 层级分段文档树Json
+          title: Frequency of automatic updates for online web pages. The unit is
+            hours.
+          type: string
+        document_id:
+          format: i64
+          title: The last modification time of the file, formatted as a 10-digit Unixtime
+            timestamp.
+          type: string
+        filter_strategy:
+          $ref: '#/components/schemas/FilterStrategy'
+        format_type:
+          $ref: '#/components/schemas/FormatType'
+        hit_count:
+          description: 命中次数
+          format: i32
+          title: The name of the document.
+          type: integer
+        index_strategy:
+          $ref: '#/components/schemas/IndexStrategy'
+        name:
+          title: The total number of characters in the document.
+          type: string
+        parsing_strategy:
+          $ref: '#/components/schemas/ParsingStrategy'
+        size:
+          description: 文件大小 字节数
+          format: i32
+          title: Segmentation rules.
+          type: integer
+        slice_count:
+          description: 包含分段数量
+          format: i32
+          title: The unique identifier of the uploaded local document.
+          type: integer
+        source_type:
+          $ref: '#/components/schemas/DocumentSource'
+        status:
+          $ref: '#/components/schemas/DocumentStatus'
+        tos_uri:
+          description: 文件链接
+          title: |-
+            File format types. The values include:
+
+            - 0: Document type, such as txt, pdf, online web pages, etc., are considered document types.
+            - 1: Spreadsheet type, such as xls spreadsheets, are considered spreadsheet types.
+            - 2: Photo type, such as png images, are considered photo types.
+          type: string
+        type:
+          description: 文件后缀 csv, pdf 等
+          title: The upload time of the file is formatted as a 10-digit Unixtime timestamp.
+          type: string
+        update_interval:
+          description: 更新间隔
+          format: i32
+          title: The following fields are only useful for the refactored table type,
+            used by the front end to determine whether editing the update frequency
+            is allowed only for the table type.
+          type: integer
+        update_time:
+          description: 更新时间
+          format: i32
+          title: Creator
+          type: integer
+        update_type:
+          $ref: '#/components/schemas/UpdateType'
+      type: object
+    DocumentSource:
+      enum:
+      - 0
+      - 1
+      - 2
+      format: int
+      title: "The method of uploading the file. \n0: upload local file.\n1: upload
+        of an online web page.\n2: custom upload"
+      type: integer
+    DocumentStatus:
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 9
+      - 1000
+      format: int
+      type: integer
+    FilterStrategy:
+      properties:
+        filter_box_position:
+          description: 过滤框位置
+          format: list
+          items:
+            format: double
+            type: number
+          type: array
+        filter_page:
+          description: 过滤页数
+          format: list
+          items:
+            format: i32
+            type: integer
+          type: array
+      type: object
+    FormatType:
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      format: int
+      type: integer
+    IndexStrategy:
+      properties:
+        hierarchical_indexing:
+          description: 是否开启分层索引
+          format: bool
+          type: boolean
+        keyword_indexing:
+          description: 是否开启关键词索引（默认为true）
+          format: bool
+          type: boolean
+        model:
+          description: 向量模型
+          type: string
+        vector_indexing:
+          description: 是否开启向量索引（默认为true）
+          format: bool
+          type: boolean
+      type: object
+    Pagination:
+      properties:
+        max_row_count:
+          description: 列表类型采集的最大条数
+          format: i32
+          title: The maximum number of items collected in a list type.
+          type: integer
+        next_page_xpath:
+          description: 当类型为 2 时，需要存储用户标记的下一页按钮
+          title: When the type is 2, it is necessary to store the next page button
+            marked by the user.
+          type: string
+        type:
+          description: 分页方式：0-不分页 1-滚动加载 2-下一页按钮
+          format: i32
+          title: 'Paging method: 0 - No paging, 1 - Infinite scroll, 2 - Next page
+            button'
+          type: integer
+      type: object
+    ParsingStrategy:
+      properties:
+        image_extraction:
+          description: 是否开启图片元素提取（精准解析时生效）
+          format: bool
+          type: boolean
+        image_ocr:
+          description: 是否开启图片OCR（精准解析时生效）
+          format: bool
+          type: boolean
+        parsing_type:
+          $ref: '#/components/schemas/ParsingType'
+        table_extraction:
+          description: 是否开启表格元素提取（精准解析时生效）
+          format: bool
+          type: boolean
+      type: object
+    ParsingType:
+      enum:
+      - 0
+      - 1
+      format: int
+      type: integer
+    SinkStrategy:
+      properties:
+        check_index:
+          description: 是否检查索引成功
+          format: bool
+          title: Check if the index is successful.
+          type: boolean
+      type: object
+    SourceInfo:
+      properties:
+        document_source:
+          $ref: '#/components/schemas/DocumentSource'
+        file_base64:
+          description: 'document_source 本地: 如果不传 tos 地址, 则需要传文件 base64, 类型文件经过 base64
+            后的字符串'
+          title: |-
+            Base64 encoding of local files.
+
+
+            Mandatory when uploading local files
+          type: string
+        file_type:
+          description: 文件类型, 比如 pdf
+          title: |-
+            Local file formats, i.e., file extensions such as txt. Formats supported include pdf, txt, doc, docx.
+            The type of uploaded file should match the type of knowledge base, for example, txt files can only be uploaded to a document-type knowledge base.
+
+
+            Mandatory when uploading local files
+          type: string
+        web_url:
+          description: 'document_source weburl: 如果不传 web_id, 则需要传 weburl'
+          title: |-
+            URL of the webpage.
+
+
+            Required when uploading an online webpage
+          type: string
+      type: object
+    TableColumn:
+      properties:
+        column_name:
+          description: 列名
+          title: |-
+            Whether to automatically filter consecutive spaces, newline characters, and tab characters. The values include:
+
+            - true: Automatically filter
+            - false: (default) Do not automatically filter
+
+            Effective when chunk\_type=1.
+          type: string
+        column_type:
+          $ref: '#/components/schemas/ColumnType'
+        contains_empty_value:
+          format: bool
+          type: boolean
+        desc:
+          description: 描述
+          title: |-
+            Segment identifier.
+            Mandatory when chunk\_type=1.
+          type: string
+        id:
+          description: 列 id
+          format: i64
+          title: Column ID
+          type: integer
+        is_semantic:
+          description: 是否为语义匹配列
+          format: bool
+          title: Image type, annotation method for image description text
+          type: boolean
+        sequence:
+          description: 列原本在 excel 的序号
+          format: i64
+          title: The maximum segment length ranges from 100 to 2000. It is mandatory
+            when chunk_type=1.
+          type: integer
+      type: object
+    TableSheet:
+      properties:
+        header_line_idx:
+          description: 用户选择的表头行数，从 0 开始编号
+          format: i64
+          title: The number of header rows selected by the user, starting from 0.
+          type: integer
+        sheet_id:
+          description: 用户选择的 sheet id
+          format: i64
+          title: The sheet ID selected by the user
+          type: integer
+        start_line_idx:
+          description: 用户选择的起始行号，从 0 开始编号
+          format: i64
+          title: The starting line number chosen by the user, numbered from 0.
+          type: integer
+      type: object
+    UpdateRule:
+      properties:
+        update_interval:
+          description: 更新间隔，单位(天)
+          format: i32
+          title: The frequency of online webpage automatic updates. The unit is hours,
+            with a minimum value of 24.
+          type: integer
+        update_type:
+          $ref: '#/components/schemas/UpdateType'
+      type: object
+    UpdateType:
+      enum:
+      - 0
+      - 1
+      - 2
+      format: int
+      title: |-
+        Whether the online web page is automatically updated. Values include:
+        0: Do not automatically update
+        1: Automatically overwrite update
+        2: Automatically append update
+      type: integer
+    BotMode:
+      enum:
+      - 0
+      - 1
+      - 2
+      format: int
+      type: integer
+    ChatV3ChatDetail:
+      properties:
+        bot_id:
+          title: The agent ID for the conversation chat.
+          type: string
+        completed_at:
+          format: i32
+          title: The time the conversation ended. A Unixtime timestamp in 10-digit
+            format in seconds.
+          type: integer
+        conversation_id:
+          title: Session ID, which is the unique identifier of the session. Token
+          type: string
+        created_at:
+          format: i32
+          title: The time the conversation was created. Unixtime timestamp in 10-bit
+            format, in seconds.
+          type: integer
+        failed_at:
+          format: i32
+          title: The time the conversation failed. Unixtime timestamp in 10-digit
+            format, in seconds.
+          type: integer
+        id:
+          title: The conversation ID, which is the unique identifier of the conversation.
+          type: string
+        last_error:
+          $ref: '#/components/schemas/LastError'
+        meta_data:
+          additionalProperties:
+            type: string
+          format: map
+          title: |-
+            An additional message when the message is created, which is used to pass in custom data for the consumer, and is also returned when the message is obtained.
+            Custom key-value pairs, which should be specified as Map object format. The length is 16 key-value pairs, where the length of the key is 1 to 64 characters, and the length of the value is 1 to 512 characters.
+          type: object
+        required_action:
+          $ref: '#/components/schemas/RequiredAction'
+        section_id:
+          type: string
+        status:
+          title: |-
+            The running state of the dialog. The value is:
+            - created: The conversation has been created.
+            - in_progress: The agent is processing.
+            - completed: The agent has completed processing, and this conversation is over.
+            - failed: dialogue failed.
+            - requires_action: Dialogue interrupted and requires further processing.
+            - canceled: The conversation has been cancelled.
+          type: string
+        usage:
+          $ref: '#/components/schemas/Usage'
+      required:
+      - id
+      - conversation_id
+      - bot_id
+      - status
+      type: object
+    ChatV3MessageDetail:
+      properties:
+        bot_id:
+          title: Write the agent ID for this message. This parameter is only returned
+            in messages generated by the conversation.
+          type: string
+        chat_id:
+          title: Chat ID. This parameter is only returned in messages generated by
+            the conversation.
+          type: string
+        content:
+          title: The content of the message supports multiple types of content including
+            plain text, multimodal (text, images, mixed input files), and cards.
+          type: string
+        content_type:
+          title: |-
+            The types of message content include:
+
+            - text: Text.
+            - object_string: Multimodal content, i.e., a combination of text and files, or a combination of text and images.
+            - card: Card. This enumeration value only appears in the interface response and is not supported as an input parameter.
+          type: string
+        conversation_id:
+          title: The session ID of this message.
+          type: string
+        created_at:
+          format: i64
+          title: The creation time of the message, formatted as a 10-digit Unixtime
+            timestamp, in seconds (s).
+          type: integer
+        id:
+          title: Message ID, i.e., the unique identifier of the message.
+          type: string
+        meta_data:
+          additionalProperties:
+            type: string
+          format: map
+          title: Additional message when creating a message will also return this
+            additional message when retrieving the message.
+          type: object
+        role:
+          title: |-
+            Entity sending this message. Values:
+            - user: Represents that the content of this message is sent by the user.
+            - assistant: Represents that the content of this message is sent by the assistant.
+          type: string
+        section_id:
+          type: string
+        type:
+          title: |-
+            Message types.
+
+            - **question**: User input content.
+            - **answer**: Message content returned to the user by the agent, supporting incremental returns. If the workflow is bound to a message node, there may be multiple answer scenarios, in which case the end marker of the streamed return can be used to determine the completion of all answers.
+            - **function_call**: Intermediate result of the function call during the agent conversation.
+            - **tool_output**: Result returned after calling the tool (function call).
+            - **tool_response**: Result returned after calling the tool (function call).
+            - **follow_up**: If the user question suggestion switch is configured to be turned on for the agent, the recommended question-related reply content will be returned.
+            - **verbose**: In multi-answer scenarios, the server will return a verbose package, and the corresponding content is in JSON format, with content.msg_type=generate_answer_finish representing the completion of all answer replies.
+
+
+            Only the initiate conversation (v3) interface supports using this parameter as an input parameter, and:
+
+            - If autoSaveHistory=true, type supports setting to question or answer.
+            - If autoSaveHistory=false, type supports setting to question, answer, function_call, tool_output/tool_response.
+
+            Among them, type=question can only correspond to role=user, meaning only the user role can and must initiate question-type messages. For detailed explanation, refer to [message type description](https://www.coze.cn/docs/developer_guides/message_type).
+          type: string
+        updated_at:
+          format: i64
+          title: The update time of the message, formatted as a 10-digit Unixtime
+            timestamp in seconds (s).
+          type: integer
+      required:
+      - id
+      - conversation_id
+      - bot_id
+      - role
+      - type
+      - content
+      - content_type
+      - chat_id
+      type: object
+    InterruptFunction:
+      properties:
+        arguments:
+          title: Method parameters.
+          type: string
+        name:
+          title: Method name.
+          type: string
+      type: object
+    InterruptPlugin:
+      properties:
+        function:
+          $ref: '#/components/schemas/InterruptFunction'
+        id:
+          title: ID of the reported run result.
+          type: string
+        require_info:
+          $ref: '#/components/schemas/InterruptRequireInfo'
+        type:
+          title: Tool type, enumeration value is function.
+          type: string
+      type: object
+    InterruptRequireInfo:
+      properties:
+        infos:
+          format: list
+          items:
+            type: string
+          title: Detailed information.
+          type: array
+      type: object
+    LastError:
+      properties:
+        code:
+          format: i32
+          title: |-
+            Status code.
+            0 means the call was successful.
+          type: integer
+        msg:
+          title: Status information. Detailed error information can be viewed in this
+            field when an API call fails.
+          type: string
+      required:
+      - code
+      - msg
+      type: object
+    OnboardingMode:
+      enum:
+      - 1
+      - 2
+      - 3
+      format: int
+      type: integer
+    RequiredAction:
+      properties:
+        submit_tool_outputs:
+          $ref: '#/components/schemas/SubmitToolOutputs'
+        type:
+          title: The type of the extra operation, the enumeration value is submit_tool_outputs.
+          type: string
+      type: object
+    SubmitToolOutputs:
+      properties:
+        tool_calls:
+          format: list
+          items:
+            $ref: '#/components/schemas/InterruptPlugin'
+          title: Detailed reporting information.
+          type: array
+      type: object
+    SuggestedQuestionsShowMode:
+      enum:
+      - 0
+      - 1
+      format: int
+      type: integer
+    Usage:
+      properties:
+        input_count:
+          format: i32
+          title: Total number of Tokens consumed by the input section.
+          type: integer
+        output_count:
+          format: i32
+          title: Total number of Tokens consumed by the output section.
+          type: integer
+        token_count:
+          format: i32
+          title: The total number of tokens consumed by this conversation, including
+            the consumption of the input and output parts.
+          type: integer
+      type: object
+    ConversationData:
+      properties:
+        connector_id:
+          type: string
+        created_at:
+          format: i64
+          title: The time when the session was created. The format is a 10-digit Unix
+            timestamp, in seconds.
+          type: integer
+        creator_d:
+          type: string
+        id:
+          title: Conversation ID, the unique identifier for a session.
+          type: string
+        last_section_id:
+          type: string
+        meta_data:
+          additionalProperties:
+            type: string
+          format: map
+          title: |-
+            When creating a conversation, additional messages will be attached and returned when retrieving the conversation.
+            Custom key-value pairs should be specified in Map object format. The length is 16 pairs of key-value pairs, with the key length ranging from 1 to 64 characters and the value length ranging from 1 to 512 characters.
+          type: object
+      type: object
+    EnterMessage0:
+      properties:
+        content:
+          description: 内容
+          title: |-
+            The content of the message supports various types of content, including plain text, multimodal (text, images, mixed input of files), and cards.
+
+            - When content_type is object_string, content is a JSON String serialized from an array of **object_string object**. For detailed explanation, please refer to **object_string object**.
+            - When content_type **=** text, content is plain text, such as `"content" : "Hello!"`.
+          type: string
+        content_type:
+          description: text/card/object_string
+          enum:
+          - text
+          - object_string
+          title: |-
+            Message content types can be set to:
+
+            - text: Text.
+            - object_string: Multimodal content, i.e., a combination of text and files, or text and images.
+            - card: Card. This enumeration value only appears in the interface response and is not supported as an input parameter.
+
+            When content is not empty, this parameter is required.
+          type: string
+        meta_data:
+          additionalProperties:
+            type: string
+          format: map
+          title: |-
+            Additional messages when creating a message will also be returned when retrieving the message.
+            For custom key-value pairs, they should be specified in Map object format. The length is 16 pairs of key-value pairs, where the length of the key ranges from 1 to 64 characters, and the length of the value ranges from 1 to 512 characters.
+
+            When content is not empty, this parameter is required.
+          type: object
+        role:
+          enum:
+          - user
+          - assistant
+          title: |-
+            Entity that sent this message. Possible values:
+
+            - **user**: Indicates that the message content was sent by the user.
+            - **assistant**: Indicates that the message content was sent by the Bot.
+          type: string
+        type:
+          enum:
+          - question
+          - answer
+          - function_call
+          - tool_output
+          - tool_response
+          title: |-
+            Message types. The default is **question**.
+
+            - **question**: User input content.
+            - **answer**: The message content returned to the user by the Bot, supporting incremental returns. If the workflow is bound to a message node, there may be multiple answer scenarios, in which case the completion of all answers can be judged by the end mark of the streamed return.
+            - **function_call**: The intermediate result of the function call during the Bot conversation.
+            - **tool_output**: The result returned after calling the tool (function call).
+            - **tool_response**: The result returned after calling the tool (function call).
+            - **follow_up**: If the user question suggestion switch is configured to be turned on in the Bot, the reply content related to the recommended question will be returned. Not supported as an input parameter in the request.
+            - **verbose**: In multiple answer scenarios, the server will return a verbose package, and the corresponding content is in JSON format. `content.msg_type =generate_answer_finish` indicates that all answer replies are completed. Not supported as an input parameter in the request.
+
+
+            Only the initiate conversation (v3) interface supports using this parameter as an input parameter, and:
+
+            - If autoSaveHistory=true, type supports setting to question or answer.
+            - If autoSaveHistory=false, type supports setting to question, answer, function_call, tool_output/tool_response.
+
+            Among them, type=question can only correspond to role=user, that is, only the user role can and can only initiate question-type messages. For detailed instructions, please refer to [Message type description](https://www.coze.cn/docs/developer_guides/message_type).
+          type: string
+      required:
+      - role
+      type: object
+    OpenMessageApi:
+      properties:
+        bot_id:
+          description: bot id //已TODO 所有的i64加注解str,入参和出参都要
+          title: Write the ID of the agent that composed this message. This parameter
+            is only returned in the messages generated by the conversation.
+          type: string
+        chat_id:
+          title: Chat ID. This parameter is only returned in messages generated by
+            the conversation.
+          type: string
+        content:
+          description: 内容
+          title: The content of the message supports various types of content such
+            as plain text, multimodal (text, images, mixed input of files), and cards.
+          type: string
+        content_type:
+          enum:
+          - text
+          - object_string
+          title: |-
+            Types of message content include:
+
+            - text: Text.
+            - object_string: Multimodal content, i.e., a combination of text and file, or text and image.
+            - card: Card. This enum value only appears in the interface response and is not supported as an input parameter.
+          type: string
+        conversation_id:
+          description: conversation id
+          title: The session ID of this message.
+          type: string
+        created_at:
+          description: 创建时间
+          format: i64
+          title: The creation time of the message is in the format of a 10-digit Unix
+            timestamp, in seconds (s).
+          type: integer
+        id:
+          description: 主键ID
+          title: Message ID, the unique identifier of a message.
+          type: string
+        meta_data:
+          additionalProperties:
+            type: string
+          format: map
+          title: The additional message created when the message is created will also
+            be returned when the message is retrieved.
+          type: object
+        role:
+          enum:
+          - user
+          - assistant
+          title: |-
+            Send this message entity. Values:
+
+            - **user**: Indicates that the content of the message was sent by the user.
+            - **assistant**: Indicates that the content of the message was sent by the Bot.
+          type: string
+        section_id:
+          type: string
+        type:
+          enum:
+          - question
+          - answer
+          - function_call
+          - tool_output
+          - tool_response
+          title: |-
+            Message types.
+
+            - **question**: User input content.
+            - **answer**: The message content returned to the user by the Bot, supporting incremental returns. If the workflow is bound to a message node, there may be multiple answer scenarios. In this case, the end marker of the streaming return can be used to determine that all answers are complete.
+            - **function_call**: Intermediate results of the function call during the Bot conversation.
+            - **tool_output**: The result returned after calling the tool (function call).
+            - **tool_response**: The result returned after calling the tool (function call).
+            - **follow_up**: If the user question suggestion switch is configured to be turned on in the Bot, recommended question-related reply content will be returned.
+            - **verbose**: In multiple answer scenarios, the server will return a verbose package, and the corresponding content is in JSON format. `content.msg_type = generate_answer_finish` means that all answer replies are complete.
+
+
+            Only the conversation (v3) interface supports using this parameter as an input parameter, and:
+
+            - If autoSaveHistory=true, type supports setting to question or answer.
+            - If autoSaveHistory=false, type supports setting to question, answer, function_call, tool_output/tool_response.
+
+            Among them, type=question can only correspond to role=user, that is, only the user role can and must initiate a question type message. For detailed instructions, please refer to [Message type description](https://www.coze.cn/docs/developer_guides/message_type).
+          type: string
+        updated_at:
+          description: 更新时间 //已TODO 时间改成int
+          format: i64
+          title: The update time of the message is in the format of a 10-digit Unixtime
+            timestamp, in seconds (s).
+          type: integer
+      type: object
+    ApiInfo:
+      properties:
+        api_id:
+          description: api id
+          title: Unique identifier of the tool.
+          type: string
+        description:
+          description: api描述
+          title: Description of the tool.
+          type: string
+        name:
+          description: api名称
+          title: The name of the tool.
+          type: string
+      type: object
+    BotConfig:
+      properties:
+        character_name:
+          type: string
+        propmt:
+          type: string
+      type: object
+    BotInfo:
+      properties:
+        bot_id:
+          description: bot id
+          title: The unique identifier of the agent.
+          type: string
+        bot_mode:
+          $ref: '#/components/schemas/BotMode'
+        create_time:
+          description: 创建时间
+          format: i64
+          title: Create time, formatted as a 10-digit Unix timestamp, in seconds (s).
+          type: integer
+        description:
+          description: bot描述
+          title: Description of the agent.
+          type: string
+        icon_url:
+          description: bot图像url
+          title: Avatar URL of the intelligent agent.
+          type: string
+        knowledge:
+          $ref: '#/components/schemas/CommonKnowledge'
+        model_info:
+          $ref: '#/components/schemas/ModelInfo'
+        name:
+          description: bot名称
+          title: Agent Name.
+          type: string
+        onboarding_info:
+          $ref: '#/components/schemas/OnboardingInfoV2'
+        plugin_info_list:
+          description: 插件信息列表
+          format: list
+          items:
+            $ref: '#/components/schemas/PluginInfo'
+          title: Agent configuration plugins.
+          type: array
+        prompt_info:
+          $ref: '#/components/schemas/PromptInfo'
+        update_time:
+          description: 更新时间
+          format: i64
+          title: Update time, formatted as a 10-digit Unix timestamp in seconds (s).
+          type: integer
+        version:
+          description: 版本
+          title: The version number of the latest release of the agent.
+          type: string
+        voice_data_list:
+          description: 选择的语音信息
+          format: list
+          items:
+            $ref: '#/components/schemas/VoiceData'
+          title: Selected voice information
+          type: array
+      type: object
+    CommonKnowledge:
+      properties:
+        knowledge_infos:
+          description: 知识库信息
+          format: list
+          items:
+            $ref: '#/components/schemas/KnowledgeInfo'
+          title: Knowledge base information.
+          type: array
+      type: object
+    CreateDraftBotData:
+      properties:
+        bot_id:
+          title: The ID of the created agent.
+          type: string
+      required:
+      - bot_id
+      type: object
+    CustomConfig:
+      properties:
+        bot_config:
+          $ref: '#/components/schemas/BotConfig'
+        model_config:
+          $ref: '#/components/schemas/ModelConfig'
+      type: object
+    EnterMessage:
+      properties:
+        content:
+          description: 如果是非 text，需要解析 JSON
+          title: If it is not text, JSON parsing is required.
+          type: string
+        content_type:
+          description: text, card, object_string
+          enum:
+          - text
+          - object_string
+          title: text, card, object_string
+          type: string
+        meta_data:
+          additionalProperties:
+            type: string
+          format: map
+          type: object
+        name:
+          type: string
+        role:
+          description: user / assistant
+          enum:
+          - user
+          - assistant
+          title: user / assistant
+          type: string
+        type:
+          description: |-
+            function_call, tool_output, knowledge, answer, follow_up, verbose, (普通请求可以不填)
+             用户输入时可用：function_call，tool_output
+             不支持用户输入使用：follow_up，knowledge，verbose，answer
+          enum:
+          - question
+          - answer
+          - function_call
+          - tool_output
+          - tool_response
+          title: |-
+            function_call, tool_output, knowledge, answer, follow_up, verbose, (General requests can be left blank)
+             User input can use: function_call, tool_output
+             User input does not support: follow_up, knowledge, verbose, answer
+          type: string
+      type: object
+    Knowledge:
+      properties:
+        auto_call:
+          description: 自动调用 or 按需调用
+          format: bool
+          title: |-
+            Whether to automatically call the knowledge base. The values include:
+
+            - **true: (default) automatically call**. The knowledge base is called in each round of conversation, using the recalled content to assist in generating replies.
+            - **false: call as needed**. The knowledge base is called based on actual needs, using the recalled content to assist in generating replies. In this case, it is necessary to clearly specify in the persona and reply logic area on the left under what circumstances to call which knowledge base to reply.
+          type: boolean
+        dataset_ids:
+          description: 更新知识库列表 全量覆盖更新
+          format: list
+          items:
+            type: string
+          title: |-
+            The knowledge base ID bound to the agent.
+            In the Button platform, open the specified knowledge base page, and the number after the knowledge parameter in the page URL is the knowledge base ID. For example, https://bots.bytedance.net/space/736142423532160****/knowledge/738509371792341****, the knowledge base ID is 738509371792341****.
+          type: array
+        search_strategy:
+          $ref: '#/components/schemas/SearchStrategy'
+      type: object
+    KnowledgeInfo:
+      properties:
+        id:
+          description: 知识库id
+          title: Knowledge Base ID.
+          type: string
+        name:
+          description: 知识库名称
+          title: Knowledge Base Name.
+          type: string
+      type: object
+    ModelConfig:
+      properties:
+        model_id:
+          type: string
+      type: object
+    ModelInfo:
+      properties:
+        model_id:
+          description: 模型id
+          title: Unique identifier of the model.
+          type: string
+        model_name:
+          description: 模型名称
+          title: Model Name.
+          type: string
+      type: object
+    OnboardingInfo:
+      properties:
+        prologue:
+          description: 开场白
+          title: |-
+            Agent's opening remarks. Length: 0~300 characters. Default: no opening remarks.
+
+            If the opening remarks include the user name variable `{{user_name}}`, the business side needs to handle it in the API scenario, such as replacing this variable with the user's name on the business side when displaying the opening remarks.
+          type: string
+        suggested_questions:
+          description: 建议问题
+          format: list
+          items:
+            type: string
+          title: Preset questions for agent's opening remarks. Each question should
+            be 0~50 characters in length, with an unlimited number of questions. No
+            default preset questions.
+          type: array
+      type: object
+    OnboardingInfoV2:
+      properties:
+        customized_onboarding_prompt:
+          description: LLM生成，用户自定义 Prompt
+          title: LLM generation, user-customized Prompt
+          type: string
+        onboarding_mode:
+          $ref: '#/components/schemas/OnboardingMode'
+        prologue:
+          description: 对应 Coze Opening Dialog开场白
+          title: |-
+            Opening remarks for agent configuration.
+
+            If the opening remarks set a user name variable `{{user_name}}`, the business side needs to handle it by itself in the API scenario, such as replacing this variable with the user name on the business side when displaying the opening remarks.
+          type: string
+        suggested_questions:
+          description: 建议问题
+          format: list
+          items:
+            type: string
+          title: Recommended list of agent configuration questions. This field is
+            not returned when user question suggestions are not enabled.
+          type: array
+        suggested_questions_show_mode:
+          $ref: '#/components/schemas/SuggestedQuestionsShowMode'
+      type: object
+    PluginIdInfo:
+      properties:
+        api_id:
+          title: "The plugin tool ID bound to the agent.\nOpen the specified plugin
+            tool page on the Coze platform, and the number after the tool parameter
+            in the page URL is the plugin tool ID. For example, \nhttps://www.coze.com/space/731762895654132\\*\\*\\*\\*/plugin/735057533610021\\*\\*\\*\\*/tool/735057536617362\\*\\*\\*\\*,
+            the plugin tool ID is 735057536617362\\*\\*\\*\\*."
+          type: string
+        plugin_id:
+          title: |-
+            The plugin ID bound to the agent.
+            In the Coze platform, open the specified plugin page, and the number after the plugin parameter in the page URL is the plugin ID. For example,
+            https://www.coze.com/space/728826510807216****/plugin/731198934927553****, the plugin ID is 731198934927553****.
+          type: string
+      required:
+      - plugin_id
+      type: object
+    PluginIdList:
+      properties:
+        id_list:
+          format: list
+          items:
+            $ref: '#/components/schemas/PluginIdInfo'
+          title: Configuration of the agent's plugin list.
+          type: array
+      type: object
+    PluginInfo:
+      properties:
+        api_info_list:
+          description: 插件包含的api列表
+          format: list
+          items:
+            $ref: '#/components/schemas/ApiInfo'
+          title: Information about the tool list of the plugin.
+          type: array
+        description:
+          description: 插件描述
+          title: Plugin Description.
+          type: string
+        icon_url:
+          description: 插件图片url
+          title: Plugin avatar.
+          type: string
+        name:
+          description: 插件名称
+          title: Plugin Name.
+          type: string
+        plugin_id:
+          description: 插件id
+          title: Plugin unique identifier.
+          type: string
+      type: object
+    PromptInfo:
+      properties:
+        prompt:
+          description: 文本prompt
+          title: The persona and response logic of the intelligent agent. Length is
+            0~20,000 characters. Default is empty.
+          type: string
+      type: object
+    PublishDraftBotData:
+      properties:
+        bot_id:
+          title: Agent ID.
+          type: string
+        version:
+          title: Version of the agent.
+          type: string
+      type: object
+    SearchStrategy:
+      enum:
+      - 0
+      - 1
+      - 20
+      format: int
+      title: |-
+        The search strategy for the knowledge base. Values include:
+        0: (Default) Semantic search. Understand the relationships between words and sentences like a human does.
+        1: Hybrid search. Combine the advantages of full-text retrieval and semantic search, and sort the results comprehensively to recall relevant content fragments.
+        20: Full-text search. Full-text retrieval based on keywords.
+      type: integer
+    SpacePublishedBots:
+      properties:
+        bot_id:
+          title: The unique identifier of the agent.
+          type: string
+        bot_name:
+          title: The name of the agent.
+          type: string
+        description:
+          title: Description of the intelligent agent.
+          type: string
+        icon_url:
+          title: Avatar of the intelligent agent.
+          type: string
+        publish_time:
+          title: The most recent release time of the agent, formatted as a 10-digit
+            Unixtime timestamp. The list of agents returned by this API is sorted
+            in descending order by this field.
+          type: string
+      type: object
+    SpacePublishedBotsInfo:
+      properties:
+        space_bots:
+          format: list
+          items:
+            $ref: '#/components/schemas/SpacePublishedBots'
+          title: List of agents published to the Agent as API channel in the specified
+            space.
+          type: array
+        total:
+          format: i32
+          title: Total number of agents in the agent list.
+          type: integer
+      type: object
+    Tool:
+      properties:
+        api_name:
+          type: string
+        parameters:
+          type: string
+        plugin_id:
+          format: i64
+          type: integer
+      type: object
+    ToolOutput:
+      properties:
+        output:
+          title: The execution results of the tool.
+          type: string
+        tool_call_id:
+          title: The ID of the reported run result. You can view this ID under the
+            tool_calls field of the [Initiate a conversation (V3) ] (/docs/developer_guides/chat_v3)
+            interface response.
+          type: string
+      required:
+      - tool_call_id
+      - output
+      type: object
+    VoiceData:
+      properties:
+        id:
+          description: 唯一id
+          title: Unique ID
+          type: string
+        language_code:
+          description: 音色语种code
+          title: Timbre language code
+          type: string
+        language_name:
+          description: 音色语种名称
+          title: Timbre language name
+          type: string
+        name:
+          description: 音色名称
+          title: Timbre name
+          type: string
+        preview_audio:
+          description: 预览音色内容
+          title: Preview tone content.
+          type: string
+        preview_text:
+          description: 预览文本内容
+          title: Preview the text content
+          type: string
+        style_id:
+          description: 音色 style_id
+          title: Timbre style_id
+          type: string
+      type: object
+    File:
+      properties:
+        URL:
+          type: string
+        bytes:
+          description: 文件字节数
+          format: i64
+          title: Total bytes of the file.
+          type: integer
+        created_at:
+          description: 上传时间戳，单位s
+          format: i64
+          title: The upload time of the file, formatted as a 10-digit Unix time stamp
+            in seconds (s).
+          type: integer
+        file_name:
+          description: 文件名
+          title: Document Name.
+          type: string
+        id:
+          description: 文件ID
+          title: Uploaded file ID.
+          type: string
+        url:
+          description: 目前仅 openapi 场景有用。白名单用户会返回文件 url
+          type: string
+      type: object
+    OpenSpace:
+      properties:
+        icon_url:
+          description: 空间图标 url
+          title: The URL address of the space icon.
+          type: string
+        id:
+          description: 空间 id
+          title: The ID of the workspace.
+          type: string
+        name:
+          description: 空间名称
+          title: The name of the workspace.
+          type: string
+        role_type:
+          description: '当前用户角色, 枚举值: owner, admin, member'
+          title: |-
+            The current user's roles in the space. Enumerated values include:
+
+            - owner: Owner
+            - admin: Administrator
+            - member: Member
+          type: string
+        workspace_type:
+          description: '工作空间类型, 枚举值: personal, team'
+          title: |-
+            Space types. Enumeration values include:
+
+            - personal: Personal workspaces
+            - team: Team workspaces
+          type: string
+      type: object
+    OpenSpaceData:
+      properties:
+        total_count:
+          description: 空间总数
+          format: i64
+          title: The total number of workspaces currently joined by the button user.
+          type: integer
+        workspaces:
+          format: list
+          items:
+            $ref: '#/components/schemas/OpenSpace'
+          title: The list of workspaces currently joined by the button user.
+          type: array
+      type: object
+    Interrupt:
+      properties:
+        data:
+          type: string
+        event_id:
+          type: string
+        type:
+          $ref: '#/components/schemas/InterruptType'
+      type: object
+    InterruptType:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      format: int
+      type: integer
+  securitySchemes:
+    token:
+      description: The Coze API uses access tokens for API request authentication.
+        You can refer to [Authentication method](https://www.coze.com/docs/developer_guides/authentication?_lang=en)
+        for more detail.
+      scheme: bearer
+      type: http
+info:
+  title: Coze OpenAPI
+  version: "1"
+openapi: 3.0.3
+paths:
+  /open_api/knowledge/document/create:
+    post:
+      description: |-
+        Upload files to the specified knowledge.
+        **Notes:**
+
+        * You can upload up to 10 files at a time.
+        * The files must match the type of knowledge. For example, document types like `.txt` can only be uploaded to a document knowledge and cannot be uploaded to a spreadsheet knowledge.
+        * Each request can only use one upload method. You cannot upload both online web pages and local documents simultaneously.
+        * The chunk strategy of knowledge is determined by the settings when the first file is uploaded.
+        * Only the owner of the knowledge can upload files to it.
+      operationId: CreateDocumentOpenAPI
+      parameters:
+      - in: header
+        name: Agw-Js-Conv
+        required: true
+        schema:
+          enum:
+          - str
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                chunk_strategy:
+                  $ref: '#/components/schemas/ChunkStrategy'
+                dataset_id:
+                  format: i64
+                  title: |-
+                    Knowledge Base ID.
+                    In the Kouzi platform, open the specified knowledge base page, and the number following the `knowledge` parameter in the page URL is the knowledge base ID. For example, `https://bots.bytedance.net/space/736142423532160****/knowledge/738509371792341****`, the knowledge base ID is `738509371792341****`.
+                  type: string
+                document_bases:
+                  description: 表格类型一次只能创建一个待创建的文档信息
+                  format: list
+                  items:
+                    $ref: '#/components/schemas/DocumentBase'
+                  title: |-
+                    Metadata information for files to be uploaded. The maximum length of the array is 10, meaning up to 10 files can be uploaded at a time. For detailed instructions, refer to the [DocumentBase object](https://www.coze.com/docs/developer_guides/create_knowledge_files#986d053d).
+                    Supported upload methods include:
+
+                    - Offline files. Supported formats are pdf, txt, doc, docx.
+                    - Online web pages.
+                  type: array
+              required:
+              - dataset_id
+              - document_bases
+              - chunk_strategy
+              type: object
+              x-coze-order:
+              - dataset_id
+              - document_bases
+              - chunk_strategy
+              - format_type
+              - sink_strategy
+              - is_append
+              - parsing_strategy
+              - index_strategy
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    type: integer
+                  document_infos:
+                    format: list
+                    items:
+                      $ref: '#/components/schemas/DocumentInfo'
+                    title: Basic information of the uploaded file.
+                    type: array
+                  msg:
+                    type: string
+                type: object
+                x-coze-order:
+                - document_infos
+                - code
+                - msg
+          description: ""
+      summary: Upload files to knowledge
+      tags:
+      - Knowledge
+  /open_api/knowledge/document/delete:
+    post:
+      description: "Delete text, images, tables, and other files in the knowledge.
+        Batch deletion is supported. \n\nOnly the owner of the knowledge can delete
+        files."
+      operationId: DeleteDocumentAPI
+      parameters:
+      - in: header
+        name: Agw-Js-Conv
+        required: true
+        schema:
+          enum:
+          - str
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                document_ids:
+                  format: list
+                  items:
+                    format: i64
+                    type: string
+                  title: List of knowledge base files to be deleted. The maximum length
+                    of the array is 100, which means that up to 100 files can be deleted
+                    at one time.
+                  type: array
+              required:
+              - document_ids
+              type: object
+              x-coze-order:
+              - document_ids
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i64
+                    title: |-
+                      Status code.
+                      0 represents a successful call.
+                    type: integer
+                  msg:
+                    title: Status information. This field can be used to view detailed
+                      error information when an API call fails.
+                    type: string
+                type: object
+                x-coze-order:
+                - code
+                - msg
+          description: ""
+      summary: Delete knowledge file
+      tags:
+      - Knowledge
+  /open_api/knowledge/document/list:
+    post:
+      description: View the list of files in a specified knowledge base, including
+        documents, tables, or images.
+      operationId: ListDocumentOpenAPI
+      parameters:
+      - in: header
+        name: Agw-Js-Conv
+        required: true
+        schema:
+          enum:
+          - str
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                dataset_id:
+                  format: i64
+                  title: Knowledge base ID of the file to be reviewed.
+                  type: string
+                page:
+                  format: i32
+                  title: Page number for pagination. Defaults to 1, meaning data is
+                    returned starting from the first page.
+                  type: integer
+                size:
+                  format: i32
+                  title: Page size. Default is 10, meaning 10 items are returned per
+                    page.
+                  type: integer
+              required:
+              - dataset_id
+              type: object
+              x-coze-order:
+              - dataset_id
+              - document_ids
+              - page
+              - size
+              - keyword
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i64
+                    title: List of knowledge base files. For detailed instructions,
+                      refer to the [DocumentInfo object](https://www.coze.cn/docs/developer_guides/list_knowledge_files#e638fe05).
+                    type: integer
+                  document_infos:
+                    format: list
+                    items:
+                      $ref: '#/components/schemas/DocumentInfo'
+                    title: "Status code.  \n0 indicates a successful call."
+                    type: array
+                  msg:
+                    title: Specify the total number of files in the knowledge base.
+                    type: string
+                  total:
+                    format: i32
+                    title: Status information. When an API call fails, detailed error
+                      information can be viewed through this field.
+                    type: integer
+                type: object
+                x-coze-order:
+                - document_infos
+                - total
+                - code
+                - msg
+          description: ""
+      summary: List knowledge file
+      tags:
+      - Knowledge
+  /open_api/knowledge/document/update:
+    post:
+      description: |-
+        Edit the file name and update strategy in the knowledge.
+
+        Only the owner of the knowledge can edit the files in the knowledge.
+      operationId: UpdateDocumentOpenAPI
+      parameters:
+      - in: header
+        name: Agw-Js-Conv
+        required: true
+        schema:
+          enum:
+          - str
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                document_id:
+                  format: i64
+                  title: Knowledge base file ID to be modified.
+                  type: string
+                document_name:
+                  description: 需要更新就传, 更新名称
+                  title: New name of the knowledge base file.
+                  type: string
+                update_rule:
+                  $ref: '#/components/schemas/UpdateRule'
+              type: object
+              x-coze-order:
+              - document_id
+              - status
+              - document_name
+              - update_rule
+              - table_meta
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i64
+                    title: |-
+                      Status code.
+                      0 represents a successful call.
+                    type: integer
+                  document_info:
+                    $ref: '#/components/schemas/DocumentInfo'
+                  msg:
+                    title: Status information. Detailed error information can be viewed
+                      through this field when an API call fails.
+                    type: string
+                type: object
+                x-coze-order:
+                - document_info
+                - code
+                - msg
+          description: ""
+      summary: Modify knowledge file
+      tags:
+      - Knowledge
+  /v1/bot/create:
+    post:
+      description: "Create a new agent.\nAfter calling this API to create an agent,
+        the agent will be in an unpublished draft state. After creation, you can view
+        the agent in the Coze platform's agent list. Call the [Publish agent as an
+        API service](https://www.coze.com/docs/developer_guides/publish_bot) API to
+        publish the agent as API service, then you can view this agent by calling
+        [Get agent list](https://www.coze.com/docs/developer_guides/published_bots_list)
+        or [Get agent configs](https://www.coze.com/docs/developer_guides/get_metadata)
+        API. \nWhen creating an agent via the API, you can set the space where the
+        agent is located, the agent's name and description, avatar, personality and
+        reply logic, and opening remarks."
+      operationId: CreateDraftBot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                description:
+                  title: Description of the agent. Length is 0~500 characters. Default
+                    is empty.
+                  type: string
+                icon_file_id:
+                  description: 头像文件id
+                  title: |-
+                    As the file ID for the agent avatar:
+
+                    - If the file ID is not specified, the Coze platform will assign an avatar to the agent by default.
+                    - To use a custom avatar, you should first upload a local file through the [Upload Files](https://www.coze.cn/docs/developer_guides/upload_files) interface and obtain the file ID from the interface response.
+                  type: string
+                name:
+                  title: 'Name of the intelligent agent. Length: 1-20 characters.'
+                  type: string
+                onboarding_info:
+                  $ref: '#/components/schemas/OnboardingInfo'
+                prompt_info:
+                  $ref: '#/components/schemas/PromptInfo'
+                space_id:
+                  title: The Space ID of the space where the agent is located. The
+                    Space ID is the unique identifier of the space. To enter a specified
+                    space, the number following the `space` parameter in the space
+                    page URL is the Space ID. For example, in `https://www.coze.cn/space/736163827687053****/bot`,
+                    the Space ID is `736163827687053****`.
+                  type: string
+              required:
+              - space_id
+              - name
+              type: object
+              x-coze-order:
+              - space_id
+              - name
+              - description
+              - icon_file_id
+              - prompt_info
+              - onboarding_info
+              - plugin_id_list
+              - voice_ids
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    title: |-
+                      Call status codes.
+
+                      - 0 indicates a successful call.
+                      - Other values indicate a failed call. You can determine the specific error reason through the msg field.
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/CreateDraftBotData'
+                  msg:
+                    title: Status information. Detailed error information can be viewed
+                      through this field when the API call fails.
+                    type: string
+                required:
+                - code
+                - msg
+                - data
+                type: object
+                x-coze-order:
+                - code
+                - msg
+                - data
+          description: ""
+      summary: Create agent
+      tags:
+      - Agent
+  /v1/bot/get_online_info:
+    get:
+      description: |-
+        To get the configuration of a specified agent, the agent must be published to the Agent as API channel.
+        This API only supports viewing agents that have already been published as API services. For agents that have never been published as API, you can view the list and configuration on the [Coze platform](https://www.coze.com/).
+      operationId: GetBotOnlineInfo
+      parameters:
+      - description: |-
+          To view the agent ID, go to the agent's development page. The number following the `bot` parameter in the development page URL is the agent ID. For example, in `https://www.coze.cn/space/341****/bot/73428668*****`, the bot ID is `73428668*****`.
+
+
+          Ensure that the space to which the agent belongs has generated an access token.
+        in: query
+        name: bot_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    title: |-
+                      Call status codes.
+
+                      - `0` indicates a successful call.
+                      - Other values indicate a failed call. You can determine the detailed error reason through the `msg` field.
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/BotInfo'
+                  msg:
+                    title: Call state information. In case of failure, error details
+                      will be returned.
+                    type: string
+                required:
+                - code
+                - msg
+                - data
+                type: object
+                x-coze-order:
+                - code
+                - msg
+                - data
+          description: ""
+      summary: Get agent configs
+      tags:
+      - Agent
+  /v1/bot/publish:
+    post:
+      description: Call the API to publish the specified agent to API, WebSDK, or
+        custom channels.
+      operationId: PublishDraftBot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                bot_id:
+                  title: |-
+                    The ID of the agent to be published.
+                    Enter the development page of the agent, the number after the bot parameter in the development page URL is the agent ID. For example, `https://www.coze.com/space/341****/bot/73428668*****`, the bot ID is `73428668*****`.
+                  type: string
+                connector_ids:
+                  format: list
+                  items:
+                    type: string
+                  title: |-
+                    List of agent release channel IDs. Currently, this API supports publishing agents as Agent as API, WebSDK, and custom channels.
+                    - Agent as API: 1024
+                    - WebSDK: 999
+                    - Custom Channel: Custom channel ID, which can be obtained by referring to [Channel Integration Overview](https://www.coze.cn/docs/guides/channel_integration_overview). Ensure that the access token of the creator using the custom channel is used for access.
+                  type: array
+              required:
+              - bot_id
+              - connector_ids
+              type: object
+              x-coze-order:
+              - bot_id
+              - connector_ids
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    title: |-
+                      Call status codes.
+
+                      - 0 indicates a successful call.
+                      - Other values indicate a failed call. You can determine the detailed error reason through the msg field.
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/PublishDraftBotData'
+                  msg:
+                    title: Status information. When an API call fails, detailed error
+                      information can be viewed through this field.
+                    type: string
+                required:
+                - code
+                - msg
+                type: object
+                x-coze-order:
+                - code
+                - msg
+                - data
+          description: ""
+      summary: Publish agent
+      tags:
+      - Agent
+  /v1/bot/update:
+    post:
+      description: |-
+        Update the configuration of the agent.
+        Through this API, you can update all agents created through the Cozy platform or API. In addition to updating the agent's name and description, avatar, persona, and response logic and opening remarks via the API, it also supports binding knowledge bases and plugins to the agent.
+      operationId: UpdateDraftBot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                bot_id:
+                  title: |-
+                    The intelligent agent ID to be modified.
+                    Enter the development page of the agent, and the number after the `bot` parameter in the development page URL is the agent ID. For example, `https://www.coze.com/space/341****/bot/73428668*****`, the bot ID is `73428668*****`.
+                  type: string
+                description:
+                  title: Description information of the agent. Length is 0~500 characters.
+                    Default is empty.
+                  type: string
+                icon_file_id:
+                  title: |-
+                    The file ID of the avatar for the agent.
+
+                    - If no file ID is specified, the Coze platform will assign a default avatar to the agent.
+                    - To use a custom avatar, you should first upload a local file via the [upload file](https://www.coze.cn/docs/developer_guides/upload_files) API and obtain the file ID from the response of the API.
+                  type: string
+                knowledge:
+                  $ref: '#/components/schemas/Knowledge'
+                name:
+                  title: Agent's name. Length should be 1~20 characters.
+                  type: string
+                onboarding_info:
+                  $ref: '#/components/schemas/OnboardingInfo'
+                prompt_info:
+                  $ref: '#/components/schemas/PromptInfo'
+              required:
+              - bot_id
+              type: object
+              x-coze-order:
+              - bot_id
+              - name
+              - description
+              - icon_file_id
+              - prompt_info
+              - onboarding_info
+              - knowledge
+              - plugin_id_list
+              - voice_ids
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    title: |-
+                      Call status code.
+
+                      - 0 indicates a successful call.
+                      - Other values indicate a failed call. You can determine the detailed error reason through the msg field.
+                    type: integer
+                  msg:
+                    title: Status information. When the API call fails, you can view
+                      detailed error information through this field.
+                    type: string
+                required:
+                - code
+                - msg
+                type: object
+                x-coze-order:
+                - code
+                - msg
+          description: ""
+      summary: Update agent
+      tags:
+      - Agent
+  /v1/conversation/create:
+    post:
+      description: "Create a conversation. \nA conversation is a question-and-answer
+        interaction between an agent and a user. A conversation contains one or more
+        messages. For concepts of conversation, chat, and messages, see [Basic concepts](https://www.coze.com/docs/developer_guides/coze_api_overview#4a288f73)."
+      operationId: CreateConversationApi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                bot_id:
+                  type: string
+                connector_id:
+                  type: string
+                messages:
+                  description: 校验最多16个
+                  format: list
+                  items:
+                    $ref: '#/components/schemas/EnterMessage0'
+                  title: The content of the message in the conversation. For detailed
+                    instructions, please refer to the [EnterMessage object](https://www.coze.cn/docs/developer_guides/create_conversation#cde8cc95).
+                  type: array
+                meta_data:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    When creating a conversation, additional messages will also be returned when retrieving the conversation.
+                    Custom key-value pairs should be specified in Map object format. The length is 16 key-value pairs, with the key length ranging from 1 to 64 characters and the value length ranging from 1 to 512 characters.
+                  type: object
+              type: object
+              x-coze-order:
+              - messages
+              - meta_data
+              - bot_id
+              - connector_id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ConversationData'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: Create conversation
+      tags:
+      - Conversation
+  /v1/conversation/message/create:
+    post:
+      description: |-
+        Create a message and add it to the specified conversation.
+        For concepts about conversation, chat, and messages, see [Basic concepts](https://www.coze.com/docs/developer_guides/coze_api_overview#4a288f73).
+      operationId: CreateMessageApi
+      parameters:
+      - description: Conversation ID, i.e., the unique identifier of the session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                content:
+                  description: 内容
+                  title: The content of the message supports various types of content,
+                    including plain text, multimodal (text, images, mixed input of
+                    files), and cards.
+                  type: string
+                content_type:
+                  enum:
+                  - text
+                  - object_string
+                  title: |-
+                    The type of message content can be set to:
+
+                    - text: Text
+                    - object_string: Multimodal content, i.e., a combination of text and file, or a combination of text and image
+                  type: string
+                meta_data:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    Additional messages when creating messages will also be returned when retrieving messages.
+                    Custom key-value pairs should be specified in Map object format. The length is 16 pairs of key-value pairs, with the key length ranging from 1 to 64 characters and the value length ranging from 1 to 512 characters.
+                  type: object
+                role:
+                  description: 已TODO 字段打平
+                  enum:
+                  - user
+                  - assistant
+                  title: |-
+                    Send this message entity. Values:
+
+                    - **user**: Represents that the content of this message is sent by the user.
+                    - **assistant**: Represents that the content of this message is sent by the Bot.
+                  type: string
+              required:
+              - role
+              type: object
+              x-coze-order:
+              - role
+              - content
+              - meta_data
+              - content_type
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OpenMessageApi'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: Create message
+      tags:
+      - Message
+  /v1/conversation/message/delete:
+    post:
+      description: Delete the message in a conversation.
+      operationId: DeleteMessageApi
+      parameters:
+      - description: |-
+          Message ID to be deleted.
+
+          - This message must be within the conversation specified by conversation_id.
+          - It is not supported to specify messages of types other than type=answer, which are generated through the conversation initiation interface. These messages are intermediate messages, and when deleting the agent's reply, the intermediate messages will be batch deleted simultaneously.
+        in: query
+        name: message_id
+        required: true
+        schema:
+          type: string
+      - description: The session ID of the message to be deleted.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              x-coze-order: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OpenMessageApi'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: Delete message
+      tags:
+      - Message
+  /v1/conversation/message/list:
+    post:
+      description: |-
+        View a list of messages for a specified conversation.
+        The difference between viewing the message list API and viewing the details of conversation messages API are:
+
+        * The API for viewing message list API is used to query all messages in a specified conversation, including not only every message manually inserted by the developer in the conversation, but also every query by the user and every reply by the agent.
+        * The API for viewing details of conversation messages API is used in non-streaming conversation scenarios to view agent replies of type=answer and conversation intermediate messages of type=follow-up in a certain chat.
+
+
+        The message is saved on the server for 180 days. After expiration, the message will be automatically deleted from the chat history.
+      operationId: ListMessageApi
+      parameters:
+      - description: Conversation ID, the unique identifier of the session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                after_id:
+                  description: 后序消息游标ID  已TODO str
+                  title: |-
+                    View messages after the specified position.
+                    The default is 0, which means no specific position is specified. To move to the next page, specify the last_id in the returned result.
+                  type: string
+                before_id:
+                  description: 前序消息游标ID  已TODO str
+                  title: |-
+                    Check the messages before the specified location.
+                    The default is 0, which means the location is not specified. To go back to the previous page, specify the first_id in the returned result.
+                  type: string
+                chat_id:
+                  description: 运行id
+                  title: Chat ID to be reviewed.
+                  type: string
+                limit:
+                  description: 每页限制条数  TODO 限制50条
+                  format: i64
+                  title: The amount of data returned for each query. The default is
+                    50, with a range of 1 to 50.
+                  type: integer
+                order:
+                  description: 查询顺序  desc倒序 asc正序 TODO 默认倒序
+                  enum:
+                  - desc
+                  - asc
+                  title: |-
+                    Sorting method for message list.
+
+                    - desc: (default) in descending order by creation time
+                    - asc: in ascending order by creation time
+                  type: string
+              type: object
+              x-coze-order:
+              - limit
+              - order
+              - chat_id
+              - before_id
+              - after_id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    format: list
+                    items:
+                      $ref: '#/components/schemas/OpenMessageApi'
+                    title: Message Details.
+                    type: array
+                  first_id:
+                    title: The Message ID of the first message in the returned message
+                      list.
+                    type: string
+                  has_more:
+                    format: bool
+                    title: |-
+                      Has all the information been returned?
+
+                      - true: Not all information has been returned, you can call this interface again to view other pages.
+                      - false: All information has been returned.
+                    type: boolean
+                  last_id:
+                    title: The Message ID of the last message in the returned message
+                      list.
+                    type: string
+                type: object
+                x-coze-order:
+                - data
+                - has_more
+                - first_id
+                - last_id
+          description: ""
+      summary: List message
+      tags:
+      - Message
+  /v1/conversation/message/modify:
+    post:
+      description: Modify a message, including the body, additional information, and
+        type.
+      operationId: ModifyMessageApi
+      parameters:
+      - description: Conversation ID, the unique identifier for a conversation.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Message ID, which is the unique identifier of the message.
+        in: query
+        name: message_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                content:
+                  description: 内容
+                  title: |-
+                    The content of the message supports various types of content such as plain text, multimodal (text, images, mixed file input), cards, and more.
+
+
+                    meta_data and content cannot be both empty.
+                  type: string
+                content_type:
+                  enum:
+                  - text
+                  - object_string
+                  title: |-
+                    Message content types include:
+
+                    - text: text
+                    - object_string: multimodal content, i.e., a combination of text and files, a combination of text and images
+
+
+                    When passing in content, the content_type should be specified simultaneously.
+                  type: string
+                meta_data:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    When creating a message, additional messages will also be returned when retrieving the message.
+                    Custom key-value pairs should be specified in Map object format. The length is 16 pairs of key-value pairs, where the key length ranges from 1 to 64 characters, and the value length ranges from 1 to 512 characters.
+
+
+                    meta_data and content cannot both be empty.
+                  type: object
+              type: object
+              x-coze-order:
+              - meta_data
+              - content
+              - content_type
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    $ref: '#/components/schemas/OpenMessageApi'
+                type: object
+                x-coze-order:
+                - message
+          description: ""
+      summary: Modify message
+      tags:
+      - Message
+  /v1/conversation/message/retrieve:
+    get:
+      description: View details of a specified message.
+      operationId: RetrieveMessageApi
+      parameters:
+      - description: Conversation ID, which is the unique identifier of the session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Message ID, i.e., the unique identifier of the message.
+        in: query
+        name: message_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OpenMessageApi'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: Get message
+      tags:
+      - Message
+  /v1/conversation/retrieve:
+    get:
+      description: View the conversation information by conversation ID.
+      operationId: RetrieveConversationApi
+      parameters:
+      - description: Conversation ID, which is the unique identifier for a session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ConversationData'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: Get conversation
+      tags:
+      - Conversation
+  /v1/files/retrieve:
+    get:
+      description: View the details of uploaded files.
+      operationId: RetrieveFileOpen
+      parameters:
+      - description: Uploaded file ID.
+        in: query
+        name: file_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/File'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: Get file
+      tags:
+      - File
+  /v1/files/upload:
+    post:
+      description: |-
+        Upload a file to the Coze platform.
+        **API description**
+        Local files cannot be directly used in messages. Before creating a message or conversation, you need to call this API to upload local files to Coze. After uploading the file, you can directly use it in multimodal content by specifying the `file_id` in the message. For usage instructions, see [Create a conversation](https://www.coze.cn/docs/developer_guides/create_conversation).
+
+        * Supported file formats:
+           Document**:** DOC, DOCX, XLS, XLSX, PPT, PPTX, PDF, Numbers, and CSV
+           Image**:** JPG, JPG2, PNG, GIF, WEBP, HEIC, HEIF, BMP, PCD, and TIFF
+        * File upload size limit:** **Each file can be up to 512 MB.
+        * Files uploaded to Coze can only be viewed or used by the account that uploaded them.
+        * Files must be uploaded using the `multipart/form-data` method.
+        * Files uploaded using the API expire after 3 months.
+      operationId: UploadFileOpen
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                file:
+                  description: "Supported file formats for upload:\nDocuments: DOC,
+                    DOCX, XLS, XLSX, PPT, PPTX, PDF, Numbers, CSV\nImages: JPG, JPG2,
+                    PNG, GIF, WEBP, HEIC, HEIF, BMP, PCD, TIFF\nFile upload size limit:
+                    Each file is a maximum of 512 MB.\nFiles uploaded to the platform
+                    are for viewing or use by this account only.\nFiles must be uploaded
+                    using the multipart/form-data method.\nFiles uploaded using the
+                    API expire after 3 months. "
+                  format: binary
+                  type: string
+                  x-coze-file-ext:
+                  - .doc
+                  - .docx
+                  - .xls
+                  - .xlsx
+                  - .ppt
+                  - .pptx
+                  - .pdf
+                  - .numbers
+                  - .csv
+                  - .jpg
+                  - .jpg2
+                  - .jpeg
+                  - .png
+                  - .gif
+                  - .webp
+                  - .heic
+                  - .heif
+                  - .bmp
+                  - .pcd
+                  - .tiff
+              required:
+              - file
+              type: object
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/File'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: Upload file
+      tags:
+      - File
+  /v1/space/published_bots_list:
+    get:
+      description: View the list of agents published to the Agent as API channel in
+        the specified space.
+      operationId: GetSpacePublishedBotsList
+      parameters:
+      - description: The Space ID of the space where the agent is located. The Space
+          ID is the unique identifier of the space. To enter the specified space,
+          the number following the `space` parameter in the space page URL is the
+          Space ID. For example, `https://www.coze.cn/space/736163827687053****/bot`,
+          the Space ID is `736163827687053****`.
+        in: query
+        name: space_id
+        required: true
+        schema:
+          type: string
+      - description: Page size. The default is 20, meaning 20 data entries are returned
+          per page.
+        in: query
+        name: page_index
+        schema:
+          type: integer
+      - description: Page number for pagination. Defaults to 1, which means data is
+          returned starting from the first page.
+        in: query
+        name: page_size
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    title: |-
+                      Status code.
+                      `0` means the call was successful.
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/SpacePublishedBotsInfo'
+                  msg:
+                    title: Status information. Detailed error information can be viewed
+                      through this field when an API call fails.
+                    type: string
+                required:
+                - code
+                - msg
+                - data
+                type: object
+                x-coze-order:
+                - code
+                - msg
+                - data
+          description: ""
+      summary: Get agent list
+      tags:
+      - Agent
+  /v1/workflow/run:
+    post:
+      description: "Execute a published workflow.\n**API Description**\nThis API operates
+        in non-streaming response mode. For nodes that support streaming output, you
+        should use the API to [execute the workflow](https://www.coze.com/docs/developer_guides/workflow_stream_run)
+        (streaming response) to obtain a streaming response. After calling the API,
+        you can get a `debug_url` from the response. By accessing this link, you can
+        view the trial run process of the workflow through a visual interface, which
+        includes detailed information such as the input and output of each execution
+        node, helping you debug or troubleshoot online.\n**Notice**\n\n* If the input
+        of the workflow includes multimodal content such as files and images, it is
+        necessary to first upload the multimodal content to a third-party storage
+        tool and obtain a publicly accessible URL address. This URL should then be
+        used as the input for the workflow.\n* Before running a workflow via the API,
+        ensure that the workflow has been published. Running a workflow that has never
+        been published will return an error code 4200. \n* Before calling this API,
+        you should first test run the workflow on the Coze platform. If the test run
+        requires association with a bot, you will also need to specify the bot ID
+        when calling this API to run the workflow. Generally, running workflows that
+        involve database nodes, variable nodes, and other similar nodes requires association
+        with a bot.\n\n**Restrictions**\nThis API does not support executing workflows
+        that include the following nodes:\n\n* Message nodes\n* End nodes with streaming
+        output enabled\n* Q&A nodes"
+      operationId: OpenAPIRunFlow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                app_id:
+                  description: 引用workflow 的应用ID
+                  title: You can obtain the app ID from the URL of the app's business
+                    logic page. It is the string following the `project-ide` parameter
+                    in the URL. For example, in the URL `https://www.coze.com/space/739174157340921****/project-ide/743996105122521****/workflow/744102227704147****`,
+                    the app ID is `743996105122521****`.
+                  type: string
+                bot_id:
+                  title: "The associated Bot ID required for some workflow executions,
+                    such as workflows with database nodes, variable nodes, etc. \nGo
+                    to the **Develop** page of your Coze bot. The number after the
+                    `bot `parameter in the page URL is the bot ID. For example: `https://www.coze.com/space/8341****/bot/73428668*****`.
+                    The bot ID is`73428668*****`.\n\n* Ensure that the token used
+                    to call this interface has permission for the space where the
+                    Bot is located.\n* Ensure that the Bot has been published as an
+                    API service."
+                  type: string
+                ext:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    Used to specify some additional fields in the format of Map[String][String]. For example, some plugins may implicitly use fields such as latitude and longitude. Currently, the following fields are supported:
+
+                    * latitude: String type, representing the east-west position on the Earth's surface.
+                    * longitude: String type, representing the north-south position on the Earth's surface.
+                    * user_id: Integer type, representing the user ID.
+                  type: object
+                parameters:
+                  title: Input parameters and their values for the starting node of
+                    the workflow. You can view the list of parameters on the arrangement
+                    page of the specified workflow.
+                  type: object
+                workflow_id:
+                  title: The ID of the workflow, which should have been published.
+                    To find the workflow ID, look for the number following the "workflow"
+                    parameter in the page URL. For example, in the URL "`https://www.coze.com/work_flow?space_id=42463***&workflow_id=73505836754923***`",
+                    the Workflow ID is `73505836754923***`.
+                  type: string
+              required:
+              - workflow_id
+              type: object
+              x-coze-order:
+              - workflow_id
+              - parameters
+              - bot_id
+              - ext
+              - is_async
+              - app_id
+              - execute_mode
+              - version
+              - connector_id
+              - project_id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    description: 通用字段调用结果
+                    format: i64
+                    title: |-
+                      Call status codes.
+
+                      - 0 indicates a successful call.
+                      - Other values indicate a failed call. You can determine the detailed error reason through the `msg` field.
+                    type: integer
+                  cost:
+                    title: Reserved field, no need to pay attention.
+                    type: string
+                  data:
+                    description: 同步返回字段执行结果，通常为json序列化字符串，也有可能是非json结构的字符串
+                    title: The execution result of the workflow is usually a JSON
+                      serialized string, but in some scenarios, it may return a non-JSON
+                      structured string.
+                    type: string
+                  debug_url:
+                    title: Workflow trial run debugging page. Access this page to
+                      view the execution results, inputs, and outputs of each workflow
+                      node.
+                    type: string
+                  detail:
+                    $ref: '#/components/schemas/ResponseDetail'
+                  execute_id:
+                    description: 异步返回字段
+                    title: Event ID for asynchronous execution.
+                    type: string
+                  msg:
+                    description: 成功为success, 失败为简单的错误信息、
+                    title: Status information. Detailed error information can be viewed
+                      through this field when an API call fails.
+                    type: string
+                  token:
+                    format: i64
+                    title: Reserved field, no need to pay attention.
+                    type: integer
+                required:
+                - code
+                type: object
+                x-coze-order:
+                - code
+                - msg
+                - data
+                - token
+                - cost
+                - debug_url
+                - execute_id
+          description: ""
+      summary: Run workflow
+      tags:
+      - Workflow
+  /v1/workflow/stream_resume:
+    post:
+      operationId: OpenAPIStreamResumeFlow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                connector_id:
+                  description: 渠道ID，比如ui builder、template、商店等
+                  type: string
+                event_id:
+                  type: string
+                ext:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  type: object
+                interrupt_type:
+                  $ref: '#/components/schemas/InterruptType'
+                resume_data:
+                  type: string
+                workflow_id:
+                  type: string
+              required:
+              - event_id
+              - interrupt_type
+              - resume_data
+              - workflow_id
+              type: object
+              x-coze-order:
+              - event_id
+              - interrupt_type
+              - resume_data
+              - ext
+              - workflow_id
+              - connector_id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  card_body:
+                    description: Content Type为Card时返回的卡片内容
+                    type: string
+                  content:
+                    description: ContentType为Text时的返回
+                    type: string
+                  content_type:
+                    description: 返回的数据类型
+                    type: string
+                  cost:
+                    type: string
+                  debug_url:
+                    type: string
+                  error_code:
+                    description: 错误信息
+                    format: i64
+                    type: integer
+                  error_message:
+                    type: string
+                  event:
+                    description: 事件类型:message,done,error
+                    type: string
+                  ext:
+                    additionalProperties:
+                      type: string
+                    description: 成功时最后一条消息
+                    format: map
+                    type: object
+                  id:
+                    description: 绝对序号
+                    type: string
+                  interrupt_data:
+                    $ref: '#/components/schemas/Interrupt'
+                  node_is_finish:
+                    description: 节点是否执行完成
+                    format: bool
+                    type: boolean
+                  node_seq_id:
+                    description: 节点信息节点中的序号
+                    type: string
+                  node_title:
+                    description: 节点名称
+                    type: string
+                  token:
+                    format: i64
+                    type: integer
+                type: object
+                x-coze-order:
+                - id
+                - event
+                - node_seq_id
+                - node_title
+                - content
+                - node_is_finish
+                - interrupt_data
+                - content_type
+                - card_body
+                - ext
+                - token
+                - cost
+                - error_code
+                - error_message
+                - debug_url
+          description: ""
+      summary: Resume workflow
+  /v1/workflow/stream_run:
+    post:
+      description: |-
+        Execute a published workflow with a streaming response.
+        **API description**
+        When calling the API to execute a workflow that supports streaming output, you often need to use the streaming response method to receive response data. This can be useful for real-time display of workflow output information or to present a typewriter effect. In a streaming response, the server does not send all data at once but sends data to the client in a stream, including various events triggered during workflow execution, until the process is completed or interrupted. Upon completion, the server will send an event: Done to indicate the workflow execution is finished. For information about events, see [Return results](https://www.coze.com/docs/developer_guides/workflow_stream_run#970775c1).
+
+        Currently, workflow nodes that support streaming responses include message nodes, Q&A nodes, and end nodes with streaming output enabled. For workflows that do not include these nodes, you can use the [workflow execution API ](https://www.coze.com/docs/developer_guides/workflow_run)to receive response data all at once.
+
+
+        **Restrictions**
+        This API is synchronous. If the workflow or certain nodes time out, the Bot may not provide the expected response. The overall timeout limit for synchronous execution can be found in the [Workflow usage restrictions](https://www.coze.com/docs/guides/workflow_limits).
+
+        * Before executing a workflow via API, ensure that the workflow has been published. Executing an unpublished workflow will return error code 4200. For information about creating and publishing workflows, see [Using workflow](https://www.coze.com/docs/guides/use_workflow).
+        * Before calling this API, you should run a test of the workflow on the Kouzi platform. If the test run requires associating with an agent, you will also need to specify the agent ID when executing the workflow via API. Typically, workflows with database nodes, variable nodes, etc., need to be associated with an agent.
+      operationId: OpenAPIStreamRunFlow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                app_id:
+                  description: 引用workflow 的应用ID
+                  type: string
+                bot_id:
+                  title: |-
+                    The associated agent ID is required. When executing certain workflows, it is necessary to specify the associated agent, such as workflows with database nodes, variable nodes, etc.
+                    ![](https://p9-arcosite.byteimg.com/obj/tos-cn-i-goo7wpa0wc/c138f5defd104f1b9544a32212cd8968 =168x119)
+                    Enter the agent's development page, and the number after the bot parameter in the URL of the development page is the agent ID. For example, in https://www.coze.com/space/341\*\*\*\*/bot/73428668\*\*\*\*\*, the Bot ID is 73428668\*\*\*\*\*.
+
+                    - Ensure that the token used to call this interface has access to the space where the agent is located.
+                    - Ensure that the agent has been published as an API service.
+                  type: string
+                connector_id:
+                  description: 渠道ID，比如ui builder、template、商店等
+                  type: string
+                execute_mode:
+                  description: 默认为正式运行，试运行需要传入"DEBUG"
+                  type: string
+                ext:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    Used to specify some additional fields, passed in the format of Map\[String\]\[String\]. For example, fields such as latitude and longitude implicitly used by certain plugins.
+                    Currently, only the following fields are supported:
+
+                    - atitude: String type, representing longitude.
+                    - longitude: String type, representing latitude.
+                    - user\_id: Integer type, representing user ID.
+                  type: object
+                is_async:
+                  format: bool
+                  type: boolean
+                parameters:
+                  title: The input parameters and values for the workflow start node
+                    can be viewed in the parameter list on the designated workflow
+                    orchestration page.
+                  type: object
+                project_id:
+                  description: 项目ID，为了兼容ui builder
+                  type: string
+                version:
+                  description: 版本号，可能是workflow版本或者project版本
+                  type: string
+                workflow_id:
+                  title: |-
+                    The Workflow ID to be executed should have already been published.
+                    Enter the Workflow orchestration page; the number following the workflow parameter in the page URL is the Workflow ID. For example, in https://www.coze.com/work\_flow?space\_id=42463\*\*\*&workflow\_id=73505836754923\*\*\*, the Workflow ID is 73505836754923\*\*\*.
+                  type: string
+              required:
+              - workflow_id
+              type: object
+              x-coze-order:
+              - workflow_id
+              - parameters
+              - ext
+              - bot_id
+              - is_async
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  card_body:
+                    description: Content Type为Card时返回的卡片内容
+                    title: The card content returned when the Content Type is Card
+                    type: string
+                  content:
+                    description: ContentType为Text时的返回
+                    title: Streaming output message content.
+                    type: string
+                  content_type:
+                    description: 返回的数据类型
+                    title: Return data type
+                    type: string
+                  cost:
+                    title: Reserved fields, no need to pay attention.
+                    type: string
+                  debug_url:
+                    type: string
+                  error_code:
+                    description: 错误信息
+                    format: i64
+                    title: |-
+                      Call status codes.
+
+                      - 0 indicates a successful call.
+                      - Other values indicate a failed call. You can determine the specific error reason through the error_message field.
+                    type: integer
+                  error_message:
+                    title: Status information. This field can be used to view detailed
+                      error information when the API call fails.
+                    type: string
+                  event:
+                    description: 事件类型:message,done,error
+                    title: |-
+                      Current streaming return data packet events include the following types:
+
+                      - Message: Workflow node output messages, such as messages from message nodes or end nodes. The specific message content can be viewed in the data.
+                      - Error: Errors. You can view error_code and error_message in the data to troubleshoot issues.
+                      - Done: Completion. Indicates that the workflow execution is complete, at which point the data is empty.
+                      - Interrupt: Interruption. Indicates that the workflow is interrupted, with specific interruption information included in the data field.
+                    type: string
+                  ext:
+                    additionalProperties:
+                      type: string
+                    description: 成功时最后一条消息
+                    format: map
+                    title: Additional fields.
+                    type: object
+                  id:
+                    description: 绝对序号
+                    title: The event ID in the interface response. Starting from 0.
+                    type: string
+                  interrupt_data:
+                    $ref: '#/components/schemas/Interrupt'
+                  node_is_finish:
+                    description: 节点是否执行完成
+                    format: bool
+                    title: Is the current message the last data packet for this node?
+                    type: boolean
+                  node_seq_id:
+                    description: 节点信息节点中的序号
+                    title: The message ID within the node starts counting from 0,
+                      for example, the 5th message of the message node.
+                    type: string
+                  node_title:
+                    description: 节点名称
+                    title: Node names for output messages, such as message nodes and
+                      end nodes.
+                    type: string
+                  token:
+                    format: i64
+                    type: integer
+                type: object
+                x-coze-order:
+                - id
+                - event
+                - node_seq_id
+                - node_title
+                - content
+                - node_is_finish
+                - interrupt_data
+                - content_type
+                - card_body
+                - ext
+                - token
+                - cost
+                - error_code
+                - error_message
+                - debug_url
+          description: ""
+      summary: Run workflow (streaming response)
+      tags:
+      - Workflow
+  /v1/workspaces:
+    get:
+      description: |-
+        View the list of workspaces the current user has joined.
+        The list of workspaces includes:
+
+        * Personal and team workspaces created by the current user.
+        * Team workspaces the current user has joined as a team member.
+
+
+        Calling this API through third-party channels is not supported at this time.
+      operationId: OpenSpaceList
+      parameters:
+      - description: Page number. The default is 1, which means data is returned starting
+          from the first page.
+        in: query
+        name: page_num
+        schema:
+          type: integer
+      - description: Page size. Default is 20, maximum is 50.
+        in: query
+        name: page_size
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i64
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/OpenSpaceData'
+                  msg:
+                    type: string
+                type: object
+                x-coze-order:
+                - data
+                - code
+                - msg
+          description: ""
+      summary: List workspace
+      tags:
+      - Workspace
+  /v3/chat:
+    post:
+      description: |-
+        Start a conversation. Users can add context and stream responses.
+        For concepts of conversation, chat, and messages, see [Basic concepts](https://www.coze.com/docs/developer_guides/coze_api_overview#4a288f73).
+        API description
+        The API initiates a conversation with a specified agent. User can add context messages to the conversation so that the agent can make a reasonable response based on historical messages. Developers can choose the response method as needed, that is, streaming or non-streaming response. The response method determines how developers get the agent's response. For information about getting the agent's response, see [Getting the agent's response via the Conversation API](https://www.coze.com/docs/developer_guides/get_chat_response).
+        Streaming response: When the agent generates a response, it sends the response to the client one by one in the form of a data stream. After processing, the server will return a complete agent response. For more information, see [Streaming response](https://www.coze.cn/docs/developer_guides/chat_v3#AJThpr1GJe).
+        Non-streaming response: Send a response message immediately regardless of whether the conversation is processed. Developers can [view the conversation details](https://www.coze.cn/docs/developer_guides/retrieve_chat) via the API to confirm that the conversation is processed, and then call the API to [view details of the conversation message](https://www.coze.cn/docs/developer_guides/list_chat_messages)s to view the complete response, such as the model response. For more information, see [Non-streaming response](https://www.coze.com/docs/developer_guides/chat_v3#337f3d53).[Concepts](https://www.coze.com/docs/developer_guides/coze_api_overview#4a288f73)
+      operationId: ChatV3
+      parameters:
+      - description: |-
+          Identify which session the conversation occurs in.
+          A session is an exchange of questions and answers between the Bot and the user. A session contains one or more messages. A conversation is a single invocation of the Bot within a session, and the messages generated during the conversation will be added to the session.
+
+          - You can use an already created session, and the existing messages in the session will be passed as context to the model. For details on how to create a session, refer to [Create a Session](/docs/developer_guides/create_conversation).
+          - For scenarios such as single question and answer that do not require distinguishing conversations, this parameter does not need to be passed, and the system will automatically generate a session.
+
+
+          In a session, there can only be one ongoing conversation; otherwise, an error 4016 will be reported when calling this interface.
+        in: query
+        name: conversation_id
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                additional_messages:
+                  format: list
+                  items:
+                    $ref: '#/components/schemas/EnterMessage'
+                  title: |-
+                    Additional information for the conversation. You can pass historical messages and the user's question in this field for the current conversation. The array length is limited to 100, meaning a maximum of 100 messages can be passed.
+
+                    - If `additional_messages` is not set, the agent will only receive the messages already in the conversation, with the last one being the user's input for this conversation, and the rest serving as the context for this conversation.
+                    - If `additional_messages` is set, the agent will receive the messages in the conversation and the messages added in `additional_messages`, with the last message in `additional_messages` being the user's input for this conversation, and the rest serving as the context.
+
+                    The message structure can refer to the [EnterMessage Object](https://www.coze.cn/docs/developer_guides/chat_v3#ed7f3dc3). For specific examples, refer to [Carrying Context](https://www.coze.cn/docs/developer_guides/chat_v3#2bb94adb).
+
+                    - The last message in the conversation or `additional_messages` should be a record with `role=user` to avoid affecting the model's performance.
+                    - If no conversation is specified or if the specified conversation has no messages, the user's question must be passed to the agent through this parameter.
+                  type: array
+                auto_save_history:
+                  format: bool
+                  title: |-
+                    Whether to save this conversation record.
+
+                    - true: (default) The conversation will save this record, including all messages specified in additional_messages, the model's responses in this conversation, and the intermediate results of the model execution.
+                    - false: The conversation will not save this record, and the details of this conversation and messages cannot be viewed later in any way. When initiating a conversation again in the same session, this conversation will not be passed to the model as context.
+
+                    In non-streaming responses (stream=false), this parameter must be set to true, i.e., save this conversation record, otherwise, the conversation status and model responses cannot be viewed.
+                  type: boolean
+                bot_id:
+                  title: |-
+                    To get the ID of the chatbot for conversation.
+                    Go to the chatbot's development page. The number following the bot parameter in the development page URL is the chatbot ID. For example, in https://www.coze.cn/space/341****/bot/73428668****, the chatbot ID is 73428668****.
+
+                    Ensure that the access key currently in use has been granted chat permissions for the space the chatbot belongs to.
+                  type: string
+                custom_variables:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    Variables defined in the agent. After setting the variable {{key}} in the agent prompt, you can pass the variable value through this parameter, and Jinja2 syntax is supported. For detailed instructions, please refer to [Variable Example](https://www.coze.cn/docs/developer_guides/chat_v3#6917d529).
+
+                    Variable names only support English letters and underscores.
+                  type: object
+                extra_params:
+                  additionalProperties:
+                    type: string
+                  description: 透传参数到 plugin/workflow 等下游
+                  format: map
+                  title: |-
+                    Additional parameters are usually used to specify some necessary parameters for the model to judge in special scenarios, such as specifying latitude and longitude and asking the agent for the weather at this location.
+                    Custom key-value pair format, where the key only supports setting to:
+
+                    - latitude: Latitude, in which case the value is the latitude value, for example, 39.9800718.
+                    - longitude: Longitude, in which case the value is the longitude value, for example, 116.309314.
+                  type: object
+                meta_data:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    Additional information, usually used to encapsulate some business-related fields. When viewing the conversation message details, the system will pass through this additional information.
+                    Custom key-value pairs should be specified in Map object format. The length is 16 pairs of key-value pairs, where the length of the key ranges from 1 to 64 characters, and the length of the value ranges from 1 to 512 characters.
+                  type: object
+                stream:
+                  format: bool
+                  title: |-
+                    Whether to enable streaming return.
+
+                    - **true**: Use streaming response. "Streaming response" provides the model's real-time response to the client, similar to a typewriter effect. You can get the server's returned conversation and message events in real-time, process and display them synchronously on the client, or directly get the agent's final reply in the completed event.
+                    - **false**: (default) Use non-streaming response. "Non-streaming response" means that the response only includes metadata such as the status of the current conversation. At this time, auto\_save\_history should be enabled simultaneously, and the complete response content such as the model reply can be viewed after the current conversation is processed. You can refer to the following business process:
+
+                    a. Call the initiate conversation interface, and set stream = false, auto\_save\_history=true, indicating the use of non-streaming response and recording historical messages.
+
+                    You need to record the Conversation ID and Chat ID for viewing detailed information later.
+
+                    b. Periodically poll the [retrieve chat details](https://www.coze.cn/docs/developer_guides/retrieve_chat) interface, it is recommended to interval more than 1 second each time, until the conversation status transitions to the final state, i.e., status is completed, required\_action, canceled, or failed.
+                    c. Call the [list chat messages](https://www.coze.cn/docs/developer_guides/list_chat_messages) interface to query the final result generated by the large model.
+                  type: boolean
+                user_id:
+                  title: |-
+                    Identify the current user interacting with the agent, defined, generated, and maintained by the user. The user_id is used to distinguish different users in a conversation, ensuring that the contextual messages, databases, and other conversational memory data are isolated between different user_ids. If user data isolation is not required, this parameter can be fixed to any arbitrary string, such as 123, abc, etc.
+
+                    For data privacy and information security considerations, it is not recommended to use the user ID defined in the business system.
+                  type: string
+              required:
+              - bot_id
+              - user_id
+              type: object
+              x-coze-order:
+              - bot_id
+              - user_id
+              - stream
+              - additional_messages
+              - custom_variables
+              - auto_save_history
+              - meta_data
+              - tools
+              - custom_config
+              - extra_params
+              - connector_id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/ChatV3ChatDetail'
+                  msg:
+                    type: string
+                required:
+                - code
+                - msg
+                type: object
+                x-coze-order:
+                - data
+                - code
+                - msg
+          description: ""
+      summary: Chat
+      tags:
+      - Chat
+  /v3/chat/cancel:
+    post:
+      operationId: CancelChatApi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                chat_id:
+                  type: string
+                conversation_id:
+                  type: string
+              required:
+              - chat_id
+              - conversation_id
+              type: object
+              x-coze-order:
+              - chat_id
+              - conversation_id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChatV3ChatDetail'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: Cancel an ongoing chat
+      tags:
+      - Chat
+  /v3/chat/message/list:
+    get:
+      description: |-
+        View messages other than the Query in a specified conversation, including model responses and intermediate results executed by the agent.
+
+        * The API for viewing the message list is used to query all messages in a specified conversation. This includes every message manually inserted by the developer, every query from the user, and every response from the agent.
+        * The API for viewing details of conversation messages is used in non-streaming conversation scenarios to view the agent's responses of type=answer and intermediate state messages of types like type=follow-up in a specific chat.
+
+
+        Before calling this API, it is recommended to first poll the API for viewing conversation details at a frequency of no more than once per second to confirm that the current round of the conversation has ended (status=completed). Otherwise, the messages retrieved by calling this API may be incomplete.
+      operationId: ListChatMessageApi
+      parameters:
+      - description: Conversation ID, which is the unique identifier of the session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Chat ID, the unique identifier of the conversation.
+        in: query
+        name: chat_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    format: list
+                    items:
+                      $ref: '#/components/schemas/ChatV3MessageDetail'
+                    title: Specify messages in the conversation other than Query,
+                      including model replies, intermediate results executed by the
+                      Bot, etc.
+                    type: array
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: Get chat messages
+      tags:
+      - Chat
+  /v3/chat/retrieve:
+    get:
+      description: |-
+        View detailed information about a conversation.
+        In non-streaming conversation scenarios, after initiating a conversation by calling the API, you can first poll this API to confirm that the current round of the conversation has ended (status=completed), and then call the API to view the details of the conversation messages and the model's responses.
+
+        * You can only view detailed information about the conversation via this API if the conversation has enabled saving history (auto_save_history=true).
+        * It is recommended to call this API at most once per second to avoid triggering rate limiting.
+      operationId: RetrieveChatOpen
+      parameters:
+      - description: Conversation ID, the unique identifier of the session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Chat ID, the unique identifier for a conversation.
+        in: query
+        name: chat_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChatV3ChatDetail'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: Get chat information
+      tags:
+      - Chat
+  /v3/chat/submit_tool_outputs:
+    post:
+      description: |-
+        Submit the results from a tool execution using this API.
+        API** description**
+        You can define the operations that need to be executed by the client as plugins. If this plugin is triggered during a conversation, the streaming event response will indicate "conversation.chat.requires_action". At this point, you need to perform the client operation and then submit the result of the plugin execution through this API.
+
+        Chats that only trigger the Local Plugin need to call this API to submit the execution results.
+      operationId: SubmitToolOutputs
+      parameters:
+      - description: Conversation ID, which is the unique identifier of the session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Chat ID, which is the unique identifier of the conversation.
+        in: query
+        name: chat_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                stream:
+                  format: bool
+                  title: |-
+                    Whether to enable streaming response.
+
+                    True: Fill in the context from the previous conversation and continue streaming the response.
+                    - false: (default) non-streaming response, replying only to basic information about the conversation.
+                  type: boolean
+                tool_outputs:
+                  format: list
+                  items:
+                    $ref: '#/components/schemas/ToolOutput'
+                  title: Tool execution results.
+                  type: array
+              required:
+              - tool_outputs
+              type: object
+              x-coze-order:
+              - stream
+              - tool_outputs
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/ChatV3ChatDetail'
+                  msg:
+                    type: string
+                required:
+                - code
+                - msg
+                type: object
+                x-coze-order:
+                - code
+                - data
+                - msg
+          description: ""
+      summary: Submit tool outputs
+      tags:
+      - Chat
+security:
+- token: []
+servers:
+- url: https://bot-open-api.byteintl.net
+tags:
+- name: Workspace
+- name: Agent
+- name: Conversation
+- name: Message
+- name: Chat
+- name: File
+- name: Knowledge
+- name: Workflow
+
