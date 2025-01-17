@@ -1,74 +1,60 @@
-package main
+package parser
 
 import (
-	"bytes"
 	"context"
-	"embed"
 	"fmt"
-	"io/fs"
 	"log"
 	"regexp"
 	"strings"
-	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-//go:embed templates/python_sdk.tmpl
-var templateFS embed.FS
-
-type GeneratePythonSDKHandler struct{}
-
-// pythonTypeMapping maps OpenAPI types to Python types
-var pythonTypeMapping = map[string]string{
-	"string":  "str",
-	"integer": "int",
-	"number":  "float",
-	"boolean": "bool",
-	"array":   "List",
-	"object":  "dict",
-}
-
-type PythonClass struct {
+// Class represents a model/class in the SDK
+type Class struct {
 	Name        string
 	Description string
-	Fields      []PythonField
+	Fields      []Field
 	BaseClass   string
 	IsEnum      bool
-	EnumValues  []PythonEnumValue
+	EnumValues  []EnumValue
 }
 
-type PythonEnumValue struct {
+// EnumValue represents a value in an enum
+type EnumValue struct {
 	Name        string
 	Value       string
 	Description string
 }
 
-type PythonField struct {
+// Field represents a field in a class
+type Field struct {
 	Name        string
 	Type        string
 	Description string
 }
 
-type PythonOperation struct {
+// Operation represents an API operation
+type Operation struct {
 	Name                string
 	Description         string
 	Path                string
 	Method              string
-	Params              []PythonParam
-	BodyParams          []PythonParam
-	QueryParams         []PythonParam
+	Params              []Param
+	BodyParams          []Param
+	QueryParams         []Param
 	ResponseType        string
 	ResponseDescription string
 	HasBody             bool
 	HasQueryParams      bool
-	ModuleName          string // Added field for module name
-	HeaderParams        []PythonParam
+	ModuleName          string
+	HeaderParams        []Param
 	HasHeaders          bool
 	StaticHeaders       map[string]string
 }
 
-type PythonParam struct {
+// Param represents a parameter in an operation
+type Param struct {
 	Name         string
 	JsonName     string
 	Type         string
@@ -77,19 +63,162 @@ type PythonParam struct {
 	IsModel      bool
 }
 
-type PythonModule struct {
+// Module represents a group of operations
+type Module struct {
 	Name       string
-	Operations []PythonOperation
-	Classes    []PythonClass
+	Operations []Operation
+	Classes    []Class
 }
 
-// Add new types for dependency analysis
+// classDependency represents a class and its dependencies
 type classDependency struct {
 	name         string
 	dependencies map[string]bool
 }
 
-func (h GeneratePythonSDKHandler) analyzeDependencies(schemas map[string]*openapi3.SchemaRef) []string {
+// Parser handles OpenAPI parsing
+type Parser struct{}
+
+// ParseOpenAPI parses an OpenAPI document and returns modules and classes
+func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[string]Module, []Class, error) {
+	// Parse OpenAPI document
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromData(yamlContent)
+	if err != nil {
+		log.Printf("[ParseOpenAPI] parse openapi v3 failed. err=%v", err)
+		return nil, nil, fmt.Errorf("parse openapi v3 failed: %w", err)
+	}
+
+	// Initialize Components if needed
+	if doc.Components == nil {
+		doc.Components = &openapi3.Components{}
+	}
+	if doc.Components.Schemas == nil {
+		doc.Components.Schemas = make(map[string]*openapi3.SchemaRef)
+	}
+
+	// Generate response data models from operations
+	for _, pathItem := range doc.Paths.Map() {
+		for _, op := range pathItem.Operations() {
+			if response, ok := op.Responses.Map()["200"]; ok && response.Value.Content != nil {
+				for _, content := range response.Value.Content {
+					if content.Schema != nil && content.Schema.Value != nil && content.Schema.Value.Properties != nil {
+						// Create response data model
+						responseClass := p.convertSchemaToClass(op.OperationID+"Resp", &openapi3.SchemaRef{
+							Value: content.Schema.Value,
+						})
+						// Add to components schemas to be generated
+						doc.Components.Schemas[responseClass.Name] = &openapi3.SchemaRef{
+							Value: content.Schema.Value,
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Generate classes from schemas
+	classes := []Class{}
+	if doc.Components != nil && doc.Components.Schemas != nil {
+		// Get sorted schema names based on dependencies
+		sortedSchemaNames := p.analyzeDependencies(doc.Components.Schemas)
+
+		// Generate classes in dependency order
+		for _, name := range sortedSchemaNames {
+			schema := doc.Components.Schemas[name]
+			class := p.convertSchemaToClass(name, schema)
+			classes = append(classes, class)
+		}
+	}
+
+	// Group operations by module
+	moduleOperations := make(map[string][]Operation)
+	for path, pathItem := range doc.Paths.Map() {
+		// Extract module name from path (second segment)
+		segments := strings.Split(strings.Trim(path, "/"), "/")
+		if len(segments) < 2 {
+			continue
+		}
+		moduleName := segments[1]
+
+		for method, op := range pathItem.Operations() {
+			operation := p.convertOperation(path, method, op)
+			operation.ModuleName = moduleName
+			moduleOperations[moduleName] = append(moduleOperations[moduleName], operation)
+		}
+	}
+
+	// Create modules
+	modules := make(map[string]Module)
+	for moduleName, operations := range moduleOperations {
+		// Find all model dependencies for each module
+		modelSet := make(map[string]bool)
+		var findDependentClasses func(className string)
+		findDependentClasses = func(className string) {
+			if modelSet[className] {
+				return
+			}
+			modelSet[className] = true
+			// Find the class
+			for _, class := range classes {
+				if class.Name == className {
+					// Add dependencies from fields
+					for _, field := range class.Fields {
+						if strings.Contains(field.Type, "List[") {
+							depName := strings.TrimSuffix(strings.TrimPrefix(field.Type, "List["), "]")
+							findDependentClasses(depName)
+						} else if !strings.Contains(field.Type, "Optional[") && !strings.Contains(field.Type, "Dict[") &&
+							field.Type != "str" && field.Type != "int" && field.Type != "float" && field.Type != "bool" && field.Type != "Any" {
+							findDependentClasses(field.Type)
+						}
+					}
+					break
+				}
+			}
+		}
+
+		// Start with direct dependencies
+		for _, op := range operations {
+			// Add response type if it's a model
+			if strings.Contains(op.ResponseType, "List[") {
+				modelName := strings.TrimSuffix(strings.TrimPrefix(op.ResponseType, "List["), "]")
+				findDependentClasses(modelName)
+			} else if op.ResponseType != "Any" {
+				findDependentClasses(op.ResponseType)
+			}
+
+			// Add parameter types if they're models
+			for _, param := range op.Params {
+				if param.IsModel {
+					if strings.Contains(param.Type, "List[") {
+						modelName := strings.TrimSuffix(strings.TrimPrefix(param.Type, "List["), "]")
+						findDependentClasses(modelName)
+					} else {
+						findDependentClasses(param.Type)
+					}
+				}
+			}
+		}
+
+		// Find all classes needed for this module
+		moduleClassList := []Class{}
+		for _, class := range classes {
+			if modelSet[class.Name] {
+				moduleClassList = append(moduleClassList, class)
+			}
+		}
+
+		modules[moduleName] = Module{
+			Name:       moduleName,
+			Operations: operations,
+			Classes:    moduleClassList,
+		}
+	}
+
+	return modules, classes, nil
+}
+
+func (p Parser) analyzeDependencies(schemas map[string]*openapi3.SchemaRef) []string {
 	// Build dependency graph
 	deps := make(map[string]*classDependency)
 	for name := range schemas {
@@ -151,183 +280,16 @@ func (h GeneratePythonSDKHandler) analyzeDependencies(schemas map[string]*openap
 	return sorted
 }
 
-func (h GeneratePythonSDKHandler) GeneratePythonSDK(ctx context.Context, yamlContent []byte) (map[string]string, error) {
-	// Parse OpenAPI document
-	loader := openapi3.NewLoader()
-	doc, err := loader.LoadFromData(yamlContent)
-	if err != nil {
-		log.Printf("[GeneratePythonSDK] parse openapi v3 failed. err=%v", err)
-		return nil, fmt.Errorf("parse openapi v3 failed: %w", err)
-	}
-
-	// Initialize Components if needed
-	if doc.Components == nil {
-		doc.Components = &openapi3.Components{}
-	}
-	if doc.Components.Schemas == nil {
-		doc.Components.Schemas = make(map[string]*openapi3.SchemaRef)
-	}
-
-	// Generate response data models from operations
-	for _, pathItem := range doc.Paths.Map() {
-		for _, op := range pathItem.Operations() {
-			if response, ok := op.Responses.Map()["200"]; ok && response.Value.Content != nil {
-				for _, content := range response.Value.Content {
-					if content.Schema != nil && content.Schema.Value != nil && content.Schema.Value.Properties != nil {
-						// Create response data model
-						responseClass := h.convertSchemaToClass(op.OperationID+"Resp", &openapi3.SchemaRef{
-							Value: content.Schema.Value,
-						})
-						// Add to components schemas to be generated
-						doc.Components.Schemas[responseClass.Name] = &openapi3.SchemaRef{
-							Value: content.Schema.Value,
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// Generate Python classes from schemas
-	classes := []PythonClass{}
-	if doc.Components != nil && doc.Components.Schemas != nil {
-		// Get sorted schema names based on dependencies
-		sortedSchemaNames := h.analyzeDependencies(doc.Components.Schemas)
-
-		// Generate classes in dependency order
-		for _, name := range sortedSchemaNames {
-			schema := doc.Components.Schemas[name]
-			class := h.convertSchemaToClass(name, schema)
-			classes = append(classes, class)
-		}
-	}
-
-	// Group operations by module
-	moduleOperations := make(map[string][]PythonOperation)
-	for path, pathItem := range doc.Paths.Map() {
-		// Extract module name from path (second segment)
-		segments := strings.Split(strings.Trim(path, "/"), "/")
-		if len(segments) < 2 {
-			continue
-		}
-		moduleName := segments[1]
-
-		for method, op := range pathItem.Operations() {
-			operation := h.convertOperation(path, method, op)
-			operation.ModuleName = moduleName
-			moduleOperations[moduleName] = append(moduleOperations[moduleName], operation)
-		}
-	}
-
-	// Generate code for each module
-	files := make(map[string]string)
-
-	// Read template
-	tmpl, err := template.New("python").Parse(h.getTemplate())
-	if err != nil {
-		log.Printf("[GeneratePythonSDK] parse template failed. err=%v", err)
-		return nil, fmt.Errorf("parse template failed: %w", err)
-	}
-
-	// Find all model dependencies for each module
-	moduleClasses := make(map[string][]PythonClass)
-	for moduleName, operations := range moduleOperations {
-		modelSet := make(map[string]bool)
-		var findDependentClasses func(className string)
-		findDependentClasses = func(className string) {
-			if modelSet[className] {
-				return
-			}
-			modelSet[className] = true
-			// Find the class
-			for _, class := range classes {
-				if class.Name == className {
-					// Add dependencies from fields
-					for _, field := range class.Fields {
-						if strings.Contains(field.Type, "List[") {
-							depName := strings.TrimSuffix(strings.TrimPrefix(field.Type, "List["), "]")
-							findDependentClasses(depName)
-						} else if !strings.Contains(field.Type, "Optional[") && !strings.Contains(field.Type, "Dict[") &&
-							field.Type != "str" && field.Type != "int" && field.Type != "float" && field.Type != "bool" && field.Type != "Any" {
-							findDependentClasses(field.Type)
-						}
-					}
-					break
-				}
-			}
-		}
-
-		// Start with direct dependencies
-		for _, op := range operations {
-			// Add response type if it's a model
-			if strings.Contains(op.ResponseType, "List[") {
-				modelName := strings.TrimSuffix(strings.TrimPrefix(op.ResponseType, "List["), "]")
-				findDependentClasses(modelName)
-			} else if op.ResponseType != "Any" {
-				findDependentClasses(op.ResponseType)
-			}
-
-			// Add parameter types if they're models
-			for _, param := range op.Params {
-				if param.IsModel {
-					if strings.Contains(param.Type, "List[") {
-						modelName := strings.TrimSuffix(strings.TrimPrefix(param.Type, "List["), "]")
-						findDependentClasses(modelName)
-					} else {
-						findDependentClasses(param.Type)
-					}
-				}
-			}
-		}
-
-		// Find all classes needed for this module
-		moduleClassList := []PythonClass{}
-		for _, class := range classes {
-			if modelSet[class.Name] {
-				moduleClassList = append(moduleClassList, class)
-			}
-		}
-
-		moduleClasses[moduleName] = moduleClassList
-	}
-
-	// Generate module files
-	for moduleName, operations := range moduleOperations {
-		var buf bytes.Buffer
-		err = tmpl.Execute(&buf, map[string]interface{}{
-			"ModuleName": moduleName,
-			"Operations": operations,
-			"Classes":    moduleClasses[moduleName],
-		})
-		if err != nil {
-			log.Printf("[GeneratePythonSDK] execute template failed. err=%v", err)
-			return nil, fmt.Errorf("execute template failed: %w", err)
-		}
-		files[fmt.Sprintf("%s", moduleName)] = buf.String()
-	}
-
-	return files, nil
-}
-
-func (h GeneratePythonSDKHandler) getTemplate() string {
-	// Read template from embedded file
-	templateContent, err := fs.ReadFile(templateFS, "templates/python_sdk.tmpl")
-	if err != nil {
-		return ""
-	}
-	return string(templateContent)
-}
-
-func (h GeneratePythonSDKHandler) convertOperation(path string, method string, op *openapi3.Operation) PythonOperation {
-	operation := PythonOperation{
-		Name:        h.toPythonMethodName(op.OperationID),
+func (p Parser) convertOperation(path string, method string, op *openapi3.Operation) Operation {
+	operation := Operation{
+		Name:        p.toMethodName(op.OperationID),
 		Description: op.Description,
 		Path:        path,
 		Method:      strings.ToUpper(method),
 	}
 
 	// Handle parameters
-	var headerParams []PythonParam
+	var headerParams []Param
 	var staticHeaders = make(map[string]string)
 	for _, param := range op.Parameters {
 		// Check if it's a header parameter with single enum value
@@ -338,17 +300,17 @@ func (h GeneratePythonSDKHandler) convertOperation(path string, method string, o
 			continue
 		}
 
-		pythonParam := PythonParam{
-			Name:        h.toPythonVarName(param.Value.Name),
+		pythonParam := Param{
+			Name:        p.toVarName(param.Value.Name),
 			JsonName:    param.Value.Name,
-			Type:        h.getFieldType(param.Value.Schema),
+			Type:        p.getFieldType(param.Value.Schema),
 			Description: param.Value.Description,
 		}
 
 		if param.Value.Required {
-			pythonParam.Type = h.getFieldType(param.Value.Schema)
+			pythonParam.Type = p.getFieldType(param.Value.Schema)
 		} else {
-			pythonParam.Type = fmt.Sprintf("Optional[%s]", h.getFieldType(param.Value.Schema))
+			pythonParam.Type = fmt.Sprintf("Optional[%s]", p.getFieldType(param.Value.Schema))
 			pythonParam.DefaultValue = "None"
 		}
 
@@ -373,10 +335,10 @@ func (h GeneratePythonSDKHandler) convertOperation(path string, method string, o
 				operation.HasBody = true
 				if content.Schema.Value.Properties != nil {
 					for name, prop := range content.Schema.Value.Properties {
-						pythonParam := PythonParam{
-							Name:        h.toPythonVarName(name),
+						pythonParam := Param{
+							Name:        p.toVarName(name),
 							JsonName:    name,
-							Type:        h.getFieldType(prop),
+							Type:        p.getFieldType(prop),
 							Description: prop.Value.Description,
 							IsModel:     prop.Ref != "" || (prop.Value != nil && prop.Value.Items != nil && prop.Value.Items.Ref != ""),
 						}
@@ -415,7 +377,7 @@ func (h GeneratePythonSDKHandler) convertOperation(path string, method string, o
 	return operation
 }
 
-func (h GeneratePythonSDKHandler) toPythonMethodName(name string) string {
+func (p Parser) toMethodName(name string) string {
 	// Convert method names like GetBot to get_bot
 	var result strings.Builder
 	for i, r := range name {
@@ -427,16 +389,16 @@ func (h GeneratePythonSDKHandler) toPythonMethodName(name string) string {
 	return strings.ToLower(result.String())
 }
 
-func (h GeneratePythonSDKHandler) convertSchemaToClass(name string, schema *openapi3.SchemaRef) PythonClass {
-	class := PythonClass{
+func (p Parser) convertSchemaToClass(name string, schema *openapi3.SchemaRef) Class {
+	class := Class{
 		Name:        name,
-		Description: h.formatDescription(schema.Value.Description),
-		Fields:      []PythonField{},
+		Description: p.formatDescription(schema.Value.Description),
+		Fields:      []Field{},
 		BaseClass:   "CozeModel",
 	}
 
 	if schema.Value.Title != "" {
-		class.Description = h.formatDescription(schema.Value.Title)
+		class.Description = p.formatDescription(schema.Value.Title)
 	}
 
 	// Handle enum types
@@ -450,7 +412,7 @@ func (h GeneratePythonSDKHandler) convertSchemaToClass(name string, schema *open
 			enumDesc := fmt.Sprintf("Value %d", intValue)
 
 			if enumName != "" {
-				class.EnumValues = append(class.EnumValues, PythonEnumValue{
+				class.EnumValues = append(class.EnumValues, EnumValue{
 					Name:        enumName,
 					Value:       fmt.Sprintf("%d", intValue),
 					Description: enumDesc,
@@ -462,13 +424,13 @@ func (h GeneratePythonSDKHandler) convertSchemaToClass(name string, schema *open
 
 	if schema.Value.Properties != nil {
 		for propName, prop := range schema.Value.Properties {
-			field := PythonField{
-				Name:        h.toPythonVarName(propName),
-				Type:        h.getFieldType(prop),
-				Description: h.formatDescription(prop.Value.Description),
+			field := Field{
+				Name:        p.toVarName(propName),
+				Type:        p.getFieldType(prop),
+				Description: p.formatDescription(prop.Value.Description),
 			}
 			if prop.Value.Title != "" {
-				field.Description = h.formatDescription(prop.Value.Title)
+				field.Description = p.formatDescription(prop.Value.Title)
 			}
 			class.Fields = append(class.Fields, field)
 		}
@@ -477,7 +439,7 @@ func (h GeneratePythonSDKHandler) convertSchemaToClass(name string, schema *open
 	return class
 }
 
-func (h GeneratePythonSDKHandler) formatDescription(desc string) string {
+func (p Parser) formatDescription(desc string) string {
 	if desc == "" {
 		return desc
 	}
@@ -492,7 +454,7 @@ func (h GeneratePythonSDKHandler) formatDescription(desc string) string {
 	return desc
 }
 
-func (h GeneratePythonSDKHandler) getFieldType(schema *openapi3.SchemaRef) string {
+func (p Parser) getFieldType(schema *openapi3.SchemaRef) string {
 	if schema.Value == nil {
 		return "Any"
 	}
@@ -505,7 +467,7 @@ func (h GeneratePythonSDKHandler) getFieldType(schema *openapi3.SchemaRef) strin
 
 	// Handle arrays
 	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 && (*schema.Value.Type)[0] == "array" && schema.Value.Items != nil {
-		itemType := h.getFieldType(schema.Value.Items)
+		itemType := p.getFieldType(schema.Value.Items)
 		return fmt.Sprintf("List[%s]", itemType)
 	}
 
@@ -513,7 +475,7 @@ func (h GeneratePythonSDKHandler) getFieldType(schema *openapi3.SchemaRef) strin
 	isOptional := len(schema.Value.Required) == 0
 	var baseType string
 	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 {
-		baseType = pythonTypeMapping[(*schema.Value.Type)[0]]
+		baseType = p.getBaseType((*schema.Value.Type)[0])
 	}
 	if baseType == "" {
 		if schema.Value.Properties != nil {
@@ -530,7 +492,19 @@ func (h GeneratePythonSDKHandler) getFieldType(schema *openapi3.SchemaRef) strin
 	return baseType
 }
 
-func (h GeneratePythonSDKHandler) toPythonVarName(name string) string {
+func (p Parser) getBaseType(openAPIType string) string {
+	typeMapping := map[string]string{
+		"string":  "str",
+		"integer": "int",
+		"number":  "float",
+		"boolean": "bool",
+		"array":   "List",
+		"object":  "dict",
+	}
+	return typeMapping[openAPIType]
+}
+
+func (p Parser) toVarName(name string) string {
 	// Replace any non-alphanumeric characters with underscore
 	reg := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 	name = reg.ReplaceAllString(name, "_")
