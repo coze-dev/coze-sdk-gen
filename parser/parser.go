@@ -35,6 +35,24 @@ type Field struct {
 	Schema      *openapi3.SchemaRef // Store raw schema for language-specific processing
 }
 
+// Add type definitions
+type TypeKind string
+
+const (
+	TypeKindPrimitive TypeKind = "primitive"
+	TypeKindArray     TypeKind = "array"
+	TypeKindRef       TypeKind = "ref"
+	TypeKindObject    TypeKind = "object"
+)
+
+// Type represents a type in the API
+type Type struct {
+	Kind      TypeKind
+	Name      string // For primitive types (string, integer, etc) and ref types
+	ItemType  *Type  // For array types
+	ObjectRef string // For object types, reference to the class name
+}
+
 // Operation represents an API operation
 type Operation struct {
 	Name                string
@@ -46,6 +64,7 @@ type Operation struct {
 	RequestBody         *openapi3.RequestBody
 	ResponseSchema      *openapi3.SchemaRef
 	ResponseDescription string
+	ResponseType        *Type
 }
 
 // Parameter represents a parameter in an operation
@@ -97,11 +116,15 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 		for _, op := range pathItem.Operations() {
 			if response, ok := op.Responses.Map()["200"]; ok && response.Value.Content != nil {
 				for _, content := range response.Value.Content {
-					if content.Schema != nil && content.Schema.Value != nil && content.Schema.Value.Properties != nil {
-						// Create response data model
-						responseClass := p.convertSchemaToClass(op.OperationID+"Resp", content.Schema)
-						// Add to components schemas to be generated
-						doc.Components.Schemas[responseClass.Name] = content.Schema
+					if content.Schema != nil && content.Schema.Value != nil {
+						// Create response type if it's an object or array of objects
+						if content.Schema.Value.Properties != nil ||
+							(content.Schema.Value.Type != nil && len(*content.Schema.Value.Type) > 0 &&
+								(*content.Schema.Value.Type)[0] == "array" && content.Schema.Value.Items != nil &&
+								content.Schema.Value.Items.Value != nil && content.Schema.Value.Items.Value.Properties != nil) {
+							// Add to components schemas to be generated
+							doc.Components.Schemas[op.OperationID+"Resp"] = content.Schema
+						}
 					}
 				}
 			}
@@ -302,7 +325,12 @@ func (p Parser) convertOperation(path string, method string, op *openapi3.Operat
 	if response, ok := op.Responses.Map()["200"]; ok && response.Value.Content != nil {
 		for mediaType, content := range response.Value.Content {
 			if strings.Contains(mediaType, "application/json") && content.Schema != nil {
+				// Set response schema
 				operation.ResponseSchema = content.Schema
+
+				// Set response type based on schema
+				operation.ResponseType = p.convertType(content.Schema)
+
 				if response.Value.Description != nil {
 					operation.ResponseDescription = *response.Value.Description
 				}
@@ -312,6 +340,58 @@ func (p Parser) convertOperation(path string, method string, op *openapi3.Operat
 	}
 
 	return operation
+}
+
+func (p Parser) convertType(schema *openapi3.SchemaRef) *Type {
+	if schema == nil {
+		return &Type{Kind: TypeKindPrimitive, Name: "any"}
+	}
+
+	// Handle references
+	if schema.Ref != "" {
+		parts := strings.Split(schema.Ref, "/")
+		refName := parts[len(parts)-1]
+		return &Type{
+			Kind: TypeKindRef,
+			Name: refName,
+		}
+	}
+
+	if schema.Value == nil {
+		return &Type{Kind: TypeKindPrimitive, Name: "any"}
+	}
+
+	// Handle arrays
+	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 && (*schema.Value.Type)[0] == "array" {
+		var itemType *Type
+		if schema.Value.Items != nil {
+			itemType = p.convertType(schema.Value.Items)
+		} else {
+			itemType = &Type{Kind: TypeKindPrimitive, Name: "any"}
+		}
+		return &Type{
+			Kind:     TypeKindArray,
+			ItemType: itemType,
+		}
+	}
+
+	// Handle objects with properties
+	if schema.Value.Properties != nil {
+		return &Type{
+			Kind:      TypeKindObject,
+			ObjectRef: schema.Value.Title, // Use title if available, will be set to appropriate name by caller
+		}
+	}
+
+	// Handle primitive types
+	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 {
+		return &Type{
+			Kind: TypeKindPrimitive,
+			Name: (*schema.Value.Type)[0],
+		}
+	}
+
+	return &Type{Kind: TypeKindPrimitive, Name: "any"}
 }
 
 func (p Parser) convertSchemaToClass(name string, schema *openapi3.SchemaRef) Class {
