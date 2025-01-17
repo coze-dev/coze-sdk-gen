@@ -329,7 +329,7 @@ func (p Parser) convertOperation(path string, method string, op *openapi3.Operat
 				operation.ResponseSchema = content.Schema
 
 				// Set response type based on schema
-				operation.ResponseType = p.convertType(content.Schema)
+				operation.ResponseType = p.convertTypeWithContext(content.Schema, op.OperationID)
 
 				if response.Value.Description != nil {
 					operation.ResponseDescription = *response.Value.Description
@@ -342,7 +342,7 @@ func (p Parser) convertOperation(path string, method string, op *openapi3.Operat
 	return operation
 }
 
-func (p Parser) convertType(schema *openapi3.SchemaRef) *Type {
+func (p Parser) convertTypeWithContext(schema *openapi3.SchemaRef, operationID string) *Type {
 	if schema == nil {
 		return &Type{Kind: TypeKindPrimitive, Name: "any"}
 	}
@@ -365,7 +365,7 @@ func (p Parser) convertType(schema *openapi3.SchemaRef) *Type {
 	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 && (*schema.Value.Type)[0] == "array" {
 		var itemType *Type
 		if schema.Value.Items != nil {
-			itemType = p.convertType(schema.Value.Items)
+			itemType = p.convertTypeWithContext(schema.Value.Items, operationID+"Item")
 		} else {
 			itemType = &Type{Kind: TypeKindPrimitive, Name: "any"}
 		}
@@ -378,8 +378,8 @@ func (p Parser) convertType(schema *openapi3.SchemaRef) *Type {
 	// Handle objects with properties
 	if schema.Value.Properties != nil {
 		return &Type{
-			Kind:      TypeKindObject,
-			ObjectRef: schema.Value.Title, // Use title if available, will be set to appropriate name by caller
+			Kind: TypeKindRef,
+			Name: operationID + "Resp",
 		}
 	}
 
@@ -392,6 +392,10 @@ func (p Parser) convertType(schema *openapi3.SchemaRef) *Type {
 	}
 
 	return &Type{Kind: TypeKindPrimitive, Name: "any"}
+}
+
+func (p Parser) convertType(schema *openapi3.SchemaRef) *Type {
+	return p.convertTypeWithContext(schema, "")
 }
 
 func (p Parser) convertSchemaToClass(name string, schema *openapi3.SchemaRef) Class {
