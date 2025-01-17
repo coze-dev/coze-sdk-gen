@@ -6,15 +6,12 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"log"
 	"regexp"
 	"strings"
 	"text/template"
 
-	"code.byted.org/gopkg/logs"
-	"code.byted.org/obric/common/oc_error"
 	"github.com/getkin/kin-openapi/openapi3"
-
-	"code.byted.org/flow/open_platform/app/developer_backend/util/oc_error_util"
 )
 
 //go:embed templates/python_sdk.tmpl
@@ -154,13 +151,13 @@ func (h GeneratePythonSDKHandler) analyzeDependencies(schemas map[string]*openap
 	return sorted
 }
 
-func (h GeneratePythonSDKHandler) GeneratePythonSDK(ctx context.Context, yamlContent []byte) (map[string]string, oc_error.Error) {
+func (h GeneratePythonSDKHandler) GeneratePythonSDK(ctx context.Context, yamlContent []byte) (map[string]string, error) {
 	// Parse OpenAPI document
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(yamlContent)
 	if err != nil {
-		logs.CtxWarn(ctx, "[GeneratePythonSDK] parse openapi v3 failed. err=%v", err)
-		return nil, oc_error_util.InvalidParam.WithPrompts(fmt.Sprintf("[GeneratePythonSDK] parse openapi v3 failed. err=%v", err))
+		log.Printf("[GeneratePythonSDK] parse openapi v3 failed. err=%v", err)
+		return nil, fmt.Errorf("parse openapi v3 failed: %w", err)
 	}
 
 	// Initialize Components if needed
@@ -228,8 +225,8 @@ func (h GeneratePythonSDKHandler) GeneratePythonSDK(ctx context.Context, yamlCon
 	// Read template
 	tmpl, err := template.New("python").Parse(h.getTemplate())
 	if err != nil {
-		logs.CtxWarn(ctx, "[GeneratePythonSDK] parse template failed. err=%v", err)
-		return nil, oc_error_util.SystemError.WithPrompts(fmt.Sprintf("[GeneratePythonSDK] parse template failed. err=%v", err))
+		log.Printf("[GeneratePythonSDK] parse template failed. err=%v", err)
+		return nil, fmt.Errorf("parse template failed: %w", err)
 	}
 
 	// Find all model dependencies for each module
@@ -303,8 +300,8 @@ func (h GeneratePythonSDKHandler) GeneratePythonSDK(ctx context.Context, yamlCon
 			"Classes":    moduleClasses[moduleName],
 		})
 		if err != nil {
-			logs.CtxWarn(ctx, "[GeneratePythonSDK] execute template failed. err=%v", err)
-			return nil, oc_error_util.SystemError.WithPrompts(fmt.Sprintf("[GeneratePythonSDK] execute template failed. err=%v", err))
+			log.Printf("[GeneratePythonSDK] execute template failed. err=%v", err)
+			return nil, fmt.Errorf("execute template failed: %w", err)
 		}
 		files[fmt.Sprintf("%s", moduleName)] = buf.String()
 	}
