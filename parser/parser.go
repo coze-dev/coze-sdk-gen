@@ -30,7 +30,7 @@ type Field struct {
 	Name        string
 	Description string
 	Required    bool
-	Schema      *openapi3.SchemaRef // Store raw schema for language-specific processing
+	Schema      Schema // Changed from *SchemaRef
 }
 
 // Add type definitions
@@ -59,8 +59,8 @@ type Operation struct {
 	Path                string
 	Method              string
 	Parameters          []Parameter
-	RequestBody         *openapi3.RequestBody
-	ResponseSchema      *openapi3.SchemaRef
+	RequestBody         *RequestBody
+	ResponseSchema      Schema // Changed from *SchemaRef
 	ResponseDescription string
 	ResponseType        *Type
 }
@@ -71,7 +71,7 @@ type Parameter struct {
 	JsonName    string // Original name from API
 	Description string
 	Required    bool
-	Schema      *openapi3.SchemaRef
+	Schema      Schema // Changed from *SchemaRef
 	In          string // query, header, path, etc.
 }
 
@@ -177,11 +177,8 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 	for moduleName, operations := range moduleOperations {
 		// Find all model dependencies for each module
 		modelSet := make(map[string]bool)
-		var findDependentClasses func(schema *openapi3.SchemaRef)
-		findDependentClasses = func(schema *openapi3.SchemaRef) {
-			if schema == nil {
-				return
-			}
+		var findDependentClasses func(schema Schema)
+		findDependentClasses = func(schema Schema) {
 			if schema.Ref != "" {
 				parts := strings.Split(schema.Ref, "/")
 				className := parts[len(parts)-1]
@@ -191,25 +188,23 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 				modelSet[className] = true
 				// Find the schema
 				if refSchema, ok := doc.Components.Schemas[className]; ok {
-					findDependentClasses(refSchema)
+					findDependentClasses(p.convertOpenAPISchema(refSchema))
 				}
 			}
-			if schema.Value != nil {
-				if schema.Value.Items != nil {
-					findDependentClasses(schema.Value.Items)
-				}
-				for _, prop := range schema.Value.Properties {
+			if schema.Type == SchemaTypeObject {
+				for _, prop := range schema.Properties {
 					findDependentClasses(prop)
 				}
+			}
+			if schema.Type == SchemaTypeArray && schema.Items != nil {
+				findDependentClasses(*schema.Items)
 			}
 		}
 
 		// Start with direct dependencies
 		for _, op := range operations {
 			// Add response schema dependencies
-			if op.ResponseSchema != nil {
-				findDependentClasses(op.ResponseSchema)
-			}
+			findDependentClasses(op.ResponseSchema)
 
 			// Add parameter dependencies
 			for _, param := range op.Parameters {
@@ -217,10 +212,8 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 			}
 
 			// Add request body dependencies
-			if op.RequestBody != nil && op.RequestBody.Content != nil {
-				for _, content := range op.RequestBody.Content {
-					findDependentClasses(content.Schema)
-				}
+			if op.RequestBody != nil {
+				findDependentClasses(op.RequestBody.Schema)
 			}
 		}
 
@@ -260,21 +253,8 @@ func (p Parser) analyzeDependencies(schemas map[string]*openapi3.SchemaRef) []st
 
 	// Analyze dependencies
 	for name, schema := range schemas {
-		if schema.Value.Properties != nil {
-			for _, prop := range schema.Value.Properties {
-				if prop.Ref != "" {
-					// Extract referenced type name
-					parts := strings.Split(prop.Ref, "/")
-					depName := parts[len(parts)-1]
-					deps[name].dependencies[depName] = true
-				} else if prop.Value != nil && prop.Value.Items != nil && prop.Value.Items.Ref != "" {
-					// Handle array item dependencies
-					parts := strings.Split(prop.Value.Items.Ref, "/")
-					depName := parts[len(parts)-1]
-					deps[name].dependencies[depName] = true
-				}
-			}
-		}
+		converted := p.convertOpenAPISchema(schema)
+		p.findDependencies(name, converted, deps)
 	}
 
 	// Topological sort
@@ -310,6 +290,26 @@ func (p Parser) analyzeDependencies(schemas map[string]*openapi3.SchemaRef) []st
 	return sorted
 }
 
+func (p Parser) findDependencies(name string, schema Schema, deps map[string]*classDependency) {
+	if schema.Ref != "" {
+		parts := strings.Split(schema.Ref, "/")
+		depName := parts[len(parts)-1]
+		deps[name].dependencies[depName] = true
+		return
+	}
+
+	if schema.Type == SchemaTypeArray && schema.Items != nil {
+		p.findDependencies(name, *schema.Items, deps)
+		return
+	}
+
+	if schema.Type == SchemaTypeObject {
+		for _, prop := range schema.Properties {
+			p.findDependencies(name, prop, deps)
+		}
+	}
+}
+
 func (p Parser) convertOperation(path string, method string, op *openapi3.Operation) Operation {
 	operation := Operation{
 		Name:        op.OperationID,
@@ -322,7 +322,7 @@ func (p Parser) convertOperation(path string, method string, op *openapi3.Operat
 
 	// Set request body if exists
 	if op.RequestBody != nil {
-		operation.RequestBody = op.RequestBody.Value
+		operation.RequestBody = p.convertOpenAPIRequestBody(op.RequestBody.Value)
 	}
 
 	// Handle parameters
@@ -332,7 +332,7 @@ func (p Parser) convertOperation(path string, method string, op *openapi3.Operat
 			JsonName:    param.Value.Name,
 			Description: param.Value.Description,
 			Required:    param.Value.Required,
-			Schema:      param.Value.Schema,
+			Schema:      p.convertOpenAPISchema(param.Value.Schema),
 			In:          param.Value.In,
 		}
 		operation.Parameters = append(operation.Parameters, parameter)
@@ -343,7 +343,7 @@ func (p Parser) convertOperation(path string, method string, op *openapi3.Operat
 		for mediaType, content := range response.Value.Content {
 			if strings.Contains(mediaType, "application/json") && content.Schema != nil {
 				// Set response schema
-				operation.ResponseSchema = content.Schema
+				operation.ResponseSchema = p.convertOpenAPISchema(content.Schema)
 
 				// Set response type based on schema
 				operation.ResponseType = p.convertTypeWithContext(content.Schema, op.OperationID)
@@ -447,7 +447,7 @@ func (p Parser) convertSchemaToClass(name string, schema *openapi3.SchemaRef) Cl
 				Name:        propName,
 				Description: prop.Value.Description,
 				Required:    p.isFieldRequired(propName, schema),
-				Schema:      prop,
+				Schema:      p.convertOpenAPISchema(prop),
 			}
 			if prop.Value.Title != "" {
 				field.Description = prop.Value.Title
@@ -469,4 +469,79 @@ func (p Parser) isFieldRequired(fieldName string, schema *openapi3.SchemaRef) bo
 		}
 	}
 	return false
+}
+
+// convertOpenAPISchema converts an OpenAPI schema to our internal schema type
+func (p Parser) convertOpenAPISchema(schema *openapi3.SchemaRef) Schema {
+	if schema == nil {
+		return Schema{Type: SchemaTypeObject}
+	}
+
+	if schema.Ref != "" {
+		return Schema{
+			Type: SchemaTypeObject,
+			Ref:  schema.Ref,
+		}
+	}
+
+	if schema.Value == nil {
+		return Schema{Type: SchemaTypeObject}
+	}
+
+	schemaType := SchemaTypeObject
+	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 {
+		switch (*schema.Value.Type)[0] {
+		case "string":
+			schemaType = SchemaTypeString
+		case "integer":
+			schemaType = SchemaTypeInteger
+		case "number":
+			schemaType = SchemaTypeNumber
+		case "boolean":
+			schemaType = SchemaTypeBoolean
+		case "array":
+			schemaType = SchemaTypeArray
+		}
+	}
+
+	properties := make(map[string]Schema)
+	if schema.Value.Properties != nil {
+		for name, prop := range schema.Value.Properties {
+			properties[name] = p.convertOpenAPISchema(prop)
+		}
+	}
+
+	var items *Schema
+	if schema.Value.Items != nil {
+		converted := p.convertOpenAPISchema(schema.Value.Items)
+		items = &converted
+	}
+
+	return Schema{
+		Type:        schemaType,
+		Description: schema.Value.Description,
+		Required:    schema.Value.Required,
+		Properties:  properties,
+		Items:       items,
+		Enum:        schema.Value.Enum,
+		Format:      schema.Value.Format,
+	}
+}
+
+// convertOpenAPIRequestBody converts an OpenAPI request body to our internal type
+func (p Parser) convertOpenAPIRequestBody(body *openapi3.RequestBody) *RequestBody {
+	if body == nil {
+		return nil
+	}
+
+	for _, mediaContent := range body.Content {
+		if mediaContent.Schema != nil {
+			return &RequestBody{
+				Required: body.Required,
+				Schema:   p.convertOpenAPISchema(mediaContent.Schema),
+			}
+		}
+	}
+
+	return nil
 }

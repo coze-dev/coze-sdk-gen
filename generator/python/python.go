@@ -11,7 +11,6 @@ import (
 	"text/template"
 
 	"github.com/coze-dev/coze-sdk-gen/parser"
-	"github.com/getkin/kin-openapi/openapi3"
 )
 
 //go:embed templates/sdk.tmpl
@@ -187,10 +186,9 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 	var staticHeaders = make(map[string]string)
 	for _, param := range op.Parameters {
 		// Check if it's a header parameter with single enum value
-		if param.In == "header" && param.Schema != nil && param.Schema.Value != nil &&
-			param.Schema.Value.Enum != nil && len(param.Schema.Value.Enum) == 1 {
+		if param.In == "header" && param.Schema.Enum != nil && len(param.Schema.Enum) == 1 {
 			// Use the single enum value directly
-			staticHeaders[param.JsonName] = fmt.Sprintf("%v", param.Schema.Value.Enum[0])
+			staticHeaders[param.JsonName] = fmt.Sprintf("%v", param.Schema.Enum[0])
 			continue
 		}
 
@@ -207,7 +205,7 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 		}
 
 		// Check if parameter is a model type
-		if param.Schema != nil && param.Schema.Ref != "" {
+		if param.Schema.Ref != "" {
 			pythonParam.IsModel = true
 		}
 
@@ -222,28 +220,22 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 
 	// Handle request body
 	if op.RequestBody != nil {
-		for _, content := range op.RequestBody.Content {
-			if content.Schema != nil {
-				operation.HasBody = true
-				if content.Schema.Value.Properties != nil {
-					for name, prop := range content.Schema.Value.Properties {
-						pythonParam := PythonParam{
-							Name:        g.toPythonVarName(name),
-							JsonName:    name,
-							Type:        g.getFieldType(prop),
-							Description: prop.Value.Description,
-							IsModel:     prop.Ref != "" || (prop.Value != nil && prop.Value.Items != nil && prop.Value.Items.Ref != ""),
-						}
-						operation.Params = append(operation.Params, pythonParam)
-						operation.BodyParams = append(operation.BodyParams, pythonParam)
-					}
-				}
+		operation.HasBody = true
+		for name, prop := range op.RequestBody.Schema.Properties {
+			pythonParam := PythonParam{
+				Name:        g.toPythonVarName(name),
+				JsonName:    name,
+				Type:        g.getFieldType(prop),
+				Description: prop.Description,
+				IsModel:     prop.Ref != "" || (prop.Type == parser.SchemaTypeArray && prop.Items != nil && prop.Items.Ref != ""),
 			}
+			operation.Params = append(operation.Params, pythonParam)
+			operation.BodyParams = append(operation.BodyParams, pythonParam)
 		}
 	}
 
 	// Handle response
-	if op.ResponseSchema != nil && op.ResponseType != nil {
+	if op.ResponseType != nil {
 		operation.ResponseType = g.convertType(op.ResponseType)
 	} else {
 		operation.ResponseType = "Any"
@@ -259,11 +251,7 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 	return operation
 }
 
-func (g Generator) getFieldType(schema *openapi3.SchemaRef) string {
-	if schema == nil || schema.Value == nil {
-		return "Any"
-	}
-
+func (g Generator) getFieldType(schema parser.Schema) string {
 	// If it's a reference, use the referenced type name
 	if schema.Ref != "" {
 		parts := strings.Split(schema.Ref, "/")
@@ -271,23 +259,30 @@ func (g Generator) getFieldType(schema *openapi3.SchemaRef) string {
 	}
 
 	// Handle arrays
-	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 && (*schema.Value.Type)[0] == "array" && schema.Value.Items != nil {
-		itemType := g.getFieldType(schema.Value.Items)
+	if schema.Type == parser.SchemaTypeArray && schema.Items != nil {
+		itemType := g.getFieldType(*schema.Items)
 		return fmt.Sprintf("List[%s]", itemType)
 	}
 
 	// Get base type
 	var baseType string
-	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 {
-		baseType = pythonTypeMapping[(*schema.Value.Type)[0]]
-	}
-	if baseType == "" {
-		if schema.Value.Properties != nil {
-			// If it has properties but no type, it's an object
-			baseType = "dict"
+	switch schema.Type {
+	case parser.SchemaTypeString:
+		baseType = pythonTypeMapping["string"]
+	case parser.SchemaTypeInteger:
+		baseType = pythonTypeMapping["integer"]
+	case parser.SchemaTypeNumber:
+		baseType = pythonTypeMapping["number"]
+	case parser.SchemaTypeBoolean:
+		baseType = pythonTypeMapping["boolean"]
+	case parser.SchemaTypeObject:
+		if len(schema.Properties) > 0 {
+			baseType = pythonTypeMapping["object"]
 		} else {
 			baseType = "Any"
 		}
+	default:
+		baseType = "Any"
 	}
 
 	return baseType
