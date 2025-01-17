@@ -1,0 +1,3360 @@
+components:
+  schemas:
+    CaptionType:
+      enum:
+      - 0
+      - 1
+      format: int
+      type: integer
+    ChunkStrategy:
+      properties:
+        chunk_type:
+          $ref: '#/components/schemas/ChunkType'
+        max_tokens:
+          format: i64
+          title: |-
+            最大分段长度，取值范围为 100~2000。
+            在 chunk\_type=1 时必选。
+          type: integer
+        remove_extra_spaces:
+          format: bool
+          title: |-
+            是否自动过滤连续的空格、换行符和制表符。取值包括：
+
+            - true：自动过滤
+            - false：（默认）不自动过滤
+
+            在 chunk\_type=1 时生效。
+          type: boolean
+        remove_urls_emails:
+          format: bool
+          title: |-
+            是否自动过滤所有 URL 和电子邮箱地址。取值包括：
+
+            - true：自动过滤
+            - false：（默认）不自动过滤
+
+            在 chunk\_type=1 时生效。
+          type: boolean
+        separator:
+          title: |-
+            分段标识符。
+            在 chunk\_type=1 时必选。
+          type: string
+      type: object
+    ChunkType:
+      enum:
+      - 0
+      - 1
+      format: int
+      title: |-
+        分段设置。取值包括：
+        0: 自动分段与清洗。采用扣子预置规则进行数据分段与处理。
+        1: 自定义。此时需要通过 separator、max_tokens、remove_extra_spaces 和 remove_urls_emails 分段规则细节。
+      type: integer
+    ColumnType:
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      format: int
+      type: integer
+    ContentSchema:
+      enum:
+      - 0
+      - 1
+      format: int
+      type: integer
+    CrawlContent:
+      properties:
+        content:
+          description: 抓取到的完整信息
+          format: list
+          items:
+            additionalProperties:
+              type: string
+            format: map
+            type: object
+          type: array
+        headers:
+          description: 表头
+          format: list
+          items:
+            type: string
+          type: array
+        marks:
+          additionalProperties:
+            type: string
+          description: 抓取信息的 XPATH
+          format: map
+          type: object
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        sub_marks:
+          additionalProperties:
+            additionalProperties:
+              type: string
+            format: map
+            type: object
+          description: 子页面抓取信息的 XPATH, key 对应于 marks 中的 key
+          format: map
+          type: object
+        tags:
+          description: 存储标记的类型，类型是 Array<'text' | 'image' | 'link'>，与 headers 一一对应
+          format: list
+          items:
+            type: string
+          type: array
+        title:
+          description: 标题
+          type: string
+        url:
+          description: 抓取页面的 URL
+          type: string
+      type: object
+    DocumentBase:
+      properties:
+        name:
+          title: 文件名称。
+          type: string
+        source_info:
+          $ref: '#/components/schemas/SourceInfo'
+        update_rule:
+          $ref: '#/components/schemas/UpdateRule'
+      type: object
+      x-coze-order:
+      - name
+      - source_info
+      - update_rule
+      - table_meta
+      - table_sheet
+    DocumentInfo:
+      properties:
+        char_count:
+          description: 字符数
+          format: i32
+          title: 文件内容的总字符数量。
+          type: integer
+        chunk_strategy:
+          $ref: '#/components/schemas/ChunkStrategy'
+        create_time:
+          description: 创建时间
+          format: i32
+          title: 文件的上传时间，格式为 10 位的 Unixtime 时间戳。
+          type: integer
+        doc_outline:
+          description: 层级分段文档树Json
+          type: string
+        document_id:
+          format: i64
+          title: 文件的 ID。
+          type: string
+        filter_strategy:
+          $ref: '#/components/schemas/FilterStrategy'
+        format_type:
+          $ref: '#/components/schemas/FormatType'
+        hit_count:
+          description: 命中次数
+          format: i32
+          title: 被对话命中的次数。
+          type: integer
+        index_strategy:
+          $ref: '#/components/schemas/IndexStrategy'
+        name:
+          title: 文件的名称。
+          type: string
+        parsing_strategy:
+          $ref: '#/components/schemas/ParsingStrategy'
+        size:
+          description: 文件大小 字节数
+          format: i32
+          title: 文件的大小，单位为字节。
+          type: integer
+        slice_count:
+          description: 包含分段数量
+          format: i32
+          title: 文件的分段数量。
+          type: integer
+        source_type:
+          $ref: '#/components/schemas/DocumentSource'
+        status:
+          $ref: '#/components/schemas/DocumentStatus'
+        tos_uri:
+          description: 文件链接
+          title: 上传的本地文档的唯一标识。
+          type: string
+        type:
+          description: 文件后缀 csv, pdf 等
+          title: 本地文件格式，即文件后缀，例如 txt。格式支持 pdf、txt、doc、docx 类型。
+          type: string
+        update_interval:
+          description: 更新间隔
+          format: i32
+          title: 在线网页自动更新的频率。单位为小时。
+          type: integer
+        update_time:
+          description: 更新时间
+          format: i32
+          title: 文件的最近一次修改时间，格式为 10 位的 Unixtime 时间戳。
+          type: integer
+        update_type:
+          $ref: '#/components/schemas/UpdateType'
+      type: object
+      x-coze-order:
+      - char_count
+      - chunk_strategy
+      - create_time
+      - document_id
+      - format_type
+      - hit_count
+      - name
+      - size
+      - slice_count
+      - source_type
+      - status
+      - type
+      - update_interval
+      - update_time
+      - update_type
+      - tos_uri
+      - web_url
+      - space_id
+      - creator_id
+      - imagex_uri
+      - table_meta
+      - is_disconnect
+      - bot_used_count
+      - source_file_id
+      - status_descript
+      - editable_update_rule
+      - editable_append_content
+    DocumentSource:
+      enum:
+      - 0
+      - 1
+      - 2
+      format: int
+      title: |-
+        文件的上传方式。支持设置为
+        0: 本地文件上传。
+        1: 表示上传在线网页。
+        2: 自定义类型。
+      type: integer
+    DocumentStatus:
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 9
+      - 1000
+      format: int
+      type: integer
+    FilterStrategy:
+      properties:
+        filter_box_position:
+          description: 过滤框位置
+          format: list
+          items:
+            format: double
+            type: number
+          type: array
+        filter_page:
+          description: 过滤页数
+          format: list
+          items:
+            format: i32
+            type: integer
+          type: array
+      type: object
+    FormatType:
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      format: int
+      type: integer
+    IndexStrategy:
+      properties:
+        hierarchical_indexing:
+          description: 是否开启分层索引
+          format: bool
+          type: boolean
+        keyword_indexing:
+          description: 是否开启关键词索引（默认为true）
+          format: bool
+          type: boolean
+        model:
+          description: 向量模型
+          type: string
+        vector_indexing:
+          description: 是否开启向量索引（默认为true）
+          format: bool
+          type: boolean
+      type: object
+    Pagination:
+      properties:
+        max_row_count:
+          description: 列表类型采集的最大条数
+          format: i32
+          type: integer
+        next_page_xpath:
+          description: 当类型为 2 时，需要存储用户标记的下一页按钮
+          type: string
+        type:
+          description: 分页方式：0-不分页 1-滚动加载 2-下一页按钮
+          format: i32
+          type: integer
+      type: object
+    ParsingStrategy:
+      properties:
+        image_extraction:
+          description: 是否开启图片元素提取（精准解析时生效）
+          format: bool
+          type: boolean
+        image_ocr:
+          description: 是否开启图片OCR（精准解析时生效）
+          format: bool
+          type: boolean
+        parsing_type:
+          $ref: '#/components/schemas/ParsingType'
+        table_extraction:
+          description: 是否开启表格元素提取（精准解析时生效）
+          format: bool
+          type: boolean
+      type: object
+    ParsingType:
+      enum:
+      - 0
+      - 1
+      format: int
+      type: integer
+    SinkStrategy:
+      properties:
+        check_index:
+          description: 是否检查索引成功
+          format: bool
+          type: boolean
+      type: object
+    SourceInfo:
+      properties:
+        document_source:
+          $ref: '#/components/schemas/DocumentSource'
+        file_base64:
+          description: 'document_source 本地: 如果不传 tos 地址, 则需要传文件 base64, 类型文件经过 base64
+            后的字符串'
+          title: |-
+            本地文件的 Base64 编码。
+
+
+            上传本地文件时必选
+          type: string
+        file_type:
+          description: 文件类型, 比如 pdf
+          title: |-
+            本地文件格式，即文件后缀，例如 txt。格式支持 pdf、txt、doc、docx 类型。
+            上传的文件类型应与知识库类型匹配，例如 txt 文件只能上传到文档类型的知识库中。
+
+
+            上传本地文件时必选
+          type: string
+        web_url:
+          description: 'document_source weburl: 如果不传 web_id, 则需要传 weburl'
+          title: |-
+            网页的 URL 地址。
+
+
+            上传在线网页时必选
+          type: string
+      type: object
+    TableColumn:
+      properties:
+        column_name:
+          description: 列名
+          type: string
+        column_type:
+          $ref: '#/components/schemas/ColumnType'
+        contains_empty_value:
+          format: bool
+          type: boolean
+        desc:
+          description: 描述
+          type: string
+        id:
+          description: 列 id
+          format: i64
+          type: integer
+        is_semantic:
+          description: 是否为语义匹配列
+          format: bool
+          type: boolean
+        sequence:
+          description: 列原本在 excel 的序号
+          format: i64
+          type: integer
+      type: object
+    TableSheet:
+      properties:
+        header_line_idx:
+          description: 用户选择的表头行数，从 0 开始编号
+          format: i64
+          type: integer
+        sheet_id:
+          description: 用户选择的 sheet id
+          format: i64
+          type: integer
+        start_line_idx:
+          description: 用户选择的起始行号，从 0 开始编号
+          format: i64
+          type: integer
+      type: object
+    UpdateRule:
+      properties:
+        update_interval:
+          description: 更新间隔，单位(天)
+          format: i32
+          title: 在线网页自动更新的频率。单位为小时，最小值为 24。
+          type: integer
+        update_type:
+          $ref: '#/components/schemas/UpdateType'
+      type: object
+    UpdateType:
+      enum:
+      - 0
+      - 1
+      - 2
+      format: int
+      title: |-
+        在线网页是否自动更新。默认不自动更新。取值包括：
+        0: 不自动更新
+        1: 自动覆盖更新
+        2: 自动追加更新
+      type: integer
+    BotMode:
+      enum:
+      - 0
+      - 1
+      - 2
+      format: int
+      type: integer
+    ChatV3ChatDetail:
+      properties:
+        bot_id:
+          title: 要进行会话聊天的智能体 ID。
+          type: string
+        completed_at:
+          format: i32
+          title: 对话结束的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+          type: integer
+        conversation_id:
+          title: 会话 ID，即会话的唯一标识。
+          type: string
+        created_at:
+          format: i32
+          title: 对话创建的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+          type: integer
+        failed_at:
+          format: i32
+          title: 对话失败的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+          type: integer
+        id:
+          title: 对话 ID，即对话的唯一标识。
+          type: string
+        last_error:
+          $ref: '#/components/schemas/LastError'
+        meta_data:
+          additionalProperties:
+            type: string
+          format: map
+          title: |-
+            创建消息时的附加消息，用于传入使用方的自定义数据，获取消息时也会返回此附加消息。
+            自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。
+          type: object
+        required_action:
+          $ref: '#/components/schemas/RequiredAction'
+        section_id:
+          title: section_id 将一个会话划分成更小的上下文单元。可以使用 /v1/conversations/{conversation_id}/clear
+            给该会话创建一个新的上下文单元，使 /v3/chat 忽略调用 clear 之前的上下文消息。
+          type: string
+        status:
+          title: |-
+            对话的运行状态。取值为：
+            - created：对话已创建。
+            - in_progress：智能体正在处理中。
+            - completed：智能体已完成处理，本次对话结束。
+            - failed：对话失败。
+            - requires_action：对话中断，需要进一步处理。
+            - canceled：对话已取消。
+          type: string
+        usage:
+          $ref: '#/components/schemas/Usage'
+      required:
+      - id
+      - conversation_id
+      - bot_id
+      - status
+      type: object
+    ChatV3MessageDetail:
+      properties:
+        bot_id:
+          title: 编写此消息的智能体 ID。此参数仅在对话产生的消息中返回。
+          type: string
+        chat_id:
+          title: Chat ID。此参数仅在对话产生的消息中返回。
+          type: string
+        content:
+          title: 消息的内容，支持纯文本、多模态（文本、图片、文件混合输入）、卡片等多种类型的内容。
+          type: string
+        content_type:
+          title: |-
+            消息内容的类型，取值包括：
+
+            - text：文本。
+            - object\_string：多模态内容，即文本和文件的组合、文本和图片的组合。
+            - card：卡片。此枚举值仅在接口响应中出现，不支持作为入参。
+          type: string
+        conversation_id:
+          title: 此消息所在的会话 ID。
+          type: string
+        created_at:
+          format: i64
+          title: 消息的创建时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+          type: integer
+        id:
+          title: Message ID，即消息的唯一标识。
+          type: string
+        meta_data:
+          additionalProperties:
+            type: string
+          format: map
+          title: 创建消息时的附加消息，获取消息时也会返回此附加消息。
+          type: object
+        role:
+          title: |-
+            发送这条消息的实体。取值：
+            - user：代表该条消息内容是用户发送的。
+            - assistant：代表该条消息内容是智能体发送的。
+          type: string
+        section_id:
+          title: section_id 将一个会话划分成更小的上下文单元。可以使用 /v1/conversations/{conversation_id}/clear
+            给该会话创建一个新的上下文单元，使 /v3/chat 忽略调用 clear 之前的上下文消息。
+          type: string
+        type:
+          title: |-
+            消息类型。
+
+            - **question**：用户输入内容。
+            - **answer**：智能体返回给用户的消息内容，支持增量返回。如果工作流绑定了 messge 节点，可能会存在多 answer 场景，此时可以用流式返回的结束标志来判断所有 answer 完成。
+            - **function\_call**：智能体对话过程中调用函数（function call）的中间结果。 
+            - **tool\_output**：调用工具 （function call）后返回的结果。
+            - **tool\_response**：调用工具 （function call）后返回的结果。
+            - **follow\_up**：如果在智能体上配置打开了用户问题建议开关，则会返回推荐问题相关的回复内容。
+            - **verbose**：多 answer 场景下，服务端会返回一个 verbose 包，对应的 content 为 JSON 格式，content.msg\_type =generate\_answer\_finish 代表全部 answer 回复完成。
+
+
+            仅发起会话（v3）接口支持将此参数作为入参，且：
+
+            - 如果 autoSaveHistory=true，type 支持设置为 question 或 answer。
+            - 如果 autoSaveHistory=false，type 支持设置为 question、answer、function\_call、tool\_output/tool\_response。
+
+            其中，type=question 只能和 role=user 对应，即仅用户角色可以且只能发起 question 类型的消息。详细说明可参考[消息 type 说明](https://www.coze.cn/docs/developer_guides/message_type)。
+          type: string
+        updated_at:
+          format: i64
+          title: 消息的更新时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+          type: integer
+      required:
+      - id
+      - conversation_id
+      - bot_id
+      - role
+      - type
+      - content
+      - content_type
+      - chat_id
+      type: object
+    InterruptFunction:
+      properties:
+        arguments:
+          title: 方法参数。
+          type: string
+        name:
+          title: 方法名。
+          type: string
+      type: object
+    InterruptPlugin:
+      properties:
+        function:
+          $ref: '#/components/schemas/InterruptFunction'
+        id:
+          title: 上报运行结果的 ID。
+          type: string
+        type:
+          title: 工具类型，枚举值为 function。
+          type: string
+      type: object
+    InterruptRequireInfo:
+      properties:
+        infos:
+          format: list
+          items:
+            type: string
+          title: 详细信息。
+          type: array
+      type: object
+    LastError:
+      properties:
+        code:
+          format: i32
+          title: |-
+            状态码。
+            0 代表调用成功。
+          type: integer
+        msg:
+          title: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+          type: string
+      required:
+      - code
+      - msg
+      type: object
+    OnboardingMode:
+      enum:
+      - 1
+      - 2
+      - 3
+      format: int
+      type: integer
+    RequiredAction:
+      properties:
+        submit_tool_outputs:
+          $ref: '#/components/schemas/SubmitToolOutputs'
+        type:
+          title: 额外操作的类型，枚举值为 submit_tool_outputs。
+          type: string
+      type: object
+    SubmitToolOutputs:
+      properties:
+        tool_calls:
+          format: list
+          items:
+            $ref: '#/components/schemas/InterruptPlugin'
+          title: 具体上报信息详情。
+          type: array
+      type: object
+    SuggestedQuestionsShowMode:
+      enum:
+      - 0
+      - 1
+      format: int
+      type: integer
+    Usage:
+      properties:
+        input_count:
+          format: i32
+          title: input 部分消耗的 Token 总数。
+          type: integer
+        output_count:
+          format: i32
+          title: output 部分消耗的 Token 总数。
+          type: integer
+        token_count:
+          format: i32
+          title: 本次对话消耗的 Token 总数，包括 input 和 output 部分的消耗。
+          type: integer
+      type: object
+    ConversationData:
+      properties:
+        created_at:
+          format: i64
+          title: 会话创建的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+          type: integer
+        id:
+          title: Conversation ID，即会话的唯一标识。
+          type: string
+        last_section_id:
+          type: string
+        meta_data:
+          additionalProperties:
+            type: string
+          format: map
+          title: |-
+            创建消息时的附加消息，获取消息时也会返回此附加消息。
+            自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。
+          type: object
+      type: object
+    EnterMessage:
+      properties:
+        content:
+          description: 内容
+          title: "消息的内容，支持纯文本、多模态（文本、图片、文件混合输入）、卡片等多种类型的内容。\n\n- content_type 为 object_string
+            时，content 为 **object_string object** 数组序列化之后的 JSON String，详细说明可参考 **object_string
+            object。** \n- 当 content_type **=** text 时，content 为普通文本，例如 `\"content\"
+            :\"Hello!\"`。"
+          type: string
+        content_type:
+          description: text/card/object_string
+          enum:
+          - text
+          - object_string
+          title: |-
+            消息内容的类型，支持设置为：
+
+            - text：文本。
+            - object\_string：多模态内容，即文本和文件的组合、文本和图片的组合。
+            - card：卡片。此枚举值仅在接口响应中出现，不支持作为入参。
+
+            content 不为空时，此参数为必选。
+          type: string
+        meta_data:
+          additionalProperties:
+            type: string
+          format: map
+          title: |-
+            创建消息时的附加消息，获取消息时也会返回此附加消息。
+            自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。
+
+            content 不为空时，此参数为必选。
+          type: object
+        role:
+          enum:
+          - user
+          - assistant
+          title: |-
+            发送这条消息的实体。取值：
+
+            - **user**：代表该条消息内容是用户发送的。
+            - **assistant**：代表该条消息内容是 Bot 发送的。
+          type: string
+        type:
+          enum:
+          - question
+          - answer
+          - function_call
+          - tool_output
+          - tool_response
+          title: "消息类型。默认为 **question。** \n\n- **question**：用户输入内容。\n- **answer**：Bot
+            返回给用户的消息内容，支持增量返回。如果工作流绑定了消息节点，可能会存在多 answer 场景，此时可以用流式返回的结束标志来判断所有 answer
+            完成。\n- **function_call**：Bot 对话过程中调用函数（function call）的中间结果。\n- **tool_output**：调用工具
+            （function call）后返回的结果。\n- **tool_response**：调用工具 （function call）后返回的结果。\n-
+            **follow_up**：如果在 Bot 上配置打开了用户问题建议开关，则会返回推荐问题相关的回复内容。不支持在请求中作为入参。\n- **verbose**：多
+            answer 场景下，服务端会返回一个 verbose 包，对应的 content 为 JSON 格式，`content.msg_type
+            =generate_answer_finish` 代表全部 answer 回复完成。不支持在请求中作为入参。\n\n\n仅发起会话（v3）接口支持将此参数作为入参，且：\n\n-
+            如果 autoSaveHistory=true，type 支持设置为 question 或 answer。\n- 如果 autoSaveHistory=false，type
+            支持设置为 question、answer、function_call、tool_output/tool_response。\n\n其中，type=question
+            只能和 role=user 对应，即仅用户角色可以且只能发起 question 类型的消息。详细说明可参考[消息 type 说明](https://www.coze.cn/docs/developer_guides/message_type)。"
+          type: string
+      required:
+      - role
+      type: object
+    OpenMessageApi:
+      properties:
+        bot_id:
+          description: bot id //已TODO 所有的i64加注解str,入参和出参都要
+          title: 编写此消息的智能体 ID。此参数仅在对话产生的消息中返回。
+          type: string
+        chat_id:
+          title: Chat ID。此参数仅在对话产生的消息中返回。
+          type: string
+        content:
+          description: 内容
+          title: 消息的内容，支持纯文本、多模态（文本、图片、文件混合输入）、卡片等多种类型的内容。
+          type: string
+        content_type:
+          enum:
+          - text
+          - object_string
+          title: |-
+            消息内容的类型，取值包括：
+
+            - text：文本。
+            - object\_string：多模态内容，即文本和文件的组合、文本和图片的组合。
+            - card：卡片。此枚举值仅在接口响应中出现，不支持作为入参。
+          type: string
+        conversation_id:
+          description: conversation id
+          title: 此消息所在的会话 ID。
+          type: string
+        created_at:
+          description: 创建时间
+          format: i64
+          title: 消息的创建时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+          type: integer
+        id:
+          description: 主键ID
+          title: Message ID，即消息的唯一标识。
+          type: string
+        meta_data:
+          additionalProperties:
+            type: string
+          format: map
+          title: 创建消息时的附加消息，获取消息时也会返回此附加消息。
+          type: object
+        role:
+          enum:
+          - user
+          - assistant
+          title: |-
+            发送这条消息的实体。取值：
+
+            - **user**：代表该条消息内容是用户发送的。
+            - **assistant**：代表该条消息内容是 Bot 发送的。
+          type: string
+        section_id:
+          type: string
+        type:
+          enum:
+          - question
+          - answer
+          - function_call
+          - tool_output
+          - tool_response
+          title: |-
+            消息类型。
+
+            - **question**：用户输入内容。
+            - **answer**：Bot 返回给用户的消息内容，支持增量返回。如果工作流绑定了 messge 节点，可能会存在多 answer 场景，此时可以用流式返回的结束标志来判断所有 answer 完成。
+            - **function_call**：Bot 对话过程中调用函数（function call）的中间结果。
+            - **tool_output**：调用工具 （function call）后返回的结果。
+            - **tool_response**：调用工具 （function call）后返回的结果。
+            - **follow_up**：如果在 Bot 上配置打开了用户问题建议开关，则会返回推荐问题相关的回复内容。
+            - **verbose**：多 answer 场景下，服务端会返回一个 verbose 包，对应的 content 为 JSON 格式，`content.msg_type =generate_answer_finish` 代表全部 answer 回复完成。
+
+
+            仅发起会话（v3）接口支持将此参数作为入参，且：
+
+            - 如果 autoSaveHistory=true，type 支持设置为 question 或 answer。
+            - 如果 autoSaveHistory=false，type 支持设置为 question、answer、function_call、tool_output/tool_response。
+
+            其中，type=question 只能和 role=user 对应，即仅用户角色可以且只能发起 question 类型的消息。详细说明可参考[消息 type 说明](https://www.coze.cn/docs/developer_guides/message_type)。
+          type: string
+        updated_at:
+          description: 更新时间 //已TODO 时间改成int
+          format: i64
+          title: 消息的更新时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+          type: integer
+      type: object
+      x-coze-order:
+      - id
+      - conversation_id
+      - bot_id
+      - chat_id
+      - meta_data
+      - role
+      - content
+      - content_type
+      - created_at
+      - updated_at
+      - type
+    ApiInfo:
+      properties:
+        api_id:
+          description: api id
+          title: 工具的唯一标识。
+          type: string
+        description:
+          description: api描述
+          title: 工具的描述。
+          type: string
+        name:
+          description: api名称
+          title: 工具的名称。
+          type: string
+      type: object
+      x-coze-order:
+      - api_id
+      - name
+      - description
+    BotConfig:
+      properties:
+        character_name:
+          type: string
+        propmt:
+          type: string
+      type: object
+    BotInfo:
+      properties:
+        bot_id:
+          description: bot id
+          title: 智能体的唯一标识。
+          type: string
+        bot_mode:
+          $ref: '#/components/schemas/BotMode'
+        create_time:
+          description: 创建时间
+          format: i64
+          title: 创建时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+          type: integer
+        description:
+          description: bot描述
+          title: 智能体的描述信息。
+          type: string
+        icon_url:
+          description: bot图像url
+          title: 智能体的头像地址。
+          type: string
+        knowledge:
+          $ref: '#/components/schemas/CommonKnowledge'
+        model_info:
+          $ref: '#/components/schemas/ModelInfo'
+        name:
+          description: bot名称
+          title: 智能体的名称。
+          type: string
+        onboarding_info:
+          $ref: '#/components/schemas/OnboardingInfoV2'
+        plugin_info_list:
+          description: 插件信息列表
+          format: list
+          items:
+            $ref: '#/components/schemas/PluginInfo'
+          title: 智能体配置的插件。
+          type: array
+        prompt_info:
+          $ref: '#/components/schemas/PromptInfo'
+        update_time:
+          description: 更新时间
+          format: i64
+          title: 更新时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+          type: integer
+        version:
+          description: 版本
+          title: 智能体最新版本的版本号。
+          type: string
+      type: object
+    CommonKnowledge:
+      properties:
+        knowledge_infos:
+          description: 知识库信息
+          format: list
+          items:
+            $ref: '#/components/schemas/KnowledgeInfo'
+          title: |
+            知识库信息。
+          type: array
+      type: object
+    CreateDraftBotData:
+      properties:
+        bot_id:
+          title: 创建的智能体 ID。
+          type: string
+      required:
+      - bot_id
+      type: object
+    CustomConfig:
+      properties:
+        bot_config:
+          $ref: '#/components/schemas/BotConfig'
+        model_config:
+          $ref: '#/components/schemas/ModelConfig'
+      type: object
+    EnterMessage0:
+      properties:
+        content:
+          description: 如果是非 text，需要解析 JSON
+          type: string
+        content_type:
+          description: text, card, object_string
+          enum:
+          - text
+          - object_string
+          type: string
+        meta_data:
+          additionalProperties:
+            type: string
+          format: map
+          type: object
+        name:
+          type: string
+        role:
+          description: user / assistant
+          enum:
+          - user
+          - assistant
+          type: string
+        type:
+          description: |-
+            function_call, tool_output, knowledge, answer, follow_up, verbose, (普通请求可以不填)
+             用户输入时可用：function_call，tool_output
+             不支持用户输入使用：follow_up，knowledge，verbose，answer
+          enum:
+          - question
+          - answer
+          - function_call
+          - tool_output
+          - tool_response
+          type: string
+      type: object
+    Knowledge:
+      properties:
+        auto_call:
+          description: 自动调用 or 按需调用
+          format: bool
+          title: |-
+            是否自动调用知识库。取值包括：
+
+            - **true：（默认）自动调用**。每一轮对话都会调用知识库，使用召回的内容辅助生成回复。
+            - **false：按需调用**。根据实际需要来调用知识库，使用召回内容辅助生成回复。此时，需要在左侧的人设与回复逻辑区域明确写清楚在什么情况下调用哪个知识库进行回复。
+          type: boolean
+        dataset_ids:
+          description: 更新知识库列表 全量覆盖更新
+          format: list
+          items:
+            type: string
+          title: |-
+            智能体绑定的知识库 ID。
+            在扣子平台中打开指定知识库页面，页面 URL 中 knowledge 参数后的数字就是知识库 ID。例如 https://bots.bytedance.net/space/736142423532160\*\*\*\*/knowledge/738509371792341\*\*\*\*，知识库 ID 为 738509371792341\*\*\*\*。
+          type: array
+        search_strategy:
+          $ref: '#/components/schemas/SearchStrategy'
+      type: object
+    KnowledgeInfo:
+      properties:
+        id:
+          description: 知识库id
+          title: 知识库 ID。
+          type: string
+        name:
+          description: 知识库名称
+          title: 知识库名称。
+          type: string
+      type: object
+    ModelConfig:
+      properties:
+        model_id:
+          type: string
+      type: object
+    ModelInfo:
+      properties:
+        model_id:
+          description: 模型id
+          title: 模型的唯一标识。
+          type: string
+        model_name:
+          description: 模型名称
+          title: 模型名称。
+          type: string
+      type: object
+    OnboardingInfo:
+      properties:
+        prologue:
+          description: 开场白
+          title: |
+            智能体的开场白。长度为 0~ 300 个字符。默认无开场白。
+
+            开场白中如果设置了用户名称变量`{{user_name}}`，API 场景中需要业务方自行处理，例如展示开场白时将此变量替换为业务侧的用户名称。
+          type: string
+        suggested_questions:
+          description: 建议问题
+          format: list
+          items:
+            type: string
+          title: 智能体的开场白预置问题。每个问题长度为 0~ 50 个字符，问题数量无限制。默认无开场白预置问题。
+          type: array
+      title: 智能体的开场白相关设置。
+      type: object
+    OnboardingInfoV2:
+      properties:
+        prologue:
+          description: 对应 Coze Opening Dialog开场白
+          title: |-
+            智能体配置的开场白内容。
+
+            开场白中如果设置了用户名称变量`{{user_name}}`，API 场景中需要业务方自行处理，例如展示开场白时将此变量替换为业务侧的用户名称。
+          type: string
+        suggested_questions:
+          description: 建议问题
+          format: list
+          items:
+            type: string
+          title: 智能体配置的推荐问题列表。未开启用户问题建议时，不返回此字段。
+          type: array
+      type: object
+    PluginIdInfo:
+      properties:
+        api_id:
+          type: string
+        plugin_id:
+          type: string
+      required:
+      - plugin_id
+      type: object
+    PluginIdList:
+      properties:
+        id_list:
+          format: list
+          items:
+            $ref: '#/components/schemas/PluginIdInfo'
+          type: array
+      type: object
+    PluginInfo:
+      properties:
+        api_info_list:
+          description: 插件包含的api列表
+          format: list
+          items:
+            $ref: '#/components/schemas/ApiInfo'
+          title: 插件的工具列表信息。
+          type: array
+        description:
+          description: 插件描述
+          title: 插件描述。
+          type: string
+        icon_url:
+          description: 插件图片url
+          title: 插件头像。
+          type: string
+        name:
+          description: 插件名称
+          title: 插件名称。
+          type: string
+        plugin_id:
+          description: 插件id
+          title: 插件唯一标识。
+          type: string
+      type: object
+      x-coze-order:
+      - plugin_id
+      - name
+      - icon_url
+      - description
+      - api_info_list
+    PromptInfo:
+      properties:
+        prompt:
+          description: 文本prompt
+          title: 智能体的人设与回复逻辑。长度为 0~ 20,000 个字符。默认为空。
+          type: string
+      title: 智能体的人设与回复逻辑。
+      type: object
+    PublishDraftBotData:
+      properties:
+        bot_id:
+          title: 智能体 ID。
+          type: string
+        version:
+          title: 智能体的版本号。
+          type: string
+      type: object
+    SearchStrategy:
+      enum:
+      - 0
+      - 1
+      - 20
+      format: int
+      title: |-
+        知识库搜索策略。取值包括：
+        - 0:（默认）语义搜索。像人类一样去理解词与词，句与句之间的关系。
+        - 1: 混合搜索。结合全文检索和语义检索的优势，并对结果进行综合排序召回相关的内容片段。
+        - 20: 全文搜索。基于关键词进行全文检索。
+      type: integer
+    SpacePublishedBots:
+      properties:
+        bot_id:
+          title: 智能体的唯一标识。
+          type: string
+        bot_name:
+          title: 智能体的名称。
+          type: string
+        description:
+          title: 智能体的描述。
+          type: string
+        icon_url:
+          title: 智能体的头像。
+          type: string
+        publish_time:
+          title: 智能体的最近一次发布时间，格式为 10 位的 Unixtime 时间戳。此 API 返回的智能体列表按照此字段降序排列。
+          type: string
+      type: object
+      x-coze-order:
+      - bot_id
+      - bot_name
+      - description
+      - icon_url
+      - publish_time
+    SpacePublishedBotsInfo:
+      properties:
+        space_bots:
+          format: list
+          items:
+            $ref: '#/components/schemas/SpacePublishedBots'
+          title: 指定空间发布到 Agent as API 渠道的智能体列表。
+          type: array
+        total:
+          format: i32
+          title: 智能体列表中的智能体总数。
+          type: integer
+      type: object
+    Tool:
+      properties:
+        api_name:
+          type: string
+        parameters:
+          type: string
+        plugin_id:
+          format: i64
+          type: integer
+      type: object
+    ToolOutput:
+      properties:
+        output:
+          title: 工具的执行结果。
+          type: string
+        tool_call_id:
+          title: 上报运行结果的 ID。你可以在[发起对话（V3）](/docs/developer_guides/chat_v3)接口响应的 tool_calls
+            字段下查看此 ID。
+          type: string
+      required:
+      - tool_call_id
+      - output
+      type: object
+    VoiceData:
+      properties:
+        id:
+          description: 唯一id
+          type: string
+        language_code:
+          description: 音色语种code
+          type: string
+        language_name:
+          description: 音色语种名称
+          type: string
+        name:
+          description: 音色名称
+          type: string
+        preview_audio:
+          description: 预览音色内容
+          type: string
+        preview_text:
+          description: 预览文本内容
+          type: string
+        style_id:
+          description: 音色 style_id
+          type: string
+      type: object
+    File:
+      properties:
+        bytes:
+          description: 文件字节数
+          format: i64
+          title: 文件的总字节数。
+          type: integer
+        created_at:
+          description: 上传时间戳，单位s
+          format: i64
+          title: 文件的上传时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+          type: integer
+        file_name:
+          description: 文件名
+          title: 文件名称。
+          type: string
+        id:
+          description: 文件ID
+          title: 已上传的文件 ID。
+          type: string
+        url:
+          description: 目前仅 openapi 场景有用。白名单用户会返回文件 url
+          type: string
+      type: object
+    OpenSpace:
+      properties:
+        icon_url:
+          description: 空间图标 url
+          title: 空间图标的 url 地址。
+          type: string
+        id:
+          description: 空间 id
+          title: 空间 ID。
+          type: string
+        name:
+          description: 空间名称
+          title: 空间名称。
+          type: string
+        role_type:
+          description: '当前用户角色, 枚举值: owner, admin, member'
+          title: |-
+            当前用户在空间中的角色。枚举值包括：
+            - owner：所有者
+            - admin：管理员
+            - member：成员
+          type: string
+        workspace_type:
+          description: '工作空间类型, 枚举值: personal, team'
+          title: |-
+            空间类型。枚举值包括：
+            - personal：个人空间
+            - team：团队空间
+          type: string
+      type: object
+    OpenSpaceData:
+      properties:
+        total_count:
+          description: 空间总数
+          format: i64
+          title: 当前扣子用户加入的空间总数。
+          type: integer
+        workspaces:
+          format: list
+          items:
+            $ref: '#/components/schemas/OpenSpace'
+          title: 当前扣子用户加入的空间列表。
+          type: array
+      type: object
+    Interrupt:
+      properties:
+        data:
+          type: string
+        event_id:
+          type: string
+        type:
+          $ref: '#/components/schemas/InterruptType'
+      type: object
+    InterruptType:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      format: int
+      title: 中断类型，你可以从[执行工作流（流式响应）](https://www.coze.cn/docs/developer_guides/workflow_stream_run)的响应信息中获得中断时间的中断类型。
+      type: integer
+    WorkflowExecuteHistory:
+      properties:
+        bot_id:
+          format: i64
+          type: string
+        connector_id:
+          format: i64
+          type: string
+        connector_uid:
+          type: string
+        cost:
+          type: string
+        cost_unit:
+          type: string
+        create_time:
+          format: i64
+          type: integer
+        debug_url:
+          type: string
+        error_code:
+          description: 执行失败
+          type: string
+        error_message:
+          type: string
+        execute_id:
+          format: i64
+          type: string
+        execute_status:
+          type: string
+        ext:
+          additionalProperties:
+            type: string
+          format: map
+          type: object
+        input:
+          description: 执行成功
+          type: string
+        logid:
+          type: string
+        output:
+          type: string
+        run_mode:
+          $ref: '#/components/schemas/WorkflowRunMode'
+        token:
+          format: i64
+          type: string
+        update_time:
+          format: i64
+          type: integer
+      type: object
+    WorkflowRunMode:
+      enum:
+      - 0
+      - 1
+      - 2
+      format: int
+      type: integer
+  securitySchemes:
+    token:
+      description: 扣子 API 通过访问令牌进行 API 请求的鉴权。生成方式可以参考[鉴权方式](https://www.coze.cn/docs/developer_guides/authentication)
+      scheme: bearer
+      type: http
+info:
+  title: Coze OpenAPI
+  version: "2"
+openapi: 3.0.3
+paths:
+  /open_api/knowledge/document/create:
+    post:
+      description: |-
+        调用此接口向指定知识库中上传文件。
+        <span id="bb27a01d"></span>
+        ## 注意事项
+
+        * 每次最多可上传 10 个文件。
+        * 必须上传和知识库类型匹配的文件，例如 txt 等文档类型的文件只能上传到文档知识库中，不可上传到表格知识库中。
+        * 每个请求只能选择一种上传方式，不支持同时上传在线网页和本地文档。
+        * 仅知识库的所有者可以向知识库中上传文件。
+      operationId: CreateDocumentOpenAPI
+      parameters:
+      - in: header
+        name: Agw-Js-Conv
+        required: true
+        schema:
+          enum:
+          - str
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                chunk_strategy:
+                  $ref: '#/components/schemas/ChunkStrategy'
+                dataset_id:
+                  format: i64
+                  title: |-
+                    知识库 ID。
+                    在扣子平台中打开指定知识库页面，页面 URL 中 `knowledge` 参数后的数字就是知识库 ID。例如 `https://bots.bytedance.net/space/736142423532160****/knowledge/738509371792341****`，知识库 ID 为 `738509371792341****`。
+                  type: string
+                document_bases:
+                  description: 表格类型一次只能创建一个待创建的文档信息
+                  format: list
+                  items:
+                    $ref: '#/components/schemas/DocumentBase'
+                  title: |-
+                    待上传文件的元数据信息。数组最大长度为 10，即每次最多上传 10 个文件。
+                    支持的上传方式包括：
+
+                    - 离线文件。格式支持 pdf、txt、doc、docx 类型。
+                    - 在线网页。
+                  type: array
+              required:
+              - dataset_id
+              - document_bases
+              - chunk_strategy
+              type: object
+              x-coze-order:
+              - dataset_id
+              - document_bases
+              - chunk_strategy
+              - format_type
+              - sink_strategy
+              - is_append
+              - parsing_strategy
+              - index_strategy
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    type: integer
+                  document_infos:
+                    format: list
+                    items:
+                      $ref: '#/components/schemas/DocumentInfo'
+                    title: 已上传文件的基本信息。
+                    type: array
+                  msg:
+                    type: string
+                type: object
+                x-coze-order:
+                - document_infos
+                - code
+                - msg
+          description: ""
+      summary: 创建知识库文件
+      tags:
+      - 知识库
+  /open_api/knowledge/document/delete:
+    post:
+      description: |-
+        调用此接口删除知识库中的文本、图片、表格等文件，支持批量删除。
+
+        仅知识库的所有者可以删除知识库文件。
+      operationId: DeleteDocumentAPI
+      parameters:
+      - in: header
+        name: Agw-Js-Conv
+        required: true
+        schema:
+          enum:
+          - str
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                document_ids:
+                  format: list
+                  items:
+                    format: i64
+                    type: string
+                  title: 待删除的知识库文件列表。数组最大长度为 100，即一次性最多可删除 100 个文件。
+                  type: array
+              required:
+              - document_ids
+              type: object
+              x-coze-order:
+              - document_ids
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i64
+                    title: |-
+                      状态码。
+                      0 代表调用成功。
+                    type: integer
+                  msg:
+                    title: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+                    type: string
+                type: object
+                x-coze-order:
+                - code
+                - msg
+          description: ""
+      summary: 删除知识库文件
+      tags:
+      - 知识库
+  /open_api/knowledge/document/list:
+    post:
+      description: 调用接口查看指定知识库的文件列表，即文档、表格或图像列表。
+      operationId: ListDocumentOpenAPI
+      parameters:
+      - in: header
+        name: Agw-Js-Conv
+        required: true
+        schema:
+          enum:
+          - str
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                dataset_id:
+                  format: i64
+                  title: 待查看文件的知识库 ID。
+                  type: string
+                page:
+                  format: i32
+                  title: 分页查询时的页码。默认为 1，即从第一页数据开始返回。
+                  type: integer
+                size:
+                  format: i32
+                  title: 分页大小。默认为 10，即每页返回 10 条数据。
+                  type: integer
+              required:
+              - dataset_id
+              type: object
+              x-coze-order:
+              - dataset_id
+              - page
+              - size
+              - document_ids
+              - keyword
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i64
+                    title: |-
+                      状态码。
+                      0 代表调用成功。
+                    type: integer
+                  document_infos:
+                    format: list
+                    items:
+                      $ref: '#/components/schemas/DocumentInfo'
+                    title: 知识库文件列表。详细说明可参考 [DocumentInfo object](https://www.coze.cn/docs/developer_guides/list_knowledge_files#e638fe05)。
+                    type: array
+                  msg:
+                    title: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+                    type: string
+                  total:
+                    format: i32
+                    title: 指定知识库中的文件总数。
+                    type: integer
+                type: object
+                x-coze-order:
+                - code
+                - msg
+                - document_infos
+                - total
+          description: ""
+      summary: 查看知识库文件列表
+      tags:
+      - 知识库
+  /open_api/knowledge/document/update:
+    post:
+      description: |-
+        调用接口修改知识库文件名称和更新策略。
+
+        调用接口修改知识库文件名称和更新策略。
+      operationId: UpdateDocumentOpenAPI
+      parameters:
+      - in: header
+        name: Agw-Js-Conv
+        required: true
+        schema:
+          enum:
+          - str
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                document_id:
+                  format: i64
+                  title: 待修改的知识库文件 ID。
+                  type: string
+                document_name:
+                  description: 需要更新就传, 更新名称
+                  title: 知识库文件的新名称。
+                  type: string
+                update_rule:
+                  $ref: '#/components/schemas/UpdateRule'
+              type: object
+              x-coze-order:
+              - document_id
+              - document_name
+              - update_rule
+              - status
+              - table_meta
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i64
+                    title: |-
+                      状态码。
+                      0 代表调用成功。
+                    type: integer
+                  document_info:
+                    $ref: '#/components/schemas/DocumentInfo'
+                  msg:
+                    title: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+                    type: string
+                type: object
+                x-coze-order:
+                - document_info
+                - code
+                - msg
+          description: ""
+      summary: 修改知识库文件
+      tags:
+      - 知识库
+  /v1/bot/create:
+    post:
+      description: |-
+        创建一个新的智能体。
+        调用此接口创建一个智能体后，此智能体为未发布的草稿状态，创建后可以在扣子平台智能体列表中查看智能体。调用[发布智能体为 API 服务](https://www.coze.cn/docs/developer_guides/publish_bot)接口发布智能体后，才能通过[查看智能体列表](https://www.coze.cn/docs/developer_guides/published_bots_list)或[获取智能体配置](https://www.coze.cn/docs/developer_guides/get_metadata)接口查看此智能体。
+        通过 API 方式创建智能体时，支持为智能体设置所在空间、智能体名称和描述、头像、人设与回复逻辑及开场白。
+      operationId: CreateDraftBot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                description:
+                  title: 智能体的描述信息。长度为 0~ 500 个字符。默认为空。
+                  type: string
+                icon_file_id:
+                  description: 头像文件id
+                  title: |-
+                    作为智能体头像的文件 ID。
+
+                    - 未指定文件 ID 时，扣子平台默认为智能体指定一个头像。
+                    - 如需使用自定义头像，应先通过[上传文件](https://www.coze.cn/docs/developer_guides/upload_files)接口上传本地文件，从接口响应中获取文件 ID。
+                  type: string
+                name:
+                  title: 智能体的名称。长度为 1~ 20 个字符。
+                  type: string
+                onboarding_info:
+                  $ref: '#/components/schemas/OnboardingInfo'
+                prompt_info:
+                  $ref: '#/components/schemas/PromptInfo'
+                space_id:
+                  title: |-
+                    智能体所在的空间的 Space ID。Space ID 是空间的唯一标识。
+                    进入指定空间，空间页面 URL 中 `space` 参数后的数字就是 Space ID。例如`https://www.coze.cn/space/736163827687053****/bot`，Space ID 为`736163827687053****`。
+                  type: string
+              required:
+              - space_id
+              - name
+              type: object
+              x-coze-order:
+              - space_id
+              - name
+              - description
+              - icon_file_id
+              - prompt_info
+              - onboarding_info
+              - plugin_id_list
+              - voice_ids
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    title: |-
+                      调用状态码。
+
+                      - 0 表示调用成功。
+                      - 其他值表示调用失败。你可以通过 msg 字段判断详细的错误原因。
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/CreateDraftBotData'
+                  msg:
+                    title: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+                    type: string
+                required:
+                - code
+                - msg
+                - data
+                type: object
+                x-coze-order:
+                - code
+                - msg
+                - data
+          description: ""
+      summary: 创建智能体
+      tags:
+      - 智能体
+  /v1/bot/get_online_info:
+    get:
+      description: |-
+        获取指定智能体的配置信息，此智能体必须已发布到 Agent as API 渠道中。
+        此接口仅支持查看已发布为 API 服务的智能体。对于创建后从未发布到 API 渠道的智能体，可以在[扣子平台](https://www.coze.cn/)中查看列表及配置。
+      operationId: GetBotOnlineInfo
+      parameters:
+      - description: |-
+          要查看的智能体 ID。
+          进入智能体的 开发页面，开发页面 URL 中 `bot` 参数后的数字就是智能体 ID。例如`https://www.coze.cn/space/341****/bot/73428668*****`，bot ID 为`73428668*****`。
+
+
+          确保该智能体的所属空间已经生成了访问令牌。
+        in: query
+        name: bot_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    title: |-
+                      调用状态码。
+
+                      - `0` 表示调用成功。
+                      - 其他值表示调用失败。你可以通过 msg 字段判断详细的错误原因。
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/BotInfo'
+                  msg:
+                    title: 调用状态信息。调用失败时会返回错误详情。
+                    type: string
+                required:
+                - code
+                - msg
+                - data
+                type: object
+                x-coze-order:
+                - code
+                - msg
+                - data
+          description: ""
+      summary: 获取智能体配置
+      tags:
+      - 智能体
+  /v1/bot/publish:
+    post:
+      description: 将指定智能体发布到 API、WebSDK 或者自定义渠道。
+      operationId: PublishDraftBot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                bot_id:
+                  title: |-
+                    要发布的智能体 ID。
+                    进入智能体的 开发页面，开发页面 URL 中 bot 参数后的数字就是智能体 ID。例如`https://www.coze.com/space/341****/bot/73428668*****`，bot ID 为`73428668*****`。
+                  type: string
+                connector_ids:
+                  format: list
+                  items:
+                    type: string
+                  title: |-
+                    智能体的发布渠道 ID 列表。目前支持通过此 API 将智能体发布为 Agent as API，WebSDK 以及自定义渠道。
+                    - Agent as API: 1024
+                    - WebSDK: 999
+                    - 自定义渠道: 自定义渠道 ID，获取方式可以参考 [渠道入驻概述](https://www.coze.cn/docs/guides/channel_integration_overview)。需要保证使用自定义渠道的创建者的访问令牌来进行访问。
+                  type: array
+              required:
+              - bot_id
+              - connector_ids
+              type: object
+              x-coze-order:
+              - bot_id
+              - connector_ids
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    title: |-
+                      调用状态码。
+
+                      - 0 表示调用成功。
+                      - 其他值表示调用失败。你可以通过 msg 字段判断详细的错误原因。
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/PublishDraftBotData'
+                  msg:
+                    title: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+                    type: string
+                required:
+                - code
+                - msg
+                type: object
+                x-coze-order:
+                - code
+                - msg
+                - data
+          description: ""
+      summary: 发布智能体
+      tags:
+      - 智能体
+  /v1/bot/update:
+    post:
+      description: |-
+        更新智能体的配置。
+        通过此 API 可更新通过扣子平台或 API 方式创建的所有智能体。通过 API 方式修改智能体除了智能体名称和描述、头像、人设与回复逻辑及开场白之外，还支持为智能体绑定知识库。
+      operationId: UpdateDraftBot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                bot_id:
+                  title: |-
+                    待修改配置的智能体 ID。
+                    进入智能体的 开发页面，开发页面 URL 中 `bot` 参数后的数字就是智能体 ID。例如`https://www.coze.cn/space/341****/bot/73428668*****`，bot ID 为`73428668*****`。
+                  type: string
+                description:
+                  title: 智能体的描述信息。长度为 0~ 500 个字符。默认为空。
+                  type: string
+                icon_file_id:
+                  title: |-
+                    作为智能体头像的文件 ID。
+
+                    - 未指定文件 ID 时，扣子平台默认为智能体指定一个头像。
+                    - 如需使用自定义头像，应先通过[上传文件](https://www.coze.cn/docs/developer_guides/upload_files)接口上传本地文件，从接口响应中获取文件 ID。
+                  type: string
+                knowledge:
+                  $ref: '#/components/schemas/Knowledge'
+                name:
+                  title: 智能体的名称。长度为 1~ 20 个字符。
+                  type: string
+                onboarding_info:
+                  $ref: '#/components/schemas/OnboardingInfo'
+                prompt_info:
+                  $ref: '#/components/schemas/PromptInfo'
+              required:
+              - bot_id
+              type: object
+              x-coze-order:
+              - bot_id
+              - name
+              - description
+              - icon_file_id
+              - prompt_info
+              - onboarding_info
+              - knowledge
+              - plugin_id_list
+              - voice_ids
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    title: |-
+                      调用状态码。
+
+                      - 0 表示调用成功。
+                      - 其他值表示调用失败。你可以通过 msg 字段判断详细的错误原因。
+                    type: integer
+                  msg:
+                    title: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+                    type: string
+                required:
+                - code
+                - msg
+                type: object
+                x-coze-order:
+                - code
+                - msg
+          description: ""
+      summary: 更新智能体
+      tags:
+      - 智能体
+  /v1/conversation/create:
+    post:
+      description: |-
+        创建一个会话。
+        会话是智能体和用户之间的一段问答交互，一个会话包含一条或多条消息。会话、对话和消息的概念说明，可参考[基础概念](https://www.coze.cn/docs/developer_guides/coze_api_overview#4a288f73)。
+      operationId: CreateConversationApi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                messages:
+                  description: 校验最多16个
+                  format: list
+                  items:
+                    $ref: '#/components/schemas/EnterMessage'
+                  title: 会话中的消息内容。详细说明可参考 [EnterMessage object](https://www.coze.cn/docs/developer_guides/create_conversation#cde8cc95)。
+                  type: array
+                meta_data:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    创建消息时的附加消息，获取消息时也会返回此附加消息。
+                    自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。
+                  type: object
+              type: object
+              x-coze-order:
+              - messages
+              - meta_data
+              - bot_id
+              - connector_id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ConversationData'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: 创建会话
+      tags:
+      - 会话
+  /v1/conversation/message/create:
+    post:
+      description: |-
+        创建一条消息，并将其添加到指定的会话中。
+        会话、对话和消息的概念说明，可参考[基础概念](https://www.coze.cn/docs/developer_guides/coze_api_overview#4a288f73)。
+
+        消息在服务端的保存时长为 180 天，到期后自动删除。你也可以调用[删除消息](https://www.coze.cn/docs/developer_guides/delete_message)接口，手动从会话中删除消息。
+      operationId: CreateMessageApi
+      parameters:
+      - description: Conversation ID，即会话的唯一标识。
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                content:
+                  description: 内容
+                  title: 消息的内容，支持纯文本、多模态（文本、图片、文件混合输入）、卡片等多种类型的内容。
+                  type: string
+                content_type:
+                  enum:
+                  - text
+                  - object_string
+                  title: |-
+                    消息内容的类型，支持设置为：
+
+                    - text：文本
+                    - object\_string：多模态内容，即文本和文件的组合、文本和图片的组合
+                  type: string
+                meta_data:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    创建消息时的附加消息，获取消息时也会返回此附加消息。
+                    自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。
+                  type: object
+                role:
+                  description: 已TODO 字段打平
+                  enum:
+                  - user
+                  - assistant
+                  title: |-
+                    发送这条消息的实体。取值：
+
+                    - **user**：代表该条消息内容是用户发送的。
+                    - **assistant**：代表该条消息内容是 Bot 发送的。
+                  type: string
+              required:
+              - role
+              type: object
+              x-coze-order:
+              - role
+              - content
+              - content_type
+              - meta_data
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OpenMessageApi'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: 创建消息
+      tags:
+      - 消息
+  /v1/conversation/message/delete:
+    post:
+      description: |-
+        调用接口在指定会话中删除消息。
+
+        * 暂不支持批量操作，需要逐条删除。
+        * 无法手动选择仅删除某一条中间态消息。当删除会话中生成的回复时，系统会自动删除与该回复相关的所有中间状态消息。中间态消息指除 type=answer 之外，通过发起对话接口生成的其他类型消息，如 type 为 verbose、function_call 等；会话中自动生成的回复指调用[发起对话](https://www.coze.cn/docs/developer_guides/chat_v3)接口生成的 type=answer 类型消息。
+        * 删除消息后，无法通过[查看消息列表](https://www.coze.cn/docs/developer_guides/list_message)或[查看对话消息详情](https://www.coze.cn/docs/developer_guides/list_chat_messages)接口查看已删除的这些消息。
+      operationId: DeleteMessageApi
+      parameters:
+      - description: 待删除的消息所属的会话 ID。
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: |-
+          待删除的消息 ID。
+
+          - 此消息必须在 conversation\_id 指定的会话中。
+          - 不支持指定为除 type=answer 之外，通过发起对话接口生成的其他类型消息。这些消息属于中间态消息，删除智能体回复时，中间态消息会同时被批量删除。
+        in: query
+        name: message_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              x-coze-order: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OpenMessageApi'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: 删除消息
+      tags:
+      - 消息
+  /v1/conversation/message/list:
+    post:
+      description: |-
+        查看指定会话的消息列表。
+        **查看消息列表** API 与**查看对话消息详情** API 的区别在于：
+
+        * **查看消息列表** API 用于查询指定会话（conversation）中的所有消息，不仅包括开发者在会话中手动插入的每一条消息，也包括用户的每一次 Query、智能体的每一次回复。
+        * **查看对话消息详情** API 通常用于非流式对话场景中，查看某次对话（chat）中 type=answer 的智能体回复及 type=follow-up 等类型的对话中间态消息。
+
+
+        消息在服务端的保存时长为180天，期满后，消息将自动从会话的消息记录中删除。
+      operationId: ListMessageApi
+      parameters:
+      - description: Conversation ID，即会话的唯一标识。
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                after_id:
+                  description: 后序消息游标ID  已TODO str
+                  title: |-
+                    查看指定位置之后的消息。
+                    默认为 0，表示不指定位置。如需向后翻页，则指定为返回结果中的 last\_id。
+                  type: string
+                before_id:
+                  description: 前序消息游标ID  已TODO str
+                  title: |-
+                    查看指定位置之前的消息。
+                    默认为 0，表示不指定位置。如需向前翻页，则指定为返回结果中的 first\_id。
+                  type: string
+                chat_id:
+                  description: 运行id
+                  title: 待查看的 Chat ID。
+                  type: string
+                limit:
+                  description: 每页限制条数  TODO 限制50条
+                  format: i64
+                  title: 每次查询返回的数据量。默认为 50，取值范围为 1~50。
+                  type: integer
+                order:
+                  description: 查询顺序  desc倒序 asc正序 TODO 默认倒序
+                  enum:
+                  - desc
+                  - asc
+                  title: |-
+                    消息列表的排序方式。
+
+                    - desc：（默认）按创建时间倒序
+                    - asc：按创建时间正序
+                  type: string
+              type: object
+              x-coze-order:
+              - order
+              - chat_id
+              - before_id
+              - after_id
+              - limit
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    format: list
+                    items:
+                      $ref: '#/components/schemas/OpenMessageApi'
+                    title: 消息详情。
+                    type: array
+                  first_id:
+                    title: 返回的消息列表中，第一条消息的 Message ID。
+                    type: string
+                  has_more:
+                    format: bool
+                    title: |-
+                      是否已返回全部消息。
+
+                      - true：未返回全部消息，可再次调用此接口查看其他分页。
+                      - false：已返回全部消息。
+                    type: boolean
+                  last_id:
+                    title: 返回的消息列表中，最后一条消息的 Message ID。
+                    type: string
+                type: object
+                x-coze-order:
+                - data
+                - has_more
+                - first_id
+                - last_id
+          description: ""
+      summary: 查看消息列表
+      tags:
+      - 消息
+  /v1/conversation/message/modify:
+    post:
+      description: 修改一条消息，支持修改消息内容、附加内容和消息类型。
+      operationId: ModifyMessageApi
+      parameters:
+      - description: Conversation ID，即会话的唯一标识。
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Message ID，即消息的唯一标识。
+        in: query
+        name: message_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                content:
+                  description: 内容
+                  title: |-
+                    消息的内容，支持纯文本、多模态（文本、图片、文件混合输入）、卡片等多种类型的内容。
+
+
+                    meta\_data 和 content 不能同时为空。
+                  type: string
+                content_type:
+                  enum:
+                  - text
+                  - object_string
+                  title: |-
+                    消息内容的类型。取值包括：
+
+                    - text：文本
+                    - object\_string：多模态内容，即文本和文件的组合、文本和图片的组合
+
+
+                    传入 content 时，应同时指定 content\_type。
+                  type: string
+                meta_data:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    创建消息时的附加消息，获取消息时也会返回此附加消息。
+                    自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。
+
+
+                    meta_data 和 content 不能同时为空。
+                  type: object
+              type: object
+              x-coze-order:
+              - content
+              - content_type
+              - meta_data
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    $ref: '#/components/schemas/OpenMessageApi'
+                type: object
+                x-coze-order:
+                - message
+          description: ""
+      summary: 修改消息
+      tags:
+      - 消息
+  /v1/conversation/message/retrieve:
+    get:
+      description: 查看指定消息的详细信息。
+      operationId: RetrieveMessageApi
+      parameters:
+      - description: Conversation ID，即会话的唯一标识。
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Message ID，即消息的唯一标识。
+        in: query
+        name: message_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OpenMessageApi'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: 查看消息详情
+      tags:
+      - 消息
+  /v1/conversation/retrieve:
+    get:
+      description: 通过会话 ID 查看会话信息。
+      operationId: RetrieveConversationApi
+      parameters:
+      - description: Conversation ID，即会话的唯一标识。
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ConversationData'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: 查看会话消息
+      tags:
+      - 会话
+  /v1/files/retrieve:
+    get:
+      description: 查看已上传的文件详情。
+      operationId: RetrieveFileOpen
+      parameters:
+      - description: 已上传的文件 ID。
+        in: query
+        name: file_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/File'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: 查看文件详情
+      tags:
+      - 文件
+  /v1/files/upload:
+    post:
+      description: |-
+        调用接口上传文件到扣子。
+        <span id="c91d0269"></span>
+        ## 接口说明
+        消息中无法直接使用本地文件，创建消息或对话前，需要先调用此接口上传本地文件到扣子。上传文件后，你可以在消息中通过指定 file_id 的方式在多模态内容中直接使用此文件。
+
+        * 支持上传的文件格式：
+           * 文档：DOC、DOCX、XLS、XLSX、PPT、PPTX、PDF、Numbers、CSV
+           * 图片：JPG、JPG2、PNG、GIF、WEBP、HEIC、HEIF、BMP、PCD、TIFF
+        * 文件上传大小限制：每个文件最大 512 MB。
+        * 上传到扣子的文件仅限本账号查看或使用。
+        * 必须使用 multipart/form-data 方式上传文件。
+        * 通过此接口上传的文件有效期为 3 个月。
+      operationId: UploadFileOpen
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                file:
+                  description: |-
+                    需要上传的文件
+                    支持上传的文件格式：文档：DOC、DOCX、XLS、XLSX、PPT、PPTX、PDF、Numbers、CSV
+                    图片：JPG、JPG2、PNG、GIF、WEBP、HEIC、HEIF、BMP、PCD、TIFF
+                    文件上传大小限制：每个文件最大 512 MB。
+                    上传到扣子的文件仅限本账号查看或使用。
+                    通过此接口上传的文件有效期为 3 个月。
+                  format: binary
+                  type: string
+                  x-coze-file-ext:
+                  - .doc
+                  - .docx
+                  - .xls
+                  - .xlsx
+                  - .ppt
+                  - .pptx
+                  - .pdf
+                  - .numbers
+                  - .csv
+                  - .jpg
+                  - .jpg2
+                  - .jpeg
+                  - .png
+                  - .gif
+                  - .webp
+                  - .heic
+                  - .heif
+                  - .bmp
+                  - .pcd
+                  - .tiff
+              required:
+              - file
+              type: object
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/File'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: 上传文件
+      tags:
+      - 文件
+  /v1/space/published_bots_list:
+    get:
+      description: |-
+        查看指定空间发布到 Agent as API 渠道的智能体列表。
+
+        此接口仅支持查看已发布为 API 服务的智能体列表。对于创建后从未发布到 API 渠道的 Bot，可以在[扣子平台](https://www.coze.cn/)中查看列表及配置。
+      operationId: GetSpacePublishedBotsList
+      parameters:
+      - description: |-
+          智能体所在的空间的 Space ID。Space ID 是空间的唯一标识。
+          进入指定空间，空间页面 URL 中 `space` 参数后的数字就是 Space ID。例如`https://www.coze.cn/space/736163827687053****/bot`，Space ID `为736163827687053****`。
+        in: query
+        name: space_id
+        required: true
+        schema:
+          type: string
+      - description: 分页查询时的页码。默认为 1，即从第一页数据开始返回。
+        in: query
+        name: page_index
+        schema:
+          type: integer
+      - description: 分页大小。默认为 20，即每页返回 20 条数据。
+        in: query
+        name: page_size
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    title: |-
+                      状态码。
+                      `0` 代表调用成功。
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/SpacePublishedBotsInfo'
+                  msg:
+                    title: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+                    type: string
+                required:
+                - code
+                - msg
+                - data
+                type: object
+                x-coze-order:
+                - code
+                - msg
+                - data
+          description: ""
+      summary: 查看智能体列表
+      tags:
+      - 智能体
+  /v1/workflow/run:
+    post:
+      description: |-
+        执行已发布的工作流。
+        <span id="4dd46fdd"></span>
+        ## 接口说明
+        此接口为非流式响应模式，对于支持流式输出的节点，应使用接口[执行工作流（流式响应）](https://www.coze.cn/docs/developer_guides/workflow_stream_run)获取流式响应。调用接口后，你可以从响应中获得 debug_url，访问链接即可通过可视化界面查看工作流的试运行过程，其中包含每个执行节点的输入输出等详细信息，帮助你在线调试或排障。
+        扣子专业版用户调用此接口时，支持通过 **is_async **参数异步运行工作流，适用于工作流执行耗时较长，导致运行超时的情况。异步运行时，工作流整体超时时间限制由 3 分钟延长至 24 小时，LLM 节点由 3 分钟延长至 5 分钟，其他节点的超时时间限制不变，详细说明可参考[工作流使用限制](https://www.coze.cn/docs/guides/workflow_limits)。异步运行后可通过本接口返回的 execute_id 调用[查询工作流异步执行结果](https://www.coze.cn/docs/developer_guides/workflow_history)API 获取工作流的执行结果。
+        <span id="02cfdb8f"></span>
+        ## 限制说明
+
+        * 不支持通过此 API 执行包括以下节点的工作流。
+           * 消息节点
+           * 开启了流式输出的结束节点
+           * 问答节点
+
+
+        * 通过 API 方式执行工作流前，应确认此工作流已发布，执行从未发布过的工作流时会返回错误码 4200。创建并发布工作流的操作可参考[使用工作流](https://www.coze.cn/docs/guides/use_workflow)。
+        * 异步运行的参数 `is_async` 仅限扣子专业版用户使用，否则调用此接口会报错 6003 Workflow execution with is_async=true is a premium feature available only to Coze Professional users.
+        * 调用此 API 之前，应先在扣子平台中试运行此工作流，如果试运行时需要关联智能体，则调用此 API 执行工作流时，也需要指定智能体ID。通常情况下，执行存在数据库节点、变量节点等节点的工作流需要关联智能体。
+      operationId: OpenAPIRunFlow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                app_id:
+                  description: 引用workflow 的应用ID
+                  type: string
+                bot_id:
+                  title: "需要关联的 Bot ID。 部分工作流执行时需要指定关联的 Bot，例如存在数据库节点、变量节点等节点的工作流。\n![bot_id_relate](https://p9-arcosite.byteimg.com/obj/tos-cn-i-goo7wpa0wc/c138f5defd104f1b9544a32212cd8968)\n进入
+                    Bot 的开发页面，开发页面 URL 中 bot 参数后的数字就是 Bot ID。例如 `https://www.coze.com/space/341****/bot/73428668*****`，Bot
+                    ID 为 `73428668*****`。 \n\n\n- 确保调用该接口使用的令牌开通了此 Bot 所在空间的权限。\n-
+                    确保该 Bot 已发布为 API 服务。"
+                  type: string
+                ext:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    用于指定一些额外的字段，以 Map\[String\]\[String\] 格式传入。例如某些插件 会隐式用到的经纬度等字段。
+                    目前仅支持以下字段：
+
+                    - latitude：String 类型，表示经度。
+                    - longitude：String 类型，表示纬度。
+                    - user\_id：Integer 类型，表示用户 ID。
+                  type: object
+                is_async:
+                  format: bool
+                  title: |-
+                    是否异步运行。异步运行后可通过本接口返回的 execute\_id 调用[查询工作流异步执行结果](https://www.coze.cn/docs/developer_guides/workflow_history)API 获取工作流的最终执行结果。
+
+                    - true：异步运行。
+                    - false：（默认）同步运行。
+
+
+                    异步运行的参数 is_async 仅限扣子专业版使用，否则调用此接口会报错 6003 Workflow execution with is_async=true is a premium feature available only to Coze Professional users
+                  type: boolean
+                parameters:
+                  title: 工作流开始节点的输入参数及取值，你可以在指定工作流的编排页面查看参数列表。
+                  type: object
+                workflow_id:
+                  title: |-
+                    待执行的 Workflow ID，此工作流应已发布。
+                    进入 Workflow 编排页面，在页面 URL 中，`workflow` 参数后的数字就是 Workflow ID。例如 `https://www.coze.com/work_flow?space_id=42463***&workflow_id=73505836754923***`，Workflow ID 为 `73505836754923***`。
+                  type: string
+              required:
+              - workflow_id
+              type: object
+              x-coze-order:
+              - workflow_id
+              - parameters
+              - bot_id
+              - ext
+              - is_async
+              - execute_mode
+              - version
+              - connector_id
+              - app_id
+              - project_id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    description: 通用字段调用结果
+                    format: i64
+                    title: |-
+                      调用状态码。
+
+                      - 0 表示调用成功。
+                      - 其他值表示调用失败。你可以通过 msg 字段判断详细的错误原因。
+                    type: integer
+                  cost:
+                    title: 预留字段，无需关注。
+                    type: string
+                  data:
+                    description: 同步返回字段执行结果，通常为json序列化字符串，也有可能是非json结构的字符串
+                    title: 工作流执行结果，通常为 JSON 序列化字符串，部分场景下可能返回非 JSON 结构的字符串。
+                    type: string
+                  debug_url:
+                    title: 工作流试运行调试页面。访问此页面可查看每个工作流节点的运行结果、输入输出等信息。
+                    type: string
+                  execute_id:
+                    description: 异步返回字段
+                    title: 异步执行的事件 ID。
+                    type: string
+                  msg:
+                    description: 成功为success, 失败为简单的错误信息、
+                    title: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+                    type: string
+                  token:
+                    format: i64
+                    title: 预留字段，无需关注。
+                    type: integer
+                required:
+                - code
+                type: object
+                x-coze-order:
+                - code
+                - msg
+                - data
+                - execute_id
+                - token
+                - cost
+                - debug_url
+          description: ""
+      summary: 执行工作流
+      tags:
+      - 工作流
+  /v1/workflow/stream_resume:
+    post:
+      description: |-
+        恢复运行已中断的工作流。
+        <span id="72087735"></span>
+        ## 接口说明
+        执行包含问答节点的工作流时，智能体会以指定问题向用户提问，并等待用户回答。此时工作流为中断状态，开发者需要调用此接口回答问题，并恢复运行工作流。如果用户的响应和智能体预期提取的信息不匹配，例如缺少必选的字段，或字段数据类型不一致，工作流会再次中断并追问。如果询问 3 次仍未收到符合预期的回复，则判定为工作流执行失败。
+        <span id="3ab9d3c3"></span>
+        ## 限制说明
+
+        * 最多调用此接口恢复运行 3 次，如果第三次恢复运行时智能体仍未收到符合预期的回复，则判定为工作流执行失败。
+        * 恢复运行后，index 和节点 index 都会重置。
+        * 在扣子专业版中，恢复运行工作流也会产生 token 消耗，且与[执行工作流（流式响应）](https://www.coze.cn/docs/developer_guides/workflow_stream_run)时消耗的 token 数量相同。
+      operationId: OpenAPIStreamResumeFlow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                connector_id:
+                  description: 渠道ID，比如ui builder、template、商店等
+                  type: string
+                event_id:
+                  title: 工作流执行中断事件 ID。你可以从[执行工作流（流式响应）](https://www.coze.cn/docs/developer_guides/workflow_stream_run)的响应信息中获得中断事件
+                    ID。
+                  type: string
+                interrupt_type:
+                  $ref: '#/components/schemas/InterruptType'
+                resume_data:
+                  title: 恢复执行时，用户对智能体指定问题的回复。回复中应包含问答节点中的必选参数，否则工作流会再次中断并提问。
+                  type: string
+                workflow_id:
+                  title: |-
+                    待执行的 Workflow ID，此工作流应已发布。
+                    进入 Workflow 编排页面，在页面 URL 中，workflow 参数后的数字就是 Workflow ID。例如 https://www.coze.com/work\_flow?space\_id=42463\*\*\*&workflow\_id=73505836754923\*\*\*，Workflow ID 为 73505836754923\*\*\*。
+                  type: string
+              required:
+              - event_id
+              - interrupt_type
+              - resume_data
+              - workflow_id
+              type: object
+              x-coze-order:
+              - workflow_id
+              - event_id
+              - interrupt_type
+              - resume_data
+              - ext
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  card_body:
+                    description: Content Type为Card时返回的卡片内容
+                    type: string
+                  content:
+                    description: ContentType为Text时的返回
+                    type: string
+                  content_type:
+                    description: 返回的数据类型
+                    type: string
+                  cost:
+                    type: string
+                  debug_url:
+                    type: string
+                  error_code:
+                    description: 错误信息
+                    format: i64
+                    type: integer
+                  error_message:
+                    type: string
+                  event:
+                    description: 事件类型:message,done,error
+                    type: string
+                  ext:
+                    additionalProperties:
+                      type: string
+                    description: 成功时最后一条消息
+                    format: map
+                    type: object
+                  id:
+                    description: 绝对序号
+                    type: string
+                  interrupt_data:
+                    $ref: '#/components/schemas/Interrupt'
+                  node_is_finish:
+                    description: 节点是否执行完成
+                    format: bool
+                    type: boolean
+                  node_seq_id:
+                    description: 节点信息节点中的序号
+                    type: string
+                  node_title:
+                    description: 节点名称
+                    type: string
+                  token:
+                    format: i64
+                    type: integer
+                type: object
+                x-coze-order:
+                - id
+                - event
+                - node_seq_id
+                - node_title
+                - content
+                - node_is_finish
+                - interrupt_data
+                - content_type
+                - card_body
+                - ext
+                - token
+                - cost
+                - error_code
+                - error_message
+                - debug_url
+          description: ""
+      summary: 恢复运行工作流
+      tags:
+      - 工作流
+  /v1/workflow/stream_run:
+    post:
+      description: "执行已发布的工作流，响应方式为流式响应。 \n<span id=\"2fef0d34\"></span>\n## 接口说明
+        \n调用 API 执行工作流时，对于支持流式输出的工作流，往往需要使用流式响应方式接收响应数据，例如实时展示工作流的输出信息、呈现打字机效果等。 \n在流式响应中，服务端不会一次性发送所有数据，而是以数据流的形式逐条发送数据给客户端，数据流中包含工作流执行过程中触发的各种事件（event），直至处理完毕或处理中断。处理结束后，服务端会通过
+        event: Done 事件提示工作流执行完毕。各个事件的说明可参考[返回结果](https://www.coze.cn/docs/developer_guides/workflow_stream_run#970775c1)。
+        \n\n目前支持流式响应的工作流节点包括**消息节点**、**问答节点**和**开启了流式输出的结束节点**。对于不包含这些节点的工作流，可以使用[执行工作流](https://www.coze.cn/docs/developer_guides/workflow_run)接口一次性接收响应数据。
+        \n\n<span id=\"37a5ac1f\"></span>\n## 限制说明\n此接口为同步接口，如果工作流整体或某些节点运行超时，Bot
+        可能无法提供符合预期的回复。同步执行时，工作流整体超时时间限制可参考[工作流使用限制](https://www.coze.cn/docs/guides/workflow_limits)。
+        \n\n* 通过 API 方式执行工作流前，应确认此工作流已发布，执行从未发布过的工作流时会返回错误码 4200。创建并发布工作流的操作可参考[使用工作流](https://www.coze.cn/docs/guides/use_workflow)。
+        \n* 调用此 API 之前，应先在扣子平台中试运行此工作流，如果试运行时需要关联智能体，则调用此 API 执行工作流时，也需要指定智能体ID。通常情况下，执行存在数据库节点、变量节点等节点的工作流需要关联智能体。
+        \n   ![图片](https://p9-arcosite.byteimg.com/tos-cn-i-goo7wpa0wc/c138f5defd104f1b9544a32212cd8968~tplv-goo7wpa0wc-image.image)"
+      operationId: OpenAPIStreamRunFlow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                app_id:
+                  description: 引用workflow 的应用ID
+                  type: string
+                bot_id:
+                  title: |-
+                    需要关联的智能体ID。 部分工作流执行时需要指定关联的智能体，例如存在数据库节点、变量节点等节点的工作流。
+                    ![](https://p9-arcosite.byteimg.com/obj/tos-cn-i-goo7wpa0wc/c138f5defd104f1b9544a32212cd8968 =168x119)
+                    进入智能体的开发页面，开发页面 URL 中 bot 参数后的数字就是智能体ID。例如 https://www.coze.com/space/341\*\*\*\*/bot/73428668\*\*\*\*\*，Bot ID 为 73428668\*\*\*\*\*。
+
+                    - 确保调用该接口使用的令牌开通了此智能体所在空间的权限。
+                    - 确保该智能体已发布为 API 服务。
+                  type: string
+                connector_id:
+                  description: 渠道ID，比如ui builder、template、商店等
+                  type: string
+                execute_mode:
+                  description: 默认为正式运行，试运行需要传入"DEBUG"
+                  type: string
+                ext:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    用于指定一些额外的字段，以 Map\[String\]\[String\] 格式传入。例如某些插件 会隐式用到的经纬度等字段。
+                    目前仅支持以下字段：
+
+                    - atitude：String 类型，表示经度。
+                    - longitude：String 类型，表示纬度。
+                    - user\_id：Integer 类型，表示用户 ID。
+                  type: object
+                parameters:
+                  title: 工作流开始节点的输入参数及取值，你可以在指定工作流的编排页面查看参数列表。
+                  type: object
+                project_id:
+                  description: 项目ID，为了兼容ui builder
+                  type: string
+                version:
+                  description: 版本号，可能是workflow版本或者project版本
+                  type: string
+                workflow_id:
+                  title: |-
+                    待执行的 Workflow ID，此工作流应已发布。
+                    进入 Workflow 编排页面，在页面 URL 中，workflow 参数后的数字就是 Workflow ID。例如 https://www.coze.com/work\_flow?space\_id=42463\*\*\*&workflow\_id=73505836754923\*\*\*，Workflow ID 为 73505836754923\*\*\*。
+                  type: string
+              required:
+              - workflow_id
+              type: object
+              x-coze-order:
+              - workflow_id
+              - parameters
+              - bot_id
+              - ext
+              - is_async
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  card_body:
+                    description: Content Type为Card时返回的卡片内容
+                    type: string
+                  content:
+                    description: ContentType为Text时的返回
+                    title: 流式输出的消息内容。
+                    type: string
+                  content_type:
+                    description: 返回的数据类型
+                    type: string
+                  cost:
+                    title: 预留字段，无需关注。
+                    type: string
+                  debug_url:
+                    type: string
+                  error_code:
+                    description: 错误信息
+                    format: i64
+                    title: |-
+                      调用状态码。
+
+                      - 0 表示调用成功。
+                      - 其他值表示调用失败。你可以通过 error\_message 字段判断详细的错误原因。
+                    type: integer
+                  error_message:
+                    title: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+                    type: string
+                  event:
+                    description: 事件类型:message,done,error
+                    title: |-
+                      当前流式返回的数据包事件。包括以下类型：
+
+                      - Message：工作流节点输出消息，例如消息节点、结束节点的输出消息。可以在 data 中查看具体的消息内容。
+                      - Error：报错。可以在 data 中查看 error\_code 和 error\_message，排查问题。
+                      - Done：结束。表示工作流执行结束，此时 data 为空。
+                      - Interrupt：中断。表示工作流中断，此时 data 字段中包含具体的中断信息。
+                    type: string
+                  ext:
+                    additionalProperties:
+                      type: string
+                    description: 成功时最后一条消息
+                    format: map
+                    title: 额外字段。
+                    type: object
+                  id:
+                    description: 绝对序号
+                    title: 此消息在接口响应中的事件 ID。以 0 为开始。
+                    type: string
+                  interrupt_data:
+                    $ref: '#/components/schemas/Interrupt'
+                  node_is_finish:
+                    description: 节点是否执行完成
+                    format: bool
+                    title: 当前消息是否为此节点的最后一个数据包。
+                    type: boolean
+                  node_seq_id:
+                    description: 节点信息节点中的序号
+                    title: 此消息在节点中的消息 ID，从 0 开始计数，例如消息节点的第 5 条消息。
+                    type: string
+                  node_title:
+                    description: 节点名称
+                    title: 输出消息的节点名称，例如消息节点、结束节点。
+                    type: string
+                  token:
+                    format: i64
+                    type: integer
+                type: object
+                x-coze-order:
+                - id
+                - event
+                - node_seq_id
+                - node_title
+                - content
+                - node_is_finish
+                - interrupt_data
+                - content_type
+                - card_body
+                - ext
+                - token
+                - cost
+                - error_code
+                - error_message
+                - debug_url
+          description: ""
+      summary: 执行工作流（流式响应）
+      tags:
+      - 工作流
+  /v1/workflows/{workflow_id}/run_histories/{execute_id}:
+    get:
+      operationId: OpenAPIGetWorkflowRunHistory
+      parameters:
+      - description: |-
+          待执行的 Workflow ID，此工作流应已发布。
+          进入 Workflow 编排页面，在页面 URL 中，workflow 参数后的数字就是 Workflow ID。例如 https://www.coze.com/work_flow?space_id=42463***&workflow_id=73505836754923***，Workflow ID 为 73505836754923***。
+        in: path
+        name: workflow_id
+        required: true
+        schema:
+          type: string
+      - description: 工作流执行 ID。调用接口[执行工作流](https://www.coze.cn/docs/developer_guides/workflow_run)，如果选择异步执行工作流，响应信息中会返回
+          execute_id。
+        in: path
+        name: execute_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i64
+                    type: integer
+                  data:
+                    format: list
+                    items:
+                      $ref: '#/components/schemas/WorkflowExecuteHistory'
+                    type: array
+                  msg:
+                    type: string
+                type: object
+          description: ""
+      summary: 查询工作流异步执行结果
+  /v1/workspaces:
+    get:
+      description: |-
+        查看当前账号加入的空间列表。
+        空间列表中包括：
+
+        * 当前账号创建的个人空间和团队空间。
+        * 当前账号作为团队成员加入的团队空间。
+
+
+        暂不支持[第三方渠道应用](https://www.coze.cn/docs/developer_guides/channel_integration_overview)调用此 API。
+      operationId: OpenSpaceList
+      parameters:
+      - description: 分页查询时的页码。默认为 1，即从第一页数据开始返回。
+        in: query
+        name: page_num
+        schema:
+          type: integer
+      - description: 分页大小。默认为 20，最大为 50。
+        in: query
+        name: page_size
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i64
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/OpenSpaceData'
+                  msg:
+                    type: string
+                type: object
+                x-coze-order:
+                - data
+                - code
+                - msg
+          description: ""
+      summary: 查看空间列表
+      tags:
+      - 空间
+  /v3/chat:
+    post:
+      description: "调用此接口发起一次对话，支持添加上下文和流式响应。 \n会话、对话和消息的概念说明，可参考[基础概念](https://www.coze.cn/docs/developer_guides/coze_api_overview#4a288f73)。
+        \n<span id=\"f568d432\"></span>\n## 接口说明 \n发起对话接口用于向指定智能体发起一次对话，支持在对话时添加对话的上下文消息，以便智能体基于历史消息做出合理的回复。开发者可以按需选择响应方式，即流式或非流式响应，响应方式决定了开发者获取智能体回复的方式。关于获取智能体回复的详细说明可参考[通过对话接口获取智能体回复](https://www.coze.cn/docs/developer_guides/get_chat_response)。
+        \n\n* **流式响应**：智能体在生成回复的同时，将回复消息以数据流的形式逐条发送给客户端。处理结束后，服务端会返回一条完整的智能体回复。详细说明可参考[流式响应](https://www.coze.cn/docs/developer_guides/chat_v3#AJThpr1GJe)。
+        \n* **非流式响应**：无论对话是否处理完毕，立即发送响应消息。开发者可以通过接口[查看对话详情](https://www.coze.cn/docs/developer_guides/retrieve_chat)确认本次对话处理结束后，再调用[查看对话消息详情](https://www.coze.cn/docs/developer_guides/list_chat_messages)接口查看模型回复等完整响应内容。详细说明可参考[非流式响应](https://www.coze.cn/docs/developer_guides/chat_v3#337f3d53)。"
+      operationId: ChatV3
+      parameters:
+      - description: |-
+          标识对话发生在哪一次会话中。
+          会话是 Bot 和用户之间的一段问答交互。一个会话包含一条或多条消息。对话是会话中对 Bot 的一次调用，Bot 会将对话中产生的消息添加到会话中。
+
+          - 可以使用已创建的会话，会话中已存在的消息将作为上下文传递给模型。创建会话的方式可参考[创建会话](/docs/developer_guides/create_conversation)。
+          - 对于一问一答等不需要区分 conversation 的场合可不传该参数，系统会自动生成一个会话
+
+
+          一个会话中，只能有一个进行中的对话，否则调用此接口时会报错 4016。
+        in: query
+        name: conversation_id
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                additional_messages:
+                  format: list
+                  items:
+                    $ref: '#/components/schemas/EnterMessage0'
+                  title: |-
+                    对话的附加信息。你可以通过此字段传入历史消息和本次对话中用户的问题。数组长度限制为 100，即最多传入 100 条消息。
+
+                    - 若未设置 additional\_messages，智能体收到的消息只有会话中已有的消息内容，其中最后一条作为本次对话的用户输入，其他内容均为本次对话的上下文。
+                    - 若设置了 additional\_messages，智能体收到的消息包括会话中已有的消息和 additional\_messages 中添加的消息，其中 additional\_messages 最后一条消息会作为本次对话的用户输入，其他内容均为本次对话的上下文。
+
+                    消息结构可参考[EnterMessage Object](https://www.coze.cn/docs/developer_guides/chat_v3#ed7f3dc3)，具体示例可参考[携带上下文](https://www.coze.cn/docs/developer_guides/chat_v3#2bb94adb)。
+
+                    - 会话或 additional\_messages 中最后一条消息应为 role=user 的记录，以免影响模型效果。
+                    - 如果本次对话未指定会话或指定的会话中无消息时，必须通过此参数传入智能体用户的问题。
+                  type: array
+                auto_save_history:
+                  format: bool
+                  title: |-
+                    是否保存本次对话记录。
+
+                    - true：（默认）会话中保存本次对话记录，包括 additional\_messages 中指定的所有消息、本次对话的模型回复结果、模型执行中间结果。
+                    - false：会话中不保存本次对话记录，后续也无法通过任何方式查看本次对话信息、消息详情。在同一个会话中再次发起对话时，本次会话也不会作为上下文传递给模型。
+
+                    非流式响应下（stream=false），此参数必须设置为 true，即保存本次对话记录，否则无法查看对话状态和模型回复。
+                  type: boolean
+                bot_id:
+                  title: |-
+                    要进行会话聊天的智能体ID。
+                    进入智能体的 开发页面，开发页面 URL 中 bot 参数后的数字就是智能体ID。例如https://www.coze.cn/space/341\*\*\*\*/bot/73428668\*\*\*\*\*，智能体ID 为73428668\*\*\*\*\*。
+
+                    确保当前使用的访问密钥已被授予智能体所属空间的 chat 权限。
+                  type: string
+                connector_id:
+                  description: 手动指定渠道 id 聊天。目前仅支持 websdk(=999)
+                  type: string
+                custom_config:
+                  $ref: '#/components/schemas/CustomConfig'
+                custom_variables:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    智能体中定义的变量。在智能体prompt 中设置变量 {{key}} 后，可以通过该参数传入变量值，同时支持 Jinja2 语法。详细说明可参考[变量示例](https://www.coze.cn/docs/developer_guides/chat_v3#6917d529)。
+
+                    变量名只支持英文字母和下划线。
+                  type: object
+                extra_params:
+                  additionalProperties:
+                    type: string
+                  description: 透传参数到 plugin/workflow 等下游
+                  format: map
+                  title: |-
+                    附加参数，通常用于特殊场景下指定一些必要参数供模型判断，例如指定经纬度，并询问智能体此位置的天气。
+                    自定义键值对格式，其中键（key）仅支持设置为：
+
+                    - latitude：纬度，此时值（Value）为纬度值，例如 39.9800718。
+                    - longitude：经度，此时值（Value）为经度值，例如 116.309314。
+                  type: object
+                meta_data:
+                  additionalProperties:
+                    type: string
+                  format: map
+                  title: |-
+                    附加信息，通常用于封装一些业务相关的字段。查看对话消息详情时，系统会透传此附加信息。
+                    自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。
+                  type: object
+                stream:
+                  format: bool
+                  title: |-
+                    是否启用流式返回。
+
+                    - **true**：采用流式响应。 “流式响应”将模型的实时响应提供给客户端，类似打字机效果。你可以实时获取服务端返回的对话、消息事件，并在客户端中同步处理、实时展示，也可以直接在 completed 事件中获取智能体最终的回复。
+                    - **false**：（默认）采用非流式响应。 “非流式响应”是指响应中仅包含本次对话的状态等元数据。此时应同时开启 auto\_save\_history，在本次对话处理结束后再查看模型回复等完整响应内容。可以参考以下业务流程：
+
+                    a. 调用发起会话接口，并设置 stream = false，auto\_save\_history=true，表示使用非流式响应，并记录历史消息。
+
+                    你需要记录会话的 Conversation ID 和 Chat ID，用于后续查看详细信息。
+
+                    b. 定期轮询[查看对话详情](https://www.coze.cn/docs/developer_guides/retrieve_chat)接口，建议每次间隔 1 秒以上，直到会话状态流转为终态，即 status 为 completed、required\_action、canceled 或 failed。
+                    c. 调用[查看对话消息详情](https://www.coze.cn/docs/developer_guides/list_chat_messages)接口，查询大模型生成的最终结果。
+                  type: boolean
+                tools:
+                  format: list
+                  items:
+                    $ref: '#/components/schemas/Tool'
+                  type: array
+                user_id:
+                  title: |-
+                    标识当前与智能体的用户，由使用方自行定义、生成与维护。user\_id 用于标识对话中的不同用户，不同的 user\_id，其对话的上下文消息、数据库等对话记忆数据互相隔离。如果不需要用户数据隔离，可将此参数固定为一个任意字符串，例如 123，abc 等。
+
+                    出于数据隐私及信息安全等方面的考虑，不建议使用业务系统中定义的用户 ID。
+                  type: string
+              required:
+              - bot_id
+              - user_id
+              type: object
+              x-coze-order:
+              - bot_id
+              - user_id
+              - stream
+              - additional_messages
+              - custom_variables
+              - auto_save_history
+              - meta_data
+              - extra_params
+              - tools
+              - custom_config
+              - connector_id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/ChatV3ChatDetail'
+                  msg:
+                    type: string
+                required:
+                - code
+                - msg
+                type: object
+                x-coze-order:
+                - data
+                - code
+                - msg
+          description: ""
+      summary: 发起对话
+      tags:
+      - 对话
+  /v3/chat/cancel:
+    post:
+      description: "调用此接口取消进行中的对话。\n调用[发起对话](https://www.coze.cn/docs/developer_guides/chat_v3)接口时，如果对话触发了复杂的工作流、图像流，或模型处理数据量大时，对话可能耗时较久。对话进行中时，用户无法在此会话中发起新的对话。此时可以调用此接口取消正在进行中的对话，取消后，对话转为已取消状态（status=canceled），你可以在会话中创建新的对话。\n<span
+        id=\"b692ec97\"></span>\n## 注意事项\n\n* 取消对话后，发起对话接口的响应不会中断，服务端仍旧会持续生成智能体回复，并根据实际的模型消耗计算
+        Token。如果你使用流式响应在对话界面实时输出智能体回复，取消对话后可以中断客户端连接，停止输出回复。\n* 如果发起对话时设置了 auto_save_history=true，成功取消对话后你仍然可以通过[查看对话消息详情](https://www.coze.cn/docs/developer_guides/list_chat_messages)或[查看消息列表](https://www.coze.cn/docs/developer_guides/list_message)接口查看完整的智能体回复，也可以在此会话中再次发起一个对话，但被取消的智能体回复不会作为上下文被传递给模型，上一轮对话中只会保留用户
+        Query 作为上下文。\n* 不支持取消以下状态的对话。你可以通过[查看对话详情](https://www.coze.cn/docs/developer_guides/retrieve_chat)接口的
+        status 字段查看对话状态。\n   * completed：会话结束。 \n   * failed：会话失败。 \n   * requires_action：会话中断。\n\n对话过程中的状态流转：\n![图片](https://p9-arcosite.byteimg.com/tos-cn-i-goo7wpa0wc/d7c3509b18454159ab3cfb89e7e7b222~tplv-goo7wpa0wc-image.image)"
+      operationId: CancelChatApi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                chat_id:
+                  title: 对话 ID，即 Chat ID。可以在[发起对话](https://www.coze.cn/docs/developer_guides/chat_v3)接口
+                    Response 中查看 id 字段，如果是流式响应，则在 Response 的 chat 事件中查看 id 字段。
+                  type: string
+                conversation_id:
+                  title: 会话 ID，即 Conversation ID。可以在[发起对话](https://www.coze.cn/docs/developer_guides/chat_v3)接口
+                    Response 中查看 conversation\_id 字段。
+                  type: string
+              required:
+              - chat_id
+              - conversation_id
+              type: object
+              x-coze-order:
+              - chat_id
+              - conversation_id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChatV3ChatDetail'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: 取消进行中的对话
+      tags:
+      - 对话
+  /v3/chat/message/list:
+    get:
+      description: |-
+        查看指定对话中除 Query 以外的其他消息，包括模型回复、智能体执行的中间结果等消息。
+        **查看消息列表** API 与**查看对话消息详情** API 的区别在于：
+
+        * **查看消息列表** API 用于查询指定会话（conversation）中的所有消息，不仅包括开发者在会话中手动插入的每一条消息，也包括用户的每一次 Query、智能体的每一次回复。
+        * **查看对话消息详情** API 通常用于非流式对话场景中，查看某次对话（chat）中 type=answer 的智能体回复及 type=follow-up 等类型的对话中间态消息。
+
+
+        调用此 API 之前，建议先以每秒最多 1 次的频率轮询 [查看对话详情](https://www.coze.cn/docs/developer_guides/retrieve_chat) API 确认本轮对话已结束（status=completed），否则调用此 API 时获取到的消息内容可能不完整。
+      operationId: ListChatMessageApi
+      parameters:
+      - description: Conversation ID，即会话的唯一标识。
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Chat ID，即对话的唯一标识。
+        in: query
+        name: chat_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    format: list
+                    items:
+                      $ref: '#/components/schemas/ChatV3MessageDetail'
+                    title: 指定对话中除 Query 以外的其他消息，包括模型回复、Bot 执行的中间结果等消息。
+                    type: array
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: 查看对话消息详情
+      tags:
+      - 对话
+  /v3/chat/retrieve:
+    get:
+      description: |-
+        查看对话的详细信息。
+        在非流式会话场景中，调用[发起对话](https://www.coze.cn/docs/developer_guides/chat_v3)接口后，可以先轮询此 API 确认本轮对话已结束（status=completed），再调用接口[查看对话消息详情](https://www.coze.cn/docs/developer_guides/list_chat_messages)查看本轮对话的模型回复。
+
+        * 仅在对话开启了保存历史记录（auto_save_history=true）后，可通过此接口查看对话的详细信息。
+        * 建议每秒最多调用 1 次此接口，否则可能触发接口限流。
+      operationId: RetrieveChatOpen
+      parameters:
+      - description: Conversation ID，即会话的唯一标识。
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Chat ID，即对话的唯一标识。
+        in: query
+        name: chat_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChatV3ChatDetail'
+                type: object
+                x-coze-order:
+                - data
+          description: ""
+      summary: 查看对话详情
+      tags:
+      - 对话
+  /v3/chat/submit_tool_outputs:
+    post:
+      description: |-
+        调用此接口提交工具执行的结果。
+        <span id="422f2e9b"></span>
+        ## 接口说明
+        你可以将需要客户端执行的操作定义为插件，对话中如果触发这个插件，流式 event 响应信息会提示“conversation.chat.requires_action”，此时需要执行客户端的操作后，通过此接口提交插件执行后的结果。
+
+        仅触发了端插件的对话需要调用此接口提交执行结果。端插件功能邀测中，若有需要可[申请白名单](mailto:feedback@coze.com)。
+      operationId: SubmitToolOutputs
+      parameters:
+      - description: Conversation ID，即会话的唯一标识。
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Chat ID，即对话的唯一标识。
+        in: query
+        name: chat_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                stream:
+                  format: bool
+                  title: |-
+                    是否开启流式响应。
+
+                    - true：填充之前对话中的上下文，继续流式响应。
+                    - false：（默认）非流式响应，仅回复对话的基本信息。
+                  type: boolean
+                tool_outputs:
+                  format: list
+                  items:
+                    $ref: '#/components/schemas/ToolOutput'
+                  title: 工具执行结果。
+                  type: array
+              required:
+              - tool_outputs
+              type: object
+              x-coze-order:
+              - stream
+              - tool_outputs
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    format: i32
+                    type: integer
+                  data:
+                    $ref: '#/components/schemas/ChatV3ChatDetail'
+                  msg:
+                    type: string
+                required:
+                - code
+                - msg
+                type: object
+                x-coze-order:
+                - code
+                - data
+                - msg
+          description: ""
+      summary: 提交工具执行结果
+      tags:
+      - 对话
+security:
+- token: []
+servers:
+- url: https://bot-open-api.bytedance.net
+tags:
+- name: 知识库
+- name: 工作流
+- name: 智能体
+- name: 空间
+- name: 会话
+- name: 消息
+- name: 对话
+- name: 文件
