@@ -1,6 +1,6 @@
 module github.com/coze-dev/coze-sdk-gen
 
-go 1.22.7
+go 1.20
 
 require (
 	github.com/getkin/kin-openapi v0.128.0
