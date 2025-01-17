@@ -74,12 +74,31 @@ type Parser struct{}
 
 // ParseOpenAPI parses an OpenAPI document and returns modules and classes
 func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[string]Module, []Class, error) {
-	// Parse OpenAPI document
+	// Parse and initialize OpenAPI document
+	doc, err := p.initializeOpenAPIDoc(yamlContent)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Generate response models from operations
+	p.generateResponseModels(doc)
+
+	// Generate classes from schemas
+	classes := p.generateClasses(doc)
+
+	// Group operations by module and create final modules
+	modules := p.generateModules(doc, classes)
+
+	return modules, classes, nil
+}
+
+// initializeOpenAPIDoc parses and initializes the OpenAPI document
+func (p Parser) initializeOpenAPIDoc(yamlContent []byte) (*openapi3.T, error) {
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(yamlContent)
 	if err != nil {
 		log.Printf("[ParseOpenAPI] parse openapi v3 failed. err=%v", err)
-		return nil, nil, fmt.Errorf("parse openapi v3 failed: %w", err)
+		return nil, fmt.Errorf("parse openapi v3 failed: %w", err)
 	}
 
 	// Initialize Components if needed
@@ -90,7 +109,11 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 		doc.Components.Schemas = make(map[string]*openapi3.SchemaRef)
 	}
 
-	// Generate response data models from operations
+	return doc, nil
+}
+
+// generateResponseModels generates response data models from operations
+func (p Parser) generateResponseModels(doc *openapi3.T) {
 	for _, pathItem := range doc.Paths.Map() {
 		for _, op := range pathItem.Operations() {
 			if response, ok := op.Responses.Map()["200"]; ok && response.Value.Content != nil {
@@ -109,8 +132,10 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 			}
 		}
 	}
+}
 
-	// Generate classes from schemas
+// generateClasses generates classes from schemas
+func (p Parser) generateClasses(doc *openapi3.T) []Class {
 	classes := []Class{}
 	if doc.Components != nil && doc.Components.Schemas != nil {
 		// Get sorted schema names based on dependencies
@@ -123,8 +148,20 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 			classes = append(classes, class)
 		}
 	}
+	return classes
+}
 
+// generateModules groups operations by module and creates final modules
+func (p Parser) generateModules(doc *openapi3.T, classes []Class) map[string]Module {
 	// Group operations by module
+	moduleOperations := p.groupOperationsByModule(doc)
+
+	// Create final modules with their dependencies
+	return p.createModulesWithDependencies(moduleOperations, classes, doc)
+}
+
+// groupOperationsByModule groups operations by their module name
+func (p Parser) groupOperationsByModule(doc *openapi3.T) map[string][]Operation {
 	moduleOperations := make(map[string][]Operation)
 	for path, pathItem := range doc.Paths.Map() {
 		// Extract module name from path (second segment)
@@ -139,60 +176,18 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 			moduleOperations[moduleName] = append(moduleOperations[moduleName], operation)
 		}
 	}
+	return moduleOperations
+}
 
-	// Create modules
+// createModulesWithDependencies creates modules with their class dependencies
+func (p Parser) createModulesWithDependencies(moduleOperations map[string][]Operation, classes []Class, doc *openapi3.T) map[string]Module {
 	modules := make(map[string]Module)
 	for moduleName, operations := range moduleOperations {
-		// Find all model dependencies for each module
-		modelSet := make(map[string]bool)
-		var findDependentClasses func(schema Schema)
-		findDependentClasses = func(schema Schema) {
-			if schema.Ref != "" {
-				parts := strings.Split(schema.Ref, "/")
-				className := parts[len(parts)-1]
-				if modelSet[className] {
-					return
-				}
-				modelSet[className] = true
-				// Find the schema
-				if refSchema, ok := doc.Components.Schemas[className]; ok {
-					findDependentClasses(p.convertOpenAPISchema(refSchema))
-				}
-			}
-			if schema.Type == SchemaTypeObject {
-				for _, prop := range schema.Properties {
-					findDependentClasses(prop)
-				}
-			}
-			if schema.Type == SchemaTypeArray && schema.Items != nil {
-				findDependentClasses(*schema.Items)
-			}
-		}
+		// Find all model dependencies for this module
+		modelSet := p.findModuleDependencies(operations, doc)
 
-		// Start with direct dependencies
-		for _, op := range operations {
-			// Add response schema dependencies
-			findDependentClasses(op.ResponseSchema)
-
-			// Add parameter dependencies
-			for _, param := range op.Parameters {
-				findDependentClasses(param.Schema)
-			}
-
-			// Add request body dependencies
-			if op.RequestBody != nil {
-				findDependentClasses(op.RequestBody.Schema)
-			}
-		}
-
-		// Find all classes needed for this module
-		moduleClassList := []Class{}
-		for _, class := range classes {
-			if modelSet[class.Name] {
-				moduleClassList = append(moduleClassList, class)
-				continue
-			}
-		}
+		// Create module class list
+		moduleClassList := p.createModuleClassList(classes, modelSet)
 
 		modules[moduleName] = Module{
 			Name:       moduleName,
@@ -200,8 +195,59 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 			Classes:    moduleClassList,
 		}
 	}
+	return modules
+}
 
-	return modules, classes, nil
+// findModuleDependencies finds all class dependencies for a module
+func (p Parser) findModuleDependencies(operations []Operation, doc *openapi3.T) map[string]bool {
+	modelSet := make(map[string]bool)
+	var findDependentClasses func(schema Schema)
+	findDependentClasses = func(schema Schema) {
+		if schema.Ref != "" {
+			parts := strings.Split(schema.Ref, "/")
+			className := parts[len(parts)-1]
+			if modelSet[className] {
+				return
+			}
+			modelSet[className] = true
+			// Find the schema
+			if refSchema, ok := doc.Components.Schemas[className]; ok {
+				findDependentClasses(p.convertOpenAPISchema(refSchema))
+			}
+		}
+		if schema.Type == SchemaTypeObject {
+			for _, prop := range schema.Properties {
+				findDependentClasses(prop)
+			}
+		}
+		if schema.Type == SchemaTypeArray && schema.Items != nil {
+			findDependentClasses(*schema.Items)
+		}
+	}
+
+	// Process all operations
+	for _, op := range operations {
+		findDependentClasses(op.ResponseSchema)
+		for _, param := range op.Parameters {
+			findDependentClasses(param.Schema)
+		}
+		if op.RequestBody != nil {
+			findDependentClasses(op.RequestBody.Schema)
+		}
+	}
+
+	return modelSet
+}
+
+// createModuleClassList creates a list of classes needed for a module
+func (p Parser) createModuleClassList(classes []Class, modelSet map[string]bool) []Class {
+	var moduleClassList []Class
+	for _, class := range classes {
+		if modelSet[class.Name] {
+			moduleClassList = append(moduleClassList, class)
+		}
+	}
+	return moduleClassList
 }
 
 func (p Parser) analyzeDependencies(schemas map[string]*openapi3.SchemaRef) []string {
