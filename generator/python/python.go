@@ -267,11 +267,7 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 	}
 
 	// Handle response
-	if op.ResponseType != nil {
-		operation.ResponseType = g.convertType(op.ResponseType)
-	} else {
-		operation.ResponseType = "Any"
-	}
+	operation.ResponseType = g.getFieldType(op.ResponseSchema)
 
 	// Update template to include headers
 	if len(headerParams) > 0 || len(staticHeaders) > 0 {
@@ -381,33 +377,4 @@ func (g Generator) getTemplate() string {
 		return ""
 	}
 	return string(templateContent)
-}
-
-func (g Generator) convertType(t *parser.Type) string {
-	if t == nil {
-		return "Any"
-	}
-
-	switch t.Kind {
-	case parser.TypeKindPrimitive:
-		if mappedType, ok := pythonTypeMapping[t.Name]; ok {
-			return mappedType
-		}
-		return "Any"
-	case parser.TypeKindArray:
-		if t.ItemType != nil {
-			itemType := g.convertType(t.ItemType)
-			return fmt.Sprintf("List[%s]", itemType)
-		}
-		return "List[Any]"
-	case parser.TypeKindRef:
-		return t.Name
-	case parser.TypeKindObject:
-		if t.ObjectRef != "" {
-			return t.ObjectRef
-		}
-		return "dict"
-	default:
-		return "Any"
-	}
 }
