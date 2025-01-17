@@ -16,7 +16,6 @@ type Class struct {
 	Fields      []Field
 	IsEnum      bool
 	EnumValues  []EnumValue
-	RawSchema   *openapi3.SchemaRef // Store raw schema for language-specific processing
 }
 
 // EnumValue represents a value in an enum
@@ -29,7 +28,6 @@ type EnumValue struct {
 // Field represents a field in a class
 type Field struct {
 	Name        string
-	JsonName    string // Original name from API
 	Description string
 	Required    bool
 	Schema      *openapi3.SchemaRef // Store raw schema for language-specific processing
@@ -421,7 +419,6 @@ func (p Parser) convertSchemaToClass(name string, schema *openapi3.SchemaRef) Cl
 	class := Class{
 		Name:        name,
 		Description: schema.Value.Description,
-		RawSchema:   schema,
 	}
 
 	if schema.Value.Title != "" {
@@ -448,7 +445,6 @@ func (p Parser) convertSchemaToClass(name string, schema *openapi3.SchemaRef) Cl
 		for propName, prop := range schema.Value.Properties {
 			field := Field{
 				Name:        propName,
-				JsonName:    propName,
 				Description: prop.Value.Description,
 				Required:    p.isFieldRequired(propName, schema),
 				Schema:      prop,
