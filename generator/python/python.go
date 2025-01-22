@@ -470,7 +470,22 @@ func (g Generator) toEnumName(name string) string {
 		}
 	}
 
-	// If no mapping found, use the default conversion logic
+	// Check if the name is already in uppercase with underscores format
+	isUpperWithUnderscores := true
+	for i, r := range name {
+		if i > 0 && r == '_' {
+			continue
+		}
+		if r < 'A' || r > 'Z' {
+			isUpperWithUnderscores = false
+			break
+		}
+	}
+	if isUpperWithUnderscores {
+		return name
+	}
+
+	// If no mapping found and not already in correct format, use the default conversion logic
 	// First convert camelCase to snake_case
 	var result strings.Builder
 	for i, r := range name {
