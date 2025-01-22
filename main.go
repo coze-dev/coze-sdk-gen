@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/coze-dev/coze-sdk-gen/generator/python"
 	"github.com/spf13/cobra"
@@ -70,7 +71,9 @@ Currently supports generating Python SDK.`,
 
 		// Write each generated file
 		for dir, content := range files {
-			outputFilePath := filepath.Join(outputPath, dir, "generated_sdk.py")
+			// Convert module name (with dots) to directory path
+			dirPath := strings.ReplaceAll(dir, ".", string(os.PathSeparator))
+			outputFilePath := filepath.Join(outputPath, dirPath, "generated_sdk.py")
 
 			// Create subdirectory if needed
 			err = os.MkdirAll(filepath.Dir(outputFilePath), 0755)

@@ -164,14 +164,14 @@ func (p Parser) generateModules(doc *openapi3.T, classes []Class) map[string]Mod
 func (p Parser) groupOperationsByModule(doc *openapi3.T) map[string][]Operation {
 	moduleOperations := make(map[string][]Operation)
 	for path, pathItem := range doc.Paths.Map() {
-		// Extract module name from path (second segment)
-		segments := strings.Split(strings.Trim(path, "/"), "/")
-		if len(segments) < 2 {
-			continue
-		}
-		moduleName := segments[1]
-
 		for method, op := range pathItem.Operations() {
+			// Use tags as module name, joined by dots
+			moduleName := strings.Join(op.Tags, ".")
+			if moduleName == "" {
+				// Fallback to default module if no tags
+				moduleName = "default"
+			}
+
 			operation := p.convertOperation(path, method, op)
 			moduleOperations[moduleName] = append(moduleOperations[moduleName], operation)
 		}
