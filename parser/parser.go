@@ -128,7 +128,21 @@ func (p Parser) processResponseContent(content *openapi3.MediaType) *openapi3.Sc
 
 	// Only process if it's an object or array of objects
 	if schemaValue.Properties != nil || p.isArrayOfObjects(schemaValue) {
-		return schema
+		// Create a copy of the schema
+		newSchema := *schema
+		// Merge existing extensions with is_response_schema
+		if newSchema.Extensions == nil {
+			newSchema.Extensions = map[string]any{"is_response_schema": true}
+		} else {
+			// Create a new map to avoid modifying the original
+			extensions := make(map[string]any, len(newSchema.Extensions)+1)
+			for k, v := range newSchema.Extensions {
+				extensions[k] = v
+			}
+			extensions["is_response_schema"] = true
+			newSchema.Extensions = extensions
+		}
+		return &newSchema
 	}
 
 	return nil
@@ -480,10 +494,17 @@ func (p Parser) convertOpenAPISchema(schema *openapi3.SchemaRef) Schema {
 		return Schema{Type: SchemaTypeObject}
 	}
 
+	// Check if this is a response schema
+	isResponseSchema := false
+	if val, ok := schema.Extensions["is_response_schema"].(bool); ok {
+		isResponseSchema = val
+	}
+
 	if schema.Ref != "" {
 		return Schema{
-			Type: SchemaTypeObject,
-			Ref:  schema.Ref,
+			Type:             SchemaTypeObject,
+			Ref:              schema.Ref,
+			IsResponseSchema: isResponseSchema,
 		}
 	}
 
@@ -521,13 +542,14 @@ func (p Parser) convertOpenAPISchema(schema *openapi3.SchemaRef) Schema {
 	}
 
 	return Schema{
-		Type:        schemaType,
-		Description: schema.Value.Description,
-		Required:    schema.Value.Required,
-		Properties:  properties,
-		Items:       items,
-		Enum:        schema.Value.Enum,
-		Format:      schema.Value.Format,
+		Type:             schemaType,
+		Description:      schema.Value.Description,
+		Required:         schema.Value.Required,
+		Properties:       properties,
+		Items:            items,
+		Enum:             schema.Value.Enum,
+		Format:           schema.Value.Format,
+		IsResponseSchema: isResponseSchema,
 	}
 }
 

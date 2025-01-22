@@ -14,14 +14,15 @@ const (
 
 // Schema represents a type definition
 type Schema struct {
-	Type        SchemaType
-	Ref         string // Reference to another type (if any)
-	Description string
-	Required    []string
-	Properties  map[string]Schema // For object types
-	Items       *Schema           // For array types
-	Format      string            // For additional type information (e.g. int32, int64)
-	Enum        []interface{}     // For enum types
+	Type             SchemaType
+	Ref              string // Reference to another type (if any)
+	Description      string
+	Required         []string
+	Properties       map[string]Schema // For object types
+	Items            *Schema           // For array types
+	Format           string            // For additional type information (e.g. int32, int64)
+	Enum             []interface{}     // For enum types
+	IsResponseSchema bool              // Whether this schema is a response schema
 }
 
 // RequestBody represents a request body in an operation
