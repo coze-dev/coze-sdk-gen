@@ -20,11 +20,20 @@ var templateFS embed.FS
 //go:embed config.json
 var configFS embed.FS
 
+type PagedOperationConfig struct {
+	Enabled         bool              `json:"enabled"`
+	ParamMapping    map[string]string `json:"param_mapping"`
+	ResponseClass   string            `json:"response_class"`
+	ReturnType      string            `json:"return_type"`
+	AsyncReturnType string            `json:"async_return_type"`
+}
+
 type ModuleConfig struct {
-	EnumNameMapping           map[string]string `json:"enum_name_mapping"`
-	OperationNameMapping      map[string]string `json:"operation_name_mapping"`
-	ResponseTypeMapping       map[string]string `json:"response_type_mapping"`
-	SkipOptionalFieldsClasses []string          `json:"skip_optional_fields_classes"`
+	EnumNameMapping           map[string]string               `json:"enum_name_mapping"`
+	OperationNameMapping      map[string]string               `json:"operation_name_mapping"`
+	ResponseTypeMapping       map[string]string               `json:"response_type_mapping"`
+	SkipOptionalFieldsClasses []string                        `json:"skip_optional_fields_classes"`
+	PagedOperations           map[string]PagedOperationConfig `json:"paged_operations"`
 }
 
 type Config struct {
@@ -91,6 +100,9 @@ type PythonOperation struct {
 	HeaderParams        []PythonParam
 	HasHeaders          bool
 	StaticHeaders       map[string]string
+	IsPaged             bool
+	ResponseClass       string
+	AsyncResponseType   string
 }
 
 // PythonParam represents a Python parameter
@@ -280,6 +292,17 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 		ResponseDescription: op.ResponseDescription,
 	}
 
+	// Check if this is a paged operation
+	var pagedConfig *PagedOperationConfig
+	if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
+		if config, ok := moduleConfig.PagedOperations[op.Name]; ok && config.Enabled {
+			pagedConfig = &config
+			operation.IsPaged = true
+			operation.ResponseClass = config.ResponseClass
+			operation.AsyncResponseType = config.AsyncReturnType
+		}
+	}
+
 	// Handle parameters
 	var headerParams []PythonParam
 	var staticHeaders = make(map[string]string)
@@ -296,8 +319,16 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 			pythonType = fmt.Sprintf("Optional[%s]", pythonType)
 		}
 
+		paramName := param.Name
+		// Apply parameter mapping for paged operations
+		if pagedConfig != nil {
+			if mappedName, ok := pagedConfig.ParamMapping[param.JsonName]; ok {
+				paramName = mappedName
+			}
+		}
+
 		pythonParam := PythonParam{
-			Name:        g.toPythonVarName(param.Name),
+			Name:        g.toPythonVarName(paramName),
 			JsonName:    param.JsonName,
 			Type:        pythonType,
 			Description: param.Description,
@@ -361,6 +392,10 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 	if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
 		if mappedType, ok := moduleConfig.ResponseTypeMapping[operation.ResponseType]; ok {
 			operation.ResponseType = mappedType
+		}
+		// Override response type for paged operations
+		if pagedConfig != nil {
+			operation.ResponseType = pagedConfig.ReturnType
 		}
 	}
 

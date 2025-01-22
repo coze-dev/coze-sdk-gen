@@ -38,7 +38,24 @@ class Client(object):
         {{ if .HasHeaders }}headers = {
             {{ range $key, $value := .StaticHeaders }}"{{ $key }}": "{{ $value }}",{{ end }}{{ range .HeaderParams }}"{{ .JsonName }}": {{ .Name }},{{ end }}
         }
-        {{ end }}{{ if eq .Method "GET" }}params = {
+        {{ end }}{{ if eq .Method "GET" }}{{ if .IsPaged }}def request_maker(i_page_num: int, i_page_size: int) -> HTTPRequest:
+            return self._requester.make_request(
+                "{{ .Method }}",
+                url,
+                params={
+                    {{ range .QueryParams }}{{ if eq .Name "page_num" }}"page_index": i_page_num,{{ else if eq .Name "page_size" }}"page_size": i_page_size,{{ else }}"{{ .JsonName }}": {{ .Name }},{{ end }}{{ end }}
+                },
+                cast={{ .ResponseClass }},
+                is_async=False,
+                stream=False,
+            )
+
+        return NumberPaged(
+            page_num={{ range .QueryParams }}{{ if eq .Name "page_num" }}{{ .Name }}{{ end }}{{ end }},
+            page_size={{ range .QueryParams }}{{ if eq .Name "page_size" }}{{ .Name }}{{ end }}{{ end }},
+            requestor=self._requester,
+            request_maker=request_maker,
+        ){{ else }}params = {
             {{ range .QueryParams }}"{{ .JsonName }}": {{ .Name }},{{ end }}
         }
         return self._requester.request(
@@ -48,7 +65,7 @@ class Client(object):
             cast={{ .ResponseType }},
             params=params,
             {{ if .HasHeaders }}headers=headers,{{ end }}
-        ){{ else }}return self._requester.request(
+        ){{ end }}{{ else }}return self._requester.request(
             "{{ .Method }}",
             url,
             False,
@@ -82,12 +99,29 @@ class AsyncClient(object):
         *,
         {{ range .Params }}{{ .Name }}: {{ .Type }} {{ if .HasDefault }} = {{ .DefaultValue }}{{ end }},
         {{ end }}
-    ) -> {{ .ResponseType }}:
+    ) -> {{ if .IsPaged }}{{ .AsyncResponseType }}{{ else }}{{ .ResponseType }}{{ end }}:
         url = f"{self._base_url}{{ .Path }}"
         {{ if .HasHeaders }}headers = {
             {{ range $key, $value := .StaticHeaders }}"{{ $key }}": "{{ $value }}",{{ end }}{{ range .HeaderParams }}"{{ .JsonName }}": {{ .Name }},{{ end }}
         }
-        {{ end }}{{ if eq .Method "GET" }}params = {
+        {{ end }}{{ if eq .Method "GET" }}{{ if .IsPaged }}def request_maker(i_page_num: int, i_page_size: int) -> HTTPRequest:
+            return self._requester.make_request(
+                "{{ .Method }}",
+                url,
+                params={
+                    {{ range .QueryParams }}{{ if eq .Name "page_num" }}"page_index": i_page_num,{{ else if eq .Name "page_size" }}"page_size": i_page_size,{{ else }}"{{ .JsonName }}": {{ .Name }},{{ end }}{{ end }}
+                },
+                cast={{ .ResponseClass }},
+                is_async=True,
+                stream=False,
+            )
+
+        return await AsyncNumberPaged.build(
+            page_num={{ range .QueryParams }}{{ if eq .Name "page_num" }}{{ .Name }}{{ end }}{{ end }},
+            page_size={{ range .QueryParams }}{{ if eq .Name "page_size" }}{{ .Name }}{{ end }}{{ end }},
+            requestor=self._requester,
+            request_maker=request_maker,
+        ){{ else }}params = {
             {{ range .QueryParams }}"{{ .JsonName }}": {{ .Name }},{{ end }}
         }
         return await self._requester.arequest(
@@ -97,7 +131,7 @@ class AsyncClient(object):
             cast={{ .ResponseType }},
             params=params,
             {{ if .HasHeaders }}headers=headers,{{ end }}
-        ){{ else }}return await self._requester.arequest(
+        ){{ end }}{{ else }}return await self._requester.arequest(
             "{{ .Method }}",
             url,
             False,

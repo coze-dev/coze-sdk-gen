@@ -23,7 +23,19 @@
                 "BotModelInfo",
                 "BotPluginAPIInfo",
                 "BotPluginInfo"
-            ]
+            ],
+            "paged_operations": {
+                "GetSpacePublishedBotsList": {
+                    "enabled": true,
+                    "param_mapping": {
+                        "page_index": "page_num",
+                        "page_size": "page_size"
+                    },
+                    "response_class": "_PrivateListBotsData",
+                    "return_type": "NumberPaged[SimpleBot]",
+                    "async_return_type": "AsyncNumberPaged[SimpleBot]"
+                }
+            }
         }
     }
 }
