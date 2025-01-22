@@ -16,6 +16,7 @@ type Class struct {
 	Fields      []Field
 	IsEnum      bool
 	EnumValues  []EnumValue
+	IsResponse  bool // Whether this class is a response model
 }
 
 // EnumValue represents a value in an enum
@@ -433,9 +434,16 @@ func (p Parser) convertOperation(path string, method string, op *openapi3.Operat
 }
 
 func (p Parser) convertSchemaToClass(name string, schema *openapi3.SchemaRef) Class {
+	// Check if this is a response schema
+	isResponseSchema := false
+	if val, ok := schema.Extensions["is_response_schema"].(bool); ok {
+		isResponseSchema = val
+	}
+
 	class := Class{
 		Name:        name,
 		Description: schema.Value.Description,
+		IsResponse:  isResponseSchema,
 	}
 
 	if schema.Value.Title != "" {
@@ -494,17 +502,10 @@ func (p Parser) convertOpenAPISchema(schema *openapi3.SchemaRef) Schema {
 		return Schema{Type: SchemaTypeObject}
 	}
 
-	// Check if this is a response schema
-	isResponseSchema := false
-	if val, ok := schema.Extensions["is_response_schema"].(bool); ok {
-		isResponseSchema = val
-	}
-
 	if schema.Ref != "" {
 		return Schema{
-			Type:             SchemaTypeObject,
-			Ref:              schema.Ref,
-			IsResponseSchema: isResponseSchema,
+			Type: SchemaTypeObject,
+			Ref:  schema.Ref,
 		}
 	}
 
@@ -542,14 +543,13 @@ func (p Parser) convertOpenAPISchema(schema *openapi3.SchemaRef) Schema {
 	}
 
 	return Schema{
-		Type:             schemaType,
-		Description:      schema.Value.Description,
-		Required:         schema.Value.Required,
-		Properties:       properties,
-		Items:            items,
-		Enum:             schema.Value.Enum,
-		Format:           schema.Value.Format,
-		IsResponseSchema: isResponseSchema,
+		Type:        schemaType,
+		Description: schema.Value.Description,
+		Required:    schema.Value.Required,
+		Properties:  properties,
+		Items:       items,
+		Enum:        schema.Value.Enum,
+		Format:      schema.Value.Format,
 	}
 }
 
