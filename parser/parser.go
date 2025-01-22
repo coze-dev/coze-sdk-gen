@@ -418,8 +418,9 @@ func (p Parser) convertOperation(path string, method string, op *openapi3.Operat
 			if strings.Contains(mediaType, "application/json") && content.Schema != nil {
 				// can only be ref
 				operation.ResponseSchema = Schema{
-					Type: SchemaTypeObject,
-					Ref:  content.Schema.Ref,
+					Type:       SchemaTypeObject,
+					Ref:        content.Schema.Ref,
+					IsResponse: true,
 				}
 
 				if response.Value.Description != nil {
@@ -509,6 +510,9 @@ func (p Parser) convertOpenAPISchema(schema *openapi3.SchemaRef) Schema {
 	}
 
 	if schema.Ref != "" {
+		if isResponseSchema {
+			fmt.Printf("is_response_schema: ref\n")
+		}
 		return Schema{
 			Type:       SchemaTypeObject,
 			Ref:        schema.Ref,
@@ -549,6 +553,9 @@ func (p Parser) convertOpenAPISchema(schema *openapi3.SchemaRef) Schema {
 		items = &converted
 	}
 
+	if isResponseSchema {
+		fmt.Printf("is_response_schema: %v\n", schemaType)
+	}
 	return Schema{
 		Type:        schemaType,
 		Description: schema.Value.Description,

@@ -17,7 +17,9 @@ import (
 var templateFS embed.FS
 
 // Generator handles Python SDK generation
-type Generator struct{}
+type Generator struct {
+	classes []PythonClass
+}
 
 // pythonTypeMapping maps OpenAPI types to Python types
 var pythonTypeMapping = map[string]string{
@@ -123,17 +125,16 @@ func (g Generator) convertModule(module parser.Module) struct {
 	Operations []PythonOperation
 	Classes    []PythonClass
 } {
-	operations := make([]PythonOperation, 0, len(module.Operations))
-	for _, op := range module.Operations {
-		operations = append(operations, g.convertOperation(op))
-	}
-
 	classes := make([]PythonClass, 0, len(module.Classes))
 	for _, class := range module.Classes {
 		pythonClass := g.convertClass(class)
-		if !pythonClass.ShouldSkip {
-			classes = append(classes, pythonClass)
-		}
+		classes = append(classes, pythonClass)
+	}
+	g.classes = classes
+
+	operations := make([]PythonOperation, 0, len(module.Operations))
+	for _, op := range module.Operations {
+		operations = append(operations, g.convertOperation(op))
 	}
 
 	return struct {
@@ -177,7 +178,6 @@ func (g Generator) convertClass(class parser.Class) PythonClass {
 		// Skip class generation if only one field named "data" exists
 		if len(filteredFields) == 1 && filteredFields[0].Name == "data" {
 			pythonClass.ShouldSkip = true
-			return pythonClass
 		}
 
 		// Add pass if no fields remain
@@ -309,12 +309,30 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 }
 
 func (g Generator) getFieldType(schema parser.Schema) string {
+
 	// Handle response schema with data field
-	if schema.IsResponse && schema.Type == parser.SchemaTypeObject {
-		for name, prop := range schema.Properties {
-			if name == "data" {
-				return g.getFieldType(prop)
+	if schema.IsResponse {
+		if schema.Ref != "" {
+			// Extract class name from ref
+			parts := strings.Split(schema.Ref, "/")
+			refClassName := parts[len(parts)-1]
+
+			// Find the referenced class
+			for _, class := range g.classes {
+				if class.Name == refClassName {
+					// Check if it has a data field
+					for _, field := range class.Fields {
+						if field.Name == "data" {
+							// Return the type of data field directly
+							return field.Type
+						}
+					}
+					// No data field found, return the class name itself
+					return refClassName
+				}
 			}
+			// Class not found in g.classes, return the ref name
+			return refClassName
 		}
 	}
 

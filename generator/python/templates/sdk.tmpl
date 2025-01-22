@@ -5,14 +5,14 @@ from cozepy.auth import Auth
 from cozepy.request import HTTPRequest, Requester
 from cozepy.util import remove_url_trailing_slash
 
-{{ range .Classes }}{{ if .Description }}"""{{ .Description }}"""{{ end }}
+{{ range .Classes }}{{ if not .ShouldSkip }}{{ if .Description }}"""{{ .Description }}"""{{ end }}
 class {{ .Name }}({{ .BaseClass }}):{{ if .IsPass }}
     pass{{ else }}
     {{ range .Fields }}{{ if .Description }}"""{{ .Description }}"""
     {{ end }}{{ .Name }}: {{ .Type }}
     {{ end }}{{ if .IsEnum }}{{ range .EnumValues }}    {{ .Name }} = {{ .Value }}  # {{ .Description }}
     {{ end }}{{ end }}{{ end }}
-{{ end }}
+{{ end }}{{ end }}
 
 """
 API Client for {{ .ModuleName }} endpoints
