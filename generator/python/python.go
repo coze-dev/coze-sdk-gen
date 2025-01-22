@@ -23,6 +23,7 @@ var configFS embed.FS
 type ModuleConfig struct {
 	EnumNameMapping      map[string]string `json:"enum_name_mapping"`
 	OperationNameMapping map[string]string `json:"operation_name_mapping"`
+	ResponseTypeMapping  map[string]string `json:"response_type_mapping"`
 }
 
 type Config struct {
@@ -203,6 +204,14 @@ func (g Generator) convertClass(class parser.Class) PythonClass {
 	}
 
 	if class.IsResponse {
+		// Check if there's a mapping for this response type
+		if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
+			if _, ok := moduleConfig.ResponseTypeMapping[class.Name]; ok {
+				// If mapped, skip this class
+				pythonClass.ShouldSkip = true
+			}
+		}
+
 		// Filter out code and msg fields for response classes
 		var filteredFields []parser.Field
 		for _, field := range class.Fields {
@@ -333,6 +342,12 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 
 	// Handle response
 	operation.ResponseType = g.getFieldType(op.ResponseSchema)
+	// Check if there's a mapping for this response type
+	if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
+		if mappedType, ok := moduleConfig.ResponseTypeMapping[operation.ResponseType]; ok {
+			operation.ResponseType = mappedType
+		}
+	}
 
 	// Update template to include headers
 	if len(headerParams) > 0 || len(staticHeaders) > 0 {
@@ -348,6 +363,7 @@ func (g Generator) getFieldType(schema parser.Schema) string {
 	// Handle response schema with data field
 	if schema.IsResponse {
 		if schema.Ref != "" {
+
 			// Extract class name from ref (already processed in parser)
 			refClassName := schema.Ref
 

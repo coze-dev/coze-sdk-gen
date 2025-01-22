@@ -12,6 +12,10 @@
                 "GetBotOnlineInfo": "retrieve",
                 "PublishDraftBot": "publish",
                 "GetSpacePublishedBotsList": "list"
+            },
+            "response_type_mapping": {
+                "CreateDraftBotData": "Bot",
+                "PublishDraftBotData": "Bot"
             }
         }
     }
