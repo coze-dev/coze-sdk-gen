@@ -112,21 +112,71 @@ func (p Parser) initializeOpenAPIDoc(yamlContent []byte) (*openapi3.T, error) {
 	return doc, nil
 }
 
-// generateResponseModels generates response data models from operations
+// getResponseSchemaName returns a consistent name for response schemas
+func (p Parser) getResponseSchemaName(operationID string) string {
+	return fmt.Sprintf("%sResp", operationID)
+}
+
+// processResponseContent extracts and processes the response schema from operation content
+func (p Parser) processResponseContent(content *openapi3.MediaType) *openapi3.SchemaRef {
+	if content == nil || content.Schema == nil || content.Schema.Value == nil {
+		return nil
+	}
+
+	schema := content.Schema
+	schemaValue := schema.Value
+
+	// Only process if it's an object or array of objects
+	if schemaValue.Properties != nil || p.isArrayOfObjects(schemaValue) {
+		return schema
+	}
+
+	return nil
+}
+
+// isArrayOfObjects checks if the schema represents an array of objects
+func (p Parser) isArrayOfObjects(schema *openapi3.Schema) bool {
+	return schema.Type != nil &&
+		len(*schema.Type) > 0 &&
+		(*schema.Type)[0] == "array" &&
+		schema.Items != nil &&
+		schema.Items.Value != nil &&
+		schema.Items.Value.Properties != nil
+}
+
+// generateResponseModels generates response data models from operations and adds them to the components schemas
 func (p Parser) generateResponseModels(doc *openapi3.T) {
+	// Ensure components and schemas are initialized
+	if doc.Components == nil {
+		doc.Components = &openapi3.Components{}
+	}
+	if doc.Components.Schemas == nil {
+		doc.Components.Schemas = make(map[string]*openapi3.SchemaRef)
+	}
+
+	// Process each operation's response
 	for _, pathItem := range doc.Paths.Map() {
 		for _, op := range pathItem.Operations() {
-			if response, ok := op.Responses.Map()["200"]; ok && response.Value.Content != nil {
-				for _, content := range response.Value.Content {
-					if content.Schema != nil && content.Schema.Value != nil {
-						// Create response type if it's an object or array of objects
-						if content.Schema.Value.Properties != nil ||
-							(content.Schema.Value.Type != nil && len(*content.Schema.Value.Type) > 0 &&
-								(*content.Schema.Value.Type)[0] == "array" && content.Schema.Value.Items != nil &&
-								content.Schema.Value.Items.Value != nil && content.Schema.Value.Items.Value.Properties != nil) {
-							// Add to components schemas to be generated
-							doc.Components.Schemas[op.OperationID+"Resp"] = content.Schema
-						}
+			// Get 200 response if exists
+			response, ok := op.Responses.Map()["200"]
+			if !ok || response.Value.Content == nil {
+				continue
+			}
+
+			// Process JSON content type
+			for contentType, content := range response.Value.Content {
+				if !strings.Contains(contentType, "application/json") {
+					continue
+				}
+
+				if schema := p.processResponseContent(content); schema != nil {
+					// Add schema to components with consistent naming
+					schemaName := p.getResponseSchemaName(op.OperationID)
+					doc.Components.Schemas[schemaName] = schema
+
+					// Update the response content to reference the schema
+					content.Schema = &openapi3.SchemaRef{
+						Ref: fmt.Sprintf("#/components/schemas/%s", schemaName),
 					}
 				}
 			}
@@ -351,10 +401,10 @@ func (p Parser) convertOperation(path string, method string, op *openapi3.Operat
 	if response, ok := op.Responses.Map()["200"]; ok && response.Value.Content != nil {
 		for mediaType, content := range response.Value.Content {
 			if strings.Contains(mediaType, "application/json") && content.Schema != nil {
-				// Set response schema - it's always a reference type
+				// can only be ref
 				operation.ResponseSchema = Schema{
 					Type: SchemaTypeObject,
-					Ref:  fmt.Sprintf("#/components/schemas/%sResp", op.OperationID),
+					Ref:  content.Schema.Ref,
 				}
 
 				if response.Value.Description != nil {
