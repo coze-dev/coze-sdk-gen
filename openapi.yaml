@@ -750,7 +750,7 @@ components:
             Custom key-value pairs should be specified in Map object format. The length is 16 pairs of key-value pairs, with the key length ranging from 1 to 64 characters and the value length ranging from 1 to 512 characters.
           type: object
       type: object
-    EnterMessage:
+    EnterMessage1:
       properties:
         content:
           description: 内容
@@ -922,7 +922,7 @@ components:
             timestamp, in seconds (s).
           type: integer
       type: object
-    ApiInfo:
+    BotPluginAPIInfo:
       properties:
         api_id:
           description: api id
@@ -974,16 +974,16 @@ components:
           title: Agent Name.
           type: string
         onboarding_info:
-          $ref: "#/components/schemas/OnboardingInfoV2"
+          $ref: "#/components/schemas/BotOnboardingInfoV2"
         plugin_info_list:
           description: 插件信息列表
           format: list
           items:
-            $ref: "#/components/schemas/PluginInfo"
+            $ref: "#/components/schemas/BotPluginInfo"
           title: Agent configuration plugins.
           type: array
         prompt_info:
-          $ref: "#/components/schemas/PromptInfo"
+          $ref: "#/components/schemas/BotPromptInfo"
         shortcut_commands:
           description: 快捷指令信息列表
           format: list
@@ -1052,7 +1052,7 @@ components:
         model_config:
           $ref: "#/components/schemas/ModelConfig"
       type: object
-    EnterMessage1:
+    EnterMessage:
       properties:
         content:
           description: 如果是非 text，需要解析 JSON
@@ -1220,7 +1220,7 @@ components:
       required:
         - model_id
       type: object
-    OnboardingInfo:
+    BotOnboardingInfo:
       properties:
         prologue:
           description: 开场白
@@ -1243,7 +1243,7 @@ components:
       x-coze-order:
         - prologue
         - suggested_questions
-    OnboardingInfoV2:
+    BotOnboardingInfoV2:
       properties:
         customized_onboarding_prompt:
           description: LLM生成，用户自定义 Prompt
@@ -1297,13 +1297,13 @@ components:
           title: Configuration of the agent's plugin list.
           type: array
       type: object
-    PluginInfo:
+    BotPluginInfo:
       properties:
         api_info_list:
           description: 插件包含的api列表
           format: list
           items:
-            $ref: "#/components/schemas/ApiInfo"
+            $ref: "#/components/schemas/BotPluginAPIInfo"
           title: Information about the tool list of the plugin.
           type: array
         description:
@@ -1323,7 +1323,7 @@ components:
           title: Plugin unique identifier.
           type: string
       type: object
-    PromptInfo:
+    BotPromptInfo:
       properties:
         prompt:
           description: 文本prompt
@@ -1427,7 +1427,7 @@ components:
           description: tool类型 workflow plugin
           type: string
       type: object
-    SpacePublishedBots:
+    SimpleBot:
       properties:
         bot_id:
           title: The unique identifier of the agent.
@@ -1453,7 +1453,7 @@ components:
         space_bots:
           format: list
           items:
-            $ref: "#/components/schemas/SpacePublishedBots"
+            $ref: "#/components/schemas/SimpleBot"
           title:
             List of agents published to the Agent as API channel in the specified
             space.
@@ -1987,9 +1987,9 @@ paths:
                   title: "Name of the intelligent agent. Length: 1-20 characters."
                   type: string
                 onboarding_info:
-                  $ref: "#/components/schemas/OnboardingInfo"
+                  $ref: "#/components/schemas/BotOnboardingInfo"
                 prompt_info:
-                  $ref: "#/components/schemas/PromptInfo"
+                  $ref: "#/components/schemas/BotPromptInfo"
                 space_id:
                   title:
                     The Space ID of the space where the agent is located. The
@@ -2206,9 +2206,9 @@ paths:
                   title: Agent's name. Length should be 1~20 characters.
                   type: string
                 onboarding_info:
-                  $ref: "#/components/schemas/OnboardingInfo"
+                  $ref: "#/components/schemas/BotOnboardingInfo"
                 prompt_info:
-                  $ref: "#/components/schemas/PromptInfo"
+                  $ref: "#/components/schemas/BotPromptInfo"
                 workflow_id_list:
                   $ref: "#/components/schemas/WorkflowIdList"
               required:
@@ -2276,7 +2276,7 @@ paths:
                   description: 校验最多16个
                   format: list
                   items:
-                    $ref: "#/components/schemas/EnterMessage"
+                    $ref: "#/components/schemas/EnterMessage1"
                   title:
                     The content of the message in the conversation. For detailed
                     instructions, please refer to the [EnterMessage object](https://www.coze.cn/docs/developer_guides/create_conversation#cde8cc95).
@@ -3358,7 +3358,7 @@ paths:
                 additional_messages:
                   format: list
                   items:
-                    $ref: "#/components/schemas/EnterMessage1"
+                    $ref: "#/components/schemas/EnterMessage"
                   title: |-
                     Additional information for the conversation. You can pass historical messages and the user's question in this field for the current conversation. The array length is limited to 100, meaning a maximum of 100 messages can be passed.
 
