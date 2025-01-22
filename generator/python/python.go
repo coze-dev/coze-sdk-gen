@@ -21,7 +21,8 @@ var templateFS embed.FS
 var configFS embed.FS
 
 type ModuleConfig struct {
-	EnumNameMapping map[string]string `json:"enum_name_mapping"`
+	EnumNameMapping      map[string]string `json:"enum_name_mapping"`
+	OperationNameMapping map[string]string `json:"operation_name_mapping"`
 }
 
 type Config struct {
@@ -423,6 +424,14 @@ func (g Generator) formatDescription(desc string) string {
 }
 
 func (g Generator) toPythonMethodName(name string) string {
+	// First check if there's a mapping in the module-specific config
+	if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
+		if mappedName, ok := moduleConfig.OperationNameMapping[name]; ok {
+			return mappedName
+		}
+	}
+
+	// If no mapping found, use the default conversion logic
 	// Convert method names like GetBot to get_bot
 	var result strings.Builder
 	for i, r := range name {

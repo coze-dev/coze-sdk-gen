@@ -5,6 +5,13 @@
                 "SingleMode": "SINGLE_AGENT",
                 "MultiMode": "MULTI_AGENT",
                 "WorkflowMode": "SINGLE_AGENT_WORKFLOW"
+            },
+            "operation_name_mapping": {
+                "UpdateBot": "update",
+                "CreateDraftBot": "create",
+                "GetBotOnlineInfo": "retrieve",
+                "PublishDraftBot": "publish",
+                "GetSpacePublishedBotsList": "list"
             }
         }
     }
