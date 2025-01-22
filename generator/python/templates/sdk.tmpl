@@ -58,7 +58,7 @@ class Client(object):
                 {{ range .QueryParams }}"{{ .JsonName }}": {{ .Name }},{{ end }}
             },{{ end }}
             {{ if .HasBody }}body={
-                {{ range .BodyParams }}"{{ .JsonName }}": {{ .Name }},{{ end }}
+                {{ range .BodyParams }}"{{ .JsonName }}": {{ .Name }}{{ if and .HasDefault .IsModel }}.model_dump() if {{ .Name }} else None{{ end }},{{ end }}
             },{{ end }}
         ){{ end }}
     {{ end }}
@@ -107,7 +107,7 @@ class AsyncClient(object):
                 {{ range .QueryParams }}"{{ .JsonName }}": {{ .Name }},{{ end }}
             },{{ end }}
             {{ if .HasBody }}body={
-                {{ range .BodyParams }}"{{ .JsonName }}": {{ .Name }},{{ end }}
+                {{ range .BodyParams }}"{{ .JsonName }}": {{ .Name }}{{ if and .HasDefault .IsModel }}.model_dump() if {{ .Name }} else None{{ end }},{{ end }}
             },{{ end }}
         ){{ end }}
     {{ end }}
