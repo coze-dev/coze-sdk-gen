@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Any
 from enum import IntEnum
-from cozepy.model import CozeModel, NumberPaged, AsyncNumberPaged
+from cozepy.model import CozeModel, NumberPaged, AsyncNumberPaged, NumberPagedResponse
 from cozepy.auth import Auth
 from cozepy.request import HTTPRequest, Requester
 from cozepy.util import remove_url_trailing_slash
@@ -10,6 +10,7 @@ class {{ .Name }}({{ .BaseClass }}):{{ if .IsPass }}
     pass{{ else }}
     {{ range .Fields }}{{ if .Description }}"""{{ .Description }}"""
     {{ end }}{{ .Name }}: {{ .Type }}
+    {{ end }}{{ range .Methods }}{{ . }}
     {{ end }}{{ if .IsEnum }}{{ range .EnumValues }}    {{ .Name }} = {{ .Value }}  # {{ .Description }}
     {{ end }}{{ end }}{{ end }}
 {{ end }}{{ end }}

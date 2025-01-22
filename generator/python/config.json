@@ -37,6 +37,7 @@
                         "page_size": "page_size"
                     },
                     "response_class": "_PrivateListBotsData",
+                    "item_type": "SimpleBot",
                     "return_type": "NumberPaged[SimpleBot]",
                     "async_return_type": "AsyncNumberPaged[SimpleBot]"
                 }

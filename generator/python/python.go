@@ -24,6 +24,7 @@ type PagedOperationConfig struct {
 	Enabled         bool              `json:"enabled"`
 	ParamMapping    map[string]string `json:"param_mapping"`
 	ResponseClass   string            `json:"response_class"`
+	ItemType        string            `json:"item_type"`
 	ReturnType      string            `json:"return_type"`
 	AsyncReturnType string            `json:"async_return_type"`
 }
@@ -63,6 +64,7 @@ type PythonClass struct {
 	Name        string
 	Description string
 	Fields      []PythonField
+	Methods     []string
 	BaseClass   string
 	IsEnum      bool
 	EnumValues  []PythonEnumValue
@@ -82,6 +84,7 @@ type PythonField struct {
 	Name        string
 	Type        string
 	Description string
+	IsMethod    bool
 }
 
 // PythonOperation represents a Python API operation
@@ -207,6 +210,22 @@ func (g Generator) convertClass(class parser.Class) PythonClass {
 		Name:        class.Name,
 		Description: g.formatDescription(class.Description),
 		BaseClass:   "CozeModel",
+	}
+
+	// Check if this is a paged response class
+	if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
+		for _, pagedOp := range moduleConfig.PagedOperations {
+			if pagedOp.ResponseClass == pythonClass.Name {
+				pythonClass.BaseClass = fmt.Sprintf("CozeModel, NumberPagedResponse[%s]", pagedOp.ItemType)
+				// Add required implementations for NumberPagedResponse
+				pythonClass.Methods = []string{
+					"def get_total(self) -> Optional[int]:\n        return self.total",
+					"def get_has_more(self) -> Optional[bool]:\n        return None",
+					fmt.Sprintf("def get_items(self) -> List[%s]:\n        return self.space_bots", pagedOp.ItemType),
+				}
+				break
+			}
+		}
 	}
 
 	if class.IsEnum {
