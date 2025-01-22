@@ -321,7 +321,10 @@ func (g Generator) getFieldType(schema parser.Schema) string {
 					// Check if it has a data field
 					for _, field := range class.Fields {
 						if field.Name == "data" {
-							// Return the type of data field directly
+							// Remove Optional[] wrapper and return the type of data field directly
+							if strings.HasPrefix(field.Type, "Optional[") && strings.HasSuffix(field.Type, "]") {
+								return field.Type[9 : len(field.Type)-1]
+							}
 							return field.Type
 						}
 					}
