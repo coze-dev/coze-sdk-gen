@@ -158,7 +158,7 @@ func (g Generator) convertClass(class parser.Class) PythonClass {
 		pythonClass.BaseClass = "IntEnum"
 		for _, value := range class.EnumValues {
 			pythonClass.EnumValues = append(pythonClass.EnumValues, PythonEnumValue{
-				Name:        value.Name,
+				Name:        g.toEnumName(value.Name),
 				Value:       fmt.Sprintf("%v", value.Value),
 				Description: value.Description,
 			})
@@ -424,6 +424,30 @@ func (g Generator) toPythonVarName(name string) string {
 	}
 
 	return name
+}
+
+// Helper function to convert enum names to uppercase with underscores
+func (g Generator) toEnumName(name string) string {
+	// First convert camelCase to snake_case
+	var result strings.Builder
+	for i, r := range name {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			result.WriteRune('_')
+		}
+		result.WriteRune(r)
+	}
+	snakeCase := strings.ToLower(result.String())
+
+	// Replace any non-alphanumeric characters with underscore
+	reg := regexp.MustCompile(`[^a-zA-Z0-9]+`)
+	name = reg.ReplaceAllString(snakeCase, "_")
+
+	// Remove consecutive underscores
+	reg = regexp.MustCompile(`_+`)
+	name = reg.ReplaceAllString(name, "_")
+
+	// Trim leading and trailing underscores and convert to uppercase
+	return strings.ToUpper(strings.Trim(name, "_"))
 }
 
 func (g Generator) getTemplate() string {
