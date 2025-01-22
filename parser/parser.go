@@ -80,9 +80,6 @@ func (p Parser) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[strin
 		return nil, nil, err
 	}
 
-	// Generate response models from operations
-	p.generateResponseModels(doc)
-
 	// Generate classes from schemas
 	classes := p.generateClasses(doc)
 
@@ -110,28 +107,6 @@ func (p Parser) initializeOpenAPIDoc(yamlContent []byte) (*openapi3.T, error) {
 	}
 
 	return doc, nil
-}
-
-// generateResponseModels generates response data models from operations
-func (p Parser) generateResponseModels(doc *openapi3.T) {
-	for _, pathItem := range doc.Paths.Map() {
-		for _, op := range pathItem.Operations() {
-			if response, ok := op.Responses.Map()["200"]; ok && response.Value.Content != nil {
-				for _, content := range response.Value.Content {
-					if content.Schema != nil && content.Schema.Value != nil {
-						// Create response type if it's an object or array of objects
-						if content.Schema.Value.Properties != nil ||
-							(content.Schema.Value.Type != nil && len(*content.Schema.Value.Type) > 0 &&
-								(*content.Schema.Value.Type)[0] == "array" && content.Schema.Value.Items != nil &&
-								content.Schema.Value.Items.Value != nil && content.Schema.Value.Items.Value.Properties != nil) {
-							// Add to components schemas to be generated
-							doc.Components.Schemas[op.OperationID+"Resp"] = content.Schema
-						}
-					}
-				}
-			}
-		}
-	}
 }
 
 // generateClasses generates classes from schemas
@@ -184,10 +159,18 @@ func (p Parser) createModulesWithDependencies(moduleOperations map[string][]Oper
 	modules := make(map[string]Module)
 	for moduleName, operations := range moduleOperations {
 		// Find all model dependencies for this module
-		modelSet := p.findModuleDependencies(operations, doc)
+		modelDeps := p.findModuleDependencies(operations, doc)
 
-		// Create module class list
-		moduleClassList := p.createModuleClassList(classes, modelSet)
+		// Generate response classes for operations
+		responseClasses := p.generateResponseClasses(operations, doc, modelDeps)
+
+		// Create module class list including both schema classes and response classes
+		var moduleClassList []Class
+		for _, class := range append(classes, responseClasses...) {
+			if modelDeps[class.Name] {
+				moduleClassList = append(moduleClassList, class)
+			}
+		}
 
 		modules[moduleName] = Module{
 			Name:       moduleName,
@@ -196,6 +179,74 @@ func (p Parser) createModulesWithDependencies(moduleOperations map[string][]Oper
 		}
 	}
 	return modules
+}
+
+// generateResponseClasses generates response classes for a set of operations
+func (p Parser) generateResponseClasses(operations []Operation, doc *openapi3.T, modelSet map[string]bool) []Class {
+	var responseClasses []Class
+
+	for _, op := range operations {
+		respClass := p.generateOperationResponseClass(op, doc)
+		if respClass == nil {
+			continue
+		}
+		responseClasses = append(responseClasses, *respClass)
+		modelSet[op.OperationID+"Resp"] = true
+	}
+
+	return responseClasses
+}
+
+// generateOperationResponseClass generates a response class for a single operation
+func (p Parser) generateOperationResponseClass(op Operation, doc *openapi3.T) *Class {
+	pathItem := doc.Paths.Find(op.Path)
+	if pathItem == nil {
+		return nil
+	}
+
+	operation := pathItem.GetOperation(strings.ToLower(op.Method))
+	if operation == nil {
+		return nil
+	}
+
+	response, ok := operation.Responses.Map()["200"]
+	if !ok || response.Value.Content == nil {
+		return nil
+	}
+
+	for _, content := range response.Value.Content {
+		if !p.isValidResponseSchema(content.Schema) {
+			continue
+		}
+
+		respClass := p.convertSchemaToClass(op.OperationID+"Resp", content.Schema)
+		return &respClass
+	}
+
+	return nil
+}
+
+// isValidResponseSchema checks if a schema should generate a response class
+func (p Parser) isValidResponseSchema(schema *openapi3.SchemaRef) bool {
+	if schema == nil || schema.Value == nil {
+		return false
+	}
+
+	// Check if it's an object with properties
+	if schema.Value.Properties != nil {
+		return true
+	}
+
+	// Check if it's an array of objects
+	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 &&
+		(*schema.Value.Type)[0] == "array" &&
+		schema.Value.Items != nil &&
+		schema.Value.Items.Value != nil &&
+		schema.Value.Items.Value.Properties != nil {
+		return true
+	}
+
+	return false
 }
 
 // findModuleDependencies finds all class dependencies for a module
@@ -237,17 +288,6 @@ func (p Parser) findModuleDependencies(operations []Operation, doc *openapi3.T) 
 	}
 
 	return modelSet
-}
-
-// createModuleClassList creates a list of classes needed for a module
-func (p Parser) createModuleClassList(classes []Class, modelSet map[string]bool) []Class {
-	var moduleClassList []Class
-	for _, class := range classes {
-		if modelSet[class.Name] {
-			moduleClassList = append(moduleClassList, class)
-		}
-	}
-	return moduleClassList
 }
 
 func (p Parser) analyzeDependencies(schemas map[string]*openapi3.SchemaRef) []string {
@@ -413,9 +453,6 @@ func (p Parser) convertSchemaToClass(name string, schema *openapi3.SchemaRef) Cl
 }
 
 func (p Parser) isFieldRequired(fieldName string, schema *openapi3.SchemaRef) bool {
-	if schema.Value.Required == nil {
-		return false
-	}
 	for _, required := range schema.Value.Required {
 		if required == fieldName {
 			return true
