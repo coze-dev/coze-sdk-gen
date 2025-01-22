@@ -968,7 +968,7 @@ components:
         knowledge:
           $ref: "#/components/schemas/CommonKnowledge"
         model_info:
-          $ref: "#/components/schemas/ModelInfo"
+          $ref: "#/components/schemas/BotModelInfo"
         name:
           description: bot名称
           title: Agent Name.
@@ -1139,7 +1139,7 @@ components:
         model_id:
           type: string
       type: object
-    ModelInfo:
+    BotModelInfo:
       properties:
         context_round:
           description: 携带上下文轮数
@@ -1181,7 +1181,7 @@ components:
           format: double
           type: number
       type: object
-    ModelInfoConfig:
+    BotModelInfoConfig:
       properties:
         context_round:
           description: 携带上下文轮数
@@ -1982,7 +1982,7 @@ paths:
                     * To use a custom avatar, you should first upload a local file through the [Upload Files](https://www.coze.com/docs/developer_guides/upload_files) interface and obtain the file ID from the interface response.
                   type: string
                 model_info_config:
-                  $ref: "#/components/schemas/ModelInfoConfig"
+                  $ref: "#/components/schemas/BotModelInfoConfig"
                 name:
                   title: "Name of the intelligent agent. Length: 1-20 characters."
                   type: string
@@ -2201,7 +2201,7 @@ paths:
                 knowledge:
                   $ref: "#/components/schemas/Knowledge"
                 model_info_config:
-                  $ref: "#/components/schemas/ModelInfoConfig"
+                  $ref: "#/components/schemas/BotModelInfoConfig"
                 name:
                   title: Agent's name. Length should be 1~20 characters.
                   type: string
