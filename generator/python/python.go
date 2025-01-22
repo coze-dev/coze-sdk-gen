@@ -309,13 +309,11 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 }
 
 func (g Generator) getFieldType(schema parser.Schema) string {
-
 	// Handle response schema with data field
 	if schema.IsResponse {
 		if schema.Ref != "" {
-			// Extract class name from ref
-			parts := strings.Split(schema.Ref, "/")
-			refClassName := parts[len(parts)-1]
+			// Extract class name from ref (already processed in parser)
+			refClassName := schema.Ref
 
 			// Find the referenced class
 			for _, class := range g.classes {
@@ -336,10 +334,9 @@ func (g Generator) getFieldType(schema parser.Schema) string {
 		}
 	}
 
-	// If it's a reference, use the referenced type name
+	// If it's a reference, use the referenced type name (already processed in parser)
 	if schema.Ref != "" {
-		parts := strings.Split(schema.Ref, "/")
-		return parts[len(parts)-1]
+		return schema.Ref
 	}
 
 	// Handle arrays

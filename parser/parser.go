@@ -269,14 +269,12 @@ func (p Parser) findModuleDependencies(operations []Operation, doc *openapi3.T) 
 	var findDependentClasses func(schema Schema)
 	findDependentClasses = func(schema Schema) {
 		if schema.Ref != "" {
-			parts := strings.Split(schema.Ref, "/")
-			className := parts[len(parts)-1]
-			if modelSet[className] {
+			if modelSet[schema.Ref] {
 				return
 			}
-			modelSet[className] = true
+			modelSet[schema.Ref] = true
 			// Find the schema
-			if refSchema, ok := doc.Components.Schemas[className]; ok {
+			if refSchema, ok := doc.Components.Schemas[schema.Ref]; ok {
 				findDependentClasses(p.convertOpenAPISchema(refSchema))
 			}
 		}
@@ -366,9 +364,7 @@ func (p Parser) analyzeDependencies(schemas map[string]*openapi3.SchemaRef) []st
 
 func (p Parser) findDependencies(name string, schema Schema, deps map[string]*classDependency) {
 	if schema.Ref != "" {
-		parts := strings.Split(schema.Ref, "/")
-		depName := parts[len(parts)-1]
-		deps[name].dependencies[depName] = true
+		deps[name].dependencies[schema.Ref] = true
 		return
 	}
 
@@ -416,10 +412,15 @@ func (p Parser) convertOperation(path string, method string, op *openapi3.Operat
 	if response, ok := op.Responses.Map()["200"]; ok && response.Value.Content != nil {
 		for mediaType, content := range response.Value.Content {
 			if strings.Contains(mediaType, "application/json") && content.Schema != nil {
-				// can only be ref
+				// Process ref to get the last component
+				ref := content.Schema.Ref
+				if ref != "" {
+					parts := strings.Split(ref, "/")
+					ref = parts[len(parts)-1]
+				}
 				operation.ResponseSchema = Schema{
 					Type:       SchemaTypeObject,
-					Ref:        content.Schema.Ref,
+					Ref:        ref,
 					IsResponse: true,
 				}
 
@@ -513,9 +514,12 @@ func (p Parser) convertOpenAPISchema(schema *openapi3.SchemaRef) Schema {
 		if isResponseSchema {
 			fmt.Printf("is_response_schema: ref\n")
 		}
+		// Process ref to get the last component
+		parts := strings.Split(schema.Ref, "/")
+		ref := parts[len(parts)-1]
 		return Schema{
 			Type:       SchemaTypeObject,
-			Ref:        schema.Ref,
+			Ref:        ref,
 			IsResponse: isResponseSchema,
 		}
 	}
