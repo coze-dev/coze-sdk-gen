@@ -22,6 +22,7 @@ type Schema struct {
 	Items       *Schema           // For array types
 	Format      string            // For additional type information (e.g. int32, int64)
 	Enum        []interface{}     // For enum types
+	IsResponse  bool              // Whether this schema is a response schema
 }
 
 // RequestBody represents a request body in an operation

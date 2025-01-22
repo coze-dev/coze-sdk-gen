@@ -502,10 +502,17 @@ func (p Parser) convertOpenAPISchema(schema *openapi3.SchemaRef) Schema {
 		return Schema{Type: SchemaTypeObject}
 	}
 
+	// Check if this is a response schema
+	isResponseSchema := false
+	if val, ok := schema.Extensions["is_response_schema"].(bool); ok {
+		isResponseSchema = val
+	}
+
 	if schema.Ref != "" {
 		return Schema{
-			Type: SchemaTypeObject,
-			Ref:  schema.Ref,
+			Type:       SchemaTypeObject,
+			Ref:        schema.Ref,
+			IsResponse: isResponseSchema,
 		}
 	}
 
@@ -550,6 +557,7 @@ func (p Parser) convertOpenAPISchema(schema *openapi3.SchemaRef) Schema {
 		Items:       items,
 		Enum:        schema.Value.Enum,
 		Format:      schema.Value.Format,
+		IsResponse:  isResponseSchema,
 	}
 }
 

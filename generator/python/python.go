@@ -37,6 +37,8 @@ type PythonClass struct {
 	BaseClass   string
 	IsEnum      bool
 	EnumValues  []PythonEnumValue
+	ShouldSkip  bool
+	IsPass      bool
 }
 
 // PythonEnumValue represents a Python enum value
@@ -128,7 +130,10 @@ func (g Generator) convertModule(module parser.Module) struct {
 
 	classes := make([]PythonClass, 0, len(module.Classes))
 	for _, class := range module.Classes {
-		classes = append(classes, g.convertClass(class))
+		pythonClass := g.convertClass(class)
+		if !pythonClass.ShouldSkip {
+			classes = append(classes, pythonClass)
+		}
 	}
 
 	return struct {
@@ -158,6 +163,30 @@ func (g Generator) convertClass(class parser.Class) PythonClass {
 			})
 		}
 		return pythonClass
+	}
+
+	if class.IsResponse {
+		// Filter out code and msg fields for response classes
+		var filteredFields []parser.Field
+		for _, field := range class.Fields {
+			if field.Name != "code" && field.Name != "msg" {
+				filteredFields = append(filteredFields, field)
+			}
+		}
+
+		// Skip class generation if only one field named "data" exists
+		if len(filteredFields) == 1 && filteredFields[0].Name == "data" {
+			pythonClass.ShouldSkip = true
+			return pythonClass
+		}
+
+		// Add pass if no fields remain
+		if len(filteredFields) == 0 {
+			pythonClass.IsPass = true
+			return pythonClass
+		}
+
+		class.Fields = filteredFields
 	}
 
 	// Track required fields
@@ -280,6 +309,15 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 }
 
 func (g Generator) getFieldType(schema parser.Schema) string {
+	// Handle response schema with data field
+	if schema.IsResponse && schema.Type == parser.SchemaTypeObject {
+		for name, prop := range schema.Properties {
+			if name == "data" {
+				return g.getFieldType(prop)
+			}
+		}
+	}
+
 	// If it's a reference, use the referenced type name
 	if schema.Ref != "" {
 		parts := strings.Split(schema.Ref, "/")
