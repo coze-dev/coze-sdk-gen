@@ -170,7 +170,7 @@ func (g Generator) convertClass(class parser.Class) PythonClass {
 		// Filter out code and msg fields for response classes
 		var filteredFields []parser.Field
 		for _, field := range class.Fields {
-			if field.Name != "code" && field.Name != "msg" {
+			if field.Name != "code" && field.Name != "msg" && field.Name != "detail" {
 				filteredFields = append(filteredFields, field)
 			}
 		}

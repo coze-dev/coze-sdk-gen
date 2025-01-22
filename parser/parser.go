@@ -557,9 +557,6 @@ func (p Parser) convertOpenAPISchema(schema *openapi3.SchemaRef) Schema {
 		items = &converted
 	}
 
-	if isResponseSchema {
-		fmt.Printf("is_response_schema: %v\n", schemaType)
-	}
 	return Schema{
 		Type:        schemaType,
 		Description: schema.Value.Description,
