@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"regexp"
@@ -16,9 +17,22 @@ import (
 //go:embed templates/sdk.tmpl
 var templateFS embed.FS
 
+//go:embed config.json
+var configFS embed.FS
+
+type ModuleConfig struct {
+	EnumNameMapping map[string]string `json:"enum_name_mapping"`
+}
+
+type Config struct {
+	Modules map[string]ModuleConfig `json:"modules"`
+}
+
 // Generator handles Python SDK generation
 type Generator struct {
-	classes []PythonClass
+	classes    []PythonClass
+	config     Config
+	moduleName string
 }
 
 // pythonTypeMapping maps OpenAPI types to Python types
@@ -86,8 +100,26 @@ type PythonParam struct {
 	IsModel      bool
 }
 
+func (g *Generator) loadConfig() error {
+	configData, err := configFS.ReadFile("config.json")
+	if err != nil {
+		return fmt.Errorf("failed to read config.json: %w", err)
+	}
+
+	if err := json.Unmarshal(configData, &g.config); err != nil {
+		return fmt.Errorf("failed to parse config.json: %w", err)
+	}
+
+	return nil
+}
+
 // Generate generates Python SDK code from parsed OpenAPI data
-func (g Generator) Generate(ctx context.Context, yamlContent []byte) (map[string]string, error) {
+func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[string]string, error) {
+	// Load config first
+	if err := g.loadConfig(); err != nil {
+		return nil, err
+	}
+
 	p := parser.Parser{}
 	modules, _, err := p.ParseOpenAPI(ctx, yamlContent)
 	if err != nil {
@@ -125,6 +157,9 @@ func (g Generator) convertModule(module parser.Module) struct {
 	Operations []PythonOperation
 	Classes    []PythonClass
 } {
+	// Store current module name
+	g.moduleName = module.Name
+
 	classes := make([]PythonClass, 0, len(module.Classes))
 	for _, class := range module.Classes {
 		pythonClass := g.convertClass(class)
@@ -428,6 +463,14 @@ func (g Generator) toPythonVarName(name string) string {
 
 // Helper function to convert enum names to uppercase with underscores
 func (g Generator) toEnumName(name string) string {
+	// First check if there's a mapping in the module-specific config
+	if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
+		if mappedName, ok := moduleConfig.EnumNameMapping[name]; ok {
+			return mappedName
+		}
+	}
+
+	// If no mapping found, use the default conversion logic
 	// First convert camelCase to snake_case
 	var result strings.Builder
 	for i, r := range name {

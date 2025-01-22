@@ -1,0 +1,11 @@
+{
+    "modules": {
+        "bots": {
+            "enum_name_mapping": {
+                "SingleMode": "SINGLE_AGENT",
+                "MultiMode": "MULTI_AGENT",
+                "WorkflowMode": "SINGLE_AGENT_WORKFLOW"
+            }
+        }
+    }
+}
