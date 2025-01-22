@@ -31,7 +31,7 @@ class Client(object):
     def {{ .Name }}(
         self,
         *,
-        {{ range .Params }}{{ .Name }}: {{ .Type }},
+        {{ range .Params }}{{ .Name }}: {{ .Type }} {{ if .HasDefault }} = {{ .DefaultValue }}{{ end }},
         {{ end }}
     ) -> {{ .ResponseType }}:
         url = f"{self._base_url}{{ .Path }}"
@@ -80,7 +80,7 @@ class AsyncClient(object):
     async def {{ .Name }}(
         self,
         *,
-        {{ range .Params }}{{ .Name }}: {{ .Type }},
+        {{ range .Params }}{{ .Name }}: {{ .Type }} {{ if .HasDefault }} = {{ .DefaultValue }}{{ end }},
         {{ end }}
     ) -> {{ .ResponseType }}:
         url = f"{self._base_url}{{ .Path }}"

@@ -100,6 +100,7 @@ type PythonParam struct {
 	Type         string
 	Description  string
 	DefaultValue string
+	HasDefault   bool
 	IsModel      bool
 }
 
@@ -304,6 +305,7 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 
 		if !param.Required {
 			pythonParam.DefaultValue = "None"
+			pythonParam.HasDefault = true
 		}
 
 		// Check if parameter is a model type
@@ -346,6 +348,7 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 			}
 			if !isRequired {
 				pythonParam.DefaultValue = "None"
+				pythonParam.HasDefault = true
 			}
 			operation.Params = append(operation.Params, pythonParam)
 			operation.BodyParams = append(operation.BodyParams, pythonParam)
