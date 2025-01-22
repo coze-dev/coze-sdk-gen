@@ -455,15 +455,26 @@ func (p Parser) convertSchemaToClass(name string, schema *openapi3.SchemaRef) Cl
 	// Handle enum types
 	if schema.Value.Type != nil && len(*schema.Value.Type) > 0 && schema.Value.Enum != nil {
 		class.IsEnum = true
-		for _, value := range schema.Value.Enum {
-			enumName := fmt.Sprintf("VALUE_%v", value)
-			enumDesc := fmt.Sprintf("Value %v", value)
 
-			class.EnumValues = append(class.EnumValues, EnumValue{
-				Name:        enumName,
-				Value:       value,
-				Description: enumDesc,
-			})
+		// Check if we have predefined enum names in Extensions
+		if enumNames, ok := schema.Value.Extensions["x-coze-enum-names"].([]interface{}); ok && len(enumNames) == len(schema.Value.Enum) {
+			// Use predefined enum names
+			for i, value := range schema.Value.Enum {
+				class.EnumValues = append(class.EnumValues, EnumValue{
+					Name:  enumNames[i].(string),
+					Value: value,
+				})
+			}
+		} else {
+			// Fallback to default naming
+			for _, value := range schema.Value.Enum {
+				enumName := fmt.Sprintf("VALUE_%v", value)
+
+				class.EnumValues = append(class.EnumValues, EnumValue{
+					Name:  enumName,
+					Value: value,
+				})
+			}
 		}
 		return class
 	}
