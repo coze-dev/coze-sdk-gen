@@ -21,9 +21,10 @@ var templateFS embed.FS
 var configFS embed.FS
 
 type ModuleConfig struct {
-	EnumNameMapping      map[string]string `json:"enum_name_mapping"`
-	OperationNameMapping map[string]string `json:"operation_name_mapping"`
-	ResponseTypeMapping  map[string]string `json:"response_type_mapping"`
+	EnumNameMapping           map[string]string `json:"enum_name_mapping"`
+	OperationNameMapping      map[string]string `json:"operation_name_mapping"`
+	ResponseTypeMapping       map[string]string `json:"response_type_mapping"`
+	SkipOptionalFieldsClasses []string          `json:"skip_optional_fields_classes"`
 }
 
 type Config struct {
@@ -242,9 +243,20 @@ func (g Generator) convertClass(class parser.Class) PythonClass {
 		}
 	}
 
+	// Check if this class should skip optional field annotations
+	skipOptionalFields := false
+	if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
+		for _, skipClass := range moduleConfig.SkipOptionalFieldsClasses {
+			if skipClass == class.Name {
+				skipOptionalFields = true
+				break
+			}
+		}
+	}
+
 	for _, field := range class.Fields {
 		fieldType := g.getFieldType(field.Schema)
-		if !field.Required {
+		if !field.Required && !skipOptionalFields {
 			fieldType = fmt.Sprintf("Optional[%s]", fieldType)
 		}
 		pythonField := PythonField{

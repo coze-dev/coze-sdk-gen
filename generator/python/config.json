@@ -16,7 +16,14 @@
             "response_type_mapping": {
                 "CreateDraftBotData": "Bot",
                 "PublishDraftBotData": "Bot"
-            }
+            },
+            "skip_optional_fields_classes": [
+                "BotOnboardingInfo",
+                "BotPromptInfo",
+                "BotModelInfo",
+                "BotPluginAPIInfo",
+                "BotPluginInfo"
+            ]
         }
     }
 }
