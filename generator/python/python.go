@@ -315,16 +315,20 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 		}
 
 		pythonType := g.getFieldType(param.Schema)
-		if !param.Required {
-			pythonType = fmt.Sprintf("Optional[%s]", pythonType)
-		}
-
 		paramName := param.Name
+
 		// Apply parameter mapping for paged operations
+		var isRequiredPagedParam bool
 		if pagedConfig != nil {
 			if mappedName, ok := pagedConfig.ParamMapping[param.JsonName]; ok {
 				paramName = mappedName
+				isRequiredPagedParam = true
 			}
+		}
+
+		// Only add Optional if not required and not a required paged parameter
+		if !param.Required && !isRequiredPagedParam {
+			pythonType = fmt.Sprintf("Optional[%s]", pythonType)
 		}
 
 		pythonParam := PythonParam{
@@ -334,7 +338,7 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 			Description: param.Description,
 		}
 
-		if !param.Required {
+		if !param.Required && !isRequiredPagedParam {
 			pythonParam.DefaultValue = "None"
 			pythonParam.HasDefault = true
 		}
