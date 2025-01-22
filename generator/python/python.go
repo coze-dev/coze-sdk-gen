@@ -32,6 +32,7 @@ type ModuleConfig struct {
 	EnumNameMapping           map[string]string               `json:"enum_name_mapping"`
 	OperationNameMapping      map[string]string               `json:"operation_name_mapping"`
 	ResponseTypeMapping       map[string]string               `json:"response_type_mapping"`
+	TypeMapping               map[string]string               `json:"type_mapping"`
 	SkipOptionalFieldsClasses []string                        `json:"skip_optional_fields_classes"`
 	PagedOperations           map[string]PagedOperationConfig `json:"paged_operations"`
 }
@@ -198,6 +199,10 @@ func (g Generator) convertModule(module parser.Module) struct {
 }
 
 func (g Generator) convertClass(class parser.Class) PythonClass {
+	if g.config.Modules[g.moduleName].TypeMapping[class.Name] != "" {
+		class.Name = g.config.Modules[g.moduleName].TypeMapping[class.Name]
+	}
+
 	pythonClass := PythonClass{
 		Name:        class.Name,
 		Description: g.formatDescription(class.Description),
