@@ -21,12 +21,10 @@ var templateFS embed.FS
 var configFS embed.FS
 
 type PagedOperationConfig struct {
-	Enabled         bool              `yaml:"enabled"`
-	ParamMapping    map[string]string `yaml:"param_mapping"`
-	ResponseClass   string            `yaml:"response_class"`
-	ItemType        string            `yaml:"item_type"`
-	ReturnType      string            `yaml:"return_type"`
-	AsyncReturnType string            `yaml:"async_return_type"`
+	Enabled       bool              `yaml:"enabled"`
+	ParamMapping  map[string]string `yaml:"param_mapping"`
+	ResponseClass string            `yaml:"response_class"`
+	ItemType      string            `yaml:"item_type"`
 }
 
 type ModuleConfig struct {
@@ -323,7 +321,9 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 			pagedConfig = &config
 			operation.IsPaged = true
 			operation.ResponseClass = config.ResponseClass
-			operation.AsyncResponseType = config.AsyncReturnType
+			// Generate return types based on item type
+			operation.ResponseType = fmt.Sprintf("NumberPaged[%s]", config.ItemType)
+			operation.AsyncResponseType = fmt.Sprintf("AsyncNumberPaged[%s]", config.ItemType)
 		}
 	}
 
@@ -423,7 +423,7 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 		}
 		// Override response type for paged operations
 		if pagedConfig != nil {
-			operation.ResponseType = pagedConfig.ReturnType
+			operation.ResponseType = fmt.Sprintf("NumberPaged[%s]", pagedConfig.ItemType)
 		}
 	}
 
