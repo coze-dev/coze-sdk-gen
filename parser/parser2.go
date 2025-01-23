@@ -368,14 +368,25 @@ func (p *Parser2) assignTypesToModules() error {
 		}
 	}
 
+	// Pre-calculate handler dependencies
+	handlerDeps := make(map[*HttpHandler]map[*Ty]bool)
+	for _, module := range p.modules {
+		for i := range module.HttpHandlers {
+			deps := make(map[*Ty]bool)
+			p.collectHandlerTypes(&module.HttpHandlers[i], deps)
+			handlerDeps[&module.HttpHandlers[i]] = deps
+		}
+	}
+
 	// For remaining types, assign based on usage
 	for _, ty := range p.types {
+		if ty.Module != "" {
+			continue // Skip if already assigned
+		}
 		// Find the first module that uses this type
 		for _, module := range p.modules {
-			if p.isTypeUsedInModule(ty, module) {
-				if ty.Module == "" {
-					ty.Module = module.Name
-				}
+			if p.isTypeUsedInModule(ty, module, handlerDeps) {
+				ty.Module = module.Name
 				module.Types = append(module.Types, ty)
 				break
 			}
@@ -386,45 +397,51 @@ func (p *Parser2) assignTypesToModules() error {
 }
 
 // isTypeUsedInModule checks if a type is used in a module
-func (p *Parser2) isTypeUsedInModule(ty *Ty, module *TyModule) bool {
-	for _, handler := range module.HttpHandlers {
-		if p.isTypeUsedInHandler(ty, &handler) {
+func (p *Parser2) isTypeUsedInModule(ty *Ty, module *TyModule, handlerDeps map[*HttpHandler]map[*Ty]bool) bool {
+	for i := range module.HttpHandlers {
+		if deps := handlerDeps[&module.HttpHandlers[i]]; deps != nil && deps[ty] {
 			return true
 		}
 	}
 	return false
 }
 
-// isTypeUsedInHandler checks if a type is used in a handler
-func (p *Parser2) isTypeUsedInHandler(ty *Ty, handler *HttpHandler) bool {
-	// Check request body
-	if handler.RequestBody == ty {
-		return true
-	}
-
-	// Check response body
-	if handler.ResponseBody == ty {
-		return true
-	}
-
-	// Check parameters
-	for _, param := range handler.HeaderParams {
-		if param.Type == ty {
-			return true
+// collectHandlerTypes recursively collects all types used in a handler
+func (p *Parser2) collectHandlerTypes(handler *HttpHandler, deps map[*Ty]bool) {
+	// Helper function to collect types from a single type
+	var collectFromType func(*Ty)
+	collectFromType = func(t *Ty) {
+		if t == nil || deps[t] {
+			return
 		}
+		deps[t] = true
+
+		switch t.Kind {
+		case TyKindObject:
+			for _, field := range t.Fields {
+				collectFromType(field.Type)
+			}
+		case TyKindArray:
+			collectFromType(t.ElementType)
+		}
+	}
+
+	// Collect from request body
+	collectFromType(handler.RequestBody)
+
+	// Collect from response body
+	collectFromType(handler.ResponseBody)
+
+	// Collect from parameters
+	for _, param := range handler.HeaderParams {
+		collectFromType(param.Type)
 	}
 	for _, param := range handler.PathParams {
-		if param.Type == ty {
-			return true
-		}
+		collectFromType(param.Type)
 	}
 	for _, param := range handler.QueryParams {
-		if param.Type == ty {
-			return true
-		}
+		collectFromType(param.Type)
 	}
-
-	return false
 }
 
 // convertPrimitiveType converts OpenAPI type to our primitive type
