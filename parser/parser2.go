@@ -38,7 +38,7 @@ type Ty struct {
 
 	// For primitive types
 	PrimitiveKind PrimitiveKind
-	EnumValues    []interface{} // Optional enum values for primitive types
+	EnumValues    []TyEnumValue // Optional enum values for primitive types
 
 	// For object types
 	Fields []TyField
@@ -56,6 +56,11 @@ type TyField struct {
 	Description string
 	Type        *Ty
 	Required    bool
+}
+
+type TyEnumValue struct {
+	Name string
+	Val  interface{}
 }
 
 // TyParameter represents an operation parameter
@@ -223,7 +228,10 @@ func (p *Parser2) convertSchema(schema *openapi3.SchemaRef, name string, isNamed
 
 		case "object":
 			ty.Kind = TyKindObject
-			for propName, prop := range schema.Value.Properties {
+			for _, pname := range schema.Value.Extensions["x-coze-order"].([]interface{}) {
+				propName := pname.(string)
+				prop := schema.Value.Properties[propName]
+
 				field, err := p.convertField(propName, prop, schema.Value.Required)
 				if err != nil {
 					return nil, fmt.Errorf("failed to convert field %s: %w", propName, err)
@@ -235,7 +243,14 @@ func (p *Parser2) convertSchema(schema *openapi3.SchemaRef, name string, isNamed
 			ty.Kind = TyKindPrimitive
 			ty.PrimitiveKind = p.convertPrimitiveType(*schema.Value.Type, schema.Value.Format)
 			if schema.Value.Enum != nil {
-				ty.EnumValues = schema.Value.Enum
+				for _, val := range schema.Value.Enum {
+					ty.EnumValues = append(ty.EnumValues, TyEnumValue{Name: "", Val: val})
+				}
+				if enumNames, ok := schema.Value.Extensions["x-coze-enum-names"].([]interface{}); ok && len(enumNames) == len(schema.Value.Enum) {
+					for i := range ty.EnumValues {
+						ty.EnumValues[i].Name = enumNames[i].(string)
+					}
+				}
 			}
 		}
 	}
