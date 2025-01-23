@@ -31,68 +31,68 @@ const (
 
 // Ty represents a type in the schema
 type Ty struct {
-	Name        string
-	Description string
-	Kind        TyKind
-	Module      string // The module this type belongs to
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Kind        TyKind `json:"kind"`
+	Module      string `json:"module"` // The module this type belongs to
 
 	// For primitive types
-	PrimitiveKind PrimitiveKind
-	EnumValues    []TyEnumValue // Optional enum values for primitive types
+	PrimitiveKind PrimitiveKind `json:"primitive_kind"`
+	EnumValues    []TyEnumValue `json:"enum_values"` // Optional enum values for primitive types
 
 	// For object types
-	Fields []TyField
+	Fields []TyField `json:"fields"`
 
 	// For array types
-	ElementType *Ty
+	ElementType *Ty `json:"element_type"`
 
 	// Metadata
-	IsNamed bool // Whether this is a named type (from components)
+	IsNamed bool `json:"is_named"` // Whether this is a named type (from components)
 }
 
 // TyField represents a field in an object type
 type TyField struct {
-	Name        string
-	Description string
-	Type        *Ty
-	Required    bool
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Type        *Ty    `json:"type"`
+	Required    bool   `json:"required"`
 }
 
 type TyEnumValue struct {
-	Name string
-	Val  interface{}
+	Name string      `json:"name"`
+	Val  interface{} `json:"val"`
 }
 
 // TyParameter represents an operation parameter
 type TyParameter struct {
-	Name        string
-	Description string
-	Required    bool
-	Type        *Ty
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Required    bool   `json:"required"`
+	Type        *Ty    `json:"type"`
 }
 
 // HttpHandler represents an API operation
 type HttpHandler struct {
-	Name        string
-	Description string
-	Path        string
-	Method      string
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Path        string `json:"path"`
+	Method      string `json:"method"`
 
 	// Parameters split by location
-	HeaderParams []TyParameter
-	PathParams   []TyParameter
-	QueryParams  []TyParameter
+	HeaderParams []TyParameter `json:"header_params"`
+	PathParams   []TyParameter `json:"path_params"`
+	QueryParams  []TyParameter `json:"query_params"`
 
 	// Request and Response
-	RequestBody  *Ty
-	ResponseBody *Ty
+	RequestBody  *Ty `json:"request_body"`
+	ResponseBody *Ty `json:"response_body"`
 }
 
 // TyModule represents a group of operations and types
 type TyModule struct {
-	Name         string
-	HttpHandlers []HttpHandler
-	Types        []*Ty
+	Name         string        `json:"name"`
+	HttpHandlers []HttpHandler `json:"http_handlers"`
+	Types        []*Ty         `json:"types"`
 }
 
 // ModuleConfig represents the configuration for type-to-module mapping
