@@ -1,12 +1,10 @@
 package parser
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
+	"github.com/coze-dev/coze-sdk-gen/util"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -71,7 +69,6 @@ type TyParameter struct {
 // HttpHandler represents an API operation
 type HttpHandler struct {
 	Name        string
-	OperationID string
 	Description string
 	Path        string
 	Method      string
@@ -95,7 +92,7 @@ type TyModule struct {
 
 // ModuleConfig represents the configuration for type-to-module mapping
 type ModuleConfig struct {
-	TypeModuleMap map[string]string // Maps type names to module names
+	TypeModuleMap map[string]string `json:"type_module_map"` // Maps type names to module names
 }
 
 // Parser2 handles OpenAPI parsing with the new schema design
@@ -107,19 +104,7 @@ type Parser2 struct {
 }
 
 // NewParser2 creates a new Parser2 instance
-func NewParser2(configPath string) (*Parser2, error) {
-	var config *ModuleConfig
-	if configPath != "" {
-		data, err := os.ReadFile(configPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read config file: %w", err)
-		}
-		config = &ModuleConfig{}
-		if err := json.Unmarshal(data, config); err != nil {
-			return nil, fmt.Errorf("failed to parse config file: %w", err)
-		}
-	}
-
+func NewParser2(config *ModuleConfig) (*Parser2, error) {
 	return &Parser2{
 		types:   make(map[string]*Ty),
 		modules: make(map[string]*TyModule),
@@ -128,7 +113,7 @@ func NewParser2(configPath string) (*Parser2, error) {
 }
 
 // ParseOpenAPI parses an OpenAPI document and returns modules
-func (p *Parser2) ParseOpenAPI(ctx context.Context, yamlContent []byte) (map[string]*TyModule, error) {
+func (p *Parser2) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) {
 	// Parse OpenAPI document
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(yamlContent)
@@ -220,7 +205,7 @@ func (p *Parser2) convertSchema(schema *openapi3.SchemaRef, name string, isNamed
 	ty := &Ty{
 		Name:        name,
 		IsNamed:     isNamed,
-		Description: schema.Value.Description,
+		Description: util.Choose(schema.Value.Title != "", schema.Value.Title, schema.Value.Description),
 	}
 
 	// Determine the kind of type
@@ -248,7 +233,7 @@ func (p *Parser2) convertSchema(schema *openapi3.SchemaRef, name string, isNamed
 
 		default:
 			ty.Kind = TyKindPrimitive
-			ty.PrimitiveKind = p.convertPrimitiveType(*schema.Value.Type)
+			ty.PrimitiveKind = p.convertPrimitiveType(*schema.Value.Type, schema.Value.Format)
 			if schema.Value.Enum != nil {
 				ty.EnumValues = schema.Value.Enum
 			}
@@ -290,7 +275,6 @@ func (p *Parser2) convertField(name string, schema *openapi3.SchemaRef, required
 func (p *Parser2) convertOperation(path, method string, op *openapi3.Operation) (*HttpHandler, error) {
 	handler := &HttpHandler{
 		Name:        op.OperationID,
-		OperationID: op.OperationID,
 		Description: op.Description,
 		Path:        path,
 		Method:      method,
@@ -371,14 +355,14 @@ func (p *Parser2) assignTypesToModules() error {
 
 	// For remaining types, assign based on usage
 	for _, ty := range p.types {
-		if ty.Module == "" {
-			// Find the first module that uses this type
-			for _, module := range p.modules {
-				if p.isTypeUsedInModule(ty, module) {
+		// Find the first module that uses this type
+		for _, module := range p.modules {
+			if p.isTypeUsedInModule(ty, module) {
+				if ty.Module == "" {
 					ty.Module = module.Name
-					module.Types = append(module.Types, ty)
-					break
 				}
+				module.Types = append(module.Types, ty)
+				break
 			}
 		}
 	}
@@ -429,7 +413,7 @@ func (p *Parser2) isTypeUsedInHandler(ty *Ty, handler *HttpHandler) bool {
 }
 
 // convertPrimitiveType converts OpenAPI type to our primitive type
-func (p *Parser2) convertPrimitiveType(typ []string) PrimitiveKind {
+func (p *Parser2) convertPrimitiveType(typ []string, format string) PrimitiveKind {
 	if len(typ) == 0 {
 		return PrimitiveUnknown
 	}
@@ -440,11 +424,12 @@ func (p *Parser2) convertPrimitiveType(typ []string) PrimitiveKind {
 	case "number":
 		return PrimitiveFloat
 	case "string":
+		if format == "binary" {
+			return PrimitiveBinary
+		}
 		return PrimitiveString
 	case "boolean":
 		return PrimitiveBool
-	case "binary":
-		return PrimitiveBinary
 	default:
 		return PrimitiveUnknown
 	}
