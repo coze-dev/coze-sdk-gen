@@ -437,33 +437,34 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 	return operation
 }
 
+func (g Generator) getResponseDataType(refClassName string) string {
+	// Find the referenced class
+	for _, class := range g.classes {
+		if class.Name == refClassName {
+			// Check if it has a data field
+			for _, field := range class.Fields {
+				if field.Name == "data" {
+					// Remove Optional[] wrapper and return the type of data field directly
+					if strings.HasPrefix(field.Type, "Optional[") && strings.HasSuffix(field.Type, "]") {
+						return field.Type[9 : len(field.Type)-1]
+					}
+					return field.Type
+				}
+			}
+			// No data field found, return the class name itself
+			return refClassName
+		}
+	}
+	// Class not found in g.classes, return the ref name
+	return refClassName
+}
+
 func (g Generator) getFieldType(schema parser.Schema) string {
 	// Handle response schema with data field
 	if schema.IsResponse {
 		if schema.Ref != "" {
-
 			// Extract class name from ref (already processed in parser)
-			refClassName := schema.Ref
-
-			// Find the referenced class
-			for _, class := range g.classes {
-				if class.Name == refClassName {
-					// Check if it has a data field
-					for _, field := range class.Fields {
-						if field.Name == "data" {
-							// Remove Optional[] wrapper and return the type of data field directly
-							if strings.HasPrefix(field.Type, "Optional[") && strings.HasSuffix(field.Type, "]") {
-								return field.Type[9 : len(field.Type)-1]
-							}
-							return field.Type
-						}
-					}
-					// No data field found, return the class name itself
-					return refClassName
-				}
-			}
-			// Class not found in g.classes, return the ref name
-			return refClassName
+			return g.getResponseDataType(schema.Ref)
 		}
 	}
 
