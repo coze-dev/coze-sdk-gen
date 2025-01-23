@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"embed"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"regexp"
@@ -12,34 +11,35 @@ import (
 	"text/template"
 
 	"github.com/coze-dev/coze-sdk-gen/parser"
+	"gopkg.in/yaml.v3"
 )
 
 //go:embed templates/sdk.tmpl
 var templateFS embed.FS
 
-//go:embed config.json
+//go:embed config.yaml
 var configFS embed.FS
 
 type PagedOperationConfig struct {
-	Enabled         bool              `json:"enabled"`
-	ParamMapping    map[string]string `json:"param_mapping"`
-	ResponseClass   string            `json:"response_class"`
-	ItemType        string            `json:"item_type"`
-	ReturnType      string            `json:"return_type"`
-	AsyncReturnType string            `json:"async_return_type"`
+	Enabled         bool              `yaml:"enabled"`
+	ParamMapping    map[string]string `yaml:"param_mapping"`
+	ResponseClass   string            `yaml:"response_class"`
+	ItemType        string            `yaml:"item_type"`
+	ReturnType      string            `yaml:"return_type"`
+	AsyncReturnType string            `yaml:"async_return_type"`
 }
 
 type ModuleConfig struct {
-	EnumNameMapping           map[string]string               `json:"enum_name_mapping"`
-	OperationNameMapping      map[string]string               `json:"operation_name_mapping"`
-	ResponseTypeMapping       map[string]string               `json:"response_type_mapping"`
-	TypeMapping               map[string]string               `json:"type_mapping"`
-	SkipOptionalFieldsClasses []string                        `json:"skip_optional_fields_classes"`
-	PagedOperations           map[string]PagedOperationConfig `json:"paged_operations"`
+	EnumNameMapping           map[string]string               `yaml:"enum_name_mapping"`
+	OperationNameMapping      map[string]string               `yaml:"operation_name_mapping"`
+	ResponseTypeModify        map[string]string               `yaml:"response_type_modify"`
+	TypeMapping               map[string]string               `yaml:"type_mapping"`
+	SkipOptionalFieldsClasses []string                        `yaml:"skip_optional_fields_classes"`
+	PagedOperations           map[string]PagedOperationConfig `yaml:"paged_operations"`
 }
 
 type Config struct {
-	Modules map[string]ModuleConfig `json:"modules"`
+	Modules map[string]ModuleConfig `yaml:"modules"`
 }
 
 // Generator handles Python SDK generation
@@ -121,13 +121,13 @@ type PythonParam struct {
 }
 
 func (g *Generator) loadConfig() error {
-	configData, err := configFS.ReadFile("config.json")
+	configData, err := configFS.ReadFile("config.yaml")
 	if err != nil {
-		return fmt.Errorf("failed to read config.json: %w", err)
+		return fmt.Errorf("failed to read config.yaml: %w", err)
 	}
 
-	if err := json.Unmarshal(configData, &g.config); err != nil {
-		return fmt.Errorf("failed to parse config.json: %w", err)
+	if err := yaml.Unmarshal(configData, &g.config); err != nil {
+		return fmt.Errorf("failed to parse config.yaml: %w", err)
 	}
 
 	return nil
@@ -244,7 +244,7 @@ func (g Generator) convertClass(class parser.Class) PythonClass {
 	if class.IsResponse {
 		// Check if there's a mapping for this response type
 		if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
-			if _, ok := moduleConfig.ResponseTypeMapping[class.Name]; ok {
+			if _, ok := moduleConfig.ResponseTypeModify[class.Name]; ok {
 				// If mapped, skip this class
 				pythonClass.ShouldSkip = true
 			}
@@ -418,7 +418,7 @@ func (g Generator) convertOperation(op parser.Operation) PythonOperation {
 	operation.ResponseType = g.getFieldType(op.ResponseSchema)
 	// Check if there's a mapping for this response type
 	if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
-		if mappedType, ok := moduleConfig.ResponseTypeMapping[operation.ResponseType]; ok {
+		if mappedType, ok := moduleConfig.ResponseTypeModify[operation.ResponseType]; ok {
 			operation.ResponseType = mappedType
 		}
 		// Override response type for paged operations
