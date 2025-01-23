@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -117,6 +118,12 @@ func NewParser2(config *ModuleConfig) (*Parser2, error) {
 	}, nil
 }
 
+// TODO: delete this
+func marshal(v any) string {
+	res, _ := json.Marshal(v)
+	return string(res)
+}
+
 // ParseOpenAPI parses an OpenAPI document and returns modules
 func (p *Parser2) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) {
 	// Parse OpenAPI document
@@ -159,7 +166,7 @@ func (p *Parser2) processNamedTypes() error {
 	for name, schema := range p.doc.Components.Schemas {
 		ty, err := p.convertSchema(schema, name, true)
 		if err != nil {
-			return fmt.Errorf("failed to convert schema %s: %w", name, err)
+			return fmt.Errorf("failed to convert schema %s: %+v err: %w", name, schema, err)
 		}
 		p.types[name] = ty
 	}
@@ -195,8 +202,11 @@ func (p *Parser2) processOperations() error {
 
 // convertSchema converts an OpenAPI schema to our type system
 func (p *Parser2) convertSchema(schema *openapi3.SchemaRef, name string, isNamed bool) (*Ty, error) {
-	if schema == nil || schema.Value == nil {
-		return nil, fmt.Errorf("nil schema")
+	if schema == nil {
+		return nil, fmt.Errorf("nil schema. s=%v", marshal(schema))
+	}
+	if schema.Value == nil {
+		return nil, fmt.Errorf("nil schema value. v=%v", marshal(schema.Value))
 	}
 
 	// If it's a reference and we've already processed it, return the existing type
@@ -228,15 +238,32 @@ func (p *Parser2) convertSchema(schema *openapi3.SchemaRef, name string, isNamed
 
 		case "object":
 			ty.Kind = TyKindObject
-			for _, pname := range schema.Value.Extensions["x-coze-order"].([]interface{}) {
-				propName := pname.(string)
-				prop := schema.Value.Properties[propName]
+			// TODO: map: ref: additionalProperties
+			// Check if x-coze-order exists and is not nil
+			if order, ok := schema.Value.Extensions["x-coze-order"]; ok && order != nil {
+				// Process properties in order
+				for _, pname := range order.([]interface{}) {
+					propName := pname.(string)
+					prop := schema.Value.Properties[propName]
+					if prop == nil {
+						continue
+					}
 
-				field, err := p.convertField(propName, prop, schema.Value.Required)
-				if err != nil {
-					return nil, fmt.Errorf("failed to convert field %s: %w", propName, err)
+					field, err := p.convertField(propName, prop, schema.Value.Required)
+					if err != nil {
+						return nil, fmt.Errorf("failed to convert field %s: %w", propName, err)
+					}
+					ty.Fields = append(ty.Fields, *field)
 				}
-				ty.Fields = append(ty.Fields, *field)
+			} else {
+				// If no order specified, process properties in map order
+				for propName, prop := range schema.Value.Properties {
+					field, err := p.convertField(propName, prop, schema.Value.Required)
+					if err != nil {
+						return nil, fmt.Errorf("failed to convert field %s: %w", propName, err)
+					}
+					ty.Fields = append(ty.Fields, *field)
+				}
 			}
 
 		default:
