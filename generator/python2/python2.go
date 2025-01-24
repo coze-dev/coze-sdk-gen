@@ -428,7 +428,6 @@ func (g *Generator) getFieldType(ty *parser.Ty) string {
 
 	case parser.TyKindObject:
 		if ty.IsNamed {
-			fmt.Println("getFieldType", ty.Name)
 			return ty.Name
 		}
 		return "Dict[str, Any]"
