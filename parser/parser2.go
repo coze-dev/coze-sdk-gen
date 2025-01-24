@@ -265,6 +265,10 @@ func (p *Parser2) processNamedTypes() error {
 	}
 
 	for name, schema := range p.doc.Components.Schemas {
+		if p.types[name] != nil {
+			continue
+		}
+
 		ty, err := p.convertSchema(schema, name, true)
 		if err != nil {
 			return fmt.Errorf("failed to convert schema %s: %+v err: %w", name, schema, err)
@@ -532,7 +536,6 @@ func (p *Parser2) assignTypesToModules() error {
 	// For remaining types, assign based on usage
 	for _, ty := range p.types {
 		if ty.Module != "" {
-			panic("hh")
 			continue // Skip if already assigned
 		}
 		// Find the first module that uses this type
