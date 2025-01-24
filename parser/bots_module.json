@@ -237,14 +237,6 @@
               "module": "bots",
               "fields": [
                 {
-                  "name": "total",
-                  "description": "Total number of agents in the agent list.",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "int"
-                  }
-                },
-                {
                   "name": "space_bots",
                   "description": "List of agents published to the Agent as API channel in the specified space.",
                   "type": {
@@ -298,94 +290,19 @@
                       "is_named": true
                     }
                   }
-                }
-              ],
-              "is_named": true
-            },
-            "required": true
-          }
-        ]
-      }
-    },
-    {
-      "name": "PublishDraftBot",
-      "description": "Publish the specified agent to API, Web SDK, or custom channels.",
-      "path": "/v1/bot/publish",
-      "method": "POST",
-      "content_type": "json",
-      "request_body": {
-        "kind": "object",
-        "fields": [
-          {
-            "name": "bot_id",
-            "description": "The ID of the agent to be published.\nNavigate to the build page of the agent. The number following the `bot` path parameter in the URL is the agent ID. For example, in the URL `https://www.coze.com/space/341****/bot/73428668*****`, the agent ID is `73428668*****`.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            },
-            "required": true
-          },
-          {
-            "name": "connector_ids",
-            "description": "List of IDs of the channels to which the agent is published. Currently, this API supports publishing agents as API, Web SDK, and custom channels.\n\n* Agent as API: 1024\n* Web SDK: 999\n* Custom channel: Custom channel ID. For information about how to obtain the channel ID, see [Channel integration overview](https://www.coze.com/docs/guides/channel_integration_overview). Ensure that the access token of the creator using the custom channel is used.",
-            "type": {
-              "kind": "array",
-              "element_type": {
-                "kind": "primimtive",
-                "primitive_kind": "string"
-              }
-            },
-            "required": true
-          }
-        ]
-      },
-      "response_body": {
-        "kind": "object",
-        "fields": [
-          {
-            "name": "code",
-            "description": "Status code:\n\n* A value of `0` indicates a successful call.\n* Any other value indicates a failed call. You can determine the detailed error reason through the msg field.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "int"
-            },
-            "required": true
-          },
-          {
-            "name": "msg",
-            "description": "This field provides detailed information about the result of the API call. If the API call fails, `msg` contains a description of the error or the reason for the failure.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            },
-            "required": true
-          },
-          {
-            "name": "data",
-            "type": {
-              "name": "PublishDraftBotData",
-              "kind": "object",
-              "module": "bots",
-              "fields": [
-                {
-                  "name": "bot_id",
-                  "description": "The ID of the agent.",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
                 },
                 {
-                  "name": "version",
-                  "description": "The version of the agent.",
+                  "name": "total",
+                  "description": "Total number of agents in the agent list.",
                   "type": {
                     "kind": "primimtive",
-                    "primitive_kind": "string"
+                    "primitive_kind": "int"
                   }
                 }
               ],
               "is_named": true
-            }
+            },
+            "required": true
           }
         ]
       }
@@ -628,45 +545,6 @@
                       "module": "bots",
                       "fields": [
                         {
-                          "name": "api_info_list",
-                          "description": "Information about the tool list of the plugin.",
-                          "type": {
-                            "kind": "array",
-                            "element_type": {
-                              "name": "BotPluginAPIInfo",
-                              "kind": "object",
-                              "module": "bots",
-                              "fields": [
-                                {
-                                  "name": "name",
-                                  "description": "The name of the tool.",
-                                  "type": {
-                                    "kind": "primimtive",
-                                    "primitive_kind": "string"
-                                  }
-                                },
-                                {
-                                  "name": "api_id",
-                                  "description": "Unique identifier of the tool.",
-                                  "type": {
-                                    "kind": "primimtive",
-                                    "primitive_kind": "string"
-                                  }
-                                },
-                                {
-                                  "name": "description",
-                                  "description": "Description of the tool.",
-                                  "type": {
-                                    "kind": "primimtive",
-                                    "primitive_kind": "string"
-                                  }
-                                }
-                              ],
-                              "is_named": true
-                            }
-                          }
-                        },
-                        {
                           "name": "description",
                           "description": "Plugin Description.",
                           "type": {
@@ -697,6 +575,45 @@
                             "kind": "primimtive",
                             "primitive_kind": "string"
                           }
+                        },
+                        {
+                          "name": "api_info_list",
+                          "description": "Information about the tool list of the plugin.",
+                          "type": {
+                            "kind": "array",
+                            "element_type": {
+                              "name": "BotPluginAPIInfo",
+                              "kind": "object",
+                              "module": "bots",
+                              "fields": [
+                                {
+                                  "name": "api_id",
+                                  "description": "Unique identifier of the tool.",
+                                  "type": {
+                                    "kind": "primimtive",
+                                    "primitive_kind": "string"
+                                  }
+                                },
+                                {
+                                  "name": "description",
+                                  "description": "Description of the tool.",
+                                  "type": {
+                                    "kind": "primimtive",
+                                    "primitive_kind": "string"
+                                  }
+                                },
+                                {
+                                  "name": "name",
+                                  "description": "The name of the tool.",
+                                  "type": {
+                                    "kind": "primimtive",
+                                    "primitive_kind": "string"
+                                  }
+                                }
+                              ],
+                              "is_named": true
+                            }
+                          }
                         }
                       ],
                       "is_named": true
@@ -710,14 +627,6 @@
                     "kind": "object",
                     "module": "bots",
                     "fields": [
-                      {
-                        "name": "frequency_penalty",
-                        "description": "频率惩罚 没配置不返回",
-                        "type": {
-                          "kind": "primimtive",
-                          "primitive_kind": "float"
-                        }
-                      },
                       {
                         "name": "max_tokens",
                         "description": "最大回复长度",
@@ -751,6 +660,38 @@
                         }
                       },
                       {
+                        "name": "top_p",
+                        "description": "top p 没配置不返回",
+                        "type": {
+                          "kind": "primimtive",
+                          "primitive_kind": "float"
+                        }
+                      },
+                      {
+                        "name": "context_round",
+                        "description": "携带上下文轮数",
+                        "type": {
+                          "kind": "primimtive",
+                          "primitive_kind": "int"
+                        }
+                      },
+                      {
+                        "name": "frequency_penalty",
+                        "description": "频率惩罚 没配置不返回",
+                        "type": {
+                          "kind": "primimtive",
+                          "primitive_kind": "float"
+                        }
+                      },
+                      {
+                        "name": "model_name",
+                        "description": "Model Name.",
+                        "type": {
+                          "kind": "primimtive",
+                          "primitive_kind": "string"
+                        }
+                      },
+                      {
                         "name": "temperature",
                         "description": "生成随机性 没配置不返回",
                         "type": {
@@ -764,30 +705,6 @@
                         "type": {
                           "kind": "primimtive",
                           "primitive_kind": "int"
-                        }
-                      },
-                      {
-                        "name": "context_round",
-                        "description": "携带上下文轮数",
-                        "type": {
-                          "kind": "primimtive",
-                          "primitive_kind": "int"
-                        }
-                      },
-                      {
-                        "name": "model_name",
-                        "description": "Model Name.",
-                        "type": {
-                          "kind": "primimtive",
-                          "primitive_kind": "string"
-                        }
-                      },
-                      {
-                        "name": "top_p",
-                        "description": "top p 没配置不返回",
-                        "type": {
-                          "kind": "primimtive",
-                          "primitive_kind": "float"
                         }
                       }
                     ],
@@ -804,30 +721,6 @@
                       "kind": "object",
                       "module": "bots",
                       "fields": [
-                        {
-                          "name": "preview_audio",
-                          "description": "Preview tone content.",
-                          "type": {
-                            "kind": "primimtive",
-                            "primitive_kind": "string"
-                          }
-                        },
-                        {
-                          "name": "preview_text",
-                          "description": "Preview the text content",
-                          "type": {
-                            "kind": "primimtive",
-                            "primitive_kind": "string"
-                          }
-                        },
-                        {
-                          "name": "style_id",
-                          "description": "Timbre style_id",
-                          "type": {
-                            "kind": "primimtive",
-                            "primitive_kind": "string"
-                          }
-                        },
                         {
                           "name": "id",
                           "description": "Unique ID",
@@ -859,6 +752,30 @@
                             "kind": "primimtive",
                             "primitive_kind": "string"
                           }
+                        },
+                        {
+                          "name": "preview_audio",
+                          "description": "Preview tone content.",
+                          "type": {
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        },
+                        {
+                          "name": "preview_text",
+                          "description": "Preview the text content",
+                          "type": {
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        },
+                        {
+                          "name": "style_id",
+                          "description": "Timbre style_id",
+                          "type": {
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
                         }
                       ],
                       "is_named": true
@@ -869,6 +786,89 @@
               "is_named": true
             },
             "required": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "PublishDraftBot",
+      "description": "Publish the specified agent to API, Web SDK, or custom channels.",
+      "path": "/v1/bot/publish",
+      "method": "POST",
+      "content_type": "json",
+      "request_body": {
+        "kind": "object",
+        "fields": [
+          {
+            "name": "bot_id",
+            "description": "The ID of the agent to be published.\nNavigate to the build page of the agent. The number following the `bot` path parameter in the URL is the agent ID. For example, in the URL `https://www.coze.com/space/341****/bot/73428668*****`, the agent ID is `73428668*****`.",
+            "type": {
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "connector_ids",
+            "description": "List of IDs of the channels to which the agent is published. Currently, this API supports publishing agents as API, Web SDK, and custom channels.\n\n* Agent as API: 1024\n* Web SDK: 999\n* Custom channel: Custom channel ID. For information about how to obtain the channel ID, see [Channel integration overview](https://www.coze.com/docs/guides/channel_integration_overview). Ensure that the access token of the creator using the custom channel is used.",
+            "type": {
+              "kind": "array",
+              "element_type": {
+                "kind": "primimtive",
+                "primitive_kind": "string"
+              }
+            },
+            "required": true
+          }
+        ]
+      },
+      "response_body": {
+        "kind": "object",
+        "fields": [
+          {
+            "name": "code",
+            "description": "Status code:\n\n* A value of `0` indicates a successful call.\n* Any other value indicates a failed call. You can determine the detailed error reason through the msg field.",
+            "type": {
+              "kind": "primimtive",
+              "primitive_kind": "int"
+            },
+            "required": true
+          },
+          {
+            "name": "msg",
+            "description": "This field provides detailed information about the result of the API call. If the API call fails, `msg` contains a description of the error or the reason for the failure.",
+            "type": {
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "data",
+            "type": {
+              "name": "PublishDraftBotData",
+              "kind": "object",
+              "module": "bots",
+              "fields": [
+                {
+                  "name": "bot_id",
+                  "description": "The ID of the agent.",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "version",
+                  "description": "The version of the agent.",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                }
+              ],
+              "is_named": true
+            }
           }
         ]
       }
@@ -1036,22 +1036,25 @@
       "is_named": true
     },
     {
-      "name": "OnboardingMode",
-      "kind": "primimtive",
+      "name": "PublishDraftBotData",
+      "kind": "object",
       "module": "bots",
-      "primitive_kind": "int",
-      "enum_values": [
+      "fields": [
         {
-          "name": "NO_NEED",
-          "val": 1
+          "name": "bot_id",
+          "description": "The ID of the agent.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
         },
         {
-          "name": "USE_MANUAL",
-          "val": 2
-        },
-        {
-          "name": "USE_LLM",
-          "val": 3
+          "name": "version",
+          "description": "The version of the agent.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
         }
       ],
       "is_named": true
@@ -1074,80 +1077,6 @@
         {
           "name": "FullTextSearch",
           "val": 20
-        }
-      ],
-      "is_named": true
-    },
-    {
-      "name": "SuggestedQuestionsShowMode",
-      "kind": "primimtive",
-      "module": "bots",
-      "primitive_kind": "int",
-      "enum_values": [
-        {
-          "name": "Random",
-          "val": 0
-        },
-        {
-          "name": "All",
-          "val": 1
-        }
-      ],
-      "is_named": true
-    },
-    {
-      "name": "BotPromptInfo",
-      "kind": "object",
-      "module": "bots",
-      "fields": [
-        {
-          "name": "prompt",
-          "description": "The persona and response logic of the intelligent agent. Length is 0~20,000 characters. Default is empty.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
-        }
-      ],
-      "is_named": true
-    },
-    {
-      "name": "CreateDraftBotData",
-      "kind": "object",
-      "module": "bots",
-      "fields": [
-        {
-          "name": "bot_id",
-          "description": "The ID of the created agent.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          },
-          "required": true
-        }
-      ],
-      "is_named": true
-    },
-    {
-      "name": "PublishDraftBotData",
-      "kind": "object",
-      "module": "bots",
-      "fields": [
-        {
-          "name": "bot_id",
-          "description": "The ID of the agent.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
-        },
-        {
-          "name": "version",
-          "description": "The version of the agent.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
         }
       ],
       "is_named": true
@@ -1180,21 +1109,59 @@
       "is_named": true
     },
     {
-      "name": "BotPluginAPIInfo",
+      "name": "SuggestedQuestionsShowMode",
+      "kind": "primimtive",
+      "module": "bots",
+      "primitive_kind": "int",
+      "enum_values": [
+        {
+          "name": "Random",
+          "val": 0
+        },
+        {
+          "name": "All",
+          "val": 1
+        }
+      ],
+      "is_named": true
+    },
+    {
+      "name": "OnboardingMode",
+      "kind": "primimtive",
+      "module": "bots",
+      "primitive_kind": "int",
+      "enum_values": [
+        {
+          "name": "NO_NEED",
+          "val": 1
+        },
+        {
+          "name": "USE_MANUAL",
+          "val": 2
+        },
+        {
+          "name": "USE_LLM",
+          "val": 3
+        }
+      ],
+      "is_named": true
+    },
+    {
+      "name": "SimpleBot",
       "kind": "object",
       "module": "bots",
       "fields": [
         {
-          "name": "name",
-          "description": "The name of the tool.",
+          "name": "bot_id",
+          "description": "The unique identifier of the agent.",
           "type": {
             "kind": "primimtive",
             "primitive_kind": "string"
           }
         },
         {
-          "name": "api_id",
-          "description": "Unique identifier of the tool.",
+          "name": "bot_name",
+          "description": "The name of the agent.",
           "type": {
             "kind": "primimtive",
             "primitive_kind": "string"
@@ -1202,7 +1169,23 @@
         },
         {
           "name": "description",
-          "description": "Description of the tool.",
+          "description": "Description of the intelligent agent.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "icon_url",
+          "description": "Avatar of the intelligent agent.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "publish_time",
+          "description": "The most recent release time of the agent, formatted as a 10-digit Unixtime timestamp. The list of agents returned by this API is sorted in descending order by this field.",
           "type": {
             "kind": "primimtive",
             "primitive_kind": "string"
@@ -1216,14 +1199,6 @@
       "kind": "object",
       "module": "bots",
       "fields": [
-        {
-          "name": "total",
-          "description": "Total number of agents in the agent list.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "int"
-          }
-        },
         {
           "name": "space_bots",
           "description": "List of agents published to the Agent as API channel in the specified space.",
@@ -1277,6 +1252,14 @@
               ],
               "is_named": true
             }
+          }
+        },
+        {
+          "name": "total",
+          "description": "Total number of agents in the agent list.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "int"
           }
         }
       ],
@@ -1336,21 +1319,13 @@
       "is_named": true
     },
     {
-      "name": "SimpleBot",
+      "name": "BotPluginAPIInfo",
       "kind": "object",
       "module": "bots",
       "fields": [
         {
-          "name": "bot_id",
-          "description": "The unique identifier of the agent.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
-        },
-        {
-          "name": "bot_name",
-          "description": "The name of the agent.",
+          "name": "api_id",
+          "description": "Unique identifier of the tool.",
           "type": {
             "kind": "primimtive",
             "primitive_kind": "string"
@@ -1358,7 +1333,31 @@
         },
         {
           "name": "description",
-          "description": "Description of the intelligent agent.",
+          "description": "Description of the tool.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "The name of the tool.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        }
+      ],
+      "is_named": true
+    },
+    {
+      "name": "BotPluginInfo",
+      "kind": "object",
+      "module": "bots",
+      "fields": [
+        {
+          "name": "description",
+          "description": "Plugin Description.",
           "type": {
             "kind": "primimtive",
             "primitive_kind": "string"
@@ -1366,18 +1365,65 @@
         },
         {
           "name": "icon_url",
-          "description": "Avatar of the intelligent agent.",
+          "description": "Plugin avatar.",
           "type": {
             "kind": "primimtive",
             "primitive_kind": "string"
           }
         },
         {
-          "name": "publish_time",
-          "description": "The most recent release time of the agent, formatted as a 10-digit Unixtime timestamp. The list of agents returned by this API is sorted in descending order by this field.",
+          "name": "name",
+          "description": "Plugin Name.",
           "type": {
             "kind": "primimtive",
             "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "plugin_id",
+          "description": "Plugin unique identifier.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "api_info_list",
+          "description": "Information about the tool list of the plugin.",
+          "type": {
+            "kind": "array",
+            "element_type": {
+              "name": "BotPluginAPIInfo",
+              "kind": "object",
+              "module": "bots",
+              "fields": [
+                {
+                  "name": "api_id",
+                  "description": "Unique identifier of the tool.",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "description",
+                  "description": "Description of the tool.",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "name",
+                  "description": "The name of the tool.",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                }
+              ],
+              "is_named": true
+            }
           }
         }
       ],
@@ -1463,113 +1509,10 @@
       "is_named": true
     },
     {
-      "name": "BotPluginInfo",
-      "kind": "object",
-      "module": "bots",
-      "fields": [
-        {
-          "name": "api_info_list",
-          "description": "Information about the tool list of the plugin.",
-          "type": {
-            "kind": "array",
-            "element_type": {
-              "name": "BotPluginAPIInfo",
-              "kind": "object",
-              "module": "bots",
-              "fields": [
-                {
-                  "name": "name",
-                  "description": "The name of the tool.",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
-                },
-                {
-                  "name": "api_id",
-                  "description": "Unique identifier of the tool.",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
-                },
-                {
-                  "name": "description",
-                  "description": "Description of the tool.",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
-                }
-              ],
-              "is_named": true
-            }
-          }
-        },
-        {
-          "name": "description",
-          "description": "Plugin Description.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
-        },
-        {
-          "name": "icon_url",
-          "description": "Plugin avatar.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
-        },
-        {
-          "name": "name",
-          "description": "Plugin Name.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
-        },
-        {
-          "name": "plugin_id",
-          "description": "Plugin unique identifier.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
-        }
-      ],
-      "is_named": true
-    },
-    {
       "name": "VoiceData",
       "kind": "object",
       "module": "bots",
       "fields": [
-        {
-          "name": "preview_audio",
-          "description": "Preview tone content.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
-        },
-        {
-          "name": "preview_text",
-          "description": "Preview the text content",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
-        },
-        {
-          "name": "style_id",
-          "description": "Timbre style_id",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
-        },
         {
           "name": "id",
           "description": "Unique ID",
@@ -1601,6 +1544,63 @@
             "kind": "primimtive",
             "primitive_kind": "string"
           }
+        },
+        {
+          "name": "preview_audio",
+          "description": "Preview tone content.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "preview_text",
+          "description": "Preview the text content",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "style_id",
+          "description": "Timbre style_id",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        }
+      ],
+      "is_named": true
+    },
+    {
+      "name": "BotPromptInfo",
+      "kind": "object",
+      "module": "bots",
+      "fields": [
+        {
+          "name": "prompt",
+          "description": "The persona and response logic of the intelligent agent. Length is 0~20,000 characters. Default is empty.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        }
+      ],
+      "is_named": true
+    },
+    {
+      "name": "CreateDraftBotData",
+      "kind": "object",
+      "module": "bots",
+      "fields": [
+        {
+          "name": "bot_id",
+          "description": "The ID of the created agent.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          },
+          "required": true
         }
       ],
       "is_named": true
@@ -1610,14 +1610,6 @@
       "kind": "object",
       "module": "bots",
       "fields": [
-        {
-          "name": "frequency_penalty",
-          "description": "频率惩罚 没配置不返回",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "float"
-          }
-        },
         {
           "name": "max_tokens",
           "description": "最大回复长度",
@@ -1651,6 +1643,38 @@
           }
         },
         {
+          "name": "top_p",
+          "description": "top p 没配置不返回",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "float"
+          }
+        },
+        {
+          "name": "context_round",
+          "description": "携带上下文轮数",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "int"
+          }
+        },
+        {
+          "name": "frequency_penalty",
+          "description": "频率惩罚 没配置不返回",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "float"
+          }
+        },
+        {
+          "name": "model_name",
+          "description": "Model Name.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
           "name": "temperature",
           "description": "生成随机性 没配置不返回",
           "type": {
@@ -1664,30 +1688,6 @@
           "type": {
             "kind": "primimtive",
             "primitive_kind": "int"
-          }
-        },
-        {
-          "name": "context_round",
-          "description": "携带上下文轮数",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "int"
-          }
-        },
-        {
-          "name": "model_name",
-          "description": "Model Name.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
-        },
-        {
-          "name": "top_p",
-          "description": "top p 没配置不返回",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "float"
           }
         }
       ],
@@ -1890,45 +1890,6 @@
               "module": "bots",
               "fields": [
                 {
-                  "name": "api_info_list",
-                  "description": "Information about the tool list of the plugin.",
-                  "type": {
-                    "kind": "array",
-                    "element_type": {
-                      "name": "BotPluginAPIInfo",
-                      "kind": "object",
-                      "module": "bots",
-                      "fields": [
-                        {
-                          "name": "name",
-                          "description": "The name of the tool.",
-                          "type": {
-                            "kind": "primimtive",
-                            "primitive_kind": "string"
-                          }
-                        },
-                        {
-                          "name": "api_id",
-                          "description": "Unique identifier of the tool.",
-                          "type": {
-                            "kind": "primimtive",
-                            "primitive_kind": "string"
-                          }
-                        },
-                        {
-                          "name": "description",
-                          "description": "Description of the tool.",
-                          "type": {
-                            "kind": "primimtive",
-                            "primitive_kind": "string"
-                          }
-                        }
-                      ],
-                      "is_named": true
-                    }
-                  }
-                },
-                {
                   "name": "description",
                   "description": "Plugin Description.",
                   "type": {
@@ -1959,6 +1920,45 @@
                     "kind": "primimtive",
                     "primitive_kind": "string"
                   }
+                },
+                {
+                  "name": "api_info_list",
+                  "description": "Information about the tool list of the plugin.",
+                  "type": {
+                    "kind": "array",
+                    "element_type": {
+                      "name": "BotPluginAPIInfo",
+                      "kind": "object",
+                      "module": "bots",
+                      "fields": [
+                        {
+                          "name": "api_id",
+                          "description": "Unique identifier of the tool.",
+                          "type": {
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        },
+                        {
+                          "name": "description",
+                          "description": "Description of the tool.",
+                          "type": {
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        },
+                        {
+                          "name": "name",
+                          "description": "The name of the tool.",
+                          "type": {
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        }
+                      ],
+                      "is_named": true
+                    }
+                  }
                 }
               ],
               "is_named": true
@@ -1972,14 +1972,6 @@
             "kind": "object",
             "module": "bots",
             "fields": [
-              {
-                "name": "frequency_penalty",
-                "description": "频率惩罚 没配置不返回",
-                "type": {
-                  "kind": "primimtive",
-                  "primitive_kind": "float"
-                }
-              },
               {
                 "name": "max_tokens",
                 "description": "最大回复长度",
@@ -2013,6 +2005,38 @@
                 }
               },
               {
+                "name": "top_p",
+                "description": "top p 没配置不返回",
+                "type": {
+                  "kind": "primimtive",
+                  "primitive_kind": "float"
+                }
+              },
+              {
+                "name": "context_round",
+                "description": "携带上下文轮数",
+                "type": {
+                  "kind": "primimtive",
+                  "primitive_kind": "int"
+                }
+              },
+              {
+                "name": "frequency_penalty",
+                "description": "频率惩罚 没配置不返回",
+                "type": {
+                  "kind": "primimtive",
+                  "primitive_kind": "float"
+                }
+              },
+              {
+                "name": "model_name",
+                "description": "Model Name.",
+                "type": {
+                  "kind": "primimtive",
+                  "primitive_kind": "string"
+                }
+              },
+              {
                 "name": "temperature",
                 "description": "生成随机性 没配置不返回",
                 "type": {
@@ -2026,30 +2050,6 @@
                 "type": {
                   "kind": "primimtive",
                   "primitive_kind": "int"
-                }
-              },
-              {
-                "name": "context_round",
-                "description": "携带上下文轮数",
-                "type": {
-                  "kind": "primimtive",
-                  "primitive_kind": "int"
-                }
-              },
-              {
-                "name": "model_name",
-                "description": "Model Name.",
-                "type": {
-                  "kind": "primimtive",
-                  "primitive_kind": "string"
-                }
-              },
-              {
-                "name": "top_p",
-                "description": "top p 没配置不返回",
-                "type": {
-                  "kind": "primimtive",
-                  "primitive_kind": "float"
                 }
               }
             ],
@@ -2066,30 +2066,6 @@
               "kind": "object",
               "module": "bots",
               "fields": [
-                {
-                  "name": "preview_audio",
-                  "description": "Preview tone content.",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
-                },
-                {
-                  "name": "preview_text",
-                  "description": "Preview the text content",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
-                },
-                {
-                  "name": "style_id",
-                  "description": "Timbre style_id",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
-                },
                 {
                   "name": "id",
                   "description": "Unique ID",
@@ -2117,6 +2093,30 @@
                 {
                   "name": "name",
                   "description": "Timbre name",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "preview_audio",
+                  "description": "Preview tone content.",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "preview_text",
+                  "description": "Preview the text content",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "style_id",
+                  "description": "Timbre style_id",
                   "type": {
                     "kind": "primimtive",
                     "primitive_kind": "string"

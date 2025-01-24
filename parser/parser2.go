@@ -8,8 +8,8 @@ import (
 
 	"github.com/coze-dev/coze-sdk-gen/util"
 	"github.com/getkin/kin-openapi/openapi3"
-	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
+	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 )
@@ -582,39 +582,18 @@ func topologicalSortTypes(entryTypes []*Ty) ([]*Ty, error) {
 	}
 
 	// Perform topological sort
-	sorted, err := topo.Sort(g)
+	sorted, err := topo.SortStabilized(g, func(nodes []graph.Node) {
+		sort.Slice(nodes, func(i, j int) bool {
+			return idToType[nodes[i].ID()].Name < idToType[nodes[j].ID()].Name
+		})
+	})
 	if err != nil {
 		return nil, fmt.Errorf("cycle detected in type dependencies: %w", err)
 	}
 
-	// Group types by their dependencies (level)
-	levelMap := make(map[int][]*Ty)
+	result := make([]*Ty, 0, len(sorted))
 	for _, node := range sorted {
-		level := 0
-		// Count incoming edges to determine level
-		it := g.To(node.ID())
-		for it.Next() {
-			level++
-		}
-
-		// Find the type with this node ID
-		ty := idToType[node.ID()]
-		levelMap[level] = append(levelMap[level], ty)
-	}
-
-	// Get sorted levels
-	levels := maps.Keys(levelMap)
-	slices.Sort(levels)
-
-	// Sort types within each level by name for deterministic ordering
-	var result []*Ty
-	for _, level := range levels {
-		types := levelMap[level]
-		// Sort by name within the same level
-		sort.Slice(types, func(i, j int) bool {
-			return types[i].Name < types[j].Name
-		})
-		result = append(result, types...)
+		result = append(result, idToType[node.ID()])
 	}
 
 	return result, nil

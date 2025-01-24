@@ -13,21 +13,21 @@ modules:
     response_type_modify:
       CreateDraftBotData: Bot
       PublishDraftBotData: Bot
-      SpacePublishedBotsInfo: _PrivateListBotsData
+      # SpacePublishedBotsInfo: _PrivateListBotsData
     type_mapping:
-      SpacePublishedBotsInfo: _PrivateListBotsData
+      # SpacePublishedBotsInfo: _PrivateListBotsData
     skip_optional_fields_classes:
       - BotOnboardingInfo
       - BotPromptInfo
       - BotModelInfo
       - BotPluginAPIInfo
       - BotPluginInfo
-      - _PrivateListBotsData
+      # - _PrivateListBotsData
     paged_operations:
       GetSpacePublishedBotsList:
         enabled: true
         param_mapping:
           page_index: page_num
           page_size: page_size
-        response_class: _PrivateListBotsData
+        # response_class: _PrivateListBotsData
         item_type: SimpleBot
