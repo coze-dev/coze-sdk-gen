@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/coze-dev/coze-sdk-gen/generator/python2"
+	"github.com/coze-dev/coze-sdk-gen/generator/python"
 	"github.com/spf13/cobra"
 )
 
@@ -55,7 +55,7 @@ Currently supports generating Python SDK.`,
 		var files map[string]string
 		switch lang {
 		case "python":
-			generator := python2.Generator{}
+			generator := python.Generator{}
 			files, err = generator.Generate(context.Background(), yamlContent)
 			if err != nil {
 				return fmt.Errorf("failed to generate Python SDK: %v", err)

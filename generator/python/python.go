@@ -1,4 +1,4 @@
-package python2
+package python
 
 import (
 	"bytes"
