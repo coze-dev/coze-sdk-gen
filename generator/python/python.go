@@ -150,8 +150,12 @@ func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[strin
 
 	// Create new parser2 instance
 	p, err := parser.NewParser(&parser.ModuleConfig{
-		GenerateUnnamedResponseType: func(h *parser.HttpHandler) string {
-			return fmt.Sprintf("%sResp", h.Name)
+		GenerateUnnamedResponseType: func(h *parser.HttpHandler) (string, bool) {
+			if h.GetActualResponseBody() == nil {
+				return fmt.Sprintf("%sResp", h.Name), true
+			}
+
+			return "", false
 		},
 	})
 	if err != nil {

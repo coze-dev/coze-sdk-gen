@@ -204,8 +204,8 @@ type TyModule struct {
 
 // ModuleConfig represents the configuration for type-to-module mapping
 type ModuleConfig struct {
-	TypeModuleMap               map[string]string         `json:"type_module_map"`                // Maps type names to module names
-	GenerateUnnamedResponseType func(*HttpHandler) string `json:"generate_unnamed_response_type"` // if response type is unnamed, will auto gen named
+	TypeModuleMap               map[string]string                 `json:"type_module_map"`                // Maps type names to module names
+	GenerateUnnamedResponseType func(*HttpHandler) (string, bool) `json:"generate_unnamed_response_type"` // if response type is unnamed, will auto gen named
 }
 
 // Parser handles OpenAPI parsing with the new schema design
@@ -268,7 +268,11 @@ func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) 
 					continue
 				}
 
-				name := p.config.GenerateUnnamedResponseType(&module.HttpHandlers[i])
+				name, gen := p.config.GenerateUnnamedResponseType(&module.HttpHandlers[i])
+				if !gen {
+					continue
+				}
+
 				module.HttpHandlers[i].ResponseBody.Name = name
 				module.HttpHandlers[i].ResponseBody.IsNamed = true
 				module.Types = append(module.Types, module.HttpHandlers[i].ResponseBody)
