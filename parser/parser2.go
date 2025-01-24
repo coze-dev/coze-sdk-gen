@@ -576,12 +576,17 @@ func (p *Parser2) assignTypesToModules() error {
 					if toID, ok := typeToID[field.Type]; ok {
 						g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
 					}
+					if toID, ok := typeToID[field.Type.ElementType]; ok {
+						g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
+					}
 				}
 			}
 			// Add edges for array element types
-			if ty.Kind == TyKindArray && ty.ElementType != nil && ty.ElementType.Module == ty.Module {
-				if toID, ok := typeToID[ty.ElementType]; ok {
-					g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
+			if ty.Kind == TyKindArray {
+				if ty.ElementType != nil {
+					if toID, ok := typeToID[ty.ElementType]; ok {
+						g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
+					}
 				}
 			}
 		}
