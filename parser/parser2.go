@@ -16,6 +16,7 @@ const (
 	TyKindPrimitive TyKind = "primimtive"
 	TyKindObject    TyKind = "object"
 	TyKindArray     TyKind = "array"
+	TyKindMap       TyKind = "map" // New type for map
 )
 
 // PrimitiveKind represents primitive types
@@ -46,6 +47,9 @@ type Ty struct {
 
 	// For array types
 	ElementType *Ty `json:"element_type,omitempty"`
+
+	// For map types
+	ValueType *Ty `json:"value_type,omitempty"` // Type of the map values
 
 	// Metadata
 	IsNamed bool `json:"is_named,omitempty"` // Whether this is a named type (from components)
@@ -224,6 +228,17 @@ func (p *Parser2) convertSchema(schema *openapi3.SchemaRef, name string, isNamed
 		Name:        name,
 		IsNamed:     isNamed,
 		Description: util.Choose(schema.Value.Title != "", schema.Value.Title, schema.Value.Description),
+	}
+
+	// Check if it's a map type first
+	if schema.Value.AdditionalProperties.Schema != nil {
+		ty.Kind = TyKindMap
+		valueType, err := p.convertSchema(schema.Value.AdditionalProperties.Schema, "", false)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert map value type: %w", err)
+		}
+		ty.ValueType = valueType
+		return ty, nil
 	}
 
 	// Determine the kind of type

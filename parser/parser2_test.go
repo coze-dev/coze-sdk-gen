@@ -23,10 +23,11 @@ func TestParser2_ParseOpenAPI(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get bots module
-	botsModule, ok := modules["files"]
+	botsModule, ok := modules["workflows.runs"]
 	require.True(t, ok, "bots module not found")
 
 	// Convert to JSON
+	// jsonData, err := json.MarshalIndent(modules, "", "  ")
 	jsonData, err := json.MarshalIndent(botsModule, "", "  ")
 	require.NoError(t, err)
 
