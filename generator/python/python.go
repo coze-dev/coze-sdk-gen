@@ -195,7 +195,9 @@ func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[strin
 
 	// Read template
 	tmpl, err := template.New("python").Funcs(template.FuncMap{
-		"title": strings.Title,
+		"title": func(x string) string {
+			return strings.ReplaceAll(strings.Title(x), ".", "")
+		},
 	}).Parse(g.getTemplate())
 	if err != nil {
 		return nil, fmt.Errorf("parse template failed: %w", err)
