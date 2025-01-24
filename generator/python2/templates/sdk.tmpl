@@ -46,14 +46,14 @@ class Client(object):
                 params={
                     {{ range .QueryParams }}{{ if eq .Name "page_num" }}"page_index": i_page_num,{{ else if eq .Name "page_size" }}"page_size": i_page_size,{{ else }}"{{ .JsonName }}": {{ .Name }},{{ end }}{{ end }}
                 },
-                cast={{ .ResponseClass }},
+                cast={{ .ResponseCast }},
                 is_async=False,
                 stream=False,
             )
 
         return NumberPaged(
-            page_num={{ range .QueryParams }}{{ if eq .Name "page_num" }}{{ .Name }}{{ end }}{{ end }},
-            page_size={{ range .QueryParams }}{{ if eq .Name "page_size" }}{{ .Name }}{{ end }}{{ end }},
+            page_num={{ .PageIndexName }},
+            page_size={{ .PageSizeName }},
             requestor=self._requester,
             request_maker=request_maker,
         ){{ else }}params = {
@@ -112,7 +112,7 @@ class AsyncClient(object):
                 params={
                     {{ range .QueryParams }}{{ if eq .Name "page_num" }}"page_index": i_page_num,{{ else if eq .Name "page_size" }}"page_size": i_page_size,{{ else }}"{{ .JsonName }}": {{ .Name }},{{ end }}{{ end }}
                 },
-                cast={{ .ResponseClass }},
+                cast={{ .ResponseCast }},
                 is_async=True,
                 stream=False,
             )

@@ -21,10 +21,10 @@ var templateFS embed.FS
 var configFS embed.FS
 
 type PagedOperationConfig struct {
-	Enabled       bool              `yaml:"enabled"`
-	ParamMapping  map[string]string `yaml:"param_mapping"`
-	ResponseClass string            `yaml:"response_class"`
-	ItemType      string            `yaml:"item_type"`
+	Enabled      bool              `yaml:"enabled"`
+	ParamMapping map[string]string `yaml:"param_mapping"`
+	// esponseClass string            `yaml:"response_class"`
+	ItemType string `yaml:"item_type"`
 }
 
 type ModuleConfig struct {
@@ -102,9 +102,12 @@ type PythonOperation struct {
 	HeaderParams        []PythonParam
 	HasHeaders          bool
 	StaticHeaders       map[string]string
-	IsPaged             bool
-	ResponseClass       string
-	AsyncResponseType   string
+	// page
+	IsPaged           bool
+	ResponseCast      string
+	AsyncResponseType string
+	PageIndexName     string
+	PageSizeName      string
 }
 
 // PythonParam represents a Python parameter
@@ -276,14 +279,6 @@ func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation
 		Method:      strings.ToUpper(handler.Method),
 	}
 
-	// Check if this is a paged operation using GetPageInfo
-	if pageInfo := handler.GetPageInfo(nil, nil); pageInfo != nil {
-		operation.IsPaged = true
-		operation.ResponseClass = pageInfo.ItemType.Name
-		operation.ResponseType = fmt.Sprintf("NumberPaged[%s]", pageInfo.ItemType.Name)
-		operation.AsyncResponseType = fmt.Sprintf("AsyncNumberPaged[%s]", pageInfo.ItemType.Name)
-	}
-
 	// Convert parameters
 	var headerParams []PythonParam
 	var staticHeaders = make(map[string]string)
@@ -307,6 +302,16 @@ func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation
 		pythonParam := g.convertParam(&param)
 		headerParams = append(headerParams, pythonParam)
 		operation.Params = append(operation.Params, pythonParam)
+	}
+
+	// Check if this is a paged operation using GetPageInfo
+	if pageInfo := handler.GetPageInfo(nil, nil); pageInfo != nil {
+		operation.IsPaged = true
+		operation.ResponseCast = pageInfo.ItemType.Name
+		operation.ResponseType = fmt.Sprintf("NumberPaged[%s]", pageInfo.ItemType.Name)
+		operation.AsyncResponseType = fmt.Sprintf("AsyncNumberPaged[%s]", pageInfo.ItemType.Name)
+		operation.PageIndexName = pageInfo.PageIndexName
+		operation.PageSizeName = pageInfo.PageSizeName
 	}
 
 	// Handle request body
