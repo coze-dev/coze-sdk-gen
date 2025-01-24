@@ -16,11 +16,13 @@ import (
 var (
 	lang       string
 	outputPath string
+	module     string
 )
 
 func init() {
 	rootCmd.Flags().StringVarP(&lang, "lang", "l", "", "SDK language to generate")
 	rootCmd.Flags().StringVarP(&outputPath, "output", "o", "", "Output directory path for the generated SDK")
+	rootCmd.Flags().StringVarP(&module, "module", "m", "", "Specific module to generate")
 
 	// Mark flags as required
 	rootCmd.MarkFlagRequired("lang")
@@ -62,6 +64,17 @@ Currently supports generating Python SDK.`,
 			}
 		default:
 			return fmt.Errorf("unsupported language %q", lang)
+		}
+
+		// Filter files by module if specified
+		if module != "" {
+			filteredFiles := make(map[string]string)
+			for dir, content := range files {
+				if dir == module {
+					filteredFiles[dir] = content
+				}
+			}
+			files = filteredFiles
 		}
 
 		// Create base directory
