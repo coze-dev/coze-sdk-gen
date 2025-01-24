@@ -231,6 +231,7 @@ type ModuleConfig struct {
 	GenerateUnnamedResponseType   func(*HttpHandler) (string, bool) `json:"generate_unnamed_response_type"`    // if response type is unnamed, will auto gen named
 	ChangeHttpHandlerResponseType map[string]string                 `json:"change_http_handler_response_type"` // change response type for http handler
 	RenameTypes                   map[string]string                 `json:"rename_types"`                      // rename types, key is old name, value is new name
+	RenameHandlers                map[string]string                 `json:"rename_handlers"`                   // rename http handlers, key is old name, value is new name
 }
 
 // Parser handles OpenAPI parsing with the new schema design
@@ -330,6 +331,22 @@ func (p *Parser) renameTypes() error {
 	return nil
 }
 
+// renameHandlers renames HTTP handlers based on configuration
+func (p *Parser) renameHandlers() error {
+	if len(p.config.RenameHandlers) == 0 {
+		return nil
+	}
+
+	for _, module := range p.modules {
+		for i := range module.HttpHandlers {
+			if newName, ok := p.config.RenameHandlers[module.HttpHandlers[i].Name]; ok {
+				module.HttpHandlers[i].Name = newName
+			}
+		}
+	}
+	return nil
+}
+
 // ParseOpenAPI parses an OpenAPI document and returns modules
 func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*Module, error) {
 	// Parse OpenAPI document
@@ -362,6 +379,11 @@ func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*Module, error) {
 
 	// Rename types based on configuration
 	if err := p.renameTypes(); err != nil {
+		return nil, err
+	}
+
+	// Rename HTTP handlers based on configuration
+	if err := p.renameHandlers(); err != nil {
 		return nil, err
 	}
 

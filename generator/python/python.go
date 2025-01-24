@@ -165,6 +165,10 @@ func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[strin
 		RenameTypes: map[string]string{
 			"SpacePublishedBotsInfo": "_PrivateListBotsData",
 		},
+		RenameHandlers: map[string]string{
+			"RetrieveFileOpen": "retrieve",
+			"UploadFileOpen":   "upload",
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create parser2 failed: %w", err)
