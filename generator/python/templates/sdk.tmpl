@@ -44,7 +44,10 @@ class Client(object):
                 "{{ .Method }}",
                 url,
                 params={
-                    {{ range .QueryParams }}{{ if eq .Name "page_num" }}"page_index": i_page_num,{{ else if eq .Name "page_size" }}"page_size": i_page_size,{{ else }}"{{ .JsonName }}": {{ .Name }},{{ end }}{{ end }}
+                    {{$page_size_name := .PageSizeName}} {{$page_index_name := .PageIndexName}}
+                    {{ range .QueryParams }}
+                    "{{ .JsonName }}": {{ if eq .Name $page_index_name }}i_page_num{{ else if eq .Name $page_size_name }}i_page_size{{ else }}{{.Name}}{{ end }},
+                    {{ end }}
                 },
                 cast={{ .ResponseCast }},
                 is_async=False,
@@ -110,7 +113,10 @@ class AsyncClient(object):
                 "{{ .Method }}",
                 url,
                 params={
-                    {{ range .QueryParams }}{{ if eq .Name "page_num" }}"page_index": i_page_num,{{ else if eq .Name "page_size" }}"page_size": i_page_size,{{ else }}"{{ .JsonName }}": {{ .Name }},{{ end }}{{ end }}
+                    {{$page_size_name := .PageSizeName}} {{$page_index_name := .PageIndexName}}
+                    {{ range .QueryParams }}
+                    "{{ .JsonName }}": {{ if eq .Name $page_index_name }}i_page_num{{ else if eq .Name $page_size_name }}i_page_size{{ else }}{{.Name}}{{ end }},
+                    {{ end }}
                 },
                 cast={{ .ResponseCast }},
                 is_async=True,
