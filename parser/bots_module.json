@@ -2,88 +2,6 @@
   "name": "files",
   "http_handlers": [
     {
-      "name": "RetrieveFileOpen",
-      "description": "View the details of uploaded files.",
-      "path": "/v1/files/retrieve",
-      "method": "GET",
-      "content_type": "json",
-      "query_params": [
-        {
-          "name": "file_id",
-          "description": "Uploaded file ID.",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          },
-          "required": true
-        }
-      ],
-      "request_body": null,
-      "response_body": {
-        "kind": "object",
-        "fields": [
-          {
-            "name": "data",
-            "type": {
-              "name": "File",
-              "kind": "object",
-              "module": "files",
-              "fields": [
-                {
-                  "name": "URL",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
-                },
-                {
-                  "name": "bytes",
-                  "description": "Total bytes of the file.",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "int"
-                  }
-                },
-                {
-                  "name": "created_at",
-                  "description": "The upload time of the file, formatted as a 10-digit Unix time stamp in seconds (s).",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "int"
-                  }
-                },
-                {
-                  "name": "file_name",
-                  "description": "Document Name.",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
-                },
-                {
-                  "name": "id",
-                  "description": "Uploaded file ID.",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
-                },
-                {
-                  "name": "url",
-                  "description": "目前仅 openapi 场景有用。白名单用户会返回文件 url",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
-                }
-              ],
-              "is_named": true
-            }
-          }
-        ]
-      }
-    },
-    {
       "name": "UploadFileOpen",
       "description": "Upload a file to the Coze platform.\n**API description**\nLocal files cannot be directly used in messages. Before creating a message or conversation, you need to call this API to upload local files to Coze. After uploading the file, you can directly use it in multimodal content by specifying the `file_id` in the message. For usage instructions, see [Create a conversation](https://www.coze.cn/docs/developer_guides/create_conversation).\n\n* Supported file formats:\n   Document**:** DOC, DOCX, XLS, XLSX, PPT, PPTX, PDF, Numbers, and CSV\n   Image**:** JPG, JPG2, PNG, GIF, WEBP, HEIC, HEIF, BMP, PCD, and TIFF\n* File upload size limit:** **Each file can be up to 512 MB.\n* Files uploaded to Coze can only be viewed or used by the account that uploaded them.\n* Files must be uploaded using the `multipart/form-data` method.\n* Files uploaded using the API expire after 3 months.",
       "path": "/v1/files/upload",
@@ -114,12 +32,87 @@
               "module": "files",
               "fields": [
                 {
-                  "name": "URL",
+                  "name": "bytes",
+                  "description": "Total bytes of the file.",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "int"
+                  }
+                },
+                {
+                  "name": "created_at",
+                  "description": "The upload time of the file, formatted as a 10-digit Unix time stamp in seconds (s).",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "int"
+                  }
+                },
+                {
+                  "name": "file_name",
+                  "description": "Document Name.",
                   "type": {
                     "kind": "primimtive",
                     "primitive_kind": "string"
                   }
                 },
+                {
+                  "name": "id",
+                  "description": "Uploaded file ID.",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "url",
+                  "description": "目前仅 openapi 场景有用。白名单用户会返回文件 url",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "URL",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                }
+              ],
+              "is_named": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "RetrieveFileOpen",
+      "description": "View the details of uploaded files.",
+      "path": "/v1/files/retrieve",
+      "method": "GET",
+      "content_type": "json",
+      "query_params": [
+        {
+          "name": "file_id",
+          "description": "Uploaded file ID.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          },
+          "required": true
+        }
+      ],
+      "request_body": null,
+      "response_body": {
+        "kind": "object",
+        "fields": [
+          {
+            "name": "data",
+            "type": {
+              "name": "File",
+              "kind": "object",
+              "module": "files",
+              "fields": [
                 {
                   "name": "bytes",
                   "description": "Total bytes of the file.",
@@ -159,6 +152,13 @@
                     "kind": "primimtive",
                     "primitive_kind": "string"
                   }
+                },
+                {
+                  "name": "URL",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 }
               ],
               "is_named": true
@@ -174,13 +174,6 @@
       "kind": "object",
       "module": "files",
       "fields": [
-        {
-          "name": "URL",
-          "type": {
-            "kind": "primimtive",
-            "primitive_kind": "string"
-          }
-        },
         {
           "name": "bytes",
           "description": "Total bytes of the file.",
@@ -216,6 +209,13 @@
         {
           "name": "url",
           "description": "目前仅 openapi 场景有用。白名单用户会返回文件 url",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "URL",
           "type": {
             "kind": "primimtive",
             "primitive_kind": "string"
