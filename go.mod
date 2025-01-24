@@ -1,6 +1,6 @@
 module github.com/coze-dev/coze-sdk-gen
 
-go 1.22
+go 1.22.0
 
 toolchain go1.22.7
 
@@ -24,5 +24,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
+	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8 // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 )

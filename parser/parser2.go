@@ -3,6 +3,7 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/coze-dev/coze-sdk-gen/util"
@@ -511,7 +512,92 @@ func (p *Parser2) convertOperation(path, method string, op *openapi3.Operation) 
 	return handler, nil
 }
 
-// assignTypesToModules assigns types to modules based on configuration or usage
+// topologicalSortTypes performs a deterministic topological sort of types based on their dependencies
+// and names to ensure consistent ordering regardless of input order
+func topologicalSortTypes(types []*Ty) ([]*Ty, error) {
+	if len(types) == 0 {
+		return types, nil
+	}
+
+	// Create a directed graph
+	g := simple.NewDirectedGraph()
+
+	// Create a mapping from type to node ID
+	typeToID := make(map[*Ty]int64)
+	for i, ty := range types {
+		id := int64(i + 1)
+		typeToID[ty] = id
+		g.AddNode(simple.Node(id))
+	}
+
+	// Add edges based on type dependencies
+	for _, ty := range types {
+		fromID := typeToID[ty]
+		// Add edges for object fields
+		if ty.Kind == TyKindObject {
+			for _, field := range ty.Fields {
+				if toID, ok := typeToID[field.Type]; ok {
+					g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
+				}
+				if toID, ok := typeToID[field.Type.ElementType]; ok {
+					g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
+				}
+			}
+		}
+		// Add edges for array element types
+		if ty.Kind == TyKindArray {
+			if ty.ElementType != nil {
+				if toID, ok := typeToID[ty.ElementType]; ok {
+					g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
+				}
+			}
+		}
+	}
+
+	// Perform topological sort
+	sorted, err := topo.Sort(g)
+	if err != nil {
+		return nil, fmt.Errorf("cycle detected in type dependencies: %w", err)
+	}
+
+	// Group types by their dependencies (level)
+	levelMap := make(map[int][]*Ty)
+	for _, node := range sorted {
+		level := 0
+		// Count incoming edges to determine level
+		it := g.To(node.ID())
+		for it.Next() {
+			level++
+		}
+
+		// Find the type with this node ID
+		for ty, id := range typeToID {
+			if id == node.ID() {
+				if levelMap[level] == nil {
+					levelMap[level] = make([]*Ty, 0)
+				}
+				levelMap[level] = append(levelMap[level], ty)
+				break
+			}
+		}
+	}
+
+	// Sort types within each level by name for deterministic ordering
+	var result []*Ty
+	for i := 0; i < len(levelMap); i++ {
+		if types := levelMap[i]; types != nil {
+			// Sort by name within the same level
+			sort.Slice(types, func(i, j int) bool {
+				return types[i].Name < types[j].Name
+			})
+			result = append(result, types...)
+		}
+	}
+
+	return result, nil
+}
+
+// Replace the topological sort section in assignTypesToModules with a call to topologicalSortTypes
 func (p *Parser2) assignTypesToModules() error {
 	// First, try to assign types based on configuration
 	if p.config != nil {
@@ -556,60 +642,10 @@ func (p *Parser2) assignTypesToModules() error {
 			continue
 		}
 
-		// Create a directed graph
-		g := simple.NewDirectedGraph()
-
-		// Create a mapping from type to node ID
-		typeToID := make(map[*Ty]int64)
-		for i, ty := range module.Types {
-			id := int64(i + 1)
-			typeToID[ty] = id
-			g.AddNode(simple.Node(id))
-		}
-
-		// Add edges based on type dependencies
-		for _, ty := range module.Types {
-			fromID := typeToID[ty]
-			// Add edges for object fields
-			if ty.Kind == TyKindObject {
-				for _, field := range ty.Fields {
-					if toID, ok := typeToID[field.Type]; ok {
-						g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
-					}
-					if toID, ok := typeToID[field.Type.ElementType]; ok {
-						g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
-					}
-				}
-			}
-			// Add edges for array element types
-			if ty.Kind == TyKindArray {
-				if ty.ElementType != nil {
-					if toID, ok := typeToID[ty.ElementType]; ok {
-						g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
-					}
-				}
-			}
-		}
-
-		// Perform topological sort
-		sorted, err := topo.Sort(g)
+		sortedTypes, err := topologicalSortTypes(module.Types)
 		if err != nil {
 			return fmt.Errorf("cycle detected in type dependencies for module %s: %w", module.Name, err)
 		}
-
-		// Create a new sorted types slice
-		sortedTypes := make([]*Ty, len(sorted))
-		for i, node := range sorted {
-			// Find the type with this node ID
-			for ty, id := range typeToID {
-				if id == node.ID() {
-					sortedTypes[i] = ty
-					break
-				}
-			}
-		}
-
-		// Update module types with sorted order
 		module.Types = sortedTypes
 	}
 
