@@ -363,7 +363,7 @@ func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation
 			}
 			operation.BodyParams = append(operation.BodyParams, fileParam)
 			operation.Params = append(operation.Params, fileParam)
-		} else if handler.RequestBody.Kind == parser.TyKindObject {
+		} else {
 			for _, field := range handler.RequestBody.Fields {
 				pythonParam := g.convertParam(&field)
 				operation.BodyParams = append(operation.BodyParams, pythonParam)
