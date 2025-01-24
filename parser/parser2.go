@@ -125,7 +125,7 @@ func (h *HttpHandler) GetPageInfo(pageIndexCandidates, pageSizeCandidates []stri
 	}
 
 	// Check if it's a GET request
-	if h.Method != "get" && h.Method != "GET" {
+	if h.Method != "GET" {
 		return nil
 	}
 
@@ -315,6 +315,8 @@ func (p *Parser2) convertSchema(schema *openapi3.SchemaRef, name string, isNamed
 		refName := getRefName(schema.Ref)
 		if existing := p.types[refName]; existing != nil {
 			return existing, nil
+		} else {
+			return p.convertSchema(p.doc.Components.Schemas[refName], refName, true)
 		}
 	}
 
@@ -350,7 +352,6 @@ func (p *Parser2) convertSchema(schema *openapi3.SchemaRef, name string, isNamed
 
 		case "object":
 			ty.Kind = TyKindObject
-			// TODO: map: ref: additionalProperties
 			// Check if x-coze-order exists and is not nil
 			if order, ok := schema.Value.Extensions["x-coze-order"]; ok && order != nil {
 				// Process properties in order
@@ -531,6 +532,7 @@ func (p *Parser2) assignTypesToModules() error {
 	// For remaining types, assign based on usage
 	for _, ty := range p.types {
 		if ty.Module != "" {
+			panic("hh")
 			continue // Skip if already assigned
 		}
 		// Find the first module that uses this type

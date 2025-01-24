@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"regexp"
@@ -271,6 +272,18 @@ func (g *Generator) convertType(ty *parser.Ty) *PythonClass {
 	return pythonClass
 }
 
+func removeOptional(t string) string {
+	if strings.HasPrefix(t, "Optional[") && strings.HasSuffix(t, "]") {
+		return t[9 : len(t)-1]
+	}
+	return t
+}
+
+func marshal(v any) string {
+	res, _ := json.Marshal(v)
+	return string(res)
+}
+
 func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation {
 	operation := &PythonOperation{
 		Name:        g.toPythonMethodName(handler.Name),
@@ -312,6 +325,17 @@ func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation
 		operation.AsyncResponseType = fmt.Sprintf("AsyncNumberPaged[%s]", pageInfo.ItemType.Name)
 		operation.PageIndexName = pageInfo.PageIndexName
 		operation.PageSizeName = pageInfo.PageSizeName
+
+		for i, param := range operation.Params {
+			if param.Name == operation.PageIndexName {
+				operation.Params[i].DefaultValue = "1"
+				operation.Params[i].Type = removeOptional(operation.Params[i].Type)
+			}
+			if param.Name == operation.PageSizeName {
+				operation.Params[i].DefaultValue = "20"
+				operation.Params[i].Type = removeOptional(operation.Params[i].Type)
+			}
+		}
 	}
 
 	// Handle request body
