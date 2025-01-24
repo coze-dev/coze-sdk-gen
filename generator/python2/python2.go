@@ -357,12 +357,12 @@ func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation
 		}
 	}
 
-	// // Check if there's a mapping for this response type
-	// if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
-	// 	if mappedType, ok := moduleConfig.ResponseTypeModify[operation.ResponseType]; ok {
-	// 		operation.ResponseType = mappedType
-	// 	}
-	// }
+	// Check if there's a mapping for this response type
+	if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
+		if mappedType, ok := moduleConfig.ResponseTypeModify[operation.ResponseType]; ok {
+			operation.ResponseType = mappedType
+		}
+	}
 
 	// Update headers
 	if len(headerParams) > 0 || len(staticHeaders) > 0 {

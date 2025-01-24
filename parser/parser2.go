@@ -3,11 +3,11 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/coze-dev/coze-sdk-gen/util"
 	"github.com/getkin/kin-openapi/openapi3"
+	"golang.org/x/exp/slices"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 )
@@ -513,45 +513,73 @@ func (p *Parser2) convertOperation(path, method string, op *openapi3.Operation) 
 }
 
 // topologicalSortTypes performs a deterministic topological sort of types based on their dependencies
-// and names to ensure consistent ordering regardless of input order
-func topologicalSortTypes(types []*Ty) ([]*Ty, error) {
-	if len(types) == 0 {
-		return types, nil
+// starting from the given entry points (RequestBody/ResponseBody)
+func topologicalSortTypes(entryTypes []*Ty) ([]*Ty, error) {
+	if len(entryTypes) == 0 {
+		return nil, nil
 	}
 
 	// Create a directed graph
 	g := simple.NewDirectedGraph()
 
-	// Create a mapping from type to node ID
+	// Create maps for tracking
 	typeToID := make(map[*Ty]int64)
-	for i, ty := range types {
-		id := int64(i + 1)
+	idToType := make(map[int64]*Ty)
+	var nextID int64 = 1
+
+	// Helper function to recursively add types and their dependencies to the graph
+	var addTypeToGraph func(*Ty)
+	addTypeToGraph = func(ty *Ty) {
+		if ty == nil {
+			return
+		}
+
+		// If we've already processed this type, skip it
+		if _, exists := typeToID[ty]; exists {
+			return
+		}
+
+		// Add the type to the graph
+		id := nextID
+		nextID++
 		typeToID[ty] = id
+		idToType[id] = ty
 		g.AddNode(simple.Node(id))
+
+		// Recursively process dependencies
+		switch ty.Kind {
+		case TyKindObject:
+			for _, field := range ty.Fields {
+				addTypeToGraph(field.Type)
+				if field.Type != nil {
+					if fieldID, ok := typeToID[field.Type]; ok {
+						if field.Type.Name == "Bot" {
+							fmt.Println("Bot from ", marshal(fieldID), "to ", id)
+						}
+						g.SetEdge(simple.Edge{F: simple.Node(fieldID), T: simple.Node(id)})
+					}
+				}
+				// Handle array element type in object fields
+				if field.Type != nil && field.Type.ElementType != nil {
+					addTypeToGraph(field.Type.ElementType)
+					if elemID, ok := typeToID[field.Type.ElementType]; ok {
+						g.SetEdge(simple.Edge{F: simple.Node(elemID), T: simple.Node(id)})
+					}
+				}
+			}
+		case TyKindArray:
+			if ty.ElementType != nil {
+				addTypeToGraph(ty.ElementType)
+				if elemID, ok := typeToID[ty.ElementType]; ok {
+					g.SetEdge(simple.Edge{F: simple.Node(elemID), T: simple.Node(id)})
+				}
+			}
+		}
 	}
 
-	// Add edges based on type dependencies
-	for _, ty := range types {
-		fromID := typeToID[ty]
-		// Add edges for object fields
-		if ty.Kind == TyKindObject {
-			for _, field := range ty.Fields {
-				if toID, ok := typeToID[field.Type]; ok {
-					g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
-				}
-				if toID, ok := typeToID[field.Type.ElementType]; ok {
-					g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
-				}
-			}
-		}
-		// Add edges for array element types
-		if ty.Kind == TyKindArray {
-			if ty.ElementType != nil {
-				if toID, ok := typeToID[ty.ElementType]; ok {
-					g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
-				}
-			}
-		}
+	// Add all entry types and their dependencies to the graph
+	for _, ty := range entryTypes {
+		addTypeToGraph(ty)
 	}
 
 	// Perform topological sort
@@ -561,37 +589,40 @@ func topologicalSortTypes(types []*Ty) ([]*Ty, error) {
 	}
 
 	// Group types by their dependencies (level)
-	levelMap := make(map[int][]*Ty)
-	for _, node := range sorted {
-		level := 0
-		// Count incoming edges to determine level
-		it := g.To(node.ID())
-		for it.Next() {
-			level++
-		}
+	// levelMap := make(map[int][]*Ty)
+	// for _, node := range sorted {
+	// 	level := 0
+	// 	// Count incoming edges to determine level
+	// 	it := g.To(node.ID())
+	// 	for it.Next() {
+	// 		level++
+	// 	}
 
-		// Find the type with this node ID
-		for ty, id := range typeToID {
-			if id == node.ID() {
-				if levelMap[level] == nil {
-					levelMap[level] = make([]*Ty, 0)
-				}
-				levelMap[level] = append(levelMap[level], ty)
-				break
-			}
-		}
-	}
+	// 	// Find the type with this node ID
+	// 	for ty, id := range typeToID {
+	// 		if id == node.ID() {
+	// 			if levelMap[level] == nil {
+	// 				levelMap[level] = make([]*Ty, 0)
+	// 			}
+	// 			levelMap[level] = append(levelMap[level], ty)
+	// 			break
+	// 		}
+	// 	}
+	// }
 
 	// Sort types within each level by name for deterministic ordering
 	var result []*Ty
-	for i := 0; i < len(levelMap); i++ {
-		if types := levelMap[i]; types != nil {
-			// Sort by name within the same level
-			sort.Slice(types, func(i, j int) bool {
-				return types[i].Name < types[j].Name
-			})
-			result = append(result, types...)
-		}
+	// for i := 0; i < len(levelMap); i++ {
+	// 	if types := levelMap[i]; types != nil {
+	// 		// Sort by name within the same level
+	// 		sort.Slice(types, func(i, j int) bool {
+	// 			return types[i].Name < types[j].Name
+	// 		})
+	// 		result = append(result, types...)
+	// 	}
+	// }
+	for _, ty := range sorted {
+		result = append(result, idToType[ty.ID()])
 	}
 
 	return result, nil
@@ -642,11 +673,34 @@ func (p *Parser2) assignTypesToModules() error {
 			continue
 		}
 
-		sortedTypes, err := topologicalSortTypes(module.Types)
+		// Collect entry types from handlers
+		var entryTypes []*Ty
+		for _, h := range module.HttpHandlers {
+			if h.RequestBody != nil {
+				entryTypes = append(entryTypes, h.RequestBody)
+			}
+			if h.ResponseBody != nil {
+				entryTypes = append(entryTypes, h.ResponseBody)
+			}
+		}
+
+		// Deduplicate entry types
+		slices.SortStableFunc(entryTypes, func(a, b *Ty) int {
+			return strings.Compare(fmt.Sprintf("%p", a), fmt.Sprintf("%p", b))
+		})
+		entryTypes = slices.Compact(entryTypes)
+
+		sortedTypes, err := topologicalSortTypes(entryTypes)
 		if err != nil {
 			return fmt.Errorf("cycle detected in type dependencies for module %s: %w", module.Name, err)
 		}
-		module.Types = sortedTypes
+
+		// Filter out unnamed types
+		namedTypes := slices.DeleteFunc(sortedTypes, func(ty *Ty) bool {
+			return !ty.IsNamed
+		})
+
+		module.Types = namedTypes
 	}
 
 	return nil
