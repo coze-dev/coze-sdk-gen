@@ -186,7 +186,9 @@ func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[strin
 	files := make(map[string]string)
 
 	// Read template
-	tmpl, err := template.New("python").Parse(g.getTemplate())
+	tmpl, err := template.New("python").Funcs(template.FuncMap{
+		"title": strings.Title,
+	}).Parse(g.getTemplate())
 	if err != nil {
 		return nil, fmt.Errorf("parse template failed: %w", err)
 	}
