@@ -84,6 +84,7 @@ type PythonField struct {
 	Type        string
 	Description string
 	IsMethod    bool
+	Default     string
 }
 
 // PythonOperation represents a Python API operation
@@ -302,6 +303,10 @@ func (g *Generator) convertType(ty *parser.Ty) *PythonClass {
 			Name:        g.toPythonVarName(field.Name),
 			Type:        fieldType,
 			Description: g.formatDescription(field.Description),
+			Default:     field.Default,
+		}
+		if pythonField.Default == "" && !field.Required {
+			pythonField.Default = "None"
 		}
 		pythonClass.Fields = append(pythonClass.Fields, pythonField)
 	}

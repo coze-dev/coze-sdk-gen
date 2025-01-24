@@ -32,7 +32,7 @@ def _try_fix_file(file: FileTypes) -> FileTypes:
 class {{ .Name }}({{ .BaseClass }}):{{ if .IsPass }}
     pass{{ else }}
     {{ range .Fields }}{{ if .Description }}"""{{ .Description }}"""
-    {{ end }}{{ .Name }}: {{ .Type }}
+    {{ end }}{{ .Name }}: {{ .Type }} {{ if ne .Default "" }} = {{ .Default }}{{ end }}
     {{ end }}{{ range .Methods }}{{ . }}
     {{ end }}{{ if .IsEnum }}{{ range .EnumValues }}    {{ .Name }} = {{ .Value }}  # {{ .Description }}
     {{ end }}{{ end }}{{ end }}
