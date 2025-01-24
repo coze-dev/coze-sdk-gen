@@ -573,10 +573,8 @@ func (p *Parser2) assignTypesToModules() error {
 			// Add edges for object fields
 			if ty.Kind == TyKindObject {
 				for _, field := range ty.Fields {
-					if field.Type != nil && field.Type.Module == ty.Module {
-						if toID, ok := typeToID[field.Type]; ok {
-							g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
-						}
+					if toID, ok := typeToID[field.Type]; ok {
+						g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
 					}
 				}
 			}
