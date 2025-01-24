@@ -249,6 +249,7 @@ type ModuleConfig struct {
 	RenameTypes                   map[string]string                        `json:"rename_types"`                      // rename types, key is old name, value is new name
 	RenameHandlers                map[string]string                        `json:"rename_handlers"`                   // rename http handlers, key is old name, value is new name
 	ChangeFields                  map[string]map[string]*FieldModification `json:"change_fields"`                     // change field properties, first key is type name, second key is field name
+	HandlerOrdering               map[string][]string                      `json:"handler_ordering"`                  // order handlers in modules, key is module name, value is ordered handler names
 }
 
 // Parser handles OpenAPI parsing with the new schema design
@@ -353,6 +354,47 @@ func (p *Parser) changeFieldRequirements() error {
 	return nil
 }
 
+// orderHandlers orders handlers in modules based on configuration
+func (p *Parser) orderHandlers() error {
+	if len(p.config.HandlerOrdering) == 0 {
+		return nil
+	}
+
+	for moduleName, orderedNames := range p.config.HandlerOrdering {
+		module, ok := p.modules[moduleName]
+		if !ok {
+			return fmt.Errorf("module %s not found", moduleName)
+		}
+
+		// Create a map for quick lookup of handler positions
+		orderMap := make(map[string]int)
+		for i, name := range orderedNames {
+			orderMap[name] = i
+		}
+
+		// Sort handlers based on the order map
+		slices.SortStableFunc(module.HttpHandlers, func(a, b HttpHandler) int {
+			aPos, aExists := orderMap[a.Name]
+			bPos, bExists := orderMap[b.Name]
+
+			// If both handlers are in the order map, use their positions
+			if aExists && bExists {
+				return aPos - bPos
+			}
+			// If only one handler is in the order map, it should come first
+			if aExists {
+				return -1
+			}
+			if bExists {
+				return 1
+			}
+			// If neither handler is in the order map, sort by name
+			return strings.Compare(a.Name, b.Name)
+		})
+	}
+	return nil
+}
+
 // changeResponseTypes changes response types based on configuration
 func (p *Parser) changeResponseTypes() error {
 	for handlerName, responseType := range p.config.ChangeHttpHandlerResponseType {
@@ -441,6 +483,11 @@ func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*Module, error) {
 
 	// Change field requirements based on configuration
 	if err := p.changeFieldRequirements(); err != nil {
+		return nil, err
+	}
+
+	// Order handlers in modules based on configuration
+	if err := p.orderHandlers(); err != nil {
 		return nil, err
 	}
 

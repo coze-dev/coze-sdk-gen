@@ -179,6 +179,9 @@ func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[strin
 				},
 			},
 		},
+		HandlerOrdering: map[string][]string{
+			"files": {"RetrieveFileOpen", "UploadFileOpen"},
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create parser2 failed: %w", err)
