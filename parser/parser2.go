@@ -7,6 +7,8 @@ import (
 
 	"github.com/coze-dev/coze-sdk-gen/util"
 	"github.com/getkin/kin-openapi/openapi3"
+	"gonum.org/v1/gonum/graph/simple"
+	"gonum.org/v1/gonum/graph/topo"
 )
 
 // TyKind represents the kind of a type
@@ -546,6 +548,66 @@ func (p *Parser2) assignTypesToModules() error {
 				break
 			}
 		}
+	}
+
+	// Perform topological sort for each module's types
+	for _, module := range p.modules {
+		if len(module.Types) == 0 {
+			continue
+		}
+
+		// Create a directed graph
+		g := simple.NewDirectedGraph()
+
+		// Create a mapping from type to node ID
+		typeToID := make(map[*Ty]int64)
+		for i, ty := range module.Types {
+			id := int64(i + 1)
+			typeToID[ty] = id
+			g.AddNode(simple.Node(id))
+		}
+
+		// Add edges based on type dependencies
+		for _, ty := range module.Types {
+			fromID := typeToID[ty]
+			// Add edges for object fields
+			if ty.Kind == TyKindObject {
+				for _, field := range ty.Fields {
+					if field.Type != nil && field.Type.Module == ty.Module {
+						if toID, ok := typeToID[field.Type]; ok {
+							g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
+						}
+					}
+				}
+			}
+			// Add edges for array element types
+			if ty.Kind == TyKindArray && ty.ElementType != nil && ty.ElementType.Module == ty.Module {
+				if toID, ok := typeToID[ty.ElementType]; ok {
+					g.SetEdge(simple.Edge{F: simple.Node(toID), T: simple.Node(fromID)})
+				}
+			}
+		}
+
+		// Perform topological sort
+		sorted, err := topo.Sort(g)
+		if err != nil {
+			return fmt.Errorf("cycle detected in type dependencies for module %s: %w", module.Name, err)
+		}
+
+		// Create a new sorted types slice
+		sortedTypes := make([]*Ty, len(sorted))
+		for i, node := range sorted {
+			// Find the type with this node ID
+			for ty, id := range typeToID {
+				if id == node.ID() {
+					sortedTypes[i] = ty
+					break
+				}
+			}
+		}
+
+		// Update module types with sorted order
+		module.Types = sortedTypes
 	}
 
 	return nil

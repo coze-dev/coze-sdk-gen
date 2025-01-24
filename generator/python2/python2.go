@@ -317,6 +317,25 @@ func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation
 		operation.Params = append(operation.Params, pythonParam)
 	}
 
+	// Handle request body
+	if handler.RequestBody != nil {
+		operation.HasBody = true
+		if handler.RequestBody.Kind == parser.TyKindObject {
+			for _, field := range handler.RequestBody.Fields {
+				pythonParam := g.convertParam(&field)
+				operation.BodyParams = append(operation.BodyParams, pythonParam)
+				operation.Params = append(operation.Params, pythonParam)
+			}
+		}
+	}
+
+	// Handle response body using GetActualResponseBody
+	if actualBody := handler.GetActualResponseBody(); actualBody != nil {
+		operation.ResponseType = g.getFieldType(actualBody)
+	} else if handler.ResponseBody != nil {
+		operation.ResponseType = g.getFieldType(handler.ResponseBody)
+	}
+
 	// Check if this is a paged operation using GetPageInfo
 	if pageInfo := handler.GetPageInfo(nil, nil); pageInfo != nil {
 		operation.IsPaged = true
@@ -338,32 +357,12 @@ func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation
 		}
 	}
 
-	// Handle request body
-	if handler.RequestBody != nil {
-		operation.HasBody = true
-		if handler.RequestBody.Kind == parser.TyKindObject {
-			for _, field := range handler.RequestBody.Fields {
-				pythonParam := g.convertParam(&field)
-				operation.BodyParams = append(operation.BodyParams, pythonParam)
-				operation.Params = append(operation.Params, pythonParam)
-			}
-		}
-	}
-
-	// Handle response body using GetActualResponseBody
-	if actualBody := handler.GetActualResponseBody(); actualBody != nil {
-		operation.ResponseType = g.getFieldType(actualBody)
-	} else if handler.ResponseBody != nil {
-		operation.ResponseType = g.getFieldType(handler.ResponseBody)
-	}
-
-	// Check if there's a mapping for this response type
-	if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
-		if mappedType, ok := moduleConfig.ResponseTypeModify[operation.ResponseType]; ok {
-			operation.ResponseType = mappedType
-		}
-
-	}
+	// // Check if there's a mapping for this response type
+	// if moduleConfig, ok := g.config.Modules[g.moduleName]; ok {
+	// 	if mappedType, ok := moduleConfig.ResponseTypeModify[operation.ResponseType]; ok {
+	// 		operation.ResponseType = mappedType
+	// 	}
+	// }
 
 	// Update headers
 	if len(headerParams) > 0 || len(staticHeaders) > 0 {
