@@ -23,7 +23,7 @@ func TestParser2_ParseOpenAPI(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get bots module
-	botsModule, ok := modules["bots"]
+	botsModule, ok := modules["files"]
 	require.True(t, ok, "bots module not found")
 
 	// Convert to JSON

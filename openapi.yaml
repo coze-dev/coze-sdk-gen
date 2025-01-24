@@ -3,27 +3,26 @@ components:
     ResponseDetail:
       properties:
         logid:
-          title:
-            The log ID for this request. If you encounter an error scenario and
+          title: The log ID for this request. If you encounter an error scenario and
             continue to receive errors after repeated attempts, you can contact the
             Coze team for assistance using this log ID and error code. For more information,
             see [Help and technical support](https://www.coze.com/docs/guides/help_and_support).
           type: string
       required:
-        - logid
+      - logid
       type: object
       x-coze-order:
-        - logid
+      - logid
     CaptionType:
       enum:
-        - 0
-        - 1
+      - 0
+      - 1
       format: int
       type: integer
     ChunkStrategy:
       properties:
         chunk_type:
-          $ref: "#/components/schemas/ChunkType"
+          $ref: '#/components/schemas/ChunkType'
         max_tokens:
           format: i64
           title: Description
@@ -42,8 +41,8 @@ components:
       type: object
     ChunkType:
       enum:
-        - 0
-        - 1
+      - 0
+      - 1
       format: int
       title: |-
         Segmentation setting. Values include:
@@ -52,19 +51,19 @@ components:
       type: integer
     ColumnType:
       enum:
-        - 0
-        - 1
-        - 2
-        - 3
-        - 4
-        - 5
-        - 6
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
       format: int
       type: integer
     ContentSchema:
       enum:
-        - 0
-        - 1
+      - 0
+      - 1
       format: int
       type: integer
     CrawlContent:
@@ -94,7 +93,7 @@ components:
           title: XPath for extracting information
           type: object
         pagination:
-          $ref: "#/components/schemas/Pagination"
+          $ref: '#/components/schemas/Pagination'
         sub_marks:
           additionalProperties:
             additionalProperties:
@@ -103,8 +102,7 @@ components:
             type: object
           description: 子页面抓取信息的 XPATH, key 对应于 marks 中的 key
           format: map
-          title:
-            The XPATH for extracting information from subpages, where the key
+          title: The XPATH for extracting information from subpages, where the key
             corresponds to the key in marks.
           type: object
         tags:
@@ -112,8 +110,7 @@ components:
           format: list
           items:
             type: string
-          title:
-            The types of stored tags, which are Array<'text' | 'image' | 'link'>,
+          title: The types of stored tags, which are Array<'text' | 'image' | 'link'>,
             correspond one-to-one with the headers.
           type: array
         title:
@@ -131,17 +128,17 @@ components:
           title: File name.
           type: string
         source_info:
-          $ref: "#/components/schemas/SourceInfo"
+          $ref: '#/components/schemas/SourceInfo'
         update_rule:
-          $ref: "#/components/schemas/UpdateRule"
+          $ref: '#/components/schemas/UpdateRule'
       type: object
       x-coze-order:
-        - name
-        - source_info
-        - update_rule
-        - table_meta
-        - table_sheet
-        - filter_strategy
+      - name
+      - source_info
+      - update_rule
+      - table_meta
+      - table_sheet
+      - filter_strategy
     DocumentInfo:
       properties:
         char_count:
@@ -150,42 +147,39 @@ components:
           title: The size of the file, in bytes.
           type: integer
         chunk_strategy:
-          $ref: "#/components/schemas/ChunkStrategy"
+          $ref: '#/components/schemas/ChunkStrategy'
         create_time:
           description: 创建时间
           format: i32
-          title:
-            Local file formats, i.e., file extensions, such as txt. Formats supported
+          title: Local file formats, i.e., file extensions, such as txt. Formats supported
             include pdf, txt, doc, docx types.
           type: integer
         doc_outline:
           description: 层级分段文档树Json
-          title:
-            Frequency of automatic updates for online web pages. The unit is
+          title: Frequency of automatic updates for online web pages. The unit is
             hours.
           type: string
         document_id:
           format: i64
-          title:
-            The last modification time of the file, formatted as a 10-digit Unixtime
+          title: The last modification time of the file, formatted as a 10-digit Unixtime
             timestamp.
           type: string
         filter_strategy:
-          $ref: "#/components/schemas/FilterStrategy"
+          $ref: '#/components/schemas/FilterStrategy'
         format_type:
-          $ref: "#/components/schemas/FormatType"
+          $ref: '#/components/schemas/FormatType'
         hit_count:
           description: 命中次数
           format: i32
           title: The name of the document.
           type: integer
         index_strategy:
-          $ref: "#/components/schemas/IndexStrategy"
+          $ref: '#/components/schemas/IndexStrategy'
         name:
           title: The total number of characters in the document.
           type: string
         parsing_strategy:
-          $ref: "#/components/schemas/ParsingStrategy"
+          $ref: '#/components/schemas/ParsingStrategy'
         size:
           description: 文件大小 字节数
           format: i32
@@ -197,9 +191,9 @@ components:
           title: The unique identifier of the uploaded local document.
           type: integer
         source_type:
-          $ref: "#/components/schemas/DocumentSource"
+          $ref: '#/components/schemas/DocumentSource'
         status:
-          $ref: "#/components/schemas/DocumentStatus"
+          $ref: '#/components/schemas/DocumentStatus'
         tos_uri:
           description: 文件链接
           title: |-
@@ -216,8 +210,7 @@ components:
         update_interval:
           description: 更新间隔
           format: i32
-          title:
-            The following fields are only useful for the refactored table type,
+          title: The following fields are only useful for the refactored table type,
             used by the front end to determine whether editing the update frequency
             is allowed only for the table type.
           type: integer
@@ -227,28 +220,27 @@ components:
           title: Creator
           type: integer
         update_type:
-          $ref: "#/components/schemas/UpdateType"
+          $ref: '#/components/schemas/UpdateType'
       type: object
     DocumentSource:
       enum:
-        - 0
-        - 1
-        - 2
+      - 0
+      - 1
+      - 2
       format: int
-      title:
-        "The method of uploading the file. \n0: upload local file.\n1: upload
+      title: "The method of uploading the file. \n0: upload local file.\n1: upload
         of an online web page.\n2: custom upload"
       type: integer
     DocumentStatus:
       enum:
-        - 0
-        - 1
-        - 2
-        - 3
-        - 4
-        - 5
-        - 9
-        - 1000
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 9
+      - 1000
       format: int
       type: integer
     FilterStrategy:
@@ -270,10 +262,10 @@ components:
       type: object
     FormatType:
       enum:
-        - 0
-        - 1
-        - 2
-        - 3
+      - 0
+      - 1
+      - 2
+      - 3
       format: int
       type: integer
     IndexStrategy:
@@ -303,16 +295,14 @@ components:
           type: integer
         next_page_xpath:
           description: 当类型为 2 时，需要存储用户标记的下一页按钮
-          title:
-            When the type is 2, it is necessary to store the next page button
+          title: When the type is 2, it is necessary to store the next page button
             marked by the user.
           type: string
         type:
           description: 分页方式：0-不分页 1-滚动加载 2-下一页按钮
           format: i32
-          title:
-            "Paging method: 0 - No paging, 1 - Infinite scroll, 2 - Next page
-            button"
+          title: 'Paging method: 0 - No paging, 1 - Infinite scroll, 2 - Next page
+            button'
           type: integer
       type: object
     ParsingStrategy:
@@ -326,7 +316,7 @@ components:
           format: bool
           type: boolean
         parsing_type:
-          $ref: "#/components/schemas/ParsingType"
+          $ref: '#/components/schemas/ParsingType'
         table_extraction:
           description: 是否开启表格元素提取（精准解析时生效）
           format: bool
@@ -334,8 +324,8 @@ components:
       type: object
     ParsingType:
       enum:
-        - 0
-        - 1
+      - 0
+      - 1
       format: int
       type: integer
     SinkStrategy:
@@ -349,11 +339,10 @@ components:
     SourceInfo:
       properties:
         document_source:
-          $ref: "#/components/schemas/DocumentSource"
+          $ref: '#/components/schemas/DocumentSource'
         file_base64:
-          description:
-            "document_source 本地: 如果不传 tos 地址, 则需要传文件 base64, 类型文件经过 base64
-            后的字符串"
+          description: 'document_source 本地: 如果不传 tos 地址, 则需要传文件 base64, 类型文件经过 base64
+            后的字符串'
           title: |-
             Base64 encoding of local files.
 
@@ -370,7 +359,7 @@ components:
             Mandatory when uploading local files
           type: string
         web_url:
-          description: "document_source weburl: 如果不传 web_id, 则需要传 weburl"
+          description: 'document_source weburl: 如果不传 web_id, 则需要传 weburl'
           title: |-
             URL of the webpage.
 
@@ -391,7 +380,7 @@ components:
             Effective when chunk\_type=1.
           type: string
         column_type:
-          $ref: "#/components/schemas/ColumnType"
+          $ref: '#/components/schemas/ColumnType'
         contains_empty_value:
           format: bool
           type: boolean
@@ -414,8 +403,7 @@ components:
         sequence:
           description: 列原本在 excel 的序号
           format: i64
-          title:
-            The maximum segment length ranges from 100 to 2000. It is mandatory
+          title: The maximum segment length ranges from 100 to 2000. It is mandatory
             when chunk_type=1.
           type: integer
       type: object
@@ -442,18 +430,17 @@ components:
         update_interval:
           description: 更新间隔，单位(天)
           format: i32
-          title:
-            The frequency of online webpage automatic updates. The unit is hours,
+          title: The frequency of online webpage automatic updates. The unit is hours,
             with a minimum value of 24.
           type: integer
         update_type:
-          $ref: "#/components/schemas/UpdateType"
+          $ref: '#/components/schemas/UpdateType'
       type: object
     UpdateType:
       enum:
-        - 0
-        - 1
-        - 2
+      - 0
+      - 1
+      - 2
       format: int
       title: |-
         Whether the online web page is automatically updated. Values include:
@@ -463,15 +450,15 @@ components:
       type: integer
     BotMode:
       enum:
-        - 0
-        - 1
-        - 2
+      - 0
+      - 1
+      - 2
       format: int
       type: integer
       x-coze-enum-names:
-        - SingleMode
-        - MultiMode
-        - WorkflowMode
+      - SingleMode
+      - MultiMode
+      - WorkflowMode
     ChatV3ChatDetail:
       properties:
         bot_id:
@@ -479,8 +466,7 @@ components:
           type: string
         completed_at:
           format: i32
-          title:
-            The time the conversation ended. A Unixtime timestamp in 10-digit
+          title: The time the conversation ended. A Unixtime timestamp in 10-digit
             format in seconds.
           type: integer
         conversation_id:
@@ -488,21 +474,19 @@ components:
           type: string
         created_at:
           format: i32
-          title:
-            The time the conversation was created. Unixtime timestamp in 10-bit
+          title: The time the conversation was created. Unixtime timestamp in 10-bit
             format, in seconds.
           type: integer
         failed_at:
           format: i32
-          title:
-            The time the conversation failed. Unixtime timestamp in 10-digit
+          title: The time the conversation failed. Unixtime timestamp in 10-digit
             format, in seconds.
           type: integer
         id:
           title: The conversation ID, which is the unique identifier of the conversation.
           type: string
         last_error:
-          $ref: "#/components/schemas/LastError"
+          $ref: '#/components/schemas/LastError'
         meta_data:
           additionalProperties:
             type: string
@@ -512,7 +496,7 @@ components:
             Custom key-value pairs, which should be specified as Map object format. The length is 16 key-value pairs, where the length of the key is 1 to 64 characters, and the length of the value is 1 to 512 characters.
           type: object
         required_action:
-          $ref: "#/components/schemas/RequiredAction"
+          $ref: '#/components/schemas/RequiredAction'
         section_id:
           type: string
         status:
@@ -526,28 +510,25 @@ components:
             - canceled: The conversation has been cancelled.
           type: string
         usage:
-          $ref: "#/components/schemas/Usage"
+          $ref: '#/components/schemas/Usage'
       required:
-        - id
-        - conversation_id
-        - bot_id
-        - status
+      - id
+      - conversation_id
+      - bot_id
+      - status
       type: object
     ChatV3MessageDetail:
       properties:
         bot_id:
-          title:
-            Write the agent ID for this message. This parameter is only returned
+          title: Write the agent ID for this message. This parameter is only returned
             in messages generated by the conversation.
           type: string
         chat_id:
-          title:
-            Chat ID. This parameter is only returned in messages generated by
+          title: Chat ID. This parameter is only returned in messages generated by
             the conversation.
           type: string
         content:
-          title:
-            The content of the message supports multiple types of content including
+          title: The content of the message supports multiple types of content including
             plain text, multimodal (text, images, mixed input files), and cards.
           type: string
         content_type:
@@ -563,8 +544,7 @@ components:
           type: string
         created_at:
           format: i64
-          title:
-            The creation time of the message, formatted as a 10-digit Unixtime
+          title: The creation time of the message, formatted as a 10-digit Unixtime
             timestamp, in seconds (s).
           type: integer
         id:
@@ -574,8 +554,7 @@ components:
           additionalProperties:
             type: string
           format: map
-          title:
-            Additional message when creating a message will also return this
+          title: Additional message when creating a message will also return this
             additional message when retrieving the message.
           type: object
         role:
@@ -608,19 +587,18 @@ components:
           type: string
         updated_at:
           format: i64
-          title:
-            The update time of the message, formatted as a 10-digit Unixtime
+          title: The update time of the message, formatted as a 10-digit Unixtime
             timestamp in seconds (s).
           type: integer
       required:
-        - id
-        - conversation_id
-        - bot_id
-        - role
-        - type
-        - content
-        - content_type
-        - chat_id
+      - id
+      - conversation_id
+      - bot_id
+      - role
+      - type
+      - content
+      - content_type
+      - chat_id
       type: object
     InterruptFunction:
       properties:
@@ -634,12 +612,12 @@ components:
     InterruptPlugin:
       properties:
         function:
-          $ref: "#/components/schemas/InterruptFunction"
+          $ref: '#/components/schemas/InterruptFunction'
         id:
           title: ID of the reported run result.
           type: string
         require_info:
-          $ref: "#/components/schemas/InterruptRequireInfo"
+          $ref: '#/components/schemas/InterruptRequireInfo'
         type:
           title: Tool type, enumeration value is function.
           type: string
@@ -662,29 +640,28 @@ components:
             0 means the call was successful.
           type: integer
         msg:
-          title:
-            Status information. Detailed error information can be viewed in this
+          title: Status information. Detailed error information can be viewed in this
             field when an API call fails.
           type: string
       required:
-        - code
-        - msg
+      - code
+      - msg
       type: object
     OnboardingMode:
       enum:
-        - 1
-        - 2
-        - 3
+      - 1
+      - 2
+      - 3
       format: int
       type: integer
       x-coze-enum-names:
-        - NO_NEED
-        - USE_MANUAL
-        - USE_LLM
+      - NO_NEED
+      - USE_MANUAL
+      - USE_LLM
     RequiredAction:
       properties:
         submit_tool_outputs:
-          $ref: "#/components/schemas/SubmitToolOutputs"
+          $ref: '#/components/schemas/SubmitToolOutputs'
         type:
           title: The type of the extra operation, the enumeration value is submit_tool_outputs.
           type: string
@@ -694,19 +671,19 @@ components:
         tool_calls:
           format: list
           items:
-            $ref: "#/components/schemas/InterruptPlugin"
+            $ref: '#/components/schemas/InterruptPlugin'
           title: Detailed reporting information.
           type: array
       type: object
     SuggestedQuestionsShowMode:
       enum:
-        - 0
-        - 1
+      - 0
+      - 1
       format: int
       type: integer
       x-coze-enum-names:
-        - Random
-        - All
+      - Random
+      - All
     Usage:
       properties:
         input_count:
@@ -719,8 +696,7 @@ components:
           type: integer
         token_count:
           format: i32
-          title:
-            The total number of tokens consumed by this conversation, including
+          title: The total number of tokens consumed by this conversation, including
             the consumption of the input and output parts.
           type: integer
       type: object
@@ -730,8 +706,7 @@ components:
           type: string
         created_at:
           format: i64
-          title:
-            The time when the session was created. The format is a 10-digit Unix
+          title: The time when the session was created. The format is a 10-digit Unix
             timestamp, in seconds.
           type: integer
         creator_d:
@@ -750,7 +725,7 @@ components:
             Custom key-value pairs should be specified in Map object format. The length is 16 pairs of key-value pairs, with the key length ranging from 1 to 64 characters and the value length ranging from 1 to 512 characters.
           type: object
       type: object
-    EnterMessage1:
+    EnterMessage:
       properties:
         content:
           description: 内容
@@ -763,8 +738,8 @@ components:
         content_type:
           description: text/card/object_string
           enum:
-            - text
-            - object_string
+          - text
+          - object_string
           title: |-
             Message content types can be set to:
 
@@ -786,8 +761,8 @@ components:
           type: object
         role:
           enum:
-            - user
-            - assistant
+          - user
+          - assistant
           title: |-
             Entity that sent this message. Possible values:
 
@@ -796,11 +771,11 @@ components:
           type: string
         type:
           enum:
-            - question
-            - answer
-            - function_call
-            - tool_output
-            - tool_response
+          - question
+          - answer
+          - function_call
+          - tool_output
+          - tool_response
           title: |-
             Message types. The default is **question**.
 
@@ -821,31 +796,28 @@ components:
             Among them, type=question can only correspond to role=user, that is, only the user role can and can only initiate question-type messages. For detailed instructions, please refer to [Message type description](https://www.coze.cn/docs/developer_guides/message_type).
           type: string
       required:
-        - role
+      - role
       type: object
     OpenMessageApi:
       properties:
         bot_id:
           description: bot id //已TODO 所有的i64加注解str,入参和出参都要
-          title:
-            Write the ID of the agent that composed this message. This parameter
+          title: Write the ID of the agent that composed this message. This parameter
             is only returned in the messages generated by the conversation.
           type: string
         chat_id:
-          title:
-            Chat ID. This parameter is only returned in messages generated by
+          title: Chat ID. This parameter is only returned in messages generated by
             the conversation.
           type: string
         content:
           description: 内容
-          title:
-            The content of the message supports various types of content such
+          title: The content of the message supports various types of content such
             as plain text, multimodal (text, images, mixed input of files), and cards.
           type: string
         content_type:
           enum:
-            - text
-            - object_string
+          - text
+          - object_string
           title: |-
             Types of message content include:
 
@@ -860,8 +832,7 @@ components:
         created_at:
           description: 创建时间
           format: i64
-          title:
-            The creation time of the message is in the format of a 10-digit Unix
+          title: The creation time of the message is in the format of a 10-digit Unix
             timestamp, in seconds (s).
           type: integer
         id:
@@ -872,14 +843,13 @@ components:
           additionalProperties:
             type: string
           format: map
-          title:
-            The additional message created when the message is created will also
+          title: The additional message created when the message is created will also
             be returned when the message is retrieved.
           type: object
         role:
           enum:
-            - user
-            - assistant
+          - user
+          - assistant
           title: |-
             Send this message entity. Values:
 
@@ -890,11 +860,11 @@ components:
           type: string
         type:
           enum:
-            - question
-            - answer
-            - function_call
-            - tool_output
-            - tool_response
+          - question
+          - answer
+          - function_call
+          - tool_output
+          - tool_response
           title: |-
             Message types.
 
@@ -917,8 +887,7 @@ components:
         updated_at:
           description: 更新时间 //已TODO 时间改成int
           format: i64
-          title:
-            The update time of the message is in the format of a 10-digit Unixtime
+          title: The update time of the message is in the format of a 10-digit Unixtime
             timestamp, in seconds (s).
           type: integer
       type: object
@@ -951,7 +920,7 @@ components:
           title: The unique identifier of the agent.
           type: string
         bot_mode:
-          $ref: "#/components/schemas/BotMode"
+          $ref: '#/components/schemas/BotMode'
         create_time:
           description: 创建时间
           format: i64
@@ -966,29 +935,29 @@ components:
           title: Avatar URL of the intelligent agent.
           type: string
         knowledge:
-          $ref: "#/components/schemas/CommonKnowledge"
+          $ref: '#/components/schemas/CommonKnowledge'
         model_info:
-          $ref: "#/components/schemas/BotModelInfo"
+          $ref: '#/components/schemas/BotModelInfo'
         name:
           description: bot名称
           title: Agent Name.
           type: string
         onboarding_info:
-          $ref: "#/components/schemas/BotOnboardingInfoV2"
+          $ref: '#/components/schemas/BotOnboardingInfoV2'
         plugin_info_list:
           description: 插件信息列表
           format: list
           items:
-            $ref: "#/components/schemas/BotPluginInfo"
+            $ref: '#/components/schemas/BotPluginInfo'
           title: Agent configuration plugins.
           type: array
         prompt_info:
-          $ref: "#/components/schemas/BotPromptInfo"
+          $ref: '#/components/schemas/BotPromptInfo'
         shortcut_commands:
           description: 快捷指令信息列表
           format: list
           items:
-            $ref: "#/components/schemas/ShortcutCommandInfo"
+            $ref: '#/components/schemas/ShortcutCommandInfo'
           type: array
         update_time:
           description: 更新时间
@@ -1003,37 +972,37 @@ components:
           description: 选择的语音信息
           format: list
           items:
-            $ref: "#/components/schemas/VoiceData"
+            $ref: '#/components/schemas/VoiceData'
           title: Selected voice information
           type: array
         workflow_info_list:
           description: workflow信息列表
           format: list
           items:
-            $ref: "#/components/schemas/WorkflowInfo"
+            $ref: '#/components/schemas/WorkflowInfo'
           type: array
       type: object
       x-coze-order:
-        - bot_id
-        - name
-        - description
-        - icon_url
-        - create_time
-        - update_time
-        - version
-        - prompt_info
-        - onboarding_info
-        - bot_mode
-        - plugin_info_list
-        - model_info
-        - voice_data_list
+      - bot_id
+      - name
+      - description
+      - icon_url
+      - create_time
+      - update_time
+      - version
+      - prompt_info
+      - onboarding_info
+      - bot_mode
+      - plugin_info_list
+      - model_info
+      - voice_data_list
     CommonKnowledge:
       properties:
         knowledge_infos:
           description: 知识库信息
           format: list
           items:
-            $ref: "#/components/schemas/KnowledgeInfo"
+            $ref: '#/components/schemas/KnowledgeInfo'
           title: Knowledge base information.
           type: array
       type: object
@@ -1043,16 +1012,16 @@ components:
           title: The ID of the created agent.
           type: string
       required:
-        - bot_id
+      - bot_id
       type: object
     CustomConfig:
       properties:
         bot_config:
-          $ref: "#/components/schemas/BotConfig"
+          $ref: '#/components/schemas/BotConfig'
         model_config:
-          $ref: "#/components/schemas/ModelConfig"
+          $ref: '#/components/schemas/ModelConfig'
       type: object
-    EnterMessage:
+    EnterMessage1:
       properties:
         content:
           description: 如果是非 text，需要解析 JSON
@@ -1061,8 +1030,8 @@ components:
         content_type:
           description: text, card, object_string
           enum:
-            - text
-            - object_string
+          - text
+          - object_string
           title: text, card, object_string
           type: string
         meta_data:
@@ -1075,8 +1044,8 @@ components:
         role:
           description: user / assistant
           enum:
-            - user
-            - assistant
+          - user
+          - assistant
           title: user / assistant
           type: string
         type:
@@ -1085,11 +1054,11 @@ components:
              用户输入时可用：function_call，tool_output
              不支持用户输入使用：follow_up，knowledge，verbose，answer
           enum:
-            - question
-            - answer
-            - function_call
-            - tool_output
-            - tool_response
+          - question
+          - answer
+          - function_call
+          - tool_output
+          - tool_response
           title: |-
             function_call, tool_output, knowledge, answer, follow_up, verbose, (General requests can be left blank)
              User input can use: function_call, tool_output
@@ -1117,12 +1086,12 @@ components:
             In the Button platform, open the specified knowledge base page, and the number after the knowledge parameter in the page URL is the knowledge base ID. For example, https://bots.bytedance.net/space/736142423532160****/knowledge/738509371792341****, the knowledge base ID is 738509371792341****.
           type: array
         search_strategy:
-          $ref: "#/components/schemas/SearchStrategy"
+          $ref: '#/components/schemas/SearchStrategy'
       type: object
       x-coze-order:
-        - dataset_ids
-        - auto_call
-        - search_strategy
+      - dataset_ids
+      - auto_call
+      - search_strategy
     KnowledgeInfo:
       properties:
         id:
@@ -1218,7 +1187,7 @@ components:
           format: double
           type: number
       required:
-        - model_id
+      - model_id
       type: object
     BotOnboardingInfo:
       properties:
@@ -1234,15 +1203,14 @@ components:
           format: list
           items:
             type: string
-          title:
-            Preset questions for agent's opening remarks. Each question should
+          title: Preset questions for agent's opening remarks. Each question should
             be 0~50 characters in length, with an unlimited number of questions. No
             default preset questions.
           type: array
       type: object
       x-coze-order:
-        - prologue
-        - suggested_questions
+      - prologue
+      - suggested_questions
     BotOnboardingInfoV2:
       properties:
         customized_onboarding_prompt:
@@ -1250,7 +1218,7 @@ components:
           title: LLM generation, user-customized Prompt
           type: string
         onboarding_mode:
-          $ref: "#/components/schemas/OnboardingMode"
+          $ref: '#/components/schemas/OnboardingMode'
         prologue:
           description: 对应 Coze Opening Dialog开场白
           title: |-
@@ -1263,18 +1231,16 @@ components:
           format: list
           items:
             type: string
-          title:
-            Recommended list of agent configuration questions. This field is
+          title: Recommended list of agent configuration questions. This field is
             not returned when user question suggestions are not enabled.
           type: array
         suggested_questions_show_mode:
-          $ref: "#/components/schemas/SuggestedQuestionsShowMode"
+          $ref: '#/components/schemas/SuggestedQuestionsShowMode'
       type: object
     PluginIdInfo:
       properties:
         api_id:
-          title:
-            "The plugin tool ID bound to the agent.\nOpen the specified plugin
+          title: "The plugin tool ID bound to the agent.\nOpen the specified plugin
             tool page on the Coze platform, and the number after the tool parameter
             in the page URL is the plugin tool ID. For example, \nhttps://www.coze.com/space/731762895654132\\*\\*\\*\\*/plugin/735057533610021\\*\\*\\*\\*/tool/735057536617362\\*\\*\\*\\*,
             the plugin tool ID is 735057536617362\\*\\*\\*\\*."
@@ -1286,14 +1252,14 @@ components:
             https://www.coze.com/space/728826510807216****/plugin/731198934927553****, the plugin ID is 731198934927553****.
           type: string
       required:
-        - plugin_id
+      - plugin_id
       type: object
     PluginIdList:
       properties:
         id_list:
           format: list
           items:
-            $ref: "#/components/schemas/PluginIdInfo"
+            $ref: '#/components/schemas/PluginIdInfo'
           title: Configuration of the agent's plugin list.
           type: array
       type: object
@@ -1303,7 +1269,7 @@ components:
           description: 插件包含的api列表
           format: list
           items:
-            $ref: "#/components/schemas/BotPluginAPIInfo"
+            $ref: '#/components/schemas/BotPluginAPIInfo'
           title: Information about the tool list of the plugin.
           type: array
         description:
@@ -1327,13 +1293,12 @@ components:
       properties:
         prompt:
           description: 文本prompt
-          title:
-            The persona and response logic of the intelligent agent. Length is
+          title: The persona and response logic of the intelligent agent. Length is
             0~20,000 characters. Default is empty.
           type: string
       type: object
       x-coze-order:
-        - prompt
+      - prompt
     PublishDraftBotData:
       properties:
         bot_id:
@@ -1345,9 +1310,9 @@ components:
       type: object
     SearchStrategy:
       enum:
-        - 0
-        - 1
-        - 20
+      - 0
+      - 1
+      - 20
       format: int
       title: |-
         The search strategy for the knowledge base. Values include:
@@ -1356,9 +1321,9 @@ components:
         20: Full-text search. Full-text retrieval based on keywords.
       type: integer
       x-coze-enum-names:
-        - SemanticSearch
-        - HybridSearch
-        - FullTextSearch
+      - SemanticSearch
+      - HybridSearch
+      - FullTextSearch
     ShortcutCommandComponent:
       properties:
         default_value:
@@ -1399,7 +1364,7 @@ components:
           description: 组件列表（参数列表）
           format: list
           items:
-            $ref: "#/components/schemas/ShortcutCommandComponent"
+            $ref: '#/components/schemas/ShortcutCommandComponent'
           type: array
         description:
           description: 快捷指令描述
@@ -1417,7 +1382,7 @@ components:
           description: 指令query模版
           type: string
         tool:
-          $ref: "#/components/schemas/ShortcutCommandToolInfo"
+          $ref: '#/components/schemas/ShortcutCommandToolInfo'
       type: object
     ShortcutCommandToolInfo:
       properties:
@@ -1442,8 +1407,7 @@ components:
           title: Avatar of the intelligent agent.
           type: string
         publish_time:
-          title:
-            The most recent release time of the agent, formatted as a 10-digit
+          title: The most recent release time of the agent, formatted as a 10-digit
             Unixtime timestamp. The list of agents returned by this API is sorted
             in descending order by this field.
           type: string
@@ -1453,9 +1417,8 @@ components:
         space_bots:
           format: list
           items:
-            $ref: "#/components/schemas/SimpleBot"
-          title:
-            List of agents published to the Agent as API channel in the specified
+            $ref: '#/components/schemas/SimpleBot'
+          title: List of agents published to the Agent as API channel in the specified
             space.
           type: array
         total:
@@ -1479,14 +1442,13 @@ components:
           title: The execution results of the tool.
           type: string
         tool_call_id:
-          title:
-            The ID of the reported run result. You can view this ID under the
+          title: The ID of the reported run result. You can view this ID under the
             tool_calls field of the [Initiate a conversation (V3) ] (/docs/developer_guides/chat_v3)
             interface response.
           type: string
       required:
-        - tool_call_id
-        - output
+      - tool_call_id
+      - output
       type: object
     VoiceData:
       properties:
@@ -1524,14 +1486,14 @@ components:
         id:
           type: string
       required:
-        - id
+      - id
       type: object
     WorkflowIdList:
       properties:
         ids:
           format: list
           items:
-            $ref: "#/components/schemas/WorkflowIdInfo"
+            $ref: '#/components/schemas/WorkflowIdInfo'
           type: array
       type: object
     WorkflowInfo:
@@ -1561,8 +1523,7 @@ components:
         created_at:
           description: 上传时间戳，单位s
           format: i64
-          title:
-            The upload time of the file, formatted as a 10-digit Unix time stamp
+          title: The upload time of the file, formatted as a 10-digit Unix time stamp
             in seconds (s).
           type: integer
         file_name:
@@ -1592,7 +1553,7 @@ components:
           title: The name of the workspace.
           type: string
         role_type:
-          description: "当前用户角色, 枚举值: owner, admin, member"
+          description: '当前用户角色, 枚举值: owner, admin, member'
           title: |-
             The current user's roles in the space. Enumerated values include:
 
@@ -1601,7 +1562,7 @@ components:
             - member: Member
           type: string
         workspace_type:
-          description: "工作空间类型, 枚举值: personal, team"
+          description: '工作空间类型, 枚举值: personal, team'
           title: |-
             Space types. Enumeration values include:
 
@@ -1619,7 +1580,7 @@ components:
         workspaces:
           format: list
           items:
-            $ref: "#/components/schemas/OpenSpace"
+            $ref: '#/components/schemas/OpenSpace'
           title: The list of workspaces currently joined by the button user.
           type: array
       type: object
@@ -1630,21 +1591,20 @@ components:
         event_id:
           type: string
         type:
-          $ref: "#/components/schemas/InterruptType"
+          $ref: '#/components/schemas/InterruptType'
       type: object
     InterruptType:
       enum:
-        - 1
-        - 2
-        - 3
-        - 4
-        - 5
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
       format: int
       type: integer
   securitySchemes:
     token:
-      description:
-        The Coze API uses access tokens for API request authentication.
+      description: The Coze API uses access tokens for API request authentication.
         You can refer to [Authentication method](https://www.coze.com/docs/developer_guides/authentication?_lang=en)
         for more detail.
       scheme: bearer
@@ -1667,20 +1627,20 @@ paths:
         * Only the owner of the knowledge can upload files to it.
       operationId: CreateDocumentOpenAPI
       parameters:
-        - in: header
-          name: Agw-Js-Conv
-          required: true
-          schema:
-            enum:
-              - str
-            type: string
+      - in: header
+        name: Agw-Js-Conv
+        required: true
+        schema:
+          enum:
+          - str
+          type: string
       requestBody:
         content:
           application/json:
             schema:
               properties:
                 chunk_strategy:
-                  $ref: "#/components/schemas/ChunkStrategy"
+                  $ref: '#/components/schemas/ChunkStrategy'
                 dataset_id:
                   format: i64
                   title: |-
@@ -1691,7 +1651,7 @@ paths:
                   description: 表格类型一次只能创建一个待创建的文档信息
                   format: list
                   items:
-                    $ref: "#/components/schemas/DocumentBase"
+                    $ref: '#/components/schemas/DocumentBase'
                   title: |-
                     Metadata information for files to be uploaded. The maximum length of the array is 10, meaning up to 10 files can be uploaded at a time. For detailed instructions, refer to the [DocumentBase object](https://www.coze.com/docs/developer_guides/create_knowledge_files#986d053d).
                     Supported upload methods include:
@@ -1700,19 +1660,19 @@ paths:
                     - Online web pages.
                   type: array
               required:
-                - dataset_id
-                - document_bases
-                - chunk_strategy
+              - dataset_id
+              - document_bases
+              - chunk_strategy
               type: object
               x-coze-order:
-                - dataset_id
-                - document_bases
-                - chunk_strategy
-                - format_type
-                - sink_strategy
-                - is_append
-                - parsing_strategy
-                - index_strategy
+              - dataset_id
+              - document_bases
+              - chunk_strategy
+              - format_type
+              - sink_strategy
+              - is_append
+              - parsing_strategy
+              - index_strategy
       responses:
         "200":
           content:
@@ -1725,36 +1685,35 @@ paths:
                   document_infos:
                     format: list
                     items:
-                      $ref: "#/components/schemas/DocumentInfo"
+                      $ref: '#/components/schemas/DocumentInfo'
                     title: Basic information of the uploaded file.
                     type: array
                   msg:
                     type: string
                 type: object
                 x-coze-order:
-                  - document_infos
-                  - code
-                  - msg
+                - document_infos
+                - code
+                - msg
           description: ""
       summary: Upload files to knowledge
       tags:
-        - datasets
-        - document
+      - datasets
+      - document
   /open_api/knowledge/document/delete:
     post:
-      description:
-        "Delete text, images, tables, and other files in the knowledge.
+      description: "Delete text, images, tables, and other files in the knowledge.
         Batch deletion is supported. \n\nOnly the owner of the knowledge can delete
         files."
       operationId: DeleteDocumentAPI
       parameters:
-        - in: header
-          name: Agw-Js-Conv
-          required: true
-          schema:
-            enum:
-              - str
-            type: string
+      - in: header
+        name: Agw-Js-Conv
+        required: true
+        schema:
+          enum:
+          - str
+          type: string
       requestBody:
         content:
           application/json:
@@ -1765,16 +1724,15 @@ paths:
                   items:
                     format: i64
                     type: string
-                  title:
-                    List of knowledge base files to be deleted. The maximum length
+                  title: List of knowledge base files to be deleted. The maximum length
                     of the array is 100, which means that up to 100 files can be deleted
                     at one time.
                   type: array
               required:
-                - document_ids
+              - document_ids
               type: object
               x-coze-order:
-                - document_ids
+              - document_ids
       responses:
         "200":
           content:
@@ -1788,33 +1746,31 @@ paths:
                       0 represents a successful call.
                     type: integer
                   msg:
-                    title:
-                      Status information. This field can be used to view detailed
+                    title: Status information. This field can be used to view detailed
                       error information when an API call fails.
                     type: string
                 type: object
                 x-coze-order:
-                  - code
-                  - msg
+                - code
+                - msg
           description: ""
       summary: Delete knowledge file
       tags:
-        - datasets
-        - document
+      - datasets
+      - document
   /open_api/knowledge/document/list:
     post:
-      description:
-        View the list of files in a specified knowledge base, including
+      description: View the list of files in a specified knowledge base, including
         documents, tables, or images.
       operationId: ListDocumentOpenAPI
       parameters:
-        - in: header
-          name: Agw-Js-Conv
-          required: true
-          schema:
-            enum:
-              - str
-            type: string
+      - in: header
+        name: Agw-Js-Conv
+        required: true
+        schema:
+          enum:
+          - str
+          type: string
       requestBody:
         content:
           application/json:
@@ -1826,25 +1782,23 @@ paths:
                   type: string
                 page:
                   format: i32
-                  title:
-                    Page number for pagination. Defaults to 1, meaning data is
+                  title: Page number for pagination. Defaults to 1, meaning data is
                     returned starting from the first page.
                   type: integer
                 size:
                   format: i32
-                  title:
-                    Page size. Default is 10, meaning 10 items are returned per
+                  title: Page size. Default is 10, meaning 10 items are returned per
                     page.
                   type: integer
               required:
-                - dataset_id
+              - dataset_id
               type: object
               x-coze-order:
-                - dataset_id
-                - document_ids
-                - page
-                - size
-                - keyword
+              - dataset_id
+              - document_ids
+              - page
+              - size
+              - keyword
       responses:
         "200":
           content:
@@ -1853,14 +1807,13 @@ paths:
                 properties:
                   code:
                     format: i64
-                    title:
-                      List of knowledge base files. For detailed instructions,
+                    title: List of knowledge base files. For detailed instructions,
                       refer to the [DocumentInfo object](https://www.coze.cn/docs/developer_guides/list_knowledge_files#e638fe05).
                     type: integer
                   document_infos:
                     format: list
                     items:
-                      $ref: "#/components/schemas/DocumentInfo"
+                      $ref: '#/components/schemas/DocumentInfo'
                     title: "Status code.  \n0 indicates a successful call."
                     type: array
                   msg:
@@ -1868,21 +1821,20 @@ paths:
                     type: string
                   total:
                     format: i32
-                    title:
-                      Status information. When an API call fails, detailed error
+                    title: Status information. When an API call fails, detailed error
                       information can be viewed through this field.
                     type: integer
                 type: object
                 x-coze-order:
-                  - document_infos
-                  - total
-                  - code
-                  - msg
+                - document_infos
+                - total
+                - code
+                - msg
           description: ""
       summary: List knowledge file
       tags:
-        - datasets
-        - document
+      - datasets
+      - document
   /open_api/knowledge/document/update:
     post:
       description: |-
@@ -1891,13 +1843,13 @@ paths:
         Only the owner of the knowledge can edit the files in the knowledge.
       operationId: UpdateDocumentOpenAPI
       parameters:
-        - in: header
-          name: Agw-Js-Conv
-          required: true
-          schema:
-            enum:
-              - str
-            type: string
+      - in: header
+        name: Agw-Js-Conv
+        required: true
+        schema:
+          enum:
+          - str
+          type: string
       requestBody:
         content:
           application/json:
@@ -1912,14 +1864,14 @@ paths:
                   title: New name of the knowledge base file.
                   type: string
                 update_rule:
-                  $ref: "#/components/schemas/UpdateRule"
+                  $ref: '#/components/schemas/UpdateRule'
               type: object
               x-coze-order:
-                - document_id
-                - status
-                - document_name
-                - update_rule
-                - table_meta
+              - document_id
+              - status
+              - document_name
+              - update_rule
+              - table_meta
       responses:
         "200":
           content:
@@ -1933,26 +1885,24 @@ paths:
                       0 represents a successful call.
                     type: integer
                   document_info:
-                    $ref: "#/components/schemas/DocumentInfo"
+                    $ref: '#/components/schemas/DocumentInfo'
                   msg:
-                    title:
-                      Status information. Detailed error information can be viewed
+                    title: Status information. Detailed error information can be viewed
                       through this field when an API call fails.
                     type: string
                 type: object
                 x-coze-order:
-                  - document_info
-                  - code
-                  - msg
+                - document_info
+                - code
+                - msg
           description: ""
       summary: Modify knowledge file
       tags:
-        - datasets
-        - document
+      - datasets
+      - document
   /v1/bot/create:
     post:
-      description:
-        "Create a new agent.\nAfter calling this API to create an agent,
+      description: "Create a new agent.\nAfter calling this API to create an agent,
         the agent will be in an unpublished draft state. After creation, you can view
         the agent in the Coze platform's agent list. Call the [Publish agent as an
         API service](https://www.coze.com/docs/developer_guides/publish_bot) API to
@@ -1969,8 +1919,7 @@ paths:
             schema:
               properties:
                 description:
-                  title:
-                    Description of the agent. Length is 0~500 characters. Default
+                  title: Description of the agent. Length is 0~500 characters. Default
                     is empty.
                   type: string
                 icon_file_id:
@@ -1982,37 +1931,36 @@ paths:
                     * To use a custom avatar, you should first upload a local file through the [Upload Files](https://www.coze.com/docs/developer_guides/upload_files) interface and obtain the file ID from the interface response.
                   type: string
                 model_info_config:
-                  $ref: "#/components/schemas/BotModelInfoConfig"
+                  $ref: '#/components/schemas/BotModelInfoConfig'
                 name:
-                  title: "Name of the intelligent agent. Length: 1-20 characters."
+                  title: 'Name of the intelligent agent. Length: 1-20 characters.'
                   type: string
                 onboarding_info:
-                  $ref: "#/components/schemas/BotOnboardingInfo"
+                  $ref: '#/components/schemas/BotOnboardingInfo'
                 prompt_info:
-                  $ref: "#/components/schemas/BotPromptInfo"
+                  $ref: '#/components/schemas/BotPromptInfo'
                 space_id:
-                  title:
-                    The Space ID of the space where the agent is located. The
+                  title: The Space ID of the space where the agent is located. The
                     Space ID is the unique identifier of the space. To enter a specified
                     space, the number following the `space` parameter in the space
                     page URL is the Space ID. For example, in `https://www.coze.cn/space/736163827687053****/bot`,
                     the Space ID is `736163827687053****`.
                   type: string
                 workflow_id_list:
-                  $ref: "#/components/schemas/WorkflowIdList"
+                  $ref: '#/components/schemas/WorkflowIdList'
               required:
-                - space_id
-                - name
+              - space_id
+              - name
               type: object
               x-coze-order:
-                - space_id
-                - name
-                - description
-                - icon_file_id
-                - prompt_info
-                - onboarding_info
-                - plugin_id_list
-                - voice_ids
+              - space_id
+              - name
+              - description
+              - icon_file_id
+              - prompt_info
+              - onboarding_info
+              - plugin_id_list
+              - voice_ids
       responses:
         "200":
           content:
@@ -2028,27 +1976,26 @@ paths:
                       * Other values indicate a failed call. You can determine the specific error reason through the msg field.
                     type: integer
                   data:
-                    $ref: "#/components/schemas/CreateDraftBotData"
+                    $ref: '#/components/schemas/CreateDraftBotData'
                   detail:
-                    $ref: "#/components/schemas/ResponseDetail"
+                    $ref: '#/components/schemas/ResponseDetail'
                   msg:
-                    title:
-                      Status information. Detailed error information can be viewed
+                    title: Status information. Detailed error information can be viewed
                       through this field when the API call fails.
                     type: string
                 required:
-                  - code
-                  - msg
-                  - data
+                - code
+                - msg
+                - data
                 type: object
                 x-coze-order:
-                  - code
-                  - msg
-                  - data
+                - code
+                - msg
+                - data
           description: ""
       summary: Create agent
       tags:
-        - bots
+      - bots
   /v1/bot/get_online_info:
     get:
       description: |-
@@ -2056,16 +2003,16 @@ paths:
         This API only supports viewing agents that have already been published as API services. For agents that have never been published as API, you can view the list and configuration on the [Coze platform](https://www.coze.com/).
       operationId: GetBotOnlineInfo
       parameters:
-        - description: |-
-            To view the agent ID, go to the agent's development page. The number following the `bot` parameter in the development page URL is the agent ID. For example, in `https://www.coze.cn/space/341****/bot/73428668*****`, the bot ID is `73428668*****`.
+      - description: |-
+          To view the agent ID, go to the agent's development page. The number following the `bot` parameter in the development page URL is the agent ID. For example, in `https://www.coze.cn/space/341****/bot/73428668*****`, the bot ID is `73428668*****`.
 
 
-            Ensure that the space to which the agent belongs has generated an access token.
-          in: query
-          name: bot_id
-          required: true
-          schema:
-            type: string
+          Ensure that the space to which the agent belongs has generated an access token.
+        in: query
+        name: bot_id
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2081,27 +2028,26 @@ paths:
                       - Other values indicate a failed call. You can determine the detailed error reason through the `msg` field.
                     type: integer
                   data:
-                    $ref: "#/components/schemas/Bot"
+                    $ref: '#/components/schemas/Bot'
                   detail:
-                    $ref: "#/components/schemas/ResponseDetail"
+                    $ref: '#/components/schemas/ResponseDetail'
                   msg:
-                    title:
-                      Call state information. In case of failure, error details
+                    title: Call state information. In case of failure, error details
                       will be returned.
                     type: string
                 required:
-                  - code
-                  - msg
-                  - data
+                - code
+                - msg
+                - data
                 type: object
                 x-coze-order:
-                  - code
-                  - msg
-                  - data
+                - code
+                - msg
+                - data
           description: ""
       summary: Get agent configs
       tags:
-        - bots
+      - bots
   /v1/bot/publish:
     post:
       description: Publish the specified agent to API, Web SDK, or custom channels.
@@ -2128,12 +2074,12 @@ paths:
                     * Custom channel: Custom channel ID. For information about how to obtain the channel ID, see [Channel integration overview](https://www.coze.com/docs/guides/channel_integration_overview). Ensure that the access token of the creator using the custom channel is used.
                   type: array
               required:
-                - bot_id
-                - connector_ids
+              - bot_id
+              - connector_ids
               type: object
               x-coze-order:
-                - bot_id
-                - connector_ids
+              - bot_id
+              - connector_ids
       responses:
         "200":
           content:
@@ -2149,27 +2095,26 @@ paths:
                       * Any other value indicates a failed call. You can determine the detailed error reason through the msg field.
                     type: integer
                   data:
-                    $ref: "#/components/schemas/PublishDraftBotData"
+                    $ref: '#/components/schemas/PublishDraftBotData'
                   detail:
-                    $ref: "#/components/schemas/ResponseDetail"
+                    $ref: '#/components/schemas/ResponseDetail'
                   msg:
-                    title:
-                      This field provides detailed information about the result
+                    title: This field provides detailed information about the result
                       of the API call. If the API call fails, `msg` contains a description
                       of the error or the reason for the failure.
                     type: string
                 required:
-                  - code
-                  - msg
+                - code
+                - msg
                 type: object
                 x-coze-order:
-                  - code
-                  - msg
-                  - data
+                - code
+                - msg
+                - data
           description: ""
       summary: Publish agent
       tags:
-        - bots
+      - bots
   /v1/bot/update:
     post:
       description: |-
@@ -2187,8 +2132,7 @@ paths:
                     Enter the development page of the agent, and the number after the `bot` parameter in the development page URL is the agent ID. For example, `https://www.coze.com/space/341****/bot/73428668*****`, the bot ID is `73428668*****`.
                   type: string
                 description:
-                  title:
-                    Description information of the agent. Length is 0~500 characters.
+                  title: Description information of the agent. Length is 0~500 characters.
                     Default is empty.
                   type: string
                 icon_file_id:
@@ -2199,31 +2143,31 @@ paths:
                     - To use a custom avatar, you should first upload a local file via the [upload file](https://www.coze.cn/docs/developer_guides/upload_files) API and obtain the file ID from the response of the API.
                   type: string
                 knowledge:
-                  $ref: "#/components/schemas/Knowledge"
+                  $ref: '#/components/schemas/Knowledge'
                 model_info_config:
-                  $ref: "#/components/schemas/BotModelInfoConfig"
+                  $ref: '#/components/schemas/BotModelInfoConfig'
                 name:
                   title: Agent's name. Length should be 1~20 characters.
                   type: string
                 onboarding_info:
-                  $ref: "#/components/schemas/BotOnboardingInfo"
+                  $ref: '#/components/schemas/BotOnboardingInfo'
                 prompt_info:
-                  $ref: "#/components/schemas/BotPromptInfo"
+                  $ref: '#/components/schemas/BotPromptInfo'
                 workflow_id_list:
-                  $ref: "#/components/schemas/WorkflowIdList"
+                  $ref: '#/components/schemas/WorkflowIdList'
               required:
-                - bot_id
+              - bot_id
               type: object
               x-coze-order:
-                - bot_id
-                - name
-                - description
-                - icon_file_id
-                - prompt_info
-                - onboarding_info
-                - knowledge
-                - plugin_id_list
-                - voice_ids
+              - bot_id
+              - name
+              - description
+              - icon_file_id
+              - prompt_info
+              - onboarding_info
+              - knowledge
+              - plugin_id_list
+              - voice_ids
       responses:
         "200":
           content:
@@ -2239,27 +2183,25 @@ paths:
                       - Other values indicate a failed call. You can determine the detailed error reason through the msg field.
                     type: integer
                   detail:
-                    $ref: "#/components/schemas/ResponseDetail"
+                    $ref: '#/components/schemas/ResponseDetail'
                   msg:
-                    title:
-                      Status information. When the API call fails, you can view
+                    title: Status information. When the API call fails, you can view
                       detailed error information through this field.
                     type: string
                 required:
-                  - code
-                  - msg
+                - code
+                - msg
                 type: object
                 x-coze-order:
-                  - code
-                  - msg
+                - code
+                - msg
           description: ""
       summary: Update agent
       tags:
-        - bots
+      - bots
   /v1/conversation/create:
     post:
-      description:
-        "Create a conversation. \nA conversation is a question-and-answer
+      description: "Create a conversation. \nA conversation is a question-and-answer
         interaction between an agent and a user. A conversation contains one or more
         messages. For concepts of conversation, chat, and messages, see [Basic concepts](https://www.coze.com/docs/developer_guides/coze_api_overview#4a288f73)."
       operationId: CreateConversationApi
@@ -2276,9 +2218,8 @@ paths:
                   description: 校验最多16个
                   format: list
                   items:
-                    $ref: "#/components/schemas/EnterMessage1"
-                  title:
-                    The content of the message in the conversation. For detailed
+                    $ref: '#/components/schemas/EnterMessage'
+                  title: The content of the message in the conversation. For detailed
                     instructions, please refer to the [EnterMessage object](https://www.coze.cn/docs/developer_guides/create_conversation#cde8cc95).
                   type: array
                 meta_data:
@@ -2291,10 +2232,10 @@ paths:
                   type: object
               type: object
               x-coze-order:
-                - messages
-                - meta_data
-                - bot_id
-                - connector_id
+              - messages
+              - meta_data
+              - bot_id
+              - connector_id
       responses:
         "200":
           content:
@@ -2302,14 +2243,14 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: "#/components/schemas/ConversationData"
+                    $ref: '#/components/schemas/ConversationData'
                 type: object
                 x-coze-order:
-                  - data
+                - data
           description: ""
       summary: Create conversation
       tags:
-        - conversations
+      - conversations
   /v1/conversation/message/create:
     post:
       description: |-
@@ -2317,12 +2258,12 @@ paths:
         For concepts about conversation, chat, and messages, see [Basic concepts](https://www.coze.com/docs/developer_guides/coze_api_overview#4a288f73).
       operationId: CreateMessageApi
       parameters:
-        - description: Conversation ID, i.e., the unique identifier of the session.
-          in: query
-          name: conversation_id
-          required: true
-          schema:
-            type: string
+      - description: Conversation ID, i.e., the unique identifier of the session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -2330,15 +2271,14 @@ paths:
               properties:
                 content:
                   description: 内容
-                  title:
-                    The content of the message supports various types of content,
+                  title: The content of the message supports various types of content,
                     including plain text, multimodal (text, images, mixed input of
                     files), and cards.
                   type: string
                 content_type:
                   enum:
-                    - text
-                    - object_string
+                  - text
+                  - object_string
                   title: |-
                     The type of message content can be set to:
 
@@ -2356,8 +2296,8 @@ paths:
                 role:
                   description: 已TODO 字段打平
                   enum:
-                    - user
-                    - assistant
+                  - user
+                  - assistant
                   title: |-
                     Send this message entity. Values:
 
@@ -2365,13 +2305,13 @@ paths:
                     - **assistant**: Represents that the content of this message is sent by the Bot.
                   type: string
               required:
-                - role
+              - role
               type: object
               x-coze-order:
-                - role
-                - content
-                - meta_data
-                - content_type
+              - role
+              - content
+              - meta_data
+              - content_type
       responses:
         "200":
           content:
@@ -2379,36 +2319,36 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: "#/components/schemas/OpenMessageApi"
+                    $ref: '#/components/schemas/OpenMessageApi'
                 type: object
                 x-coze-order:
-                  - data
+                - data
           description: ""
       summary: Create message
       tags:
-        - conversations
-        - message
+      - conversations
+      - message
   /v1/conversation/message/delete:
     post:
       description: Delete the message in a conversation.
       operationId: DeleteMessageApi
       parameters:
-        - description: |-
-            Message ID to be deleted.
+      - description: |-
+          Message ID to be deleted.
 
-            - This message must be within the conversation specified by conversation_id.
-            - It is not supported to specify messages of types other than type=answer, which are generated through the conversation initiation interface. These messages are intermediate messages, and when deleting the agent's reply, the intermediate messages will be batch deleted simultaneously.
-          in: query
-          name: message_id
-          required: true
-          schema:
-            type: string
-        - description: The session ID of the message to be deleted.
-          in: query
-          name: conversation_id
-          required: true
-          schema:
-            type: string
+          - This message must be within the conversation specified by conversation_id.
+          - It is not supported to specify messages of types other than type=answer, which are generated through the conversation initiation interface. These messages are intermediate messages, and when deleting the agent's reply, the intermediate messages will be batch deleted simultaneously.
+        in: query
+        name: message_id
+        required: true
+        schema:
+          type: string
+      - description: The session ID of the message to be deleted.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -2422,15 +2362,15 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: "#/components/schemas/OpenMessageApi"
+                    $ref: '#/components/schemas/OpenMessageApi'
                 type: object
                 x-coze-order:
-                  - data
+                - data
           description: ""
       summary: Delete message
       tags:
-        - conversations
-        - message
+      - conversations
+      - message
   /v1/conversation/message/list:
     post:
       description: |-
@@ -2444,12 +2384,12 @@ paths:
         The message is saved on the server for 180 days. After expiration, the message will be automatically deleted from the chat history.
       operationId: ListMessageApi
       parameters:
-        - description: Conversation ID, the unique identifier of the session.
-          in: query
-          name: conversation_id
-          required: true
-          schema:
-            type: string
+      - description: Conversation ID, the unique identifier of the session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -2474,15 +2414,14 @@ paths:
                 limit:
                   description: 每页限制条数  TODO 限制50条
                   format: i64
-                  title:
-                    The amount of data returned for each query. The default is
+                  title: The amount of data returned for each query. The default is
                     50, with a range of 1 to 50.
                   type: integer
                 order:
                   description: 查询顺序  desc倒序 asc正序 TODO 默认倒序
                   enum:
-                    - desc
-                    - asc
+                  - desc
+                  - asc
                   title: |-
                     Sorting method for message list.
 
@@ -2491,11 +2430,11 @@ paths:
                   type: string
               type: object
               x-coze-order:
-                - limit
-                - order
-                - chat_id
-                - before_id
-                - after_id
+              - limit
+              - order
+              - chat_id
+              - before_id
+              - after_id
       responses:
         "200":
           content:
@@ -2505,12 +2444,11 @@ paths:
                   data:
                     format: list
                     items:
-                      $ref: "#/components/schemas/OpenMessageApi"
+                      $ref: '#/components/schemas/OpenMessageApi'
                     title: Message Details.
                     type: array
                   first_id:
-                    title:
-                      The Message ID of the first message in the returned message
+                    title: The Message ID of the first message in the returned message
                       list.
                     type: string
                   has_more:
@@ -2522,40 +2460,38 @@ paths:
                       - false: All information has been returned.
                     type: boolean
                   last_id:
-                    title:
-                      The Message ID of the last message in the returned message
+                    title: The Message ID of the last message in the returned message
                       list.
                     type: string
                 type: object
                 x-coze-order:
-                  - data
-                  - has_more
-                  - first_id
-                  - last_id
+                - data
+                - has_more
+                - first_id
+                - last_id
           description: ""
       summary: List message
       tags:
-        - conversations
-        - message
+      - conversations
+      - message
   /v1/conversation/message/modify:
     post:
-      description:
-        Modify a message, including the body, additional information, and
+      description: Modify a message, including the body, additional information, and
         type.
       operationId: ModifyMessageApi
       parameters:
-        - description: Conversation ID, the unique identifier for a conversation.
-          in: query
-          name: conversation_id
-          required: true
-          schema:
-            type: string
-        - description: Message ID, which is the unique identifier of the message.
-          in: query
-          name: message_id
-          required: true
-          schema:
-            type: string
+      - description: Conversation ID, the unique identifier for a conversation.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Message ID, which is the unique identifier of the message.
+        in: query
+        name: message_id
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -2571,8 +2507,8 @@ paths:
                   type: string
                 content_type:
                   enum:
-                    - text
-                    - object_string
+                  - text
+                  - object_string
                   title: |-
                     Message content types include:
 
@@ -2595,9 +2531,9 @@ paths:
                   type: object
               type: object
               x-coze-order:
-                - meta_data
-                - content
-                - content_type
+              - meta_data
+              - content
+              - content_type
       responses:
         "200":
           content:
@@ -2605,32 +2541,32 @@ paths:
               schema:
                 properties:
                   message:
-                    $ref: "#/components/schemas/OpenMessageApi"
+                    $ref: '#/components/schemas/OpenMessageApi'
                 type: object
                 x-coze-order:
-                  - message
+                - message
           description: ""
       summary: Modify message
       tags:
-        - conversations
-        - message
+      - conversations
+      - message
   /v1/conversation/message/retrieve:
     get:
       description: View details of a specified message.
       operationId: RetrieveMessageApi
       parameters:
-        - description: Conversation ID, which is the unique identifier of the session.
-          in: query
-          name: conversation_id
-          required: true
-          schema:
-            type: string
-        - description: Message ID, i.e., the unique identifier of the message.
-          in: query
-          name: message_id
-          required: true
-          schema:
-            type: string
+      - description: Conversation ID, which is the unique identifier of the session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Message ID, i.e., the unique identifier of the message.
+        in: query
+        name: message_id
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2638,26 +2574,26 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: "#/components/schemas/OpenMessageApi"
+                    $ref: '#/components/schemas/OpenMessageApi'
                 type: object
                 x-coze-order:
-                  - data
+                - data
           description: ""
       summary: Get message
       tags:
-        - conversations
-        - message
+      - conversations
+      - message
   /v1/conversation/retrieve:
     get:
       description: View the conversation information by conversation ID.
       operationId: RetrieveConversationApi
       parameters:
-        - description: Conversation ID, which is the unique identifier for a session.
-          in: query
-          name: conversation_id
-          required: true
-          schema:
-            type: string
+      - description: Conversation ID, which is the unique identifier for a session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2665,25 +2601,25 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: "#/components/schemas/ConversationData"
+                    $ref: '#/components/schemas/ConversationData'
                 type: object
                 x-coze-order:
-                  - data
+                - data
           description: ""
       summary: Get conversation
       tags:
-        - conversations
+      - conversations
   /v1/files/retrieve:
     get:
       description: View the details of uploaded files.
       operationId: RetrieveFileOpen
       parameters:
-        - description: Uploaded file ID.
-          in: query
-          name: file_id
-          required: true
-          schema:
-            type: string
+      - description: Uploaded file ID.
+        in: query
+        name: file_id
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -2691,14 +2627,16 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: "#/components/schemas/File"
+                    $ref: '#/components/schemas/File'
+                  detail:
+                    $ref: '#/components/schemas/ResponseDetail'
                 type: object
                 x-coze-order:
-                  - data
+                - data
           description: ""
       summary: Get file
       tags:
-        - files
+      - files
   /v1/files/upload:
     post:
       description: |-
@@ -2720,8 +2658,7 @@ paths:
             schema:
               properties:
                 file:
-                  description:
-                    "Supported file formats for upload:\nDocuments: DOC,
+                  description: "Supported file formats for upload:\nDocuments: DOC,
                     DOCX, XLS, XLSX, PPT, PPTX, PDF, Numbers, CSV\nImages: JPG, JPG2,
                     PNG, GIF, WEBP, HEIC, HEIF, BMP, PCD, TIFF\nFile upload size limit:
                     Each file is a maximum of 512 MB.\nFiles uploaded to the platform
@@ -2731,30 +2668,30 @@ paths:
                   format: binary
                   type: string
                   x-coze-file-ext:
-                    - .doc
-                    - .docx
-                    - .xls
-                    - .xlsx
-                    - .ppt
-                    - .pptx
-                    - .pdf
-                    - .numbers
-                    - .csv
-                    - .jpg
-                    - .jpg2
-                    - .jpeg
-                    - .png
-                    - .gif
-                    - .webp
-                    - .heic
-                    - .heif
-                    - .bmp
-                    - .pcd
-                    - .tiff
+                  - .doc
+                  - .docx
+                  - .xls
+                  - .xlsx
+                  - .ppt
+                  - .pptx
+                  - .pdf
+                  - .numbers
+                  - .csv
+                  - .jpg
+                  - .jpg2
+                  - .jpeg
+                  - .png
+                  - .gif
+                  - .webp
+                  - .heic
+                  - .heif
+                  - .bmp
+                  - .pcd
+                  - .tiff
               required:
-                - file
+              - Data
+              - file
               type: object
-        required: true
       responses:
         "200":
           content:
@@ -2762,46 +2699,42 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: "#/components/schemas/File"
+                    $ref: '#/components/schemas/File'
                 type: object
                 x-coze-order:
-                  - data
+                - data
           description: ""
       summary: Upload file
       tags:
-        - files
+      - files
   /v1/space/published_bots_list:
     get:
-      description:
-        View the list of agents published to the Agent as API channel in
+      description: View the list of agents published to the Agent as API channel in
         the specified space.
       operationId: GetSpacePublishedBotsList
       parameters:
-        - description:
-            The Space ID of the space where the agent is located. The Space
-            ID is the unique identifier of the space. To enter the specified space,
-            the number following the `space` parameter in the space page URL is the
-            Space ID. For example, `https://www.coze.cn/space/736163827687053****/bot`,
-            the Space ID is `736163827687053****`.
-          in: query
-          name: space_id
-          required: true
-          schema:
-            type: string
-        - description:
-            Page size. The default is 20, meaning 20 data entries are returned
-            per page.
-          in: query
-          name: page_index
-          schema:
-            type: integer
-        - description:
-            Page number for pagination. Defaults to 1, which means data is
-            returned starting from the first page.
-          in: query
-          name: page_size
-          schema:
-            type: integer
+      - description: The Space ID of the space where the agent is located. The Space
+          ID is the unique identifier of the space. To enter the specified space,
+          the number following the `space` parameter in the space page URL is the
+          Space ID. For example, `https://www.coze.cn/space/736163827687053****/bot`,
+          the Space ID is `736163827687053****`.
+        in: query
+        name: space_id
+        required: true
+        schema:
+          type: string
+      - description: Page size. The default is 20, meaning 20 data entries are returned
+          per page.
+        in: query
+        name: page_index
+        schema:
+          type: integer
+      - description: Page number for pagination. Defaults to 1, which means data is
+          returned starting from the first page.
+        in: query
+        name: page_size
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -2815,31 +2748,29 @@ paths:
                       `0` means the call was successful.
                     type: integer
                   data:
-                    $ref: "#/components/schemas/SpacePublishedBotsInfo"
+                    $ref: '#/components/schemas/SpacePublishedBotsInfo'
                   detail:
-                    $ref: "#/components/schemas/ResponseDetail"
+                    $ref: '#/components/schemas/ResponseDetail'
                   msg:
-                    title:
-                      Status information. Detailed error information can be viewed
+                    title: Status information. Detailed error information can be viewed
                       through this field when an API call fails.
                     type: string
                 required:
-                  - code
-                  - msg
-                  - data
+                - code
+                - msg
+                - data
                 type: object
                 x-coze-order:
-                  - code
-                  - msg
-                  - data
+                - code
+                - msg
+                - data
           description: ""
       summary: Get agent list
       tags:
-        - bots
+      - bots
   /v1/workflow/run:
     post:
-      description:
-        "Execute a published workflow.\n**API Description**\nThis API operates
+      description: "Execute a published workflow.\n**API Description**\nThis API operates
         in non-streaming response mode. For nodes that support streaming output, you
         should use the API to [execute the workflow](https://www.coze.com/docs/developer_guides/workflow_stream_run)
         (streaming response) to obtain a streaming response. After calling the API,
@@ -2868,15 +2799,13 @@ paths:
               properties:
                 app_id:
                   description: 引用workflow 的应用ID
-                  title:
-                    You can obtain the app ID from the URL of the app's business
+                  title: You can obtain the app ID from the URL of the app's business
                     logic page. It is the string following the `project-ide` parameter
                     in the URL. For example, in the URL `https://www.coze.com/space/739174157340921****/project-ide/743996105122521****/workflow/744102227704147****`,
                     the app ID is `743996105122521****`.
                   type: string
                 bot_id:
-                  title:
-                    "The associated Bot ID required for some workflow executions,
+                  title: "The associated Bot ID required for some workflow executions,
                     such as workflows with database nodes, variable nodes, etc. \nGo
                     to the **Develop** page of your Coze bot. The number after the
                     `bot `parameter in the page URL is the bot ID. For example: `https://www.coze.com/space/8341****/bot/73428668*****`.
@@ -2897,32 +2826,30 @@ paths:
                     * user_id: Integer type, representing the user ID.
                   type: object
                 parameters:
-                  title:
-                    Input parameters and their values for the starting node of
+                  title: Input parameters and their values for the starting node of
                     the workflow. You can view the list of parameters on the arrangement
                     page of the specified workflow.
                   type: object
                 workflow_id:
-                  title:
-                    The ID of the workflow, which should have been published.
+                  title: The ID of the workflow, which should have been published.
                     To find the workflow ID, look for the number following the "workflow"
                     parameter in the page URL. For example, in the URL "`https://www.coze.com/work_flow?space_id=42463***&workflow_id=73505836754923***`",
                     the Workflow ID is `73505836754923***`.
                   type: string
               required:
-                - workflow_id
+              - workflow_id
               type: object
               x-coze-order:
-                - workflow_id
-                - parameters
-                - bot_id
-                - ext
-                - is_async
-                - app_id
-                - execute_mode
-                - version
-                - connector_id
-                - project_id
+              - workflow_id
+              - parameters
+              - bot_id
+              - ext
+              - is_async
+              - app_id
+              - execute_mode
+              - version
+              - connector_id
+              - project_id
       responses:
         "200":
           content:
@@ -2943,27 +2870,24 @@ paths:
                     type: string
                   data:
                     description: 同步返回字段执行结果，通常为json序列化字符串，也有可能是非json结构的字符串
-                    title:
-                      The execution result of the workflow is usually a JSON
+                    title: The execution result of the workflow is usually a JSON
                       serialized string, but in some scenarios, it may return a non-JSON
                       structured string.
                     type: string
                   debug_url:
-                    title:
-                      Workflow trial run debugging page. Access this page to
+                    title: Workflow trial run debugging page. Access this page to
                       view the execution results, inputs, and outputs of each workflow
                       node.
                     type: string
                   detail:
-                    $ref: "#/components/schemas/ResponseDetail"
+                    $ref: '#/components/schemas/ResponseDetail'
                   execute_id:
                     description: 异步返回字段
                     title: Event ID for asynchronous execution.
                     type: string
                   msg:
                     description: 成功为success, 失败为简单的错误信息、
-                    title:
-                      Status information. Detailed error information can be viewed
+                    title: Status information. Detailed error information can be viewed
                       through this field when an API call fails.
                     type: string
                   token:
@@ -2971,21 +2895,21 @@ paths:
                     title: Reserved field, no need to pay attention.
                     type: integer
                 required:
-                  - code
+                - code
                 type: object
                 x-coze-order:
-                  - code
-                  - msg
-                  - data
-                  - token
-                  - cost
-                  - debug_url
-                  - execute_id
+                - code
+                - msg
+                - data
+                - token
+                - cost
+                - debug_url
+                - execute_id
           description: ""
       summary: Run workflow
       tags:
-        - workflows
-        - runs
+      - workflows
+      - runs
   /v1/workflow/stream_resume:
     post:
       operationId: OpenAPIStreamResumeFlow
@@ -3005,24 +2929,24 @@ paths:
                   format: map
                   type: object
                 interrupt_type:
-                  $ref: "#/components/schemas/InterruptType"
+                  $ref: '#/components/schemas/InterruptType'
                 resume_data:
                   type: string
                 workflow_id:
                   type: string
               required:
-                - event_id
-                - interrupt_type
-                - resume_data
-                - workflow_id
+              - event_id
+              - interrupt_type
+              - resume_data
+              - workflow_id
               type: object
               x-coze-order:
-                - event_id
-                - interrupt_type
-                - resume_data
-                - ext
-                - workflow_id
-                - connector_id
+              - event_id
+              - interrupt_type
+              - resume_data
+              - ext
+              - workflow_id
+              - connector_id
       responses:
         "200":
           content:
@@ -3061,7 +2985,7 @@ paths:
                     description: 绝对序号
                     type: string
                   interrupt_data:
-                    $ref: "#/components/schemas/Interrupt"
+                    $ref: '#/components/schemas/Interrupt'
                   node_is_finish:
                     description: 节点是否执行完成
                     format: bool
@@ -3077,26 +3001,26 @@ paths:
                     type: integer
                 type: object
                 x-coze-order:
-                  - id
-                  - event
-                  - node_seq_id
-                  - node_title
-                  - content
-                  - node_is_finish
-                  - interrupt_data
-                  - content_type
-                  - card_body
-                  - ext
-                  - token
-                  - cost
-                  - error_code
-                  - error_message
-                  - debug_url
+                - id
+                - event
+                - node_seq_id
+                - node_title
+                - content
+                - node_is_finish
+                - interrupt_data
+                - content_type
+                - card_body
+                - ext
+                - token
+                - cost
+                - error_code
+                - error_message
+                - debug_url
           description: ""
       summary: Resume workflow
       tags:
-        - workflows
-        - runs
+      - workflows
+      - runs
   /v1/workflow/stream_run:
     post:
       description: |-
@@ -3152,8 +3076,7 @@ paths:
                   format: bool
                   type: boolean
                 parameters:
-                  title:
-                    The input parameters and values for the workflow start node
+                  title: The input parameters and values for the workflow start node
                     can be viewed in the parameter list on the designated workflow
                     orchestration page.
                   type: object
@@ -3169,14 +3092,14 @@ paths:
                     Enter the Workflow orchestration page; the number following the workflow parameter in the page URL is the Workflow ID. For example, in https://www.coze.com/work\_flow?space\_id=42463\*\*\*&workflow\_id=73505836754923\*\*\*, the Workflow ID is 73505836754923\*\*\*.
                   type: string
               required:
-                - workflow_id
+              - workflow_id
               type: object
               x-coze-order:
-                - workflow_id
-                - parameters
-                - ext
-                - bot_id
-                - is_async
+              - workflow_id
+              - parameters
+              - ext
+              - bot_id
+              - is_async
       responses:
         "200":
           content:
@@ -3210,8 +3133,7 @@ paths:
                       - Other values indicate a failed call. You can determine the specific error reason through the error_message field.
                     type: integer
                   error_message:
-                    title:
-                      Status information. This field can be used to view detailed
+                    title: Status information. This field can be used to view detailed
                       error information when the API call fails.
                     type: string
                   event:
@@ -3236,7 +3158,7 @@ paths:
                     title: The event ID in the interface response. Starting from 0.
                     type: string
                   interrupt_data:
-                    $ref: "#/components/schemas/Interrupt"
+                    $ref: '#/components/schemas/Interrupt'
                   node_is_finish:
                     description: 节点是否执行完成
                     format: bool
@@ -3244,14 +3166,12 @@ paths:
                     type: boolean
                   node_seq_id:
                     description: 节点信息节点中的序号
-                    title:
-                      The message ID within the node starts counting from 0,
+                    title: The message ID within the node starts counting from 0,
                       for example, the 5th message of the message node.
                     type: string
                   node_title:
                     description: 节点名称
-                    title:
-                      Node names for output messages, such as message nodes and
+                    title: Node names for output messages, such as message nodes and
                       end nodes.
                     type: string
                   token:
@@ -3259,26 +3179,26 @@ paths:
                     type: integer
                 type: object
                 x-coze-order:
-                  - id
-                  - event
-                  - node_seq_id
-                  - node_title
-                  - content
-                  - node_is_finish
-                  - interrupt_data
-                  - content_type
-                  - card_body
-                  - ext
-                  - token
-                  - cost
-                  - error_code
-                  - error_message
-                  - debug_url
+                - id
+                - event
+                - node_seq_id
+                - node_title
+                - content
+                - node_is_finish
+                - interrupt_data
+                - content_type
+                - card_body
+                - ext
+                - token
+                - cost
+                - error_code
+                - error_message
+                - debug_url
           description: ""
       summary: Run workflow (streaming response)
       tags:
-        - workflows
-        - runs
+      - workflows
+      - runs
   /v1/workspaces:
     get:
       description: |-
@@ -3292,18 +3212,17 @@ paths:
         Calling this API through third-party channels is not supported at this time.
       operationId: OpenSpaceList
       parameters:
-        - description:
-            Page number. The default is 1, which means data is returned starting
-            from the first page.
-          in: query
-          name: page_num
-          schema:
-            type: integer
-        - description: Page size. Default is 20, maximum is 50.
-          in: query
-          name: page_size
-          schema:
-            type: integer
+      - description: Page number. The default is 1, which means data is returned starting
+          from the first page.
+        in: query
+        name: page_num
+        schema:
+          type: integer
+      - description: Page size. Default is 20, maximum is 50.
+        in: query
+        name: page_size
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -3314,18 +3233,18 @@ paths:
                     format: i64
                     type: integer
                   data:
-                    $ref: "#/components/schemas/OpenSpaceData"
+                    $ref: '#/components/schemas/OpenSpaceData'
                   msg:
                     type: string
                 type: object
                 x-coze-order:
-                  - data
-                  - code
-                  - msg
+                - data
+                - code
+                - msg
           description: ""
       summary: List workspace
       tags:
-        - workspaces
+      - workspaces
   /v3/chat:
     post:
       description: |-
@@ -3337,19 +3256,19 @@ paths:
         Non-streaming response: Send a response message immediately regardless of whether the conversation is processed. Developers can [view the conversation details](https://www.coze.cn/docs/developer_guides/retrieve_chat) via the API to confirm that the conversation is processed, and then call the API to [view details of the conversation message](https://www.coze.cn/docs/developer_guides/list_chat_messages)s to view the complete response, such as the model response. For more information, see [Non-streaming response](https://www.coze.com/docs/developer_guides/chat_v3#337f3d53).[Concepts](https://www.coze.com/docs/developer_guides/coze_api_overview#4a288f73)
       operationId: ChatV3
       parameters:
-        - description: |-
-            Identify which session the conversation occurs in.
-            A session is an exchange of questions and answers between the Bot and the user. A session contains one or more messages. A conversation is a single invocation of the Bot within a session, and the messages generated during the conversation will be added to the session.
+      - description: |-
+          Identify which session the conversation occurs in.
+          A session is an exchange of questions and answers between the Bot and the user. A session contains one or more messages. A conversation is a single invocation of the Bot within a session, and the messages generated during the conversation will be added to the session.
 
-            - You can use an already created session, and the existing messages in the session will be passed as context to the model. For details on how to create a session, refer to [Create a Session](/docs/developer_guides/create_conversation).
-            - For scenarios such as single question and answer that do not require distinguishing conversations, this parameter does not need to be passed, and the system will automatically generate a session.
+          - You can use an already created session, and the existing messages in the session will be passed as context to the model. For details on how to create a session, refer to [Create a Session](/docs/developer_guides/create_conversation).
+          - For scenarios such as single question and answer that do not require distinguishing conversations, this parameter does not need to be passed, and the system will automatically generate a session.
 
 
-            In a session, there can only be one ongoing conversation; otherwise, an error 4016 will be reported when calling this interface.
-          in: query
-          name: conversation_id
-          schema:
-            type: string
+          In a session, there can only be one ongoing conversation; otherwise, an error 4016 will be reported when calling this interface.
+        in: query
+        name: conversation_id
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -3358,7 +3277,7 @@ paths:
                 additional_messages:
                   format: list
                   items:
-                    $ref: "#/components/schemas/EnterMessage"
+                    $ref: '#/components/schemas/EnterMessage1'
                   title: |-
                     Additional information for the conversation. You can pass historical messages and the user's question in this field for the current conversation. The array length is limited to 100, meaning a maximum of 100 messages can be passed.
 
@@ -3438,21 +3357,21 @@ paths:
                     For data privacy and information security considerations, it is not recommended to use the user ID defined in the business system.
                   type: string
               required:
-                - bot_id
-                - user_id
+              - bot_id
+              - user_id
               type: object
               x-coze-order:
-                - bot_id
-                - user_id
-                - stream
-                - additional_messages
-                - custom_variables
-                - auto_save_history
-                - meta_data
-                - tools
-                - custom_config
-                - extra_params
-                - connector_id
+              - bot_id
+              - user_id
+              - stream
+              - additional_messages
+              - custom_variables
+              - auto_save_history
+              - meta_data
+              - tools
+              - custom_config
+              - extra_params
+              - connector_id
       responses:
         "200":
           content:
@@ -3463,21 +3382,21 @@ paths:
                     format: i32
                     type: integer
                   data:
-                    $ref: "#/components/schemas/ChatV3ChatDetail"
+                    $ref: '#/components/schemas/ChatV3ChatDetail'
                   msg:
                     type: string
                 required:
-                  - code
-                  - msg
+                - code
+                - msg
                 type: object
                 x-coze-order:
-                  - data
-                  - code
-                  - msg
+                - data
+                - code
+                - msg
           description: ""
       summary: Chat
       tags:
-        - chat
+      - chat
   /v3/chat/cancel:
     post:
       operationId: CancelChatApi
@@ -3491,12 +3410,12 @@ paths:
                 conversation_id:
                   type: string
               required:
-                - chat_id
-                - conversation_id
+              - chat_id
+              - conversation_id
               type: object
               x-coze-order:
-                - chat_id
-                - conversation_id
+              - chat_id
+              - conversation_id
       responses:
         "200":
           content:
@@ -3504,14 +3423,14 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: "#/components/schemas/ChatV3ChatDetail"
+                    $ref: '#/components/schemas/ChatV3ChatDetail'
                 type: object
                 x-coze-order:
-                  - data
+                - data
           description: ""
       summary: Cancel an ongoing chat
       tags:
-        - chat
+      - chat
   /v3/chat/message/list:
     get:
       description: |-
@@ -3524,18 +3443,18 @@ paths:
         Before calling this API, it is recommended to first poll the API for viewing conversation details at a frequency of no more than once per second to confirm that the current round of the conversation has ended (status=completed). Otherwise, the messages retrieved by calling this API may be incomplete.
       operationId: ListChatMessageApi
       parameters:
-        - description: Conversation ID, which is the unique identifier of the session.
-          in: query
-          name: conversation_id
-          required: true
-          schema:
-            type: string
-        - description: Chat ID, the unique identifier of the conversation.
-          in: query
-          name: chat_id
-          required: true
-          schema:
-            type: string
+      - description: Conversation ID, which is the unique identifier of the session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Chat ID, the unique identifier of the conversation.
+        in: query
+        name: chat_id
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -3545,20 +3464,19 @@ paths:
                   data:
                     format: list
                     items:
-                      $ref: "#/components/schemas/ChatV3MessageDetail"
-                    title:
-                      Specify messages in the conversation other than Query,
+                      $ref: '#/components/schemas/ChatV3MessageDetail'
+                    title: Specify messages in the conversation other than Query,
                       including model replies, intermediate results executed by the
                       Bot, etc.
                     type: array
                 type: object
                 x-coze-order:
-                  - data
+                - data
           description: ""
       summary: Get chat messages
       tags:
-        - chat
-        - message
+      - chat
+      - message
   /v3/chat/retrieve:
     get:
       description: |-
@@ -3569,18 +3487,18 @@ paths:
         * It is recommended to call this API at most once per second to avoid triggering rate limiting.
       operationId: RetrieveChatOpen
       parameters:
-        - description: Conversation ID, the unique identifier of the session.
-          in: query
-          name: conversation_id
-          required: true
-          schema:
-            type: string
-        - description: Chat ID, the unique identifier for a conversation.
-          in: query
-          name: chat_id
-          required: true
-          schema:
-            type: string
+      - description: Conversation ID, the unique identifier of the session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Chat ID, the unique identifier for a conversation.
+        in: query
+        name: chat_id
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -3588,14 +3506,14 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: "#/components/schemas/ChatV3ChatDetail"
+                    $ref: '#/components/schemas/ChatV3ChatDetail'
                 type: object
                 x-coze-order:
-                  - data
+                - data
           description: ""
       summary: Get chat information
       tags:
-        - chat
+      - chat
   /v3/chat/submit_tool_outputs:
     post:
       description: |-
@@ -3606,18 +3524,18 @@ paths:
         Chats that only trigger the Local Plugin need to call this API to submit the execution results.
       operationId: SubmitToolOutputs
       parameters:
-        - description: Conversation ID, which is the unique identifier of the session.
-          in: query
-          name: conversation_id
-          required: true
-          schema:
-            type: string
-        - description: Chat ID, which is the unique identifier of the conversation.
-          in: query
-          name: chat_id
-          required: true
-          schema:
-            type: string
+      - description: Conversation ID, which is the unique identifier of the session.
+        in: query
+        name: conversation_id
+        required: true
+        schema:
+          type: string
+      - description: Chat ID, which is the unique identifier of the conversation.
+        in: query
+        name: chat_id
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -3634,15 +3552,15 @@ paths:
                 tool_outputs:
                   format: list
                   items:
-                    $ref: "#/components/schemas/ToolOutput"
+                    $ref: '#/components/schemas/ToolOutput'
                   title: Tool execution results.
                   type: array
               required:
-                - tool_outputs
+              - tool_outputs
               type: object
               x-coze-order:
-                - stream
-                - tool_outputs
+              - stream
+              - tool_outputs
       responses:
         "200":
           content:
@@ -3653,22 +3571,22 @@ paths:
                     format: i32
                     type: integer
                   data:
-                    $ref: "#/components/schemas/ChatV3ChatDetail"
+                    $ref: '#/components/schemas/ChatV3ChatDetail'
                   msg:
                     type: string
                 required:
-                  - code
-                  - msg
+                - code
+                - msg
                 type: object
                 x-coze-order:
-                  - code
-                  - data
-                  - msg
+                - code
+                - data
+                - msg
           description: ""
       summary: Submit tool outputs
       tags:
-        - chat
+      - chat
 security:
-  - token: []
+- token: []
 servers:
-  - url: https://bot-open-api.byteintl.net
+- url: https://bot-open-api.byteintl.net

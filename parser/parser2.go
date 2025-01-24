@@ -65,12 +65,6 @@ type TyEnumValue struct {
 }
 
 // TyParameter represents an operation parameter
-type TyParameter struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Required    bool   `json:"required,omitempty"`
-	Type        *Ty    `json:"type"`
-}
 
 // HttpHandler represents an API operation
 type HttpHandler struct {
@@ -80,9 +74,9 @@ type HttpHandler struct {
 	Method      string `json:"method"`
 
 	// Parameters split by location
-	HeaderParams []TyParameter `json:"header_params,omitempty"`
-	PathParams   []TyParameter `json:"path_params,omitempty"`
-	QueryParams  []TyParameter `json:"query_params,omitempty"`
+	HeaderParams []TyField `json:"header_params,omitempty"`
+	PathParams   []TyField `json:"path_params,omitempty"`
+	QueryParams  []TyField `json:"query_params,omitempty"`
 
 	// Request and Response
 	RequestBody  *Ty `json:"request_body"`
@@ -335,7 +329,7 @@ func (p *Parser2) convertOperation(path, method string, op *openapi3.Operation) 
 			return nil, fmt.Errorf("failed to convert parameter schema: %w", err)
 		}
 
-		parameter := TyParameter{
+		parameter := TyField{
 			Name:        param.Value.Name,
 			Description: param.Value.Description,
 			Required:    param.Value.Required,
