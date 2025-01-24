@@ -87,7 +87,7 @@ Currently supports generating Python SDK.`,
 		for dir, content := range files {
 			// Convert module name (with dots) to directory path
 			dirPath := strings.ReplaceAll(dir, ".", string(os.PathSeparator))
-			outputFilePath := filepath.Join(outputPath, dirPath, "generated_sdk.py")
+			outputFilePath := filepath.Join(outputPath, dirPath, "__init__.py")
 
 			// Create subdirectory if needed
 			err = os.MkdirAll(filepath.Dir(outputFilePath), 0755)

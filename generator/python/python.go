@@ -352,23 +352,25 @@ func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation
 	// Handle request body
 	if handler.RequestBody != nil {
 		operation.HasBody = true
-		if handler.ContentType == parser.ContentTypeFile {
-			// For file upload, use FileTypes as the parameter type
+		switch handler.ContentType {
+		case parser.ContentTypeFile:
 			operation.HasFileUpload = true
-			fileParam := PythonParam{
-				Name:        "file",
-				JsonName:    "file",
-				Type:        "FileTypes",
-				Description: handler.RequestBody.Description,
+			for _, field := range handler.RequestBody.Fields {
+				pythonParam := g.convertParam(&field)
+				if field.Type.PrimitiveKind == parser.PrimitiveBinary {
+					pythonParam.Type = "FileTypes"
+				}
+				operation.BodyParams = append(operation.BodyParams, pythonParam)
+				operation.Params = append(operation.Params, pythonParam)
 			}
-			operation.BodyParams = append(operation.BodyParams, fileParam)
-			operation.Params = append(operation.Params, fileParam)
-		} else {
+		case parser.ContentTypeJson:
 			for _, field := range handler.RequestBody.Fields {
 				pythonParam := g.convertParam(&field)
 				operation.BodyParams = append(operation.BodyParams, pythonParam)
 				operation.Params = append(operation.Params, pythonParam)
 			}
+		default:
+			panic(fmt.Sprintf("unsupported content type %q", handler.ContentType))
 		}
 	}
 
