@@ -339,7 +339,11 @@ func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation
 	// Check if this is a paged operation using GetPageInfo
 	if pageInfo := handler.GetPageInfo(nil, nil); pageInfo != nil {
 		operation.IsPaged = true
-		operation.ResponseCast = pageInfo.ItemType.Name
+		if b := handler.GetActualResponseBody(); b != nil {
+			operation.ResponseCast = g.getFieldType(handler.GetActualResponseBody())
+		} else {
+			operation.ResponseCast = "unknown_paged_response"
+		}
 		operation.ResponseType = fmt.Sprintf("NumberPaged[%s]", pageInfo.ItemType.Name)
 		operation.AsyncResponseType = fmt.Sprintf("AsyncNumberPaged[%s]", pageInfo.ItemType.Name)
 		operation.PageIndexName = pageInfo.PageIndexName
@@ -424,6 +428,7 @@ func (g *Generator) getFieldType(ty *parser.Ty) string {
 
 	case parser.TyKindObject:
 		if ty.IsNamed {
+			fmt.Println("getFieldType", ty.Name)
 			return ty.Name
 		}
 		return "Dict[str, Any]"
