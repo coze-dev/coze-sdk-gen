@@ -3,10 +3,12 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/coze-dev/coze-sdk-gen/util"
 	"github.com/getkin/kin-openapi/openapi3"
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
@@ -553,9 +555,6 @@ func topologicalSortTypes(entryTypes []*Ty) ([]*Ty, error) {
 				addTypeToGraph(field.Type)
 				if field.Type != nil {
 					if fieldID, ok := typeToID[field.Type]; ok {
-						if field.Type.Name == "Bot" {
-							fmt.Println("Bot from ", marshal(fieldID), "to ", id)
-						}
 						g.SetEdge(simple.Edge{F: simple.Node(fieldID), T: simple.Node(id)})
 					}
 				}
@@ -589,40 +588,33 @@ func topologicalSortTypes(entryTypes []*Ty) ([]*Ty, error) {
 	}
 
 	// Group types by their dependencies (level)
-	// levelMap := make(map[int][]*Ty)
-	// for _, node := range sorted {
-	// 	level := 0
-	// 	// Count incoming edges to determine level
-	// 	it := g.To(node.ID())
-	// 	for it.Next() {
-	// 		level++
-	// 	}
+	levelMap := make(map[int][]*Ty)
+	for _, node := range sorted {
+		level := 0
+		// Count incoming edges to determine level
+		it := g.To(node.ID())
+		for it.Next() {
+			level++
+		}
 
-	// 	// Find the type with this node ID
-	// 	for ty, id := range typeToID {
-	// 		if id == node.ID() {
-	// 			if levelMap[level] == nil {
-	// 				levelMap[level] = make([]*Ty, 0)
-	// 			}
-	// 			levelMap[level] = append(levelMap[level], ty)
-	// 			break
-	// 		}
-	// 	}
-	// }
+		// Find the type with this node ID
+		ty := idToType[node.ID()]
+		levelMap[level] = append(levelMap[level], ty)
+	}
+
+	// Get sorted levels
+	levels := maps.Keys(levelMap)
+	slices.Sort(levels)
 
 	// Sort types within each level by name for deterministic ordering
 	var result []*Ty
-	// for i := 0; i < len(levelMap); i++ {
-	// 	if types := levelMap[i]; types != nil {
-	// 		// Sort by name within the same level
-	// 		sort.Slice(types, func(i, j int) bool {
-	// 			return types[i].Name < types[j].Name
-	// 		})
-	// 		result = append(result, types...)
-	// 	}
-	// }
-	for _, ty := range sorted {
-		result = append(result, idToType[ty.ID()])
+	for _, level := range levels {
+		types := levelMap[level]
+		// Sort by name within the same level
+		sort.Slice(types, func(i, j int) bool {
+			return types[i].Name < types[j].Name
+		})
+		result = append(result, types...)
 	}
 
 	return result, nil
