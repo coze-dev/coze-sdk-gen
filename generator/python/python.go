@@ -171,6 +171,13 @@ func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[strin
 			"RetrieveFileOpen": "retrieve",
 			"UploadFileOpen":   "upload",
 		},
+		ChangeFields: map[string]map[string]*parser.FieldModification{
+			"File": {
+				"id": {
+					Requirement: parser.FieldRequirementRequired,
+				},
+			},
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create parser2 failed: %w", err)

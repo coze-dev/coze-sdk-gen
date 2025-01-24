@@ -24,6 +24,21 @@ const (
 	TyKindMap       TyKind = "map" // New type for map
 )
 
+// FieldRequirementChange represents the type of change to make to a field's requirement
+type FieldRequirementChange int
+
+const (
+	FieldRequirementNoChange FieldRequirementChange = iota
+	FieldRequirementRequired
+	FieldRequirementOptional
+)
+
+// FieldModification represents modifications to be made to a field
+type FieldModification struct {
+	Requirement FieldRequirementChange `json:"requirement,omitempty"` // Change to make to field's requirement
+	Default     string                 `json:"default,omitempty"`     // Default value to set for the field
+}
+
 // PrimitiveKind represents primitive types
 type PrimitiveKind string
 
@@ -66,6 +81,7 @@ type TyField struct {
 	Description string `json:"description,omitempty"`
 	Type        *Ty    `json:"type"`
 	Required    bool   `json:"required,omitempty"`
+	Default     string `json:"default,omitempty"`
 }
 
 type TyEnumValue struct {
@@ -227,11 +243,12 @@ type Module struct {
 
 // ModuleConfig represents the configuration for type-to-module mapping
 type ModuleConfig struct {
-	TypeModuleMap                 map[string]string                 `json:"type_module_map"`                   // Maps type names to module names
-	GenerateUnnamedResponseType   func(*HttpHandler) (string, bool) `json:"generate_unnamed_response_type"`    // if response type is unnamed, will auto gen named
-	ChangeHttpHandlerResponseType map[string]string                 `json:"change_http_handler_response_type"` // change response type for http handler
-	RenameTypes                   map[string]string                 `json:"rename_types"`                      // rename types, key is old name, value is new name
-	RenameHandlers                map[string]string                 `json:"rename_handlers"`                   // rename http handlers, key is old name, value is new name
+	TypeModuleMap                 map[string]string                        `json:"type_module_map"`                   // Maps type names to module names
+	GenerateUnnamedResponseType   func(*HttpHandler) (string, bool)        `json:"generate_unnamed_response_type"`    // if response type is unnamed, will auto gen named
+	ChangeHttpHandlerResponseType map[string]string                        `json:"change_http_handler_response_type"` // change response type for http handler
+	RenameTypes                   map[string]string                        `json:"rename_types"`                      // rename types, key is old name, value is new name
+	RenameHandlers                map[string]string                        `json:"rename_handlers"`                   // rename http handlers, key is old name, value is new name
+	ChangeFields                  map[string]map[string]*FieldModification `json:"change_fields"`                     // change field properties, first key is type name, second key is field name
 }
 
 // Parser handles OpenAPI parsing with the new schema design
@@ -281,6 +298,56 @@ func (p *Parser) generateUnnamedResponseTypes() error {
 			module.HttpHandlers[i].ResponseBody.Name = name
 			module.HttpHandlers[i].ResponseBody.IsNamed = true
 			module.Types = append(module.Types, module.HttpHandlers[i].ResponseBody)
+		}
+	}
+	return nil
+}
+
+// changeFieldRequirements changes field requirements based on configuration
+func (p *Parser) changeFieldRequirements() error {
+	if len(p.config.ChangeFields) == 0 {
+		return nil
+	}
+
+	for typeName, fieldModifications := range p.config.ChangeFields {
+		ty, ok := p.namedTypes[typeName]
+		if !ok {
+			return fmt.Errorf("type %s not found", typeName)
+		}
+
+		if ty.Kind != TyKindObject {
+			return fmt.Errorf("type %s is not an object type", typeName)
+		}
+
+		for fieldName, modification := range fieldModifications {
+			if modification == nil {
+				continue
+			}
+
+			found := false
+			for i := range ty.Fields {
+				if ty.Fields[i].Name == fieldName {
+					// Apply requirement changes
+					switch modification.Requirement {
+					case FieldRequirementRequired:
+						ty.Fields[i].Required = true
+					case FieldRequirementOptional:
+						ty.Fields[i].Required = false
+					}
+
+					// Apply default value if provided
+					if modification.Default != "" {
+						ty.Fields[i].Default = modification.Default
+					}
+
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				return fmt.Errorf("field %s not found in type %s", fieldName, typeName)
+			}
 		}
 	}
 	return nil
@@ -369,6 +436,11 @@ func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*Module, error) {
 
 	// Generate names for unnamed response types
 	if err := p.generateUnnamedResponseTypes(); err != nil {
+		return nil, err
+	}
+
+	// Change field requirements based on configuration
+	if err := p.changeFieldRequirements(); err != nil {
 		return nil, err
 	}
 
