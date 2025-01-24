@@ -217,8 +217,8 @@ func (h *Ty) HasOnlyStatusFields() bool {
 	return len(h.Fields) > 0
 }
 
-// TyModule represents a group of operations and types
-type TyModule struct {
+// Module represents a group of operations and types
+type Module struct {
 	Name         string        `json:"name"`
 	HttpHandlers []HttpHandler `json:"http_handlers"`
 	Types        []*Ty         `json:"types"`
@@ -229,14 +229,15 @@ type ModuleConfig struct {
 	TypeModuleMap                 map[string]string                 `json:"type_module_map"`                   // Maps type names to module names
 	GenerateUnnamedResponseType   func(*HttpHandler) (string, bool) `json:"generate_unnamed_response_type"`    // if response type is unnamed, will auto gen named
 	ChangeHttpHandlerResponseType map[string]string                 `json:"change_http_handler_response_type"` // change response type for http handler
+	RenameTypes                   map[string]string                 `json:"rename_types"`                      // rename types, key is old name, value is new name
 }
 
 // Parser handles OpenAPI parsing with the new schema design
 type Parser struct {
-	types   map[string]*Ty       // All types indexed by name
-	modules map[string]*TyModule // All modules
-	config  *ModuleConfig        // Module configuration
-	doc     *openapi3.T          // The OpenAPI document
+	namedTypes map[string]*Ty     // All types indexed by name
+	modules    map[string]*Module // All modules
+	config     *ModuleConfig      // Module configuration
+	doc        *openapi3.T        // The OpenAPI document
 }
 
 // NewParser creates a new Parser2 instance
@@ -246,9 +247,9 @@ func NewParser(config *ModuleConfig) (*Parser, error) {
 	}
 
 	return &Parser{
-		types:   make(map[string]*Ty),
-		modules: make(map[string]*TyModule),
-		config:  config,
+		namedTypes: make(map[string]*Ty),
+		modules:    make(map[string]*Module),
+		config:     config,
 	}, nil
 }
 
@@ -286,7 +287,7 @@ func (p *Parser) generateUnnamedResponseTypes() error {
 // changeResponseTypes changes response types based on configuration
 func (p *Parser) changeResponseTypes() error {
 	for handlerName, responseType := range p.config.ChangeHttpHandlerResponseType {
-		newType, ok := p.types[responseType]
+		newType, ok := p.namedTypes[responseType]
 		if !ok {
 			return fmt.Errorf("type %s not found for handler %s", responseType, handlerName)
 		}
@@ -302,8 +303,34 @@ func (p *Parser) changeResponseTypes() error {
 	return nil
 }
 
+// renameTypes renames types based on configuration
+func (p *Parser) renameTypes() error {
+	if len(p.config.RenameTypes) == 0 {
+		return nil
+	}
+
+	// First check if all target names are available
+	for _, newName := range p.config.RenameTypes {
+		if _, exists := p.namedTypes[newName]; exists {
+			return fmt.Errorf("cannot rename to %s: type already exists", newName)
+		}
+	}
+
+	// Perform the renaming
+	for oldName, newName := range p.config.RenameTypes {
+		if ty, exists := p.namedTypes[oldName]; exists {
+			// Update the type name
+			ty.Name = newName
+			// Update the types map
+			delete(p.namedTypes, oldName)
+			p.namedTypes[newName] = ty
+		}
+	}
+	return nil
+}
+
 // ParseOpenAPI parses an OpenAPI document and returns modules
-func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) {
+func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*Module, error) {
 	// Parse OpenAPI document
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(yamlContent)
@@ -332,6 +359,11 @@ func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) 
 		return nil, err
 	}
 
+	// Rename types based on configuration
+	if err := p.renameTypes(); err != nil {
+		return nil, err
+	}
+
 	// Assign types to modules
 	if err := p.assignTypesToModules(); err != nil {
 		return nil, err
@@ -342,7 +374,7 @@ func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) 
 
 // GetType returns a type by name
 func (p *Parser) GetType(name string) *Ty {
-	return p.types[name]
+	return p.namedTypes[name]
 }
 
 // processNamedTypes processes all named types from components
@@ -352,7 +384,7 @@ func (p *Parser) processNamedTypes() error {
 	}
 
 	for name, schema := range p.doc.Components.Schemas {
-		if p.types[name] != nil {
+		if p.namedTypes[name] != nil {
 			continue
 		}
 
@@ -360,7 +392,7 @@ func (p *Parser) processNamedTypes() error {
 		if err != nil {
 			return fmt.Errorf("failed to convert schema %s: %+v err: %w", name, schema, err)
 		}
-		p.types[name] = ty
+		p.namedTypes[name] = ty
 	}
 	return nil
 }
@@ -382,7 +414,7 @@ func (p *Parser) processOperations() error {
 
 			module, ok := p.modules[moduleName]
 			if !ok {
-				module = &TyModule{Name: moduleName}
+				module = &Module{Name: moduleName}
 				p.modules[moduleName] = module
 			}
 
@@ -404,7 +436,7 @@ func (p *Parser) convertSchema(schema *openapi3.SchemaRef, name string, isNamed 
 	// If it's a reference and we've already processed it, return the existing type
 	if schema.Ref != "" {
 		refName := getRefName(schema.Ref)
-		if existing := p.types[refName]; existing != nil {
+		if existing := p.namedTypes[refName]; existing != nil {
 			return existing, nil
 		} else {
 			return p.convertSchema(p.doc.Components.Schemas[refName], refName, true)
@@ -488,7 +520,7 @@ func (p *Parser) convertSchema(schema *openapi3.SchemaRef, name string, isNamed 
 
 	// Store named types in the type map
 	if isNamed {
-		p.types[name] = ty
+		p.namedTypes[name] = ty
 	} else {
 		ty.Description = ""
 	}
@@ -686,7 +718,7 @@ func (p *Parser) assignTypesToModules() error {
 	// First, try to assign types based on configuration
 	if p.config != nil {
 		for typeName, moduleName := range p.config.TypeModuleMap {
-			if ty := p.types[typeName]; ty != nil {
+			if ty := p.namedTypes[typeName]; ty != nil {
 				ty.Module = moduleName
 				if module := p.modules[moduleName]; module != nil {
 					module.Types = append(module.Types, ty)
@@ -706,7 +738,7 @@ func (p *Parser) assignTypesToModules() error {
 	}
 
 	// For remaining types, assign based on usage
-	for _, ty := range p.types {
+	for _, ty := range p.namedTypes {
 		if ty.Module != "" {
 			continue // Skip if already assigned
 		}
@@ -760,7 +792,7 @@ func (p *Parser) assignTypesToModules() error {
 }
 
 // isTypeUsedInModule checks if a type is used in a module
-func (p *Parser) isTypeUsedInModule(ty *Ty, module *TyModule, handlerDeps map[*HttpHandler]map[*Ty]bool) bool {
+func (p *Parser) isTypeUsedInModule(ty *Ty, module *Module, handlerDeps map[*HttpHandler]map[*Ty]bool) bool {
 	for i := range module.HttpHandlers {
 		if deps := handlerDeps[&module.HttpHandlers[i]]; deps != nil && deps[ty] {
 			return true

@@ -162,6 +162,9 @@ func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[strin
 			"UpdateDraftBot":  "Bot",
 			"PublishDraftBot": "Bot",
 		},
+		RenameTypes: map[string]string{
+			"SpacePublishedBotsInfo": "_PrivateListBotsData",
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create parser2 failed: %w", err)
@@ -200,7 +203,7 @@ func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[strin
 	return files, nil
 }
 
-func (g *Generator) convertModule(module *parser.TyModule) PythonModule {
+func (g *Generator) convertModule(module *parser.Module) PythonModule {
 	// Store current module name
 	g.moduleName = module.Name
 
