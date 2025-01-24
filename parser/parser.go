@@ -195,6 +195,28 @@ func (h *HttpHandler) GetActualResponseBody() *Ty {
 	return nil
 }
 
+// HasOnlyStatusFields checks if the response body only contains status-related fields
+// like code, msg, detail, etc., indicating it's just a status response without meaningful data.
+func (h *Ty) HasOnlyStatusFields() bool {
+	if h == nil || h.Kind != TyKindObject {
+		return false
+	}
+
+	statusFields := map[string]bool{
+		"code":   true,
+		"msg":    true,
+		"detail": true,
+	}
+
+	for _, field := range h.Fields {
+		if !statusFields[field.Name] {
+			return false
+		}
+	}
+
+	return len(h.Fields) > 0
+}
+
 // TyModule represents a group of operations and types
 type TyModule struct {
 	Name         string        `json:"name"`
