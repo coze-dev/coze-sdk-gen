@@ -64,7 +64,13 @@ type TyEnumValue struct {
 	Val  interface{} `json:"val"`
 }
 
-// TyParameter represents an operation parameter
+// ContentType represents the request content type
+type ContentType string
+
+const (
+	ContentTypeJson ContentType = "json"
+	ContentTypeFile ContentType = "file"
+)
 
 // HttpHandler represents an API operation
 type HttpHandler struct {
@@ -72,6 +78,9 @@ type HttpHandler struct {
 	Description string `json:"description,omitempty"`
 	Path        string `json:"path"`
 	Method      string `json:"method"`
+
+	// Content Type
+	ContentType ContentType `json:"content_type"`
 
 	// Parameters split by location
 	HeaderParams []TyField `json:"header_params,omitempty"`
@@ -316,6 +325,7 @@ func (p *Parser2) convertOperation(path, method string, op *openapi3.Operation) 
 		Description: op.Description,
 		Path:        path,
 		Method:      method,
+		ContentType: ContentTypeJson, // Default to JSON
 	}
 
 	// Convert parameters
@@ -348,13 +358,21 @@ func (p *Parser2) convertOperation(path, method string, op *openapi3.Operation) 
 
 	// Convert request body
 	if op.RequestBody != nil && op.RequestBody.Value != nil {
-		for _, content := range op.RequestBody.Value.Content {
+		for contentType, content := range op.RequestBody.Value.Content {
 			if content.Schema != nil {
 				requestType, err := p.convertSchema(content.Schema, "", false)
 				if err != nil {
 					return nil, fmt.Errorf("failed to convert request body schema: %w", err)
 				}
 				handler.RequestBody = requestType
+
+				// Set content type based on request body content type
+				switch contentType {
+				case "multipart/form-data":
+					handler.ContentType = ContentTypeFile
+				case "application/json":
+					handler.ContentType = ContentTypeJson
+				}
 				break
 			}
 		}
