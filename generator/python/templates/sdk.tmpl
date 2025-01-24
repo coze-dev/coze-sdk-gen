@@ -1,9 +1,32 @@
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any{{ if .HasFileUpload }}, IO, Union, Tuple{{ end }}
 from enum import IntEnum
 from cozepy.model import CozeModel, NumberPaged, AsyncNumberPaged, NumberPagedResponse
 from cozepy.auth import Auth
 from cozepy.request import HTTPRequest, Requester
 from cozepy.util import remove_url_trailing_slash
+{{ if .HasFileUpload }}from pathlib import Path
+import os
+
+FileContent = Union[IO[bytes], bytes, str, Path]
+FileTypes = Union[
+    # file (or bytes)
+    FileContent,
+    # (filename, file (or bytes))
+    Tuple[Optional[str], FileContent],
+]
+
+def _try_fix_file(file: FileTypes) -> FileTypes:
+    if isinstance(file, Path):
+        if not file.exists():
+            raise ValueError(f"File not found: {file}")
+        return open(file, "rb")
+
+    if isinstance(file, str):
+        if not os.path.isfile(file):
+            raise ValueError(f"File not found: {file}")
+        return open(file, "rb")
+
+    return file{{ end }}
 
 {{ range .Classes }}{{ if not .ShouldSkip }}{{ if .Description }}"""{{ .Description }}"""{{ end }}
 class {{ .Name }}({{ .BaseClass }}):{{ if .IsPass }}
@@ -69,7 +92,15 @@ class Client(object):
             cast={{ .ResponseType }},
             params=params,
             {{ if .HasHeaders }}headers=headers,{{ end }}
-        ){{ end }}{{ else }}return self._requester.request(
+        ){{ end }}{{ else }}{{ if .HasFileUpload }}files = {"file": _try_fix_file(file)}
+        return self._requester.request(
+            "{{ .Method }}",
+            url,
+            False,
+            cast={{ .ResponseType }},
+            {{ if .HasHeaders }}headers=headers,{{ end }}
+            files=files,
+        ){{ else }}return self._requester.request(
             "{{ .Method }}",
             url,
             False,
@@ -81,7 +112,7 @@ class Client(object):
             {{ if .HasBody }}body={
                 {{ range .BodyParams }}"{{ .JsonName }}": {{ .Name }}{{ if and .HasDefault .IsModel }}.model_dump() if {{ .Name }} else None{{ end }},{{ end }}
             },{{ end }}
-        ){{ end }}
+        ){{ end }}{{ end }}
     {{ end }}
 
 """
@@ -138,7 +169,15 @@ class AsyncClient(object):
             cast={{ .ResponseType }},
             params=params,
             {{ if .HasHeaders }}headers=headers,{{ end }}
-        ){{ end }}{{ else }}return await self._requester.arequest(
+        ){{ end }}{{ else }}{{ if .HasFileUpload }}files = {"file": _try_fix_file(file)}
+        return await self._requester.arequest(
+            "{{ .Method }}",
+            url,
+            False,
+            cast={{ .ResponseType }},
+            {{ if .HasHeaders }}headers=headers,{{ end }}
+            files=files,
+        ){{ else }}return await self._requester.arequest(
             "{{ .Method }}",
             url,
             False,
@@ -150,5 +189,5 @@ class AsyncClient(object):
             {{ if .HasBody }}body={
                 {{ range .BodyParams }}"{{ .JsonName }}": {{ .Name }}{{ if and .HasDefault .IsModel }}.model_dump() if {{ .Name }} else None{{ end }},{{ end }}
             },{{ end }}
-        ){{ end }}
+        ){{ end }}{{ end }}
     {{ end }}

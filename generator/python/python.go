@@ -109,6 +109,7 @@ type PythonOperation struct {
 	AsyncResponseType string
 	PageIndexName     string
 	PageSizeName      string
+	HasFileUpload     bool
 }
 
 // PythonParam represents a Python parameter
@@ -124,8 +125,9 @@ type PythonParam struct {
 
 // PythonModule represents a converted Python module
 type PythonModule struct {
-	Operations []PythonOperation
-	Classes    []PythonClass
+	Operations    []PythonOperation
+	Classes       []PythonClass
+	HasFileUpload bool
 }
 
 func (g *Generator) loadConfig() error {
@@ -194,9 +196,10 @@ func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[strin
 		pythonModule := g.convertModule(module)
 		var buf bytes.Buffer
 		err = tmpl.Execute(&buf, map[string]interface{}{
-			"ModuleName": moduleName,
-			"Operations": pythonModule.Operations,
-			"Classes":    pythonModule.Classes,
+			"ModuleName":    moduleName,
+			"Operations":    pythonModule.Operations,
+			"Classes":       pythonModule.Classes,
+			"HasFileUpload": pythonModule.HasFileUpload,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("execute template failed: %w", err)
@@ -222,15 +225,20 @@ func (g *Generator) convertModule(module *parser.Module) PythonModule {
 
 	// Convert operations
 	operations := make([]PythonOperation, 0)
+	hasFileUpload := false
 	for _, handler := range module.HttpHandlers {
 		if op := g.convertHandler(&handler); op != nil {
 			operations = append(operations, *op)
+			if op.HasFileUpload {
+				hasFileUpload = true
+			}
 		}
 	}
 
 	return PythonModule{
-		Operations: operations,
-		Classes:    classes,
+		Operations:    operations,
+		Classes:       classes,
+		HasFileUpload: hasFileUpload,
 	}
 }
 
@@ -344,7 +352,18 @@ func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation
 	// Handle request body
 	if handler.RequestBody != nil {
 		operation.HasBody = true
-		if handler.RequestBody.Kind == parser.TyKindObject {
+		if handler.ContentType == parser.ContentTypeFile {
+			// For file upload, use FileTypes as the parameter type
+			operation.HasFileUpload = true
+			fileParam := PythonParam{
+				Name:        "file",
+				JsonName:    "file",
+				Type:        "FileTypes",
+				Description: handler.RequestBody.Description,
+			}
+			operation.BodyParams = append(operation.BodyParams, fileParam)
+			operation.Params = append(operation.Params, fileParam)
+		} else if handler.RequestBody.Kind == parser.TyKindObject {
 			for _, field := range handler.RequestBody.Fields {
 				pythonParam := g.convertParam(&field)
 				operation.BodyParams = append(operation.BodyParams, pythonParam)
@@ -370,8 +389,8 @@ func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation
 		}
 		operation.ResponseType = fmt.Sprintf("NumberPaged[%s]", pageInfo.ItemType.Name)
 		operation.AsyncResponseType = fmt.Sprintf("AsyncNumberPaged[%s]", pageInfo.ItemType.Name)
-		operation.PageIndexName = pageInfo.PageIndexName
-		operation.PageSizeName = pageInfo.PageSizeName
+		operation.PageIndexName = g.toPythonVarName(pageInfo.PageIndexName)
+		operation.PageSizeName = g.toPythonVarName(pageInfo.PageSizeName)
 
 		for i, param := range operation.Params {
 			if param.Name == operation.PageIndexName {
