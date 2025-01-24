@@ -185,7 +185,7 @@ func (p *Parser2) processOperations() error {
 			// Get or create module
 			moduleName := "default"
 			if len(op.Tags) > 0 {
-				moduleName = op.Tags[0]
+				moduleName = strings.Join(op.Tags, ".")
 			}
 
 			module, ok := p.modules[moduleName]
@@ -285,6 +285,8 @@ func (p *Parser2) convertSchema(schema *openapi3.SchemaRef, name string, isNamed
 	// Store named types in the type map
 	if isNamed {
 		p.types[name] = ty
+	} else {
+		ty.Description = ""
 	}
 
 	return ty, nil
@@ -307,7 +309,7 @@ func (p *Parser2) convertField(name string, schema *openapi3.SchemaRef, required
 
 	return &TyField{
 		Name:        name,
-		Description: schema.Value.Description,
+		Description: util.Choose(schema.Value.Title != "", schema.Value.Title, schema.Value.Description),
 		Type:        fieldType,
 		Required:    isRequired,
 	}, nil
