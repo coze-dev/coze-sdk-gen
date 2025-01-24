@@ -149,7 +149,7 @@ func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[strin
 	}
 
 	// Create new parser2 instance
-	p, err := parser.NewParser2(nil)
+	p, err := parser.NewParser(nil)
 	if err != nil {
 		return nil, fmt.Errorf("create parser2 failed: %w", err)
 	}

@@ -204,20 +204,25 @@ type TyModule struct {
 
 // ModuleConfig represents the configuration for type-to-module mapping
 type ModuleConfig struct {
-	TypeModuleMap map[string]string `json:"type_module_map"` // Maps type names to module names
+	TypeModuleMap               map[string]string         `json:"type_module_map"`                // Maps type names to module names
+	GenerateUnnamedResponseType func(*HttpHandler) string `json:"generate_unnamed_response_type"` // if response type is unnamed, will auto gen named
 }
 
-// Parser2 handles OpenAPI parsing with the new schema design
-type Parser2 struct {
+// Parser handles OpenAPI parsing with the new schema design
+type Parser struct {
 	types   map[string]*Ty       // All types indexed by name
 	modules map[string]*TyModule // All modules
 	config  *ModuleConfig        // Module configuration
 	doc     *openapi3.T          // The OpenAPI document
 }
 
-// NewParser2 creates a new Parser2 instance
-func NewParser2(config *ModuleConfig) (*Parser2, error) {
-	return &Parser2{
+// NewParser creates a new Parser2 instance
+func NewParser(config *ModuleConfig) (*Parser, error) {
+	if config == nil {
+		config = &ModuleConfig{}
+	}
+
+	return &Parser{
 		types:   make(map[string]*Ty),
 		modules: make(map[string]*TyModule),
 		config:  config,
@@ -231,7 +236,7 @@ func marshal(v any) string {
 }
 
 // ParseOpenAPI parses an OpenAPI document and returns modules
-func (p *Parser2) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) {
+func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) {
 	// Parse OpenAPI document
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromData(yamlContent)
@@ -259,12 +264,12 @@ func (p *Parser2) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error)
 }
 
 // GetType returns a type by name
-func (p *Parser2) GetType(name string) *Ty {
+func (p *Parser) GetType(name string) *Ty {
 	return p.types[name]
 }
 
 // processNamedTypes processes all named types from components
-func (p *Parser2) processNamedTypes() error {
+func (p *Parser) processNamedTypes() error {
 	if p.doc.Components == nil || p.doc.Components.Schemas == nil {
 		return nil
 	}
@@ -284,7 +289,7 @@ func (p *Parser2) processNamedTypes() error {
 }
 
 // processOperations processes all operations and their types
-func (p *Parser2) processOperations() error {
+func (p *Parser) processOperations() error {
 	for path, pathItem := range p.doc.Paths.Map() {
 		for method, op := range pathItem.Operations() {
 			handler, err := p.convertOperation(path, method, op)
@@ -311,7 +316,7 @@ func (p *Parser2) processOperations() error {
 }
 
 // convertSchema converts an OpenAPI schema to our type system
-func (p *Parser2) convertSchema(schema *openapi3.SchemaRef, name string, isNamed bool) (*Ty, error) {
+func (p *Parser) convertSchema(schema *openapi3.SchemaRef, name string, isNamed bool) (*Ty, error) {
 	if schema == nil {
 		return nil, fmt.Errorf("nil schema. s=%v", marshal(schema))
 	}
@@ -415,7 +420,7 @@ func (p *Parser2) convertSchema(schema *openapi3.SchemaRef, name string, isNamed
 }
 
 // convertField converts a schema property to a field
-func (p *Parser2) convertField(name string, schema *openapi3.SchemaRef, required []string) (*TyField, error) {
+func (p *Parser) convertField(name string, schema *openapi3.SchemaRef, required []string) (*TyField, error) {
 	fieldType, err := p.convertSchema(schema, "", false)
 	if err != nil {
 		return nil, err
@@ -438,7 +443,7 @@ func (p *Parser2) convertField(name string, schema *openapi3.SchemaRef, required
 }
 
 // convertOperation converts an OpenAPI operation to our HttpHandler
-func (p *Parser2) convertOperation(path, method string, op *openapi3.Operation) (*HttpHandler, error) {
+func (p *Parser) convertOperation(path, method string, op *openapi3.Operation) (*HttpHandler, error) {
 	handler := &HttpHandler{
 		Name:        op.OperationID,
 		Description: op.Description,
@@ -600,7 +605,7 @@ func topologicalSortTypes(entryTypes []*Ty) ([]*Ty, error) {
 }
 
 // Replace the topological sort section in assignTypesToModules with a call to topologicalSortTypes
-func (p *Parser2) assignTypesToModules() error {
+func (p *Parser) assignTypesToModules() error {
 	// First, try to assign types based on configuration
 	if p.config != nil {
 		for typeName, moduleName := range p.config.TypeModuleMap {
@@ -678,7 +683,7 @@ func (p *Parser2) assignTypesToModules() error {
 }
 
 // isTypeUsedInModule checks if a type is used in a module
-func (p *Parser2) isTypeUsedInModule(ty *Ty, module *TyModule, handlerDeps map[*HttpHandler]map[*Ty]bool) bool {
+func (p *Parser) isTypeUsedInModule(ty *Ty, module *TyModule, handlerDeps map[*HttpHandler]map[*Ty]bool) bool {
 	for i := range module.HttpHandlers {
 		if deps := handlerDeps[&module.HttpHandlers[i]]; deps != nil && deps[ty] {
 			return true
@@ -688,7 +693,7 @@ func (p *Parser2) isTypeUsedInModule(ty *Ty, module *TyModule, handlerDeps map[*
 }
 
 // collectHandlerTypes recursively collects all types used in a handler
-func (p *Parser2) collectHandlerTypes(handler *HttpHandler, deps map[*Ty]bool) {
+func (p *Parser) collectHandlerTypes(handler *HttpHandler, deps map[*Ty]bool) {
 	// Helper function to collect types from a single type
 	var collectFromType func(*Ty)
 	collectFromType = func(t *Ty) {
@@ -726,7 +731,7 @@ func (p *Parser2) collectHandlerTypes(handler *HttpHandler, deps map[*Ty]bool) {
 }
 
 // convertPrimitiveType converts OpenAPI type to our primitive type
-func (p *Parser2) convertPrimitiveType(typ []string, format string) PrimitiveKind {
+func (p *Parser) convertPrimitiveType(typ []string, format string) PrimitiveKind {
 	if len(typ) == 0 {
 		return PrimitiveUnknown
 	}

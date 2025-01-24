@@ -9,13 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParser2_ParseOpenAPI(t *testing.T) {
+func TestParser_ParseOpenAPI(t *testing.T) {
 	// Read OpenAPI file
 	yamlContent, err := os.ReadFile("../openapi.yaml")
 	require.NoError(t, err)
 
 	// Create parser
-	parser, err := NewParser2(nil)
+	parser, err := NewParser(nil)
 	require.NoError(t, err)
 
 	// Parse OpenAPI
