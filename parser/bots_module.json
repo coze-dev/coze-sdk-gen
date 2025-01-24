@@ -1,424 +1,105 @@
 {
-  "name": "workflows.runs",
+  "name": "files",
   "http_handlers": [
     {
-      "name": "OpenAPIStreamRunFlow",
-      "description": "Execute a published workflow with a streaming response.\n**API description**\nWhen calling the API to execute a workflow that supports streaming output, you often need to use the streaming response method to receive response data. This can be useful for real-time display of workflow output information or to present a typewriter effect. In a streaming response, the server does not send all data at once but sends data to the client in a stream, including various events triggered during workflow execution, until the process is completed or interrupted. Upon completion, the server will send an event: Done to indicate the workflow execution is finished. For information about events, see [Return results](https://www.coze.com/docs/developer_guides/workflow_stream_run#970775c1).\n\nCurrently, workflow nodes that support streaming responses include message nodes, Q\u0026A nodes, and end nodes with streaming output enabled. For workflows that do not include these nodes, you can use the [workflow execution API ](https://www.coze.com/docs/developer_guides/workflow_run)to receive response data all at once.\n\n\n**Restrictions**\nThis API is synchronous. If the workflow or certain nodes time out, the Bot may not provide the expected response. The overall timeout limit for synchronous execution can be found in the [Workflow usage restrictions](https://www.coze.com/docs/guides/workflow_limits).\n\n* Before executing a workflow via API, ensure that the workflow has been published. Executing an unpublished workflow will return error code 4200. For information about creating and publishing workflows, see [Using workflow](https://www.coze.com/docs/guides/use_workflow).\n* Before calling this API, you should run a test of the workflow on the Kouzi platform. If the test run requires associating with an agent, you will also need to specify the agent ID when executing the workflow via API. Typically, workflows with database nodes, variable nodes, etc., need to be associated with an agent.",
-      "path": "/v1/workflow/stream_run",
-      "method": "POST",
+      "name": "RetrieveFileOpen",
+      "description": "View the details of uploaded files.",
+      "path": "/v1/files/retrieve",
+      "method": "GET",
       "content_type": "json",
-      "request_body": {
-        "kind": "object",
-        "fields": [
-          {
-            "name": "workflow_id",
-            "description": "The Workflow ID to be executed should have already been published.\nEnter the Workflow orchestration page; the number following the workflow parameter in the page URL is the Workflow ID. For example, in https://www.coze.com/work\\_flow?space\\_id=42463\\*\\*\\*\u0026workflow\\_id=73505836754923\\*\\*\\*, the Workflow ID is 73505836754923\\*\\*\\*.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            },
-            "required": true
+      "query_params": [
+        {
+          "name": "file_id",
+          "description": "Uploaded file ID.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
           },
-          {
-            "name": "parameters",
-            "description": "The input parameters and values for the workflow start node can be viewed in the parameter list on the designated workflow orchestration page.",
-            "type": {
-              "kind": "object"
-            }
-          },
-          {
-            "name": "ext",
-            "description": "Used to specify some additional fields, passed in the format of Map\\[String\\]\\[String\\]. For example, fields such as latitude and longitude implicitly used by certain plugins.\nCurrently, only the following fields are supported:\n\n- atitude: String type, representing longitude.\n- longitude: String type, representing latitude.\n- user\\_id: Integer type, representing user ID.",
-            "type": {
-              "description": "Used to specify some additional fields, passed in the format of Map\\[String\\]\\[String\\]. For example, fields such as latitude and longitude implicitly used by certain plugins.\nCurrently, only the following fields are supported:\n\n- atitude: String type, representing longitude.\n- longitude: String type, representing latitude.\n- user\\_id: Integer type, representing user ID.",
-              "kind": "map",
-              "value_type": {
-                "kind": "primimtive",
-                "primitive_kind": "string"
-              }
-            }
-          },
-          {
-            "name": "bot_id",
-            "description": "The associated agent ID is required. When executing certain workflows, it is necessary to specify the associated agent, such as workflows with database nodes, variable nodes, etc.\n![](https://p9-arcosite.byteimg.com/obj/tos-cn-i-goo7wpa0wc/c138f5defd104f1b9544a32212cd8968 =168x119)\nEnter the agent's development page, and the number after the bot parameter in the URL of the development page is the agent ID. For example, in https://www.coze.com/space/341\\*\\*\\*\\*/bot/73428668\\*\\*\\*\\*\\*, the Bot ID is 73428668\\*\\*\\*\\*\\*.\n\n- Ensure that the token used to call this interface has access to the space where the agent is located.\n- Ensure that the agent has been published as an API service.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "is_async",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "bool"
-            }
-          }
-        ]
-      },
+          "required": true
+        }
+      ],
+      "request_body": null,
       "response_body": {
         "kind": "object",
         "fields": [
-          {
-            "name": "id",
-            "description": "The event ID in the interface response. Starting from 0.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "event",
-            "description": "Current streaming return data packet events include the following types:\n\n- Message: Workflow node output messages, such as messages from message nodes or end nodes. The specific message content can be viewed in the data.\n- Error: Errors. You can view error_code and error_message in the data to troubleshoot issues.\n- Done: Completion. Indicates that the workflow execution is complete, at which point the data is empty.\n- Interrupt: Interruption. Indicates that the workflow is interrupted, with specific interruption information included in the data field.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "node_seq_id",
-            "description": "The message ID within the node starts counting from 0, for example, the 5th message of the message node.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "node_title",
-            "description": "Node names for output messages, such as message nodes and end nodes.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "content",
-            "description": "Streaming output message content.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "node_is_finish",
-            "description": "Is the current message the last data packet for this node?",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "bool"
-            }
-          },
-          {
-            "name": "interrupt_data",
-            "type": {
-              "name": "Interrupt",
-              "kind": "object",
-              "module": "workflows.runs",
-              "fields": [
-                {
-                  "name": "data",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
-                },
-                {
-                  "name": "event_id",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "string"
-                  }
-                },
-                {
-                  "name": "type",
-                  "type": {
-                    "kind": "primimtive",
-                    "primitive_kind": "int",
-                    "enum_values": [
-                      {
-                        "val": 1
-                      },
-                      {
-                        "val": 2
-                      },
-                      {
-                        "val": 3
-                      },
-                      {
-                        "val": 4
-                      },
-                      {
-                        "val": 5
-                      }
-                    ]
-                  }
-                }
-              ],
-              "is_named": true
-            }
-          },
-          {
-            "name": "content_type",
-            "description": "Return data type",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "card_body",
-            "description": "The card content returned when the Content Type is Card",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "ext",
-            "description": "Additional fields.",
-            "type": {
-              "description": "Additional fields.",
-              "kind": "map",
-              "value_type": {
-                "kind": "primimtive",
-                "primitive_kind": "string"
-              }
-            }
-          },
-          {
-            "name": "token",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "int"
-            }
-          },
-          {
-            "name": "cost",
-            "description": "Reserved fields, no need to pay attention.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "error_code",
-            "description": "Call status codes.\n\n- 0 indicates a successful call.\n- Other values indicate a failed call. You can determine the specific error reason through the error_message field.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "int"
-            }
-          },
-          {
-            "name": "error_message",
-            "description": "Status information. This field can be used to view detailed error information when the API call fails.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "debug_url",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "OpenAPIRunFlow",
-      "description": "Execute a published workflow.\n**API Description**\nThis API operates in non-streaming response mode. For nodes that support streaming output, you should use the API to [execute the workflow](https://www.coze.com/docs/developer_guides/workflow_stream_run) (streaming response) to obtain a streaming response. After calling the API, you can get a `debug_url` from the response. By accessing this link, you can view the trial run process of the workflow through a visual interface, which includes detailed information such as the input and output of each execution node, helping you debug or troubleshoot online.\n**Notice**\n\n* If the input of the workflow includes multimodal content such as files and images, it is necessary to first upload the multimodal content to a third-party storage tool and obtain a publicly accessible URL address. This URL should then be used as the input for the workflow.\n* Before running a workflow via the API, ensure that the workflow has been published. Running a workflow that has never been published will return an error code 4200. \n* Before calling this API, you should first test run the workflow on the Coze platform. If the test run requires association with a bot, you will also need to specify the bot ID when calling this API to run the workflow. Generally, running workflows that involve database nodes, variable nodes, and other similar nodes requires association with a bot.\n\n**Restrictions**\nThis API does not support executing workflows that include the following nodes:\n\n* Message nodes\n* End nodes with streaming output enabled\n* Q\u0026A nodes",
-      "path": "/v1/workflow/run",
-      "method": "POST",
-      "content_type": "json",
-      "request_body": {
-        "kind": "object",
-        "fields": [
-          {
-            "name": "workflow_id",
-            "description": "The ID of the workflow, which should have been published. To find the workflow ID, look for the number following the \"workflow\" parameter in the page URL. For example, in the URL \"`https://www.coze.com/work_flow?space_id=42463***\u0026workflow_id=73505836754923***`\", the Workflow ID is `73505836754923***`.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            },
-            "required": true
-          },
-          {
-            "name": "parameters",
-            "description": "Input parameters and their values for the starting node of the workflow. You can view the list of parameters on the arrangement page of the specified workflow.",
-            "type": {
-              "kind": "object"
-            }
-          },
-          {
-            "name": "bot_id",
-            "description": "The associated Bot ID required for some workflow executions, such as workflows with database nodes, variable nodes, etc. \nGo to the **Develop** page of your Coze bot. The number after the `bot `parameter in the page URL is the bot ID. For example: `https://www.coze.com/space/8341****/bot/73428668*****`. The bot ID is`73428668*****`.\n\n* Ensure that the token used to call this interface has permission for the space where the Bot is located.\n* Ensure that the Bot has been published as an API service.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "ext",
-            "description": "Used to specify some additional fields in the format of Map[String][String]. For example, some plugins may implicitly use fields such as latitude and longitude. Currently, the following fields are supported:\n\n* latitude: String type, representing the east-west position on the Earth's surface.\n* longitude: String type, representing the north-south position on the Earth's surface.\n* user_id: Integer type, representing the user ID.",
-            "type": {
-              "description": "Used to specify some additional fields in the format of Map[String][String]. For example, some plugins may implicitly use fields such as latitude and longitude. Currently, the following fields are supported:\n\n* latitude: String type, representing the east-west position on the Earth's surface.\n* longitude: String type, representing the north-south position on the Earth's surface.\n* user_id: Integer type, representing the user ID.",
-              "kind": "map",
-              "value_type": {
-                "kind": "primimtive",
-                "primitive_kind": "string"
-              }
-            }
-          },
-          {
-            "name": "app_id",
-            "description": "You can obtain the app ID from the URL of the app's business logic page. It is the string following the `project-ide` parameter in the URL. For example, in the URL `https://www.coze.com/space/739174157340921****/project-ide/743996105122521****/workflow/744102227704147****`, the app ID is `743996105122521****`.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          }
-        ]
-      },
-      "response_body": {
-        "kind": "object",
-        "fields": [
-          {
-            "name": "code",
-            "description": "Call status codes.\n\n- 0 indicates a successful call.\n- Other values indicate a failed call. You can determine the detailed error reason through the `msg` field.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "int"
-            },
-            "required": true
-          },
-          {
-            "name": "msg",
-            "description": "Status information. Detailed error information can be viewed through this field when an API call fails.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
           {
             "name": "data",
-            "description": "The execution result of the workflow is usually a JSON serialized string, but in some scenarios, it may return a non-JSON structured string.",
             "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "token",
-            "description": "Reserved field, no need to pay attention.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "int"
-            }
-          },
-          {
-            "name": "cost",
-            "description": "Reserved field, no need to pay attention.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "debug_url",
-            "description": "Workflow trial run debugging page. Access this page to view the execution results, inputs, and outputs of each workflow node.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "execute_id",
-            "description": "Event ID for asynchronous execution.",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
+              "name": "File",
+              "kind": "object",
+              "module": "files",
+              "fields": [
+                {
+                  "name": "URL",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "bytes",
+                  "description": "Total bytes of the file.",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "int"
+                  }
+                },
+                {
+                  "name": "created_at",
+                  "description": "The upload time of the file, formatted as a 10-digit Unix time stamp in seconds (s).",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "int"
+                  }
+                },
+                {
+                  "name": "file_name",
+                  "description": "Document Name.",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "id",
+                  "description": "Uploaded file ID.",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "url",
+                  "description": "目前仅 openapi 场景有用。白名单用户会返回文件 url",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                }
+              ],
+              "is_named": true
             }
           }
         ]
       }
     },
     {
-      "name": "OpenAPIStreamResumeFlow",
-      "path": "/v1/workflow/stream_resume",
+      "name": "UploadFileOpen",
+      "description": "Upload a file to the Coze platform.\n**API description**\nLocal files cannot be directly used in messages. Before creating a message or conversation, you need to call this API to upload local files to Coze. After uploading the file, you can directly use it in multimodal content by specifying the `file_id` in the message. For usage instructions, see [Create a conversation](https://www.coze.cn/docs/developer_guides/create_conversation).\n\n* Supported file formats:\n   Document**:** DOC, DOCX, XLS, XLSX, PPT, PPTX, PDF, Numbers, and CSV\n   Image**:** JPG, JPG2, PNG, GIF, WEBP, HEIC, HEIF, BMP, PCD, and TIFF\n* File upload size limit:** **Each file can be up to 512 MB.\n* Files uploaded to Coze can only be viewed or used by the account that uploaded them.\n* Files must be uploaded using the `multipart/form-data` method.\n* Files uploaded using the API expire after 3 months.",
+      "path": "/v1/files/upload",
       "method": "POST",
-      "content_type": "json",
+      "content_type": "file",
       "request_body": {
         "kind": "object",
         "fields": [
           {
-            "name": "event_id",
+            "name": "file",
+            "description": "Supported file formats for upload:\nDocuments: DOC, DOCX, XLS, XLSX, PPT, PPTX, PDF, Numbers, CSV\nImages: JPG, JPG2, PNG, GIF, WEBP, HEIC, HEIF, BMP, PCD, TIFF\nFile upload size limit: Each file is a maximum of 512 MB.\nFiles uploaded to the platform are for viewing or use by this account only.\nFiles must be uploaded using the multipart/form-data method.\nFiles uploaded using the API expire after 3 months. ",
             "type": {
               "kind": "primimtive",
-              "primitive_kind": "string"
+              "primitive_kind": "binary"
             },
             "required": true
-          },
-          {
-            "name": "interrupt_type",
-            "type": {
-              "name": "InterruptType",
-              "kind": "primimtive",
-              "module": "workflows.runs",
-              "primitive_kind": "int",
-              "enum_values": [
-                {
-                  "val": 1
-                },
-                {
-                  "val": 2
-                },
-                {
-                  "val": 3
-                },
-                {
-                  "val": 4
-                },
-                {
-                  "val": 5
-                }
-              ],
-              "is_named": true
-            },
-            "required": true
-          },
-          {
-            "name": "resume_data",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            },
-            "required": true
-          },
-          {
-            "name": "ext",
-            "type": {
-              "kind": "map",
-              "value_type": {
-                "kind": "primimtive",
-                "primitive_kind": "string"
-              }
-            }
-          },
-          {
-            "name": "workflow_id",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            },
-            "required": true
-          },
-          {
-            "name": "connector_id",
-            "description": "渠道ID，比如ui builder、template、商店等",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
           }
         ]
       },
@@ -426,164 +107,61 @@
         "kind": "object",
         "fields": [
           {
-            "name": "id",
-            "description": "绝对序号",
+            "name": "data",
             "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "event",
-            "description": "事件类型:message,done,error",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "node_seq_id",
-            "description": "节点信息节点中的序号",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "node_title",
-            "description": "节点名称",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "content",
-            "description": "ContentType为Text时的返回",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "node_is_finish",
-            "description": "节点是否执行完成",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "bool"
-            }
-          },
-          {
-            "name": "interrupt_data",
-            "type": {
-              "name": "Interrupt",
+              "name": "File",
               "kind": "object",
-              "module": "workflows.runs",
+              "module": "files",
               "fields": [
                 {
-                  "name": "data",
+                  "name": "URL",
                   "type": {
                     "kind": "primimtive",
                     "primitive_kind": "string"
                   }
                 },
                 {
-                  "name": "event_id",
+                  "name": "bytes",
+                  "description": "Total bytes of the file.",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "int"
+                  }
+                },
+                {
+                  "name": "created_at",
+                  "description": "The upload time of the file, formatted as a 10-digit Unix time stamp in seconds (s).",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "int"
+                  }
+                },
+                {
+                  "name": "file_name",
+                  "description": "Document Name.",
                   "type": {
                     "kind": "primimtive",
                     "primitive_kind": "string"
                   }
                 },
                 {
-                  "name": "type",
+                  "name": "id",
+                  "description": "Uploaded file ID.",
                   "type": {
                     "kind": "primimtive",
-                    "primitive_kind": "int",
-                    "enum_values": [
-                      {
-                        "val": 1
-                      },
-                      {
-                        "val": 2
-                      },
-                      {
-                        "val": 3
-                      },
-                      {
-                        "val": 4
-                      },
-                      {
-                        "val": 5
-                      }
-                    ]
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "url",
+                  "description": "目前仅 openapi 场景有用。白名单用户会返回文件 url",
+                  "type": {
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
                   }
                 }
               ],
               "is_named": true
-            }
-          },
-          {
-            "name": "content_type",
-            "description": "返回的数据类型",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "card_body",
-            "description": "Content Type为Card时返回的卡片内容",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "ext",
-            "description": "成功时最后一条消息",
-            "type": {
-              "description": "成功时最后一条消息",
-              "kind": "map",
-              "value_type": {
-                "kind": "primimtive",
-                "primitive_kind": "string"
-              }
-            }
-          },
-          {
-            "name": "token",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "int"
-            }
-          },
-          {
-            "name": "cost",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "error_code",
-            "description": "错误信息",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "int"
-            }
-          },
-          {
-            "name": "error_message",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
-            }
-          },
-          {
-            "name": "debug_url",
-            "type": {
-              "kind": "primimtive",
-              "primitive_kind": "string"
             }
           }
         ]
@@ -592,70 +170,55 @@
   ],
   "types": [
     {
-      "name": "InterruptType",
-      "kind": "primimtive",
-      "module": "workflows.runs",
-      "primitive_kind": "int",
-      "enum_values": [
-        {
-          "val": 1
-        },
-        {
-          "val": 2
-        },
-        {
-          "val": 3
-        },
-        {
-          "val": 4
-        },
-        {
-          "val": 5
-        }
-      ],
-      "is_named": true
-    },
-    {
-      "name": "Interrupt",
+      "name": "File",
       "kind": "object",
-      "module": "workflows.runs",
+      "module": "files",
       "fields": [
         {
-          "name": "data",
+          "name": "URL",
           "type": {
             "kind": "primimtive",
             "primitive_kind": "string"
           }
         },
         {
-          "name": "event_id",
+          "name": "bytes",
+          "description": "Total bytes of the file.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "int"
+          }
+        },
+        {
+          "name": "created_at",
+          "description": "The upload time of the file, formatted as a 10-digit Unix time stamp in seconds (s).",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "int"
+          }
+        },
+        {
+          "name": "file_name",
+          "description": "Document Name.",
           "type": {
             "kind": "primimtive",
             "primitive_kind": "string"
           }
         },
         {
-          "name": "type",
+          "name": "id",
+          "description": "Uploaded file ID.",
           "type": {
             "kind": "primimtive",
-            "primitive_kind": "int",
-            "enum_values": [
-              {
-                "val": 1
-              },
-              {
-                "val": 2
-              },
-              {
-                "val": 3
-              },
-              {
-                "val": 4
-              },
-              {
-                "val": 5
-              }
-            ]
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "url",
+          "description": "目前仅 openapi 场景有用。白名单用户会返回文件 url",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
           }
         }
       ],

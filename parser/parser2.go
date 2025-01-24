@@ -96,6 +96,100 @@ type HttpHandler struct {
 	ResponseBody *Ty `json:"response_body"`
 }
 
+// Default pagination parameter candidates
+var (
+	DefaultPageIndexCandidates = []string{"page_index", "page_num"}
+	DefaultPageSizeCandidates  = []string{"page_size", "page_num"}
+)
+
+// PageInfo represents pagination information
+type PageInfo struct {
+	ItemType      *Ty    // The type of items in the paginated array
+	PageIndexName string // The parameter name for page index/number
+	PageSizeName  string // The parameter name for page size
+}
+
+// GetPageInfo checks if this handler represents a paginated request and returns pagination details.
+// A request is considered paginated if:
+// 1. It's a GET request
+// 2. Has two query parameters matching the candidates for page index and size
+// 3. The actual response body contains an array field
+// Returns nil if the handler is not a paginated request.
+func (h *HttpHandler) GetPageInfo(pageIndexCandidates, pageSizeCandidates []string) *PageInfo {
+	// Use default candidates if none provided
+	if len(pageIndexCandidates) == 0 {
+		pageIndexCandidates = DefaultPageIndexCandidates
+	}
+	if len(pageSizeCandidates) == 0 {
+		pageSizeCandidates = DefaultPageSizeCandidates
+	}
+
+	// Check if it's a GET request
+	if h.Method != "get" && h.Method != "GET" {
+		return nil
+	}
+
+	// Check query parameters
+	var pageIndex, pageSize string
+	paramNames := make(map[string]bool)
+	for _, param := range h.QueryParams {
+		paramNames[param.Name] = true
+	}
+
+	// Check for page index parameter
+	for _, candidate := range pageIndexCandidates {
+		if paramNames[candidate] {
+			pageIndex = candidate
+			break
+		}
+	}
+
+	// Check for page size parameter
+	for _, candidate := range pageSizeCandidates {
+		if paramNames[candidate] && candidate != pageIndex {
+			pageSize = candidate
+			break
+		}
+	}
+
+	if pageIndex == "" || pageSize == "" {
+		return nil
+	}
+
+	// Check response body
+	actualBody := h.GetActualResponseBody()
+	if actualBody == nil || actualBody.Kind != TyKindObject {
+		return nil
+	}
+
+	// Look for an array field in the actual response body
+	for _, field := range actualBody.Fields {
+		if field.Type.Kind == TyKindArray {
+			return &PageInfo{
+				ItemType:      field.Type.ElementType,
+				PageIndexName: pageIndex,
+				PageSizeName:  pageSize,
+			}
+		}
+	}
+	return nil
+}
+
+// GetActualResponseBody returns the "actual" response body type.
+// If ResponseBody has a "data" field, returns its type, otherwise returns nil.
+func (h *HttpHandler) GetActualResponseBody() *Ty {
+	if h.ResponseBody == nil || h.ResponseBody.Kind != TyKindObject {
+		return nil
+	}
+
+	for _, field := range h.ResponseBody.Fields {
+		if field.Name == "data" {
+			return field.Type
+		}
+	}
+	return nil
+}
+
 // TyModule represents a group of operations and types
 type TyModule struct {
 	Name         string        `json:"name"`
