@@ -258,6 +258,50 @@ func marshal(v any) string {
 	return string(res)
 }
 
+// generateUnnamedResponseTypes generates names for unnamed response types and adds them to modules
+func (p *Parser) generateUnnamedResponseTypes() error {
+	if p.config.GenerateUnnamedResponseType == nil {
+		return nil
+	}
+
+	for _, module := range p.modules {
+		for i := range module.HttpHandlers {
+			if module.HttpHandlers[i].ResponseBody == nil || module.HttpHandlers[i].ResponseBody.IsNamed {
+				continue
+			}
+
+			name, gen := p.config.GenerateUnnamedResponseType(&module.HttpHandlers[i])
+			if !gen {
+				continue
+			}
+
+			module.HttpHandlers[i].ResponseBody.Name = name
+			module.HttpHandlers[i].ResponseBody.IsNamed = true
+			module.Types = append(module.Types, module.HttpHandlers[i].ResponseBody)
+		}
+	}
+	return nil
+}
+
+// changeResponseTypes changes response types based on configuration
+func (p *Parser) changeResponseTypes() error {
+	for handlerName, responseType := range p.config.ChangeHttpHandlerResponseType {
+		newType, ok := p.types[responseType]
+		if !ok {
+			return fmt.Errorf("type %s not found for handler %s", responseType, handlerName)
+		}
+
+		for _, module := range p.modules {
+			for i := range module.HttpHandlers {
+				if module.HttpHandlers[i].Name == handlerName {
+					module.HttpHandlers[i].ResponseBody = newType
+				}
+			}
+		}
+	}
+	return nil
+}
+
 // ParseOpenAPI parses an OpenAPI document and returns modules
 func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) {
 	// Parse OpenAPI document
@@ -278,37 +322,14 @@ func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) 
 		return nil, err
 	}
 
-	// generate response type for unnamed response body
-	if p.config.GenerateUnnamedResponseType != nil {
-		for _, module := range p.modules {
-			for i := range module.HttpHandlers {
-				if module.HttpHandlers[i].ResponseBody == nil || module.HttpHandlers[i].ResponseBody.IsNamed {
-					continue
-				}
-
-				name, gen := p.config.GenerateUnnamedResponseType(&module.HttpHandlers[i])
-				if !gen {
-					continue
-				}
-
-				module.HttpHandlers[i].ResponseBody.Name = name
-				module.HttpHandlers[i].ResponseBody.IsNamed = true
-				module.Types = append(module.Types, module.HttpHandlers[i].ResponseBody)
-			}
-		}
+	// Generate names for unnamed response types
+	if err := p.generateUnnamedResponseTypes(); err != nil {
+		return nil, err
 	}
 
-	// change response type
-	for handlerName, responseType := range p.config.ChangeHttpHandlerResponseType {
-		fmt.Println("change response type", handlerName, responseType)
-		for _, module := range p.modules {
-			for i := range module.HttpHandlers {
-				if module.HttpHandlers[i].Name == handlerName {
-					fmt.Println("change response type", handlerName, responseType)
-					module.HttpHandlers[i].ResponseBody = p.types[responseType]
-				}
-			}
-		}
+	// Change response types based on configuration
+	if err := p.changeResponseTypes(); err != nil {
+		return nil, err
 	}
 
 	// Assign types to modules
