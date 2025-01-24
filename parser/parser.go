@@ -206,6 +206,7 @@ func (h *Ty) HasOnlyStatusFields() bool {
 		"code":   true,
 		"msg":    true,
 		"detail": true,
+		"logid":  true,
 	}
 
 	for _, field := range h.Fields {
