@@ -226,8 +226,9 @@ type TyModule struct {
 
 // ModuleConfig represents the configuration for type-to-module mapping
 type ModuleConfig struct {
-	TypeModuleMap               map[string]string                 `json:"type_module_map"`                // Maps type names to module names
-	GenerateUnnamedResponseType func(*HttpHandler) (string, bool) `json:"generate_unnamed_response_type"` // if response type is unnamed, will auto gen named
+	TypeModuleMap                 map[string]string                 `json:"type_module_map"`                   // Maps type names to module names
+	GenerateUnnamedResponseType   func(*HttpHandler) (string, bool) `json:"generate_unnamed_response_type"`    // if response type is unnamed, will auto gen named
+	ChangeHttpHandlerResponseType map[string]string                 `json:"change_http_handler_response_type"` // change response type for http handler
 }
 
 // Parser handles OpenAPI parsing with the new schema design
@@ -277,11 +278,6 @@ func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) 
 		return nil, err
 	}
 
-	// Assign types to modules
-	if err := p.assignTypesToModules(); err != nil {
-		return nil, err
-	}
-
 	// generate response type for unnamed response body
 	if p.config.GenerateUnnamedResponseType != nil {
 		for _, module := range p.modules {
@@ -300,6 +296,24 @@ func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) 
 				module.Types = append(module.Types, module.HttpHandlers[i].ResponseBody)
 			}
 		}
+	}
+
+	// change response type
+	for handlerName, responseType := range p.config.ChangeHttpHandlerResponseType {
+		fmt.Println("change response type", handlerName, responseType)
+		for _, module := range p.modules {
+			for i := range module.HttpHandlers {
+				if module.HttpHandlers[i].Name == handlerName {
+					fmt.Println("change response type", handlerName, responseType)
+					module.HttpHandlers[i].ResponseBody = p.types[responseType]
+				}
+			}
+		}
+	}
+
+	// Assign types to modules
+	if err := p.assignTypesToModules(); err != nil {
+		return nil, err
 	}
 
 	return p.modules, nil

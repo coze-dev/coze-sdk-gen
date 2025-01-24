@@ -157,6 +157,11 @@ func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[strin
 
 			return "", false
 		},
+		ChangeHttpHandlerResponseType: map[string]string{
+			"CreateDraftBot":  "Bot",
+			"UpdateDraftBot":  "Bot",
+			"PublishDraftBot": "Bot",
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create parser2 failed: %w", err)
