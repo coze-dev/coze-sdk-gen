@@ -260,6 +260,22 @@ func (p *Parser) ParseOpenAPI(yamlContent []byte) (map[string]*TyModule, error) 
 		return nil, err
 	}
 
+	// generate response type for unnamed response body
+	if p.config.GenerateUnnamedResponseType != nil {
+		for _, module := range p.modules {
+			for i := range module.HttpHandlers {
+				if module.HttpHandlers[i].ResponseBody == nil || module.HttpHandlers[i].ResponseBody.IsNamed {
+					continue
+				}
+
+				name := p.config.GenerateUnnamedResponseType(&module.HttpHandlers[i])
+				module.HttpHandlers[i].ResponseBody.Name = name
+				module.HttpHandlers[i].ResponseBody.IsNamed = true
+				module.Types = append(module.Types, module.HttpHandlers[i].ResponseBody)
+			}
+		}
+	}
+
 	return p.modules, nil
 }
 
