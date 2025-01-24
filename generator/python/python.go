@@ -180,7 +180,7 @@ func (g *Generator) Generate(ctx context.Context, yamlContent []byte) (map[strin
 			},
 		},
 		HandlerOrdering: map[string][]string{
-			"files": {"RetrieveFileOpen", "UploadFileOpen"},
+			"files": {"UploadFileOpen", "RetrieveFileOpen"},
 		},
 	})
 	if err != nil {
