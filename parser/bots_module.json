@@ -2,891 +2,133 @@
   "name": "bots",
   "http_handlers": [
     {
-      "name": "CreateDraftBot",
-      "description": "Create a new agent.\nAfter calling this API to create an agent, the agent will be in an unpublished draft state. After creation, you can view the agent in the Coze platform's agent list. Call the [Publish agent as an API service](https://www.coze.com/docs/developer_guides/publish_bot) API to publish the agent as API service, then you can view this agent by calling [Get agent list](https://www.coze.com/docs/developer_guides/published_bots_list) or [Get agent configs](https://www.coze.com/docs/developer_guides/get_metadata) API. \nWhen creating an agent via the API, you can set the space where the agent is located, the agent's name and description, avatar, personality and reply logic, and opening remarks.",
-      "path": "/v1/bot/create",
-      "method": "POST",
-      "header_params": null,
-      "path_params": null,
-      "query_params": null,
-      "request_body": {
-        "name": "",
-        "description": "",
-        "kind": 1,
-        "module": "",
-        "primitive_kind": "",
-        "enum_values": null,
-        "fields": [
-          {
-            "name": "space_id",
-            "description": "",
-            "type": {
-              "name": "",
-              "description": "The Space ID of the space where the agent is located. The Space ID is the unique identifier of the space. To enter a specified space, the number following the `space` parameter in the space page URL is the Space ID. For example, in `https://www.coze.cn/space/736163827687053****/bot`, the Space ID is `736163827687053****`.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": true
-          },
-          {
-            "name": "name",
-            "description": "",
-            "type": {
-              "name": "",
-              "description": "Name of the intelligent agent. Length: 1-20 characters.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": true
-          },
-          {
-            "name": "description",
-            "description": "",
-            "type": {
-              "name": "",
-              "description": "Description of the agent. Length is 0~500 characters. Default is empty.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": false
-          },
-          {
-            "name": "icon_file_id",
-            "description": "头像文件id",
-            "type": {
-              "name": "",
-              "description": "As the file ID for the agent avatar:\n\n* If the file ID is not specified, the Coze platform will assign an avatar to the agent by default.\n* To use a custom avatar, you should first upload a local file through the [Upload Files](https://www.coze.com/docs/developer_guides/upload_files) interface and obtain the file ID from the interface response.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": false
-          },
-          {
-            "name": "prompt_info",
-            "description": "",
-            "type": {
-              "name": "BotPromptInfo",
-              "description": "",
-              "kind": 1,
-              "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
-              "fields": [
-                {
-                  "name": "prompt",
-                  "description": "文本prompt",
-                  "type": {
-                    "name": "",
-                    "description": "The persona and response logic of the intelligent agent. Length is 0~20,000 characters. Default is empty.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                }
-              ],
-              "element_type": null,
-              "is_named": true
-            },
-            "required": false
-          },
-          {
-            "name": "onboarding_info",
-            "description": "",
-            "type": {
-              "name": "BotOnboardingInfo",
-              "description": "",
-              "kind": 1,
-              "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
-              "fields": [
-                {
-                  "name": "prologue",
-                  "description": "开场白",
-                  "type": {
-                    "name": "",
-                    "description": "Agent's opening remarks. Length: 0~300 characters. Default: no opening remarks.\n\nIf the opening remarks include the user name variable `{{user_name}}`, the business side needs to handle it in the API scenario, such as replacing this variable with the user's name on the business side when displaying the opening remarks.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                },
-                {
-                  "name": "suggested_questions",
-                  "description": "建议问题",
-                  "type": {
-                    "name": "",
-                    "description": "Preset questions for agent's opening remarks. Each question should be 0~50 characters in length, with an unlimited number of questions. No default preset questions.",
-                    "kind": 2,
-                    "module": "",
-                    "primitive_kind": "",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": {
-                      "name": "",
-                      "description": "",
-                      "kind": 0,
-                      "module": "",
-                      "primitive_kind": "string",
-                      "enum_values": null,
-                      "fields": null,
-                      "element_type": null,
-                      "is_named": false
-                    },
-                    "is_named": false
-                  },
-                  "required": false
-                }
-              ],
-              "element_type": null,
-              "is_named": true
-            },
-            "required": false
-          }
-        ],
-        "element_type": null,
-        "is_named": false
-      },
-      "response_body": {
-        "name": "",
-        "description": "",
-        "kind": 1,
-        "module": "",
-        "primitive_kind": "",
-        "enum_values": null,
-        "fields": [
-          {
-            "name": "code",
-            "description": "",
-            "type": {
-              "name": "",
-              "description": "Call status codes.\n\n* 0 indicates a successful call.\n* Other values indicate a failed call. You can determine the specific error reason through the msg field.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "int",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": true
-          },
-          {
-            "name": "msg",
-            "description": "",
-            "type": {
-              "name": "",
-              "description": "Status information. Detailed error information can be viewed through this field when the API call fails.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": true
-          },
-          {
-            "name": "data",
-            "description": "",
-            "type": {
-              "name": "CreateDraftBotData",
-              "description": "",
-              "kind": 1,
-              "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
-              "fields": [
-                {
-                  "name": "bot_id",
-                  "description": "",
-                  "type": {
-                    "name": "",
-                    "description": "The ID of the created agent.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": true
-                }
-              ],
-              "element_type": null,
-              "is_named": true
-            },
-            "required": true
-          }
-        ],
-        "element_type": null,
-        "is_named": false
-      }
-    },
-    {
-      "name": "GetSpacePublishedBotsList",
-      "description": "View the list of agents published to the Agent as API channel in the specified space.",
-      "path": "/v1/space/published_bots_list",
-      "method": "GET",
-      "header_params": null,
-      "path_params": null,
-      "query_params": [
-        {
-          "name": "space_id",
-          "description": "The Space ID of the space where the agent is located. The Space ID is the unique identifier of the space. To enter the specified space, the number following the `space` parameter in the space page URL is the Space ID. For example, `https://www.coze.cn/space/736163827687053****/bot`, the Space ID is `736163827687053****`.",
-          "required": true,
-          "type": {
-            "name": "",
-            "description": "",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          }
-        },
-        {
-          "name": "page_index",
-          "description": "Page size. The default is 20, meaning 20 data entries are returned per page.",
-          "required": false,
-          "type": {
-            "name": "",
-            "description": "",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "int",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          }
-        },
-        {
-          "name": "page_size",
-          "description": "Page number for pagination. Defaults to 1, which means data is returned starting from the first page.",
-          "required": false,
-          "type": {
-            "name": "",
-            "description": "",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "int",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          }
-        }
-      ],
-      "request_body": null,
-      "response_body": {
-        "name": "",
-        "description": "",
-        "kind": 1,
-        "module": "",
-        "primitive_kind": "",
-        "enum_values": null,
-        "fields": [
-          {
-            "name": "code",
-            "description": "",
-            "type": {
-              "name": "",
-              "description": "Status code.\n`0` means the call was successful.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "int",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": true
-          },
-          {
-            "name": "msg",
-            "description": "",
-            "type": {
-              "name": "",
-              "description": "Status information. Detailed error information can be viewed through this field when an API call fails.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": true
-          },
-          {
-            "name": "data",
-            "description": "",
-            "type": {
-              "name": "SpacePublishedBotsInfo",
-              "description": "",
-              "kind": 1,
-              "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
-              "fields": [
-                {
-                  "name": "space_bots",
-                  "description": "",
-                  "type": {
-                    "name": "",
-                    "description": "List of agents published to the Agent as API channel in the specified space.",
-                    "kind": 2,
-                    "module": "",
-                    "primitive_kind": "",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": {
-                      "name": "SimpleBot",
-                      "description": "",
-                      "kind": 1,
-                      "module": "bots",
-                      "primitive_kind": "",
-                      "enum_values": null,
-                      "fields": [
-                        {
-                          "name": "bot_name",
-                          "description": "",
-                          "type": {
-                            "name": "",
-                            "description": "The name of the agent.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
-                        },
-                        {
-                          "name": "description",
-                          "description": "",
-                          "type": {
-                            "name": "",
-                            "description": "Description of the intelligent agent.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
-                        },
-                        {
-                          "name": "icon_url",
-                          "description": "",
-                          "type": {
-                            "name": "",
-                            "description": "Avatar of the intelligent agent.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
-                        },
-                        {
-                          "name": "publish_time",
-                          "description": "",
-                          "type": {
-                            "name": "",
-                            "description": "The most recent release time of the agent, formatted as a 10-digit Unixtime timestamp. The list of agents returned by this API is sorted in descending order by this field.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
-                        },
-                        {
-                          "name": "bot_id",
-                          "description": "",
-                          "type": {
-                            "name": "",
-                            "description": "The unique identifier of the agent.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
-                        }
-                      ],
-                      "element_type": null,
-                      "is_named": true
-                    },
-                    "is_named": false
-                  },
-                  "required": false
-                },
-                {
-                  "name": "total",
-                  "description": "",
-                  "type": {
-                    "name": "",
-                    "description": "Total number of agents in the agent list.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "int",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                }
-              ],
-              "element_type": null,
-              "is_named": true
-            },
-            "required": true
-          }
-        ],
-        "element_type": null,
-        "is_named": false
-      }
-    },
-    {
-      "name": "PublishDraftBot",
-      "description": "Publish the specified agent to API, Web SDK, or custom channels.",
-      "path": "/v1/bot/publish",
-      "method": "POST",
-      "header_params": null,
-      "path_params": null,
-      "query_params": null,
-      "request_body": {
-        "name": "",
-        "description": "",
-        "kind": 1,
-        "module": "",
-        "primitive_kind": "",
-        "enum_values": null,
-        "fields": [
-          {
-            "name": "bot_id",
-            "description": "",
-            "type": {
-              "name": "",
-              "description": "The ID of the agent to be published.\nNavigate to the build page of the agent. The number following the `bot` path parameter in the URL is the agent ID. For example, in the URL `https://www.coze.com/space/341****/bot/73428668*****`, the agent ID is `73428668*****`.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": true
-          },
-          {
-            "name": "connector_ids",
-            "description": "",
-            "type": {
-              "name": "",
-              "description": "List of IDs of the channels to which the agent is published. Currently, this API supports publishing agents as API, Web SDK, and custom channels.\n\n* Agent as API: 1024\n* Web SDK: 999\n* Custom channel: Custom channel ID. For information about how to obtain the channel ID, see [Channel integration overview](https://www.coze.com/docs/guides/channel_integration_overview). Ensure that the access token of the creator using the custom channel is used.",
-              "kind": 2,
-              "module": "",
-              "primitive_kind": "",
-              "enum_values": null,
-              "fields": null,
-              "element_type": {
-                "name": "",
-                "description": "",
-                "kind": 0,
-                "module": "",
-                "primitive_kind": "string",
-                "enum_values": null,
-                "fields": null,
-                "element_type": null,
-                "is_named": false
-              },
-              "is_named": false
-            },
-            "required": true
-          }
-        ],
-        "element_type": null,
-        "is_named": false
-      },
-      "response_body": {
-        "name": "",
-        "description": "",
-        "kind": 1,
-        "module": "",
-        "primitive_kind": "",
-        "enum_values": null,
-        "fields": [
-          {
-            "name": "code",
-            "description": "",
-            "type": {
-              "name": "",
-              "description": "Status code:\n\n* A value of `0` indicates a successful call.\n* Any other value indicates a failed call. You can determine the detailed error reason through the msg field.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "int",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": true
-          },
-          {
-            "name": "msg",
-            "description": "",
-            "type": {
-              "name": "",
-              "description": "This field provides detailed information about the result of the API call. If the API call fails, `msg` contains a description of the error or the reason for the failure.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": true
-          },
-          {
-            "name": "data",
-            "description": "",
-            "type": {
-              "name": "PublishDraftBotData",
-              "description": "",
-              "kind": 1,
-              "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
-              "fields": [
-                {
-                  "name": "bot_id",
-                  "description": "",
-                  "type": {
-                    "name": "",
-                    "description": "The ID of the agent.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                },
-                {
-                  "name": "version",
-                  "description": "",
-                  "type": {
-                    "name": "",
-                    "description": "The version of the agent.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                }
-              ],
-              "element_type": null,
-              "is_named": true
-            },
-            "required": false
-          }
-        ],
-        "element_type": null,
-        "is_named": false
-      }
-    },
-    {
       "name": "UpdateBot",
       "description": "Update the configuration of the agent.\nThrough this API, you can update all agents created through the Cozy platform or API. In addition to updating the agent's name and description, avatar, persona, and response logic and opening remarks via the API, it also supports binding knowledge bases and plugins to the agent.",
       "path": "/v1/bot/update",
       "method": "POST",
-      "header_params": null,
-      "path_params": null,
-      "query_params": null,
       "request_body": {
-        "name": "",
-        "description": "",
-        "kind": 1,
-        "module": "",
-        "primitive_kind": "",
-        "enum_values": null,
+        "kind": "object",
         "fields": [
           {
             "name": "bot_id",
-            "description": "",
             "type": {
-              "name": "",
               "description": "The intelligent agent ID to be modified.\nEnter the development page of the agent, and the number after the `bot` parameter in the development page URL is the agent ID. For example, `https://www.coze.com/space/341****/bot/73428668*****`, the bot ID is `73428668*****`.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
+              "kind": "primimtive",
+              "primitive_kind": "string"
             },
             "required": true
           },
           {
             "name": "name",
-            "description": "",
             "type": {
-              "name": "",
               "description": "Agent's name. Length should be 1~20 characters.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": false
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            }
           },
           {
             "name": "description",
-            "description": "",
             "type": {
-              "name": "",
               "description": "Description information of the agent. Length is 0~500 characters. Default is empty.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": false
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            }
           },
           {
             "name": "icon_file_id",
-            "description": "",
             "type": {
-              "name": "",
               "description": "The file ID of the avatar for the agent.\n\n- If no file ID is specified, the Coze platform will assign a default avatar to the agent.\n- To use a custom avatar, you should first upload a local file via the [upload file](https://www.coze.cn/docs/developer_guides/upload_files) API and obtain the file ID from the response of the API.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "required": false
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            }
           },
           {
             "name": "prompt_info",
-            "description": "",
             "type": {
               "name": "BotPromptInfo",
-              "description": "",
-              "kind": 1,
+              "kind": "object",
               "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
               "fields": [
                 {
                   "name": "prompt",
                   "description": "文本prompt",
                   "type": {
-                    "name": "",
                     "description": "The persona and response logic of the intelligent agent. Length is 0~20,000 characters. Default is empty.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 }
               ],
-              "element_type": null,
               "is_named": true
-            },
-            "required": false
+            }
           },
           {
             "name": "onboarding_info",
-            "description": "",
             "type": {
               "name": "BotOnboardingInfo",
-              "description": "",
-              "kind": 1,
+              "kind": "object",
               "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
               "fields": [
                 {
                   "name": "prologue",
                   "description": "开场白",
                   "type": {
-                    "name": "",
                     "description": "Agent's opening remarks. Length: 0~300 characters. Default: no opening remarks.\n\nIf the opening remarks include the user name variable `{{user_name}}`, the business side needs to handle it in the API scenario, such as replacing this variable with the user's name on the business side when displaying the opening remarks.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 },
                 {
                   "name": "suggested_questions",
                   "description": "建议问题",
                   "type": {
-                    "name": "",
                     "description": "Preset questions for agent's opening remarks. Each question should be 0~50 characters in length, with an unlimited number of questions. No default preset questions.",
-                    "kind": 2,
-                    "module": "",
-                    "primitive_kind": "",
-                    "enum_values": null,
-                    "fields": null,
+                    "kind": "array",
                     "element_type": {
-                      "name": "",
-                      "description": "",
-                      "kind": 0,
-                      "module": "",
-                      "primitive_kind": "string",
-                      "enum_values": null,
-                      "fields": null,
-                      "element_type": null,
-                      "is_named": false
-                    },
-                    "is_named": false
-                  },
-                  "required": false
+                      "kind": "primimtive",
+                      "primitive_kind": "string"
+                    }
+                  }
                 }
               ],
-              "element_type": null,
               "is_named": true
-            },
-            "required": false
+            }
           },
           {
             "name": "knowledge",
-            "description": "",
             "type": {
               "name": "Knowledge",
-              "description": "",
-              "kind": 1,
+              "kind": "object",
               "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
               "fields": [
                 {
                   "name": "dataset_ids",
                   "description": "更新知识库列表 全量覆盖更新",
                   "type": {
-                    "name": "",
                     "description": "The knowledge base ID bound to the agent.\nIn the Button platform, open the specified knowledge base page, and the number after the knowledge parameter in the page URL is the knowledge base ID. For example, https://bots.bytedance.net/space/736142423532160****/knowledge/738509371792341****, the knowledge base ID is 738509371792341****.",
-                    "kind": 2,
-                    "module": "",
-                    "primitive_kind": "",
-                    "enum_values": null,
-                    "fields": null,
+                    "kind": "array",
                     "element_type": {
-                      "name": "",
-                      "description": "",
-                      "kind": 0,
-                      "module": "",
-                      "primitive_kind": "string",
-                      "enum_values": null,
-                      "fields": null,
-                      "element_type": null,
-                      "is_named": false
-                    },
-                    "is_named": false
-                  },
-                  "required": false
+                      "kind": "primimtive",
+                      "primitive_kind": "string"
+                    }
+                  }
                 },
                 {
                   "name": "auto_call",
                   "description": "自动调用 or 按需调用",
                   "type": {
-                    "name": "",
                     "description": "Whether to automatically call the knowledge base. The values include:\n\n- **true: (default) automatically call**. The knowledge base is called in each round of conversation, using the recalled content to assist in generating replies.\n- **false: call as needed**. The knowledge base is called based on actual needs, using the recalled content to assist in generating replies. In this case, it is necessary to clearly specify in the persona and reply logic area on the left under what circumstances to call which knowledge base to reply.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "bool",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "bool"
+                  }
                 },
                 {
                   "name": "search_strategy",
-                  "description": "",
                   "type": {
-                    "name": "",
+                    "name": "SearchStrategy",
                     "description": "The search strategy for the knowledge base. Values include:\n0: (Default) Semantic search. Understand the relationships between words and sentences like a human does.\n1: Hybrid search. Combine the advantages of full-text retrieval and semantic search, and sort the results comprehensively to recall relevant content fragments.\n20: Full-text search. Full-text retrieval based on keywords.",
-                    "kind": 0,
-                    "module": "",
+                    "kind": "primimtive",
+                    "module": "bots",
                     "primitive_kind": "int",
                     "enum_values": [
                       {
@@ -902,65 +144,393 @@
                         "val": 20
                       }
                     ],
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "is_named": true
+                  }
                 }
               ],
-              "element_type": null,
               "is_named": true
-            },
-            "required": false
+            }
           }
-        ],
-        "element_type": null,
-        "is_named": false
+        ]
       },
       "response_body": {
-        "name": "",
-        "description": "",
-        "kind": 1,
-        "module": "",
-        "primitive_kind": "",
-        "enum_values": null,
+        "kind": "object",
         "fields": [
           {
             "name": "code",
-            "description": "",
             "type": {
-              "name": "",
               "description": "Call status code.\n\n- 0 indicates a successful call.\n- Other values indicate a failed call. You can determine the detailed error reason through the msg field.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "int",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
+              "kind": "primimtive",
+              "primitive_kind": "int"
             },
             "required": true
           },
           {
             "name": "msg",
-            "description": "",
             "type": {
-              "name": "",
               "description": "Status information. When the API call fails, you can view detailed error information through this field.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
+              "kind": "primimtive",
+              "primitive_kind": "string"
             },
             "required": true
           }
-        ],
-        "element_type": null,
-        "is_named": false
+        ]
+      }
+    },
+    {
+      "name": "GetSpacePublishedBotsList",
+      "description": "View the list of agents published to the Agent as API channel in the specified space.",
+      "path": "/v1/space/published_bots_list",
+      "method": "GET",
+      "query_params": [
+        {
+          "name": "space_id",
+          "description": "The Space ID of the space where the agent is located. The Space ID is the unique identifier of the space. To enter the specified space, the number following the `space` parameter in the space page URL is the Space ID. For example, `https://www.coze.cn/space/736163827687053****/bot`, the Space ID is `736163827687053****`.",
+          "required": true,
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "page_index",
+          "description": "Page size. The default is 20, meaning 20 data entries are returned per page.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "int"
+          }
+        },
+        {
+          "name": "page_size",
+          "description": "Page number for pagination. Defaults to 1, which means data is returned starting from the first page.",
+          "type": {
+            "kind": "primimtive",
+            "primitive_kind": "int"
+          }
+        }
+      ],
+      "request_body": null,
+      "response_body": {
+        "kind": "object",
+        "fields": [
+          {
+            "name": "code",
+            "type": {
+              "description": "Status code.\n`0` means the call was successful.",
+              "kind": "primimtive",
+              "primitive_kind": "int"
+            },
+            "required": true
+          },
+          {
+            "name": "msg",
+            "type": {
+              "description": "Status information. Detailed error information can be viewed through this field when an API call fails.",
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "data",
+            "type": {
+              "name": "SpacePublishedBotsInfo",
+              "kind": "object",
+              "module": "bots",
+              "fields": [
+                {
+                  "name": "space_bots",
+                  "type": {
+                    "description": "List of agents published to the Agent as API channel in the specified space.",
+                    "kind": "array",
+                    "element_type": {
+                      "name": "SimpleBot",
+                      "kind": "object",
+                      "module": "bots",
+                      "fields": [
+                        {
+                          "name": "bot_id",
+                          "type": {
+                            "description": "The unique identifier of the agent.",
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        },
+                        {
+                          "name": "bot_name",
+                          "type": {
+                            "description": "The name of the agent.",
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        },
+                        {
+                          "name": "description",
+                          "type": {
+                            "description": "Description of the intelligent agent.",
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        },
+                        {
+                          "name": "icon_url",
+                          "type": {
+                            "description": "Avatar of the intelligent agent.",
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        },
+                        {
+                          "name": "publish_time",
+                          "type": {
+                            "description": "The most recent release time of the agent, formatted as a 10-digit Unixtime timestamp. The list of agents returned by this API is sorted in descending order by this field.",
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        }
+                      ],
+                      "is_named": true
+                    }
+                  }
+                },
+                {
+                  "name": "total",
+                  "type": {
+                    "description": "Total number of agents in the agent list.",
+                    "kind": "primimtive",
+                    "primitive_kind": "int"
+                  }
+                }
+              ],
+              "is_named": true
+            },
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "CreateDraftBot",
+      "description": "Create a new agent.\nAfter calling this API to create an agent, the agent will be in an unpublished draft state. After creation, you can view the agent in the Coze platform's agent list. Call the [Publish agent as an API service](https://www.coze.com/docs/developer_guides/publish_bot) API to publish the agent as API service, then you can view this agent by calling [Get agent list](https://www.coze.com/docs/developer_guides/published_bots_list) or [Get agent configs](https://www.coze.com/docs/developer_guides/get_metadata) API. \nWhen creating an agent via the API, you can set the space where the agent is located, the agent's name and description, avatar, personality and reply logic, and opening remarks.",
+      "path": "/v1/bot/create",
+      "method": "POST",
+      "request_body": {
+        "kind": "object",
+        "fields": [
+          {
+            "name": "space_id",
+            "type": {
+              "description": "The Space ID of the space where the agent is located. The Space ID is the unique identifier of the space. To enter a specified space, the number following the `space` parameter in the space page URL is the Space ID. For example, in `https://www.coze.cn/space/736163827687053****/bot`, the Space ID is `736163827687053****`.",
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "name",
+            "type": {
+              "description": "Name of the intelligent agent. Length: 1-20 characters.",
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "description",
+            "type": {
+              "description": "Description of the agent. Length is 0~500 characters. Default is empty.",
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            }
+          },
+          {
+            "name": "icon_file_id",
+            "description": "头像文件id",
+            "type": {
+              "description": "As the file ID for the agent avatar:\n\n* If the file ID is not specified, the Coze platform will assign an avatar to the agent by default.\n* To use a custom avatar, you should first upload a local file through the [Upload Files](https://www.coze.com/docs/developer_guides/upload_files) interface and obtain the file ID from the interface response.",
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            }
+          },
+          {
+            "name": "prompt_info",
+            "type": {
+              "name": "BotPromptInfo",
+              "kind": "object",
+              "module": "bots",
+              "fields": [
+                {
+                  "name": "prompt",
+                  "description": "文本prompt",
+                  "type": {
+                    "description": "The persona and response logic of the intelligent agent. Length is 0~20,000 characters. Default is empty.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                }
+              ],
+              "is_named": true
+            }
+          },
+          {
+            "name": "onboarding_info",
+            "type": {
+              "name": "BotOnboardingInfo",
+              "kind": "object",
+              "module": "bots",
+              "fields": [
+                {
+                  "name": "prologue",
+                  "description": "开场白",
+                  "type": {
+                    "description": "Agent's opening remarks. Length: 0~300 characters. Default: no opening remarks.\n\nIf the opening remarks include the user name variable `{{user_name}}`, the business side needs to handle it in the API scenario, such as replacing this variable with the user's name on the business side when displaying the opening remarks.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "suggested_questions",
+                  "description": "建议问题",
+                  "type": {
+                    "description": "Preset questions for agent's opening remarks. Each question should be 0~50 characters in length, with an unlimited number of questions. No default preset questions.",
+                    "kind": "array",
+                    "element_type": {
+                      "kind": "primimtive",
+                      "primitive_kind": "string"
+                    }
+                  }
+                }
+              ],
+              "is_named": true
+            }
+          }
+        ]
+      },
+      "response_body": {
+        "kind": "object",
+        "fields": [
+          {
+            "name": "code",
+            "type": {
+              "description": "Call status codes.\n\n* 0 indicates a successful call.\n* Other values indicate a failed call. You can determine the specific error reason through the msg field.",
+              "kind": "primimtive",
+              "primitive_kind": "int"
+            },
+            "required": true
+          },
+          {
+            "name": "msg",
+            "type": {
+              "description": "Status information. Detailed error information can be viewed through this field when the API call fails.",
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "data",
+            "type": {
+              "name": "CreateDraftBotData",
+              "kind": "object",
+              "module": "bots",
+              "fields": [
+                {
+                  "name": "bot_id",
+                  "type": {
+                    "description": "The ID of the created agent.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  },
+                  "required": true
+                }
+              ],
+              "is_named": true
+            },
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "PublishDraftBot",
+      "description": "Publish the specified agent to API, Web SDK, or custom channels.",
+      "path": "/v1/bot/publish",
+      "method": "POST",
+      "request_body": {
+        "kind": "object",
+        "fields": [
+          {
+            "name": "bot_id",
+            "type": {
+              "description": "The ID of the agent to be published.\nNavigate to the build page of the agent. The number following the `bot` path parameter in the URL is the agent ID. For example, in the URL `https://www.coze.com/space/341****/bot/73428668*****`, the agent ID is `73428668*****`.",
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "connector_ids",
+            "type": {
+              "description": "List of IDs of the channels to which the agent is published. Currently, this API supports publishing agents as API, Web SDK, and custom channels.\n\n* Agent as API: 1024\n* Web SDK: 999\n* Custom channel: Custom channel ID. For information about how to obtain the channel ID, see [Channel integration overview](https://www.coze.com/docs/guides/channel_integration_overview). Ensure that the access token of the creator using the custom channel is used.",
+              "kind": "array",
+              "element_type": {
+                "kind": "primimtive",
+                "primitive_kind": "string"
+              }
+            },
+            "required": true
+          }
+        ]
+      },
+      "response_body": {
+        "kind": "object",
+        "fields": [
+          {
+            "name": "code",
+            "type": {
+              "description": "Status code:\n\n* A value of `0` indicates a successful call.\n* Any other value indicates a failed call. You can determine the detailed error reason through the msg field.",
+              "kind": "primimtive",
+              "primitive_kind": "int"
+            },
+            "required": true
+          },
+          {
+            "name": "msg",
+            "type": {
+              "description": "This field provides detailed information about the result of the API call. If the API call fails, `msg` contains a description of the error or the reason for the failure.",
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "data",
+            "type": {
+              "name": "PublishDraftBotData",
+              "kind": "object",
+              "module": "bots",
+              "fields": [
+                {
+                  "name": "bot_id",
+                  "type": {
+                    "description": "The ID of the agent.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "version",
+                  "type": {
+                    "description": "The version of the agent.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                }
+              ],
+              "is_named": true
+            }
+          }
+        ]
       }
     },
     {
@@ -968,283 +538,144 @@
       "description": "To get the configuration of a specified agent, the agent must be published to the Agent as API channel.\nThis API only supports viewing agents that have already been published as API services. For agents that have never been published as API, you can view the list and configuration on the [Coze platform](https://www.coze.com/).",
       "path": "/v1/bot/get_online_info",
       "method": "GET",
-      "header_params": null,
-      "path_params": null,
       "query_params": [
         {
           "name": "bot_id",
           "description": "To view the agent ID, go to the agent's development page. The number following the `bot` parameter in the development page URL is the agent ID. For example, in `https://www.coze.cn/space/341****/bot/73428668*****`, the bot ID is `73428668*****`.\n\n\nEnsure that the space to which the agent belongs has generated an access token.",
           "required": true,
           "type": {
-            "name": "",
-            "description": "",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
+            "kind": "primimtive",
+            "primitive_kind": "string"
           }
         }
       ],
       "request_body": null,
       "response_body": {
-        "name": "",
-        "description": "",
-        "kind": 1,
-        "module": "",
-        "primitive_kind": "",
-        "enum_values": null,
+        "kind": "object",
         "fields": [
           {
             "name": "code",
-            "description": "",
             "type": {
-              "name": "",
               "description": "Call status codes.\n\n- `0` indicates a successful call.\n- Other values indicate a failed call. You can determine the detailed error reason through the `msg` field.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "int",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
+              "kind": "primimtive",
+              "primitive_kind": "int"
             },
             "required": true
           },
           {
             "name": "msg",
-            "description": "",
             "type": {
-              "name": "",
               "description": "Call state information. In case of failure, error details will be returned.",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
+              "kind": "primimtive",
+              "primitive_kind": "string"
             },
             "required": true
           },
           {
             "name": "data",
-            "description": "",
             "type": {
               "name": "Bot",
-              "description": "",
-              "kind": 1,
+              "kind": "object",
               "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
               "fields": [
                 {
                   "name": "bot_id",
                   "description": "bot id",
                   "type": {
-                    "name": "",
                     "description": "The unique identifier of the agent.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 },
                 {
                   "name": "name",
                   "description": "bot名称",
                   "type": {
-                    "name": "",
                     "description": "Agent Name.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 },
                 {
                   "name": "description",
                   "description": "bot描述",
                   "type": {
-                    "name": "",
                     "description": "Description of the agent.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 },
                 {
                   "name": "icon_url",
                   "description": "bot图像url",
                   "type": {
-                    "name": "",
                     "description": "Avatar URL of the intelligent agent.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 },
                 {
                   "name": "create_time",
                   "description": "创建时间",
                   "type": {
-                    "name": "",
                     "description": "Create time, formatted as a 10-digit Unix timestamp, in seconds (s).",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "int",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "int"
+                  }
                 },
                 {
                   "name": "update_time",
                   "description": "更新时间",
                   "type": {
-                    "name": "",
                     "description": "Update time, formatted as a 10-digit Unix timestamp in seconds (s).",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "int",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "int"
+                  }
                 },
                 {
                   "name": "version",
                   "description": "版本",
                   "type": {
-                    "name": "",
                     "description": "The version number of the latest release of the agent.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 },
                 {
                   "name": "prompt_info",
-                  "description": "",
                   "type": {
-                    "name": "BotPromptInfo",
-                    "description": "",
-                    "kind": 1,
-                    "module": "bots",
-                    "primitive_kind": "",
-                    "enum_values": null,
+                    "kind": "object",
                     "fields": [
                       {
                         "name": "prompt",
                         "description": "文本prompt",
                         "type": {
-                          "name": "",
                           "description": "The persona and response logic of the intelligent agent. Length is 0~20,000 characters. Default is empty.",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "string",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
+                          "kind": "primimtive",
+                          "primitive_kind": "string"
+                        }
                       }
-                    ],
-                    "element_type": null,
-                    "is_named": true
-                  },
-                  "required": false
+                    ]
+                  }
                 },
                 {
                   "name": "onboarding_info",
-                  "description": "",
                   "type": {
-                    "name": "BotOnboardingInfoV2",
-                    "description": "",
-                    "kind": 1,
-                    "module": "bots",
-                    "primitive_kind": "",
-                    "enum_values": null,
+                    "kind": "object",
                     "fields": [
-                      {
-                        "name": "suggested_questions_show_mode",
-                        "description": "",
-                        "type": {
-                          "name": "",
-                          "description": "",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "int",
-                          "enum_values": [
-                            {
-                              "name": "Random",
-                              "val": 0
-                            },
-                            {
-                              "name": "All",
-                              "val": 1
-                            }
-                          ],
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
-                      },
                       {
                         "name": "customized_onboarding_prompt",
                         "description": "LLM生成，用户自定义 Prompt",
                         "type": {
-                          "name": "",
                           "description": "LLM generation, user-customized Prompt",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "string",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
+                          "kind": "primimtive",
+                          "primitive_kind": "string"
+                        }
                       },
                       {
                         "name": "onboarding_mode",
-                        "description": "",
                         "type": {
-                          "name": "OnboardingMode",
-                          "description": "",
-                          "kind": 0,
-                          "module": "bots",
+                          "kind": "primimtive",
                           "primitive_kind": "int",
                           "enum_values": [
                             {
@@ -1259,68 +690,55 @@
                               "name": "USE_LLM",
                               "val": 3
                             }
-                          ],
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": true
-                        },
-                        "required": false
+                          ]
+                        }
                       },
                       {
                         "name": "prologue",
                         "description": "对应 Coze Opening Dialog开场白",
                         "type": {
-                          "name": "",
                           "description": "Opening remarks for agent configuration.\n\nIf the opening remarks set a user name variable `{{user_name}}`, the business side needs to handle it by itself in the API scenario, such as replacing this variable with the user name on the business side when displaying the opening remarks.",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "string",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
+                          "kind": "primimtive",
+                          "primitive_kind": "string"
+                        }
                       },
                       {
                         "name": "suggested_questions",
                         "description": "建议问题",
                         "type": {
-                          "name": "",
                           "description": "Recommended list of agent configuration questions. This field is not returned when user question suggestions are not enabled.",
-                          "kind": 2,
-                          "module": "",
-                          "primitive_kind": "",
-                          "enum_values": null,
-                          "fields": null,
+                          "kind": "array",
                           "element_type": {
-                            "name": "",
-                            "description": "",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "is_named": false
-                        },
-                        "required": false
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        }
+                      },
+                      {
+                        "name": "suggested_questions_show_mode",
+                        "type": {
+                          "kind": "primimtive",
+                          "primitive_kind": "int",
+                          "enum_values": [
+                            {
+                              "name": "Random",
+                              "val": 0
+                            },
+                            {
+                              "name": "All",
+                              "val": 1
+                            }
+                          ]
+                        }
                       }
-                    ],
-                    "element_type": null,
-                    "is_named": true
-                  },
-                  "required": false
+                    ]
+                  }
                 },
                 {
                   "name": "bot_mode",
-                  "description": "",
                   "type": {
                     "name": "BotMode",
-                    "description": "",
-                    "kind": 0,
+                    "kind": "primimtive",
                     "module": "bots",
                     "primitive_kind": "int",
                     "enum_values": [
@@ -1337,565 +755,406 @@
                         "val": 2
                       }
                     ],
-                    "fields": null,
-                    "element_type": null,
                     "is_named": true
-                  },
-                  "required": false
+                  }
                 },
                 {
                   "name": "plugin_info_list",
                   "description": "插件信息列表",
                   "type": {
-                    "name": "",
                     "description": "Agent configuration plugins.",
-                    "kind": 2,
-                    "module": "",
-                    "primitive_kind": "",
-                    "enum_values": null,
-                    "fields": null,
+                    "kind": "array",
                     "element_type": {
-                      "name": "BotPluginInfo",
-                      "description": "",
-                      "kind": 1,
-                      "module": "bots",
-                      "primitive_kind": "",
-                      "enum_values": null,
+                      "kind": "object",
                       "fields": [
-                        {
-                          "name": "icon_url",
-                          "description": "插件图片url",
-                          "type": {
-                            "name": "",
-                            "description": "Plugin avatar.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
-                        },
-                        {
-                          "name": "name",
-                          "description": "插件名称",
-                          "type": {
-                            "name": "",
-                            "description": "Plugin Name.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
-                        },
-                        {
-                          "name": "plugin_id",
-                          "description": "插件id",
-                          "type": {
-                            "name": "",
-                            "description": "Plugin unique identifier.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
-                        },
                         {
                           "name": "api_info_list",
                           "description": "插件包含的api列表",
                           "type": {
-                            "name": "",
                             "description": "Information about the tool list of the plugin.",
-                            "kind": 2,
-                            "module": "",
-                            "primitive_kind": "",
-                            "enum_values": null,
-                            "fields": null,
+                            "kind": "array",
                             "element_type": {
-                              "name": "BotPluginAPIInfo",
-                              "description": "",
-                              "kind": 1,
-                              "module": "bots",
-                              "primitive_kind": "",
-                              "enum_values": null,
+                              "kind": "object",
                               "fields": [
+                                {
+                                  "name": "api_id",
+                                  "description": "api id",
+                                  "type": {
+                                    "description": "Unique identifier of the tool.",
+                                    "kind": "primimtive",
+                                    "primitive_kind": "string"
+                                  }
+                                },
                                 {
                                   "name": "description",
                                   "description": "api描述",
                                   "type": {
-                                    "name": "",
                                     "description": "Description of the tool.",
-                                    "kind": 0,
-                                    "module": "",
-                                    "primitive_kind": "string",
-                                    "enum_values": null,
-                                    "fields": null,
-                                    "element_type": null,
-                                    "is_named": false
-                                  },
-                                  "required": false
+                                    "kind": "primimtive",
+                                    "primitive_kind": "string"
+                                  }
                                 },
                                 {
                                   "name": "name",
                                   "description": "api名称",
                                   "type": {
-                                    "name": "",
                                     "description": "The name of the tool.",
-                                    "kind": 0,
-                                    "module": "",
-                                    "primitive_kind": "string",
-                                    "enum_values": null,
-                                    "fields": null,
-                                    "element_type": null,
-                                    "is_named": false
-                                  },
-                                  "required": false
-                                },
-                                {
-                                  "name": "api_id",
-                                  "description": "api id",
-                                  "type": {
-                                    "name": "",
-                                    "description": "Unique identifier of the tool.",
-                                    "kind": 0,
-                                    "module": "",
-                                    "primitive_kind": "string",
-                                    "enum_values": null,
-                                    "fields": null,
-                                    "element_type": null,
-                                    "is_named": false
-                                  },
-                                  "required": false
+                                    "kind": "primimtive",
+                                    "primitive_kind": "string"
+                                  }
                                 }
-                              ],
-                              "element_type": null,
-                              "is_named": true
-                            },
-                            "is_named": false
-                          },
-                          "required": false
+                              ]
+                            }
+                          }
                         },
                         {
                           "name": "description",
                           "description": "插件描述",
                           "type": {
-                            "name": "",
                             "description": "Plugin Description.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        },
+                        {
+                          "name": "icon_url",
+                          "description": "插件图片url",
+                          "type": {
+                            "description": "Plugin avatar.",
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        },
+                        {
+                          "name": "name",
+                          "description": "插件名称",
+                          "type": {
+                            "description": "Plugin Name.",
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        },
+                        {
+                          "name": "plugin_id",
+                          "description": "插件id",
+                          "type": {
+                            "description": "Plugin unique identifier.",
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
                         }
-                      ],
-                      "element_type": null,
-                      "is_named": true
-                    },
-                    "is_named": false
-                  },
-                  "required": false
+                      ]
+                    }
+                  }
                 },
                 {
                   "name": "model_info",
-                  "description": "",
                   "type": {
-                    "name": "BotModelInfo",
-                    "description": "",
-                    "kind": 1,
-                    "module": "bots",
-                    "primitive_kind": "",
-                    "enum_values": null,
+                    "kind": "object",
                     "fields": [
-                      {
-                        "name": "max_tokens",
-                        "description": "最大回复长度",
-                        "type": {
-                          "name": "",
-                          "description": "最大回复长度",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "int",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
-                      },
-                      {
-                        "name": "model_name",
-                        "description": "模型名称",
-                        "type": {
-                          "name": "",
-                          "description": "Model Name.",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "string",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
-                      },
-                      {
-                        "name": "presence_penalty",
-                        "description": "存在惩罚 没配置不返回",
-                        "type": {
-                          "name": "",
-                          "description": "存在惩罚 没配置不返回",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "float",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
-                      },
-                      {
-                        "name": "temperature",
-                        "description": "生成随机性 没配置不返回",
-                        "type": {
-                          "name": "",
-                          "description": "生成随机性 没配置不返回",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "float",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
-                      },
                       {
                         "name": "top_p",
                         "description": "top p 没配置不返回",
                         "type": {
-                          "name": "",
                           "description": "top p 没配置不返回",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "float",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
+                          "kind": "primimtive",
+                          "primitive_kind": "float"
+                        }
                       },
                       {
                         "name": "frequency_penalty",
                         "description": "频率惩罚 没配置不返回",
                         "type": {
-                          "name": "",
                           "description": "频率惩罚 没配置不返回",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "float",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
+                          "kind": "primimtive",
+                          "primitive_kind": "float"
+                        }
                       },
                       {
                         "name": "model_id",
                         "description": "模型id",
                         "type": {
-                          "name": "",
                           "description": "Unique identifier of the model.",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "string",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
+                          "kind": "primimtive",
+                          "primitive_kind": "string"
+                        }
+                      },
+                      {
+                        "name": "model_name",
+                        "description": "模型名称",
+                        "type": {
+                          "description": "Model Name.",
+                          "kind": "primimtive",
+                          "primitive_kind": "string"
+                        }
                       },
                       {
                         "name": "response_format",
                         "description": "输出格式 text、markdown、json",
                         "type": {
-                          "name": "",
                           "description": "输出格式 text、markdown、json",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "string",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
+                          "kind": "primimtive",
+                          "primitive_kind": "string"
+                        }
                       },
                       {
                         "name": "top_k",
                         "description": "生成时，采样候选集的大小 没配置不返回",
                         "type": {
-                          "name": "",
                           "description": "生成时，采样候选集的大小 没配置不返回",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "int",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
+                          "kind": "primimtive",
+                          "primitive_kind": "int"
+                        }
                       },
                       {
                         "name": "context_round",
                         "description": "携带上下文轮数",
                         "type": {
-                          "name": "",
                           "description": "携带上下文轮数",
-                          "kind": 0,
-                          "module": "",
-                          "primitive_kind": "int",
-                          "enum_values": null,
-                          "fields": null,
-                          "element_type": null,
-                          "is_named": false
-                        },
-                        "required": false
+                          "kind": "primimtive",
+                          "primitive_kind": "int"
+                        }
+                      },
+                      {
+                        "name": "max_tokens",
+                        "description": "最大回复长度",
+                        "type": {
+                          "description": "最大回复长度",
+                          "kind": "primimtive",
+                          "primitive_kind": "int"
+                        }
+                      },
+                      {
+                        "name": "presence_penalty",
+                        "description": "存在惩罚 没配置不返回",
+                        "type": {
+                          "description": "存在惩罚 没配置不返回",
+                          "kind": "primimtive",
+                          "primitive_kind": "float"
+                        }
+                      },
+                      {
+                        "name": "temperature",
+                        "description": "生成随机性 没配置不返回",
+                        "type": {
+                          "description": "生成随机性 没配置不返回",
+                          "kind": "primimtive",
+                          "primitive_kind": "float"
+                        }
                       }
-                    ],
-                    "element_type": null,
-                    "is_named": true
-                  },
-                  "required": false
+                    ]
+                  }
                 },
                 {
                   "name": "voice_data_list",
                   "description": "选择的语音信息",
                   "type": {
-                    "name": "",
                     "description": "Selected voice information",
-                    "kind": 2,
-                    "module": "",
-                    "primitive_kind": "",
-                    "enum_values": null,
-                    "fields": null,
+                    "kind": "array",
                     "element_type": {
                       "name": "VoiceData",
-                      "description": "",
-                      "kind": 1,
+                      "kind": "object",
                       "module": "bots",
-                      "primitive_kind": "",
-                      "enum_values": null,
                       "fields": [
                         {
                           "name": "id",
                           "description": "唯一id",
                           "type": {
-                            "name": "",
                             "description": "Unique ID",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
                         },
                         {
                           "name": "language_code",
                           "description": "音色语种code",
                           "type": {
-                            "name": "",
                             "description": "Timbre language code",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
                         },
                         {
                           "name": "language_name",
                           "description": "音色语种名称",
                           "type": {
-                            "name": "",
                             "description": "Timbre language name",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
                         },
                         {
                           "name": "name",
                           "description": "音色名称",
                           "type": {
-                            "name": "",
                             "description": "Timbre name",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
                         },
                         {
                           "name": "preview_audio",
                           "description": "预览音色内容",
                           "type": {
-                            "name": "",
                             "description": "Preview tone content.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
                         },
                         {
                           "name": "preview_text",
                           "description": "预览文本内容",
                           "type": {
-                            "name": "",
                             "description": "Preview the text content",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
                         },
                         {
                           "name": "style_id",
                           "description": "音色 style_id",
                           "type": {
-                            "name": "",
                             "description": "Timbre style_id",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
                         }
                       ],
-                      "element_type": null,
                       "is_named": true
-                    },
-                    "is_named": false
-                  },
-                  "required": false
+                    }
+                  }
                 }
               ],
-              "element_type": null,
               "is_named": true
             },
             "required": true
           }
-        ],
-        "element_type": null,
-        "is_named": false
+        ]
       }
     }
   ],
   "types": [
     {
-      "name": "Knowledge",
-      "description": "",
-      "kind": 1,
+      "name": "VoiceData",
+      "kind": "object",
       "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
+      "fields": [
+        {
+          "name": "id",
+          "description": "唯一id",
+          "type": {
+            "description": "Unique ID",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "language_code",
+          "description": "音色语种code",
+          "type": {
+            "description": "Timbre language code",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "language_name",
+          "description": "音色语种名称",
+          "type": {
+            "description": "Timbre language name",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "name",
+          "description": "音色名称",
+          "type": {
+            "description": "Timbre name",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "preview_audio",
+          "description": "预览音色内容",
+          "type": {
+            "description": "Preview tone content.",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "preview_text",
+          "description": "预览文本内容",
+          "type": {
+            "description": "Preview the text content",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "style_id",
+          "description": "音色 style_id",
+          "type": {
+            "description": "Timbre style_id",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        }
+      ],
+      "is_named": true
+    },
+    {
+      "name": "CreateDraftBotData",
+      "kind": "object",
+      "module": "bots",
+      "fields": [
+        {
+          "name": "bot_id",
+          "type": {
+            "description": "The ID of the created agent.",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          },
+          "required": true
+        }
+      ],
+      "is_named": true
+    },
+    {
+      "name": "Knowledge",
+      "kind": "object",
+      "module": "bots",
       "fields": [
         {
           "name": "dataset_ids",
           "description": "更新知识库列表 全量覆盖更新",
           "type": {
-            "name": "",
             "description": "The knowledge base ID bound to the agent.\nIn the Button platform, open the specified knowledge base page, and the number after the knowledge parameter in the page URL is the knowledge base ID. For example, https://bots.bytedance.net/space/736142423532160****/knowledge/738509371792341****, the knowledge base ID is 738509371792341****.",
-            "kind": 2,
-            "module": "",
-            "primitive_kind": "",
-            "enum_values": null,
-            "fields": null,
+            "kind": "array",
             "element_type": {
-              "name": "",
-              "description": "",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "is_named": false
-          },
-          "required": false
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            }
+          }
         },
         {
           "name": "auto_call",
           "description": "自动调用 or 按需调用",
           "type": {
-            "name": "",
             "description": "Whether to automatically call the knowledge base. The values include:\n\n- **true: (default) automatically call**. The knowledge base is called in each round of conversation, using the recalled content to assist in generating replies.\n- **false: call as needed**. The knowledge base is called based on actual needs, using the recalled content to assist in generating replies. In this case, it is necessary to clearly specify in the persona and reply logic area on the left under what circumstances to call which knowledge base to reply.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "bool",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "kind": "primimtive",
+            "primitive_kind": "bool"
+          }
         },
         {
           "name": "search_strategy",
-          "description": "",
           "type": {
-            "name": "",
+            "name": "SearchStrategy",
             "description": "The search strategy for the knowledge base. Values include:\n0: (Default) Semantic search. Understand the relationships between words and sentences like a human does.\n1: Hybrid search. Combine the advantages of full-text retrieval and semantic search, and sort the results comprehensively to recall relevant content fragments.\n20: Full-text search. Full-text retrieval based on keywords.",
-            "kind": 0,
-            "module": "",
+            "kind": "primimtive",
+            "module": "bots",
             "primitive_kind": "int",
             "enum_values": [
               {
@@ -1911,1141 +1170,163 @@
                 "val": 20
               }
             ],
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "is_named": true
+          }
         }
       ],
-      "element_type": null,
-      "is_named": true
-    },
-    {
-      "name": "CreateDraftBotData",
-      "description": "",
-      "kind": 1,
-      "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
-      "fields": [
-        {
-          "name": "bot_id",
-          "description": "",
-          "type": {
-            "name": "",
-            "description": "The ID of the created agent.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": true
-        }
-      ],
-      "element_type": null,
       "is_named": true
     },
     {
       "name": "SimpleBot",
-      "description": "",
-      "kind": 1,
+      "kind": "object",
       "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
       "fields": [
         {
-          "name": "bot_name",
-          "description": "",
+          "name": "bot_id",
           "type": {
-            "name": "",
+            "description": "The unique identifier of the agent.",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "bot_name",
+          "type": {
             "description": "The name of the agent.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
         },
         {
           "name": "description",
-          "description": "",
           "type": {
-            "name": "",
             "description": "Description of the intelligent agent.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
         },
         {
           "name": "icon_url",
-          "description": "",
           "type": {
-            "name": "",
             "description": "Avatar of the intelligent agent.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
         },
         {
           "name": "publish_time",
-          "description": "",
           "type": {
-            "name": "",
             "description": "The most recent release time of the agent, formatted as a 10-digit Unixtime timestamp. The list of agents returned by this API is sorted in descending order by this field.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "bot_id",
-          "description": "",
-          "type": {
-            "name": "",
-            "description": "The unique identifier of the agent.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
         }
       ],
-      "element_type": null,
-      "is_named": true
-    },
-    {
-      "name": "BotModelInfo",
-      "description": "",
-      "kind": 1,
-      "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
-      "fields": [
-        {
-          "name": "max_tokens",
-          "description": "最大回复长度",
-          "type": {
-            "name": "",
-            "description": "最大回复长度",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "int",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "model_name",
-          "description": "模型名称",
-          "type": {
-            "name": "",
-            "description": "Model Name.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "presence_penalty",
-          "description": "存在惩罚 没配置不返回",
-          "type": {
-            "name": "",
-            "description": "存在惩罚 没配置不返回",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "float",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "temperature",
-          "description": "生成随机性 没配置不返回",
-          "type": {
-            "name": "",
-            "description": "生成随机性 没配置不返回",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "float",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "top_p",
-          "description": "top p 没配置不返回",
-          "type": {
-            "name": "",
-            "description": "top p 没配置不返回",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "float",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "frequency_penalty",
-          "description": "频率惩罚 没配置不返回",
-          "type": {
-            "name": "",
-            "description": "频率惩罚 没配置不返回",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "float",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "model_id",
-          "description": "模型id",
-          "type": {
-            "name": "",
-            "description": "Unique identifier of the model.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "response_format",
-          "description": "输出格式 text、markdown、json",
-          "type": {
-            "name": "",
-            "description": "输出格式 text、markdown、json",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "top_k",
-          "description": "生成时，采样候选集的大小 没配置不返回",
-          "type": {
-            "name": "",
-            "description": "生成时，采样候选集的大小 没配置不返回",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "int",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "context_round",
-          "description": "携带上下文轮数",
-          "type": {
-            "name": "",
-            "description": "携带上下文轮数",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "int",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        }
-      ],
-      "element_type": null,
-      "is_named": true
-    },
-    {
-      "name": "PublishDraftBotData",
-      "description": "",
-      "kind": 1,
-      "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
-      "fields": [
-        {
-          "name": "bot_id",
-          "description": "",
-          "type": {
-            "name": "",
-            "description": "The ID of the agent.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "version",
-          "description": "",
-          "type": {
-            "name": "",
-            "description": "The version of the agent.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        }
-      ],
-      "element_type": null,
-      "is_named": true
-    },
-    {
-      "name": "SpacePublishedBotsInfo",
-      "description": "",
-      "kind": 1,
-      "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
-      "fields": [
-        {
-          "name": "space_bots",
-          "description": "",
-          "type": {
-            "name": "",
-            "description": "List of agents published to the Agent as API channel in the specified space.",
-            "kind": 2,
-            "module": "",
-            "primitive_kind": "",
-            "enum_values": null,
-            "fields": null,
-            "element_type": {
-              "name": "SimpleBot",
-              "description": "",
-              "kind": 1,
-              "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
-              "fields": [
-                {
-                  "name": "bot_name",
-                  "description": "",
-                  "type": {
-                    "name": "",
-                    "description": "The name of the agent.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                },
-                {
-                  "name": "description",
-                  "description": "",
-                  "type": {
-                    "name": "",
-                    "description": "Description of the intelligent agent.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                },
-                {
-                  "name": "icon_url",
-                  "description": "",
-                  "type": {
-                    "name": "",
-                    "description": "Avatar of the intelligent agent.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                },
-                {
-                  "name": "publish_time",
-                  "description": "",
-                  "type": {
-                    "name": "",
-                    "description": "The most recent release time of the agent, formatted as a 10-digit Unixtime timestamp. The list of agents returned by this API is sorted in descending order by this field.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                },
-                {
-                  "name": "bot_id",
-                  "description": "",
-                  "type": {
-                    "name": "",
-                    "description": "The unique identifier of the agent.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                }
-              ],
-              "element_type": null,
-              "is_named": true
-            },
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "total",
-          "description": "",
-          "type": {
-            "name": "",
-            "description": "Total number of agents in the agent list.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "int",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        }
-      ],
-      "element_type": null,
-      "is_named": true
-    },
-    {
-      "name": "BotPluginInfo",
-      "description": "",
-      "kind": 1,
-      "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
-      "fields": [
-        {
-          "name": "icon_url",
-          "description": "插件图片url",
-          "type": {
-            "name": "",
-            "description": "Plugin avatar.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "name",
-          "description": "插件名称",
-          "type": {
-            "name": "",
-            "description": "Plugin Name.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "plugin_id",
-          "description": "插件id",
-          "type": {
-            "name": "",
-            "description": "Plugin unique identifier.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "api_info_list",
-          "description": "插件包含的api列表",
-          "type": {
-            "name": "",
-            "description": "Information about the tool list of the plugin.",
-            "kind": 2,
-            "module": "",
-            "primitive_kind": "",
-            "enum_values": null,
-            "fields": null,
-            "element_type": {
-              "name": "BotPluginAPIInfo",
-              "description": "",
-              "kind": 1,
-              "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
-              "fields": [
-                {
-                  "name": "description",
-                  "description": "api描述",
-                  "type": {
-                    "name": "",
-                    "description": "Description of the tool.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                },
-                {
-                  "name": "name",
-                  "description": "api名称",
-                  "type": {
-                    "name": "",
-                    "description": "The name of the tool.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                },
-                {
-                  "name": "api_id",
-                  "description": "api id",
-                  "type": {
-                    "name": "",
-                    "description": "Unique identifier of the tool.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                }
-              ],
-              "element_type": null,
-              "is_named": true
-            },
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "description",
-          "description": "插件描述",
-          "type": {
-            "name": "",
-            "description": "Plugin Description.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        }
-      ],
-      "element_type": null,
-      "is_named": true
-    },
-    {
-      "name": "BotOnboardingInfo",
-      "description": "",
-      "kind": 1,
-      "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
-      "fields": [
-        {
-          "name": "prologue",
-          "description": "开场白",
-          "type": {
-            "name": "",
-            "description": "Agent's opening remarks. Length: 0~300 characters. Default: no opening remarks.\n\nIf the opening remarks include the user name variable `{{user_name}}`, the business side needs to handle it in the API scenario, such as replacing this variable with the user's name on the business side when displaying the opening remarks.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "suggested_questions",
-          "description": "建议问题",
-          "type": {
-            "name": "",
-            "description": "Preset questions for agent's opening remarks. Each question should be 0~50 characters in length, with an unlimited number of questions. No default preset questions.",
-            "kind": 2,
-            "module": "",
-            "primitive_kind": "",
-            "enum_values": null,
-            "fields": null,
-            "element_type": {
-              "name": "",
-              "description": "",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "is_named": false
-          },
-          "required": false
-        }
-      ],
-      "element_type": null,
-      "is_named": true
-    },
-    {
-      "name": "OnboardingMode",
-      "description": "",
-      "kind": 0,
-      "module": "bots",
-      "primitive_kind": "int",
-      "enum_values": [
-        {
-          "name": "NO_NEED",
-          "val": 1
-        },
-        {
-          "name": "USE_MANUAL",
-          "val": 2
-        },
-        {
-          "name": "USE_LLM",
-          "val": 3
-        }
-      ],
-      "fields": null,
-      "element_type": null,
-      "is_named": true
-    },
-    {
-      "name": "BotPromptInfo",
-      "description": "",
-      "kind": 1,
-      "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
-      "fields": [
-        {
-          "name": "prompt",
-          "description": "文本prompt",
-          "type": {
-            "name": "",
-            "description": "The persona and response logic of the intelligent agent. Length is 0~20,000 characters. Default is empty.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        }
-      ],
-      "element_type": null,
-      "is_named": true
-    },
-    {
-      "name": "BotPluginAPIInfo",
-      "description": "",
-      "kind": 1,
-      "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
-      "fields": [
-        {
-          "name": "description",
-          "description": "api描述",
-          "type": {
-            "name": "",
-            "description": "Description of the tool.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "name",
-          "description": "api名称",
-          "type": {
-            "name": "",
-            "description": "The name of the tool.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "api_id",
-          "description": "api id",
-          "type": {
-            "name": "",
-            "description": "Unique identifier of the tool.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        }
-      ],
-      "element_type": null,
-      "is_named": true
-    },
-    {
-      "name": "BotOnboardingInfoV2",
-      "description": "",
-      "kind": 1,
-      "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
-      "fields": [
-        {
-          "name": "suggested_questions_show_mode",
-          "description": "",
-          "type": {
-            "name": "",
-            "description": "",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "int",
-            "enum_values": [
-              {
-                "name": "Random",
-                "val": 0
-              },
-              {
-                "name": "All",
-                "val": 1
-              }
-            ],
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "customized_onboarding_prompt",
-          "description": "LLM生成，用户自定义 Prompt",
-          "type": {
-            "name": "",
-            "description": "LLM generation, user-customized Prompt",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "onboarding_mode",
-          "description": "",
-          "type": {
-            "name": "OnboardingMode",
-            "description": "",
-            "kind": 0,
-            "module": "bots",
-            "primitive_kind": "int",
-            "enum_values": [
-              {
-                "name": "NO_NEED",
-                "val": 1
-              },
-              {
-                "name": "USE_MANUAL",
-                "val": 2
-              },
-              {
-                "name": "USE_LLM",
-                "val": 3
-              }
-            ],
-            "fields": null,
-            "element_type": null,
-            "is_named": true
-          },
-          "required": false
-        },
-        {
-          "name": "prologue",
-          "description": "对应 Coze Opening Dialog开场白",
-          "type": {
-            "name": "",
-            "description": "Opening remarks for agent configuration.\n\nIf the opening remarks set a user name variable `{{user_name}}`, the business side needs to handle it by itself in the API scenario, such as replacing this variable with the user name on the business side when displaying the opening remarks.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "suggested_questions",
-          "description": "建议问题",
-          "type": {
-            "name": "",
-            "description": "Recommended list of agent configuration questions. This field is not returned when user question suggestions are not enabled.",
-            "kind": 2,
-            "module": "",
-            "primitive_kind": "",
-            "enum_values": null,
-            "fields": null,
-            "element_type": {
-              "name": "",
-              "description": "",
-              "kind": 0,
-              "module": "",
-              "primitive_kind": "string",
-              "enum_values": null,
-              "fields": null,
-              "element_type": null,
-              "is_named": false
-            },
-            "is_named": false
-          },
-          "required": false
-        }
-      ],
-      "element_type": null,
       "is_named": true
     },
     {
       "name": "Bot",
-      "description": "",
-      "kind": 1,
+      "kind": "object",
       "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
       "fields": [
         {
           "name": "bot_id",
           "description": "bot id",
           "type": {
-            "name": "",
             "description": "The unique identifier of the agent.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
         },
         {
           "name": "name",
           "description": "bot名称",
           "type": {
-            "name": "",
             "description": "Agent Name.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
         },
         {
           "name": "description",
           "description": "bot描述",
           "type": {
-            "name": "",
             "description": "Description of the agent.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
         },
         {
           "name": "icon_url",
           "description": "bot图像url",
           "type": {
-            "name": "",
             "description": "Avatar URL of the intelligent agent.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
         },
         {
           "name": "create_time",
           "description": "创建时间",
           "type": {
-            "name": "",
             "description": "Create time, formatted as a 10-digit Unix timestamp, in seconds (s).",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "int",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "kind": "primimtive",
+            "primitive_kind": "int"
+          }
         },
         {
           "name": "update_time",
           "description": "更新时间",
           "type": {
-            "name": "",
             "description": "Update time, formatted as a 10-digit Unix timestamp in seconds (s).",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "int",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "kind": "primimtive",
+            "primitive_kind": "int"
+          }
         },
         {
           "name": "version",
           "description": "版本",
           "type": {
-            "name": "",
             "description": "The version number of the latest release of the agent.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
         },
         {
           "name": "prompt_info",
-          "description": "",
           "type": {
-            "name": "BotPromptInfo",
-            "description": "",
-            "kind": 1,
-            "module": "bots",
-            "primitive_kind": "",
-            "enum_values": null,
+            "kind": "object",
             "fields": [
               {
                 "name": "prompt",
                 "description": "文本prompt",
                 "type": {
-                  "name": "",
                   "description": "The persona and response logic of the intelligent agent. Length is 0~20,000 characters. Default is empty.",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "string",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
+                  "kind": "primimtive",
+                  "primitive_kind": "string"
+                }
               }
-            ],
-            "element_type": null,
-            "is_named": true
-          },
-          "required": false
+            ]
+          }
         },
         {
           "name": "onboarding_info",
-          "description": "",
           "type": {
-            "name": "BotOnboardingInfoV2",
-            "description": "",
-            "kind": 1,
-            "module": "bots",
-            "primitive_kind": "",
-            "enum_values": null,
+            "kind": "object",
             "fields": [
-              {
-                "name": "suggested_questions_show_mode",
-                "description": "",
-                "type": {
-                  "name": "",
-                  "description": "",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "int",
-                  "enum_values": [
-                    {
-                      "name": "Random",
-                      "val": 0
-                    },
-                    {
-                      "name": "All",
-                      "val": 1
-                    }
-                  ],
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
-              },
               {
                 "name": "customized_onboarding_prompt",
                 "description": "LLM生成，用户自定义 Prompt",
                 "type": {
-                  "name": "",
                   "description": "LLM generation, user-customized Prompt",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "string",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
+                  "kind": "primimtive",
+                  "primitive_kind": "string"
+                }
               },
               {
                 "name": "onboarding_mode",
-                "description": "",
                 "type": {
-                  "name": "OnboardingMode",
-                  "description": "",
-                  "kind": 0,
-                  "module": "bots",
+                  "kind": "primimtive",
                   "primitive_kind": "int",
                   "enum_values": [
                     {
@@ -3060,68 +1341,55 @@
                       "name": "USE_LLM",
                       "val": 3
                     }
-                  ],
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": true
-                },
-                "required": false
+                  ]
+                }
               },
               {
                 "name": "prologue",
                 "description": "对应 Coze Opening Dialog开场白",
                 "type": {
-                  "name": "",
                   "description": "Opening remarks for agent configuration.\n\nIf the opening remarks set a user name variable `{{user_name}}`, the business side needs to handle it by itself in the API scenario, such as replacing this variable with the user name on the business side when displaying the opening remarks.",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "string",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
+                  "kind": "primimtive",
+                  "primitive_kind": "string"
+                }
               },
               {
                 "name": "suggested_questions",
                 "description": "建议问题",
                 "type": {
-                  "name": "",
                   "description": "Recommended list of agent configuration questions. This field is not returned when user question suggestions are not enabled.",
-                  "kind": 2,
-                  "module": "",
-                  "primitive_kind": "",
-                  "enum_values": null,
-                  "fields": null,
+                  "kind": "array",
                   "element_type": {
-                    "name": "",
-                    "description": "",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "is_named": false
-                },
-                "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                }
+              },
+              {
+                "name": "suggested_questions_show_mode",
+                "type": {
+                  "kind": "primimtive",
+                  "primitive_kind": "int",
+                  "enum_values": [
+                    {
+                      "name": "Random",
+                      "val": 0
+                    },
+                    {
+                      "name": "All",
+                      "val": 1
+                    }
+                  ]
+                }
               }
-            ],
-            "element_type": null,
-            "is_named": true
-          },
-          "required": false
+            ]
+          }
         },
         {
           "name": "bot_mode",
-          "description": "",
           "type": {
             "name": "BotMode",
-            "description": "",
-            "kind": 0,
+            "kind": "primimtive",
             "module": "bots",
             "primitive_kind": "int",
             "enum_values": [
@@ -3138,502 +1406,381 @@
                 "val": 2
               }
             ],
-            "fields": null,
-            "element_type": null,
             "is_named": true
-          },
-          "required": false
+          }
         },
         {
           "name": "plugin_info_list",
           "description": "插件信息列表",
           "type": {
-            "name": "",
             "description": "Agent configuration plugins.",
-            "kind": 2,
-            "module": "",
-            "primitive_kind": "",
-            "enum_values": null,
-            "fields": null,
+            "kind": "array",
             "element_type": {
-              "name": "BotPluginInfo",
-              "description": "",
-              "kind": 1,
-              "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
+              "kind": "object",
               "fields": [
-                {
-                  "name": "icon_url",
-                  "description": "插件图片url",
-                  "type": {
-                    "name": "",
-                    "description": "Plugin avatar.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                },
-                {
-                  "name": "name",
-                  "description": "插件名称",
-                  "type": {
-                    "name": "",
-                    "description": "Plugin Name.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                },
-                {
-                  "name": "plugin_id",
-                  "description": "插件id",
-                  "type": {
-                    "name": "",
-                    "description": "Plugin unique identifier.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
-                },
                 {
                   "name": "api_info_list",
                   "description": "插件包含的api列表",
                   "type": {
-                    "name": "",
                     "description": "Information about the tool list of the plugin.",
-                    "kind": 2,
-                    "module": "",
-                    "primitive_kind": "",
-                    "enum_values": null,
-                    "fields": null,
+                    "kind": "array",
                     "element_type": {
-                      "name": "BotPluginAPIInfo",
-                      "description": "",
-                      "kind": 1,
-                      "module": "bots",
-                      "primitive_kind": "",
-                      "enum_values": null,
+                      "kind": "object",
                       "fields": [
+                        {
+                          "name": "api_id",
+                          "description": "api id",
+                          "type": {
+                            "description": "Unique identifier of the tool.",
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
+                        },
                         {
                           "name": "description",
                           "description": "api描述",
                           "type": {
-                            "name": "",
                             "description": "Description of the tool.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
                         },
                         {
                           "name": "name",
                           "description": "api名称",
                           "type": {
-                            "name": "",
                             "description": "The name of the tool.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
-                        },
-                        {
-                          "name": "api_id",
-                          "description": "api id",
-                          "type": {
-                            "name": "",
-                            "description": "Unique identifier of the tool.",
-                            "kind": 0,
-                            "module": "",
-                            "primitive_kind": "string",
-                            "enum_values": null,
-                            "fields": null,
-                            "element_type": null,
-                            "is_named": false
-                          },
-                          "required": false
+                            "kind": "primimtive",
+                            "primitive_kind": "string"
+                          }
                         }
-                      ],
-                      "element_type": null,
-                      "is_named": true
-                    },
-                    "is_named": false
-                  },
-                  "required": false
+                      ]
+                    }
+                  }
                 },
                 {
                   "name": "description",
                   "description": "插件描述",
                   "type": {
-                    "name": "",
                     "description": "Plugin Description.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "icon_url",
+                  "description": "插件图片url",
+                  "type": {
+                    "description": "Plugin avatar.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "name",
+                  "description": "插件名称",
+                  "type": {
+                    "description": "Plugin Name.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "plugin_id",
+                  "description": "插件id",
+                  "type": {
+                    "description": "Plugin unique identifier.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 }
-              ],
-              "element_type": null,
-              "is_named": true
-            },
-            "is_named": false
-          },
-          "required": false
+              ]
+            }
+          }
         },
         {
           "name": "model_info",
-          "description": "",
           "type": {
-            "name": "BotModelInfo",
-            "description": "",
-            "kind": 1,
-            "module": "bots",
-            "primitive_kind": "",
-            "enum_values": null,
+            "kind": "object",
             "fields": [
-              {
-                "name": "max_tokens",
-                "description": "最大回复长度",
-                "type": {
-                  "name": "",
-                  "description": "最大回复长度",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "int",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
-              },
-              {
-                "name": "model_name",
-                "description": "模型名称",
-                "type": {
-                  "name": "",
-                  "description": "Model Name.",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "string",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
-              },
-              {
-                "name": "presence_penalty",
-                "description": "存在惩罚 没配置不返回",
-                "type": {
-                  "name": "",
-                  "description": "存在惩罚 没配置不返回",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "float",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
-              },
-              {
-                "name": "temperature",
-                "description": "生成随机性 没配置不返回",
-                "type": {
-                  "name": "",
-                  "description": "生成随机性 没配置不返回",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "float",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
-              },
               {
                 "name": "top_p",
                 "description": "top p 没配置不返回",
                 "type": {
-                  "name": "",
                   "description": "top p 没配置不返回",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "float",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
+                  "kind": "primimtive",
+                  "primitive_kind": "float"
+                }
               },
               {
                 "name": "frequency_penalty",
                 "description": "频率惩罚 没配置不返回",
                 "type": {
-                  "name": "",
                   "description": "频率惩罚 没配置不返回",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "float",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
+                  "kind": "primimtive",
+                  "primitive_kind": "float"
+                }
               },
               {
                 "name": "model_id",
                 "description": "模型id",
                 "type": {
-                  "name": "",
                   "description": "Unique identifier of the model.",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "string",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
+                  "kind": "primimtive",
+                  "primitive_kind": "string"
+                }
+              },
+              {
+                "name": "model_name",
+                "description": "模型名称",
+                "type": {
+                  "description": "Model Name.",
+                  "kind": "primimtive",
+                  "primitive_kind": "string"
+                }
               },
               {
                 "name": "response_format",
                 "description": "输出格式 text、markdown、json",
                 "type": {
-                  "name": "",
                   "description": "输出格式 text、markdown、json",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "string",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
+                  "kind": "primimtive",
+                  "primitive_kind": "string"
+                }
               },
               {
                 "name": "top_k",
                 "description": "生成时，采样候选集的大小 没配置不返回",
                 "type": {
-                  "name": "",
                   "description": "生成时，采样候选集的大小 没配置不返回",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "int",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
+                  "kind": "primimtive",
+                  "primitive_kind": "int"
+                }
               },
               {
                 "name": "context_round",
                 "description": "携带上下文轮数",
                 "type": {
-                  "name": "",
                   "description": "携带上下文轮数",
-                  "kind": 0,
-                  "module": "",
-                  "primitive_kind": "int",
-                  "enum_values": null,
-                  "fields": null,
-                  "element_type": null,
-                  "is_named": false
-                },
-                "required": false
+                  "kind": "primimtive",
+                  "primitive_kind": "int"
+                }
+              },
+              {
+                "name": "max_tokens",
+                "description": "最大回复长度",
+                "type": {
+                  "description": "最大回复长度",
+                  "kind": "primimtive",
+                  "primitive_kind": "int"
+                }
+              },
+              {
+                "name": "presence_penalty",
+                "description": "存在惩罚 没配置不返回",
+                "type": {
+                  "description": "存在惩罚 没配置不返回",
+                  "kind": "primimtive",
+                  "primitive_kind": "float"
+                }
+              },
+              {
+                "name": "temperature",
+                "description": "生成随机性 没配置不返回",
+                "type": {
+                  "description": "生成随机性 没配置不返回",
+                  "kind": "primimtive",
+                  "primitive_kind": "float"
+                }
               }
-            ],
-            "element_type": null,
-            "is_named": true
-          },
-          "required": false
+            ]
+          }
         },
         {
           "name": "voice_data_list",
           "description": "选择的语音信息",
           "type": {
-            "name": "",
             "description": "Selected voice information",
-            "kind": 2,
-            "module": "",
-            "primitive_kind": "",
-            "enum_values": null,
-            "fields": null,
+            "kind": "array",
             "element_type": {
               "name": "VoiceData",
-              "description": "",
-              "kind": 1,
+              "kind": "object",
               "module": "bots",
-              "primitive_kind": "",
-              "enum_values": null,
               "fields": [
                 {
                   "name": "id",
                   "description": "唯一id",
                   "type": {
-                    "name": "",
                     "description": "Unique ID",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 },
                 {
                   "name": "language_code",
                   "description": "音色语种code",
                   "type": {
-                    "name": "",
                     "description": "Timbre language code",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 },
                 {
                   "name": "language_name",
                   "description": "音色语种名称",
                   "type": {
-                    "name": "",
                     "description": "Timbre language name",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 },
                 {
                   "name": "name",
                   "description": "音色名称",
                   "type": {
-                    "name": "",
                     "description": "Timbre name",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 },
                 {
                   "name": "preview_audio",
                   "description": "预览音色内容",
                   "type": {
-                    "name": "",
                     "description": "Preview tone content.",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 },
                 {
                   "name": "preview_text",
                   "description": "预览文本内容",
                   "type": {
-                    "name": "",
                     "description": "Preview the text content",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 },
                 {
                   "name": "style_id",
                   "description": "音色 style_id",
                   "type": {
-                    "name": "",
                     "description": "Timbre style_id",
-                    "kind": 0,
-                    "module": "",
-                    "primitive_kind": "string",
-                    "enum_values": null,
-                    "fields": null,
-                    "element_type": null,
-                    "is_named": false
-                  },
-                  "required": false
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
                 }
               ],
-              "element_type": null,
               "is_named": true
-            },
-            "is_named": false
-          },
-          "required": false
+            }
+          }
         }
       ],
-      "element_type": null,
+      "is_named": true
+    },
+    {
+      "name": "BotOnboardingInfo",
+      "kind": "object",
+      "module": "bots",
+      "fields": [
+        {
+          "name": "prologue",
+          "description": "开场白",
+          "type": {
+            "description": "Agent's opening remarks. Length: 0~300 characters. Default: no opening remarks.\n\nIf the opening remarks include the user name variable `{{user_name}}`, the business side needs to handle it in the API scenario, such as replacing this variable with the user's name on the business side when displaying the opening remarks.",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "suggested_questions",
+          "description": "建议问题",
+          "type": {
+            "description": "Preset questions for agent's opening remarks. Each question should be 0~50 characters in length, with an unlimited number of questions. No default preset questions.",
+            "kind": "array",
+            "element_type": {
+              "kind": "primimtive",
+              "primitive_kind": "string"
+            }
+          }
+        }
+      ],
+      "is_named": true
+    },
+    {
+      "name": "SpacePublishedBotsInfo",
+      "kind": "object",
+      "module": "bots",
+      "fields": [
+        {
+          "name": "space_bots",
+          "type": {
+            "description": "List of agents published to the Agent as API channel in the specified space.",
+            "kind": "array",
+            "element_type": {
+              "name": "SimpleBot",
+              "kind": "object",
+              "module": "bots",
+              "fields": [
+                {
+                  "name": "bot_id",
+                  "type": {
+                    "description": "The unique identifier of the agent.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "bot_name",
+                  "type": {
+                    "description": "The name of the agent.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "description",
+                  "type": {
+                    "description": "Description of the intelligent agent.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "icon_url",
+                  "type": {
+                    "description": "Avatar of the intelligent agent.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                },
+                {
+                  "name": "publish_time",
+                  "type": {
+                    "description": "The most recent release time of the agent, formatted as a 10-digit Unixtime timestamp. The list of agents returned by this API is sorted in descending order by this field.",
+                    "kind": "primimtive",
+                    "primitive_kind": "string"
+                  }
+                }
+              ],
+              "is_named": true
+            }
+          }
+        },
+        {
+          "name": "total",
+          "type": {
+            "description": "Total number of agents in the agent list.",
+            "kind": "primimtive",
+            "primitive_kind": "int"
+          }
+        }
+      ],
       "is_named": true
     },
     {
       "name": "BotMode",
-      "description": "",
-      "kind": 0,
+      "kind": "primimtive",
       "module": "bots",
       "primitive_kind": "int",
       "enum_values": [
@@ -3650,132 +1797,69 @@
           "val": 2
         }
       ],
-      "fields": null,
-      "element_type": null,
       "is_named": true
     },
     {
-      "name": "VoiceData",
-      "description": "",
-      "kind": 1,
+      "name": "BotPromptInfo",
+      "kind": "object",
       "module": "bots",
-      "primitive_kind": "",
-      "enum_values": null,
       "fields": [
         {
-          "name": "id",
-          "description": "唯一id",
+          "name": "prompt",
+          "description": "文本prompt",
           "type": {
-            "name": "",
-            "description": "Unique ID",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "language_code",
-          "description": "音色语种code",
-          "type": {
-            "name": "",
-            "description": "Timbre language code",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "language_name",
-          "description": "音色语种名称",
-          "type": {
-            "name": "",
-            "description": "Timbre language name",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "name",
-          "description": "音色名称",
-          "type": {
-            "name": "",
-            "description": "Timbre name",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "preview_audio",
-          "description": "预览音色内容",
-          "type": {
-            "name": "",
-            "description": "Preview tone content.",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "preview_text",
-          "description": "预览文本内容",
-          "type": {
-            "name": "",
-            "description": "Preview the text content",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
-        },
-        {
-          "name": "style_id",
-          "description": "音色 style_id",
-          "type": {
-            "name": "",
-            "description": "Timbre style_id",
-            "kind": 0,
-            "module": "",
-            "primitive_kind": "string",
-            "enum_values": null,
-            "fields": null,
-            "element_type": null,
-            "is_named": false
-          },
-          "required": false
+            "description": "The persona and response logic of the intelligent agent. Length is 0~20,000 characters. Default is empty.",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
         }
       ],
-      "element_type": null,
+      "is_named": true
+    },
+    {
+      "name": "PublishDraftBotData",
+      "kind": "object",
+      "module": "bots",
+      "fields": [
+        {
+          "name": "bot_id",
+          "type": {
+            "description": "The ID of the agent.",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        },
+        {
+          "name": "version",
+          "type": {
+            "description": "The version of the agent.",
+            "kind": "primimtive",
+            "primitive_kind": "string"
+          }
+        }
+      ],
+      "is_named": true
+    },
+    {
+      "name": "SearchStrategy",
+      "description": "The search strategy for the knowledge base. Values include:\n0: (Default) Semantic search. Understand the relationships between words and sentences like a human does.\n1: Hybrid search. Combine the advantages of full-text retrieval and semantic search, and sort the results comprehensively to recall relevant content fragments.\n20: Full-text search. Full-text retrieval based on keywords.",
+      "kind": "primimtive",
+      "module": "bots",
+      "primitive_kind": "int",
+      "enum_values": [
+        {
+          "name": "SemanticSearch",
+          "val": 0
+        },
+        {
+          "name": "HybridSearch",
+          "val": 1
+        },
+        {
+          "name": "FullTextSearch",
+          "val": 20
+        }
+      ],
       "is_named": true
     }
   ]

@@ -10,12 +10,12 @@ import (
 )
 
 // TyKind represents the kind of a type
-type TyKind int
+type TyKind string
 
 const (
-	TyKindPrimitive TyKind = iota
-	TyKindObject
-	TyKindArray
+	TyKindPrimitive TyKind = "primimtive"
+	TyKindObject    TyKind = "object"
+	TyKindArray     TyKind = "array"
 )
 
 // PrimitiveKind represents primitive types
@@ -27,62 +27,62 @@ const (
 	PrimitiveString  PrimitiveKind = "string"
 	PrimitiveBool    PrimitiveKind = "bool"
 	PrimitiveBinary  PrimitiveKind = "binary"
-	PrimitiveUnknown PrimitiveKind = "unknown"
+	PrimitiveUnknown PrimitiveKind = ""
 )
 
 // Ty represents a type in the schema
 type Ty struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
 	Kind        TyKind `json:"kind"`
-	Module      string `json:"module"` // The module this type belongs to
+	Module      string `json:"module,omitempty"` // The module this type belongs to
 
 	// For primitive types
-	PrimitiveKind PrimitiveKind `json:"primitive_kind"`
-	EnumValues    []TyEnumValue `json:"enum_values"` // Optional enum values for primitive types
+	PrimitiveKind PrimitiveKind `json:"primitive_kind,omitempty"`
+	EnumValues    []TyEnumValue `json:"enum_values,omitempty"` // Optional enum values for primitive types
 
 	// For object types
-	Fields []TyField `json:"fields"`
+	Fields []TyField `json:"fields,omitempty"`
 
 	// For array types
-	ElementType *Ty `json:"element_type"`
+	ElementType *Ty `json:"element_type,omitempty"`
 
 	// Metadata
-	IsNamed bool `json:"is_named"` // Whether this is a named type (from components)
+	IsNamed bool `json:"is_named,omitempty"` // Whether this is a named type (from components)
 }
 
 // TyField represents a field in an object type
 type TyField struct {
 	Name        string `json:"name"`
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 	Type        *Ty    `json:"type"`
-	Required    bool   `json:"required"`
+	Required    bool   `json:"required,omitempty"`
 }
 
 type TyEnumValue struct {
-	Name string      `json:"name"`
+	Name string      `json:"name,omitempty"`
 	Val  interface{} `json:"val"`
 }
 
 // TyParameter represents an operation parameter
 type TyParameter struct {
 	Name        string `json:"name"`
-	Description string `json:"description"`
-	Required    bool   `json:"required"`
+	Description string `json:"description,omitempty"`
+	Required    bool   `json:"required,omitempty"`
 	Type        *Ty    `json:"type"`
 }
 
 // HttpHandler represents an API operation
 type HttpHandler struct {
 	Name        string `json:"name"`
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 	Path        string `json:"path"`
 	Method      string `json:"method"`
 
 	// Parameters split by location
-	HeaderParams []TyParameter `json:"header_params"`
-	PathParams   []TyParameter `json:"path_params"`
-	QueryParams  []TyParameter `json:"query_params"`
+	HeaderParams []TyParameter `json:"header_params,omitempty"`
+	PathParams   []TyParameter `json:"path_params,omitempty"`
+	QueryParams  []TyParameter `json:"query_params,omitempty"`
 
 	// Request and Response
 	RequestBody  *Ty `json:"request_body"`
