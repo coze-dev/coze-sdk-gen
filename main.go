@@ -3,13 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
 
-	"github.com/coze-dev/coze-sdk-gen/generator/python"
+	"github.com/coze-dev/coze-sdk-gen/formater"
+	"github.com/coze-dev/coze-sdk-gen/generator"
+	"github.com/coze-dev/coze-sdk-gen/writer"
 	"github.com/spf13/cobra"
 )
 
@@ -54,64 +52,19 @@ Currently supports generating Python SDK.`,
 		}
 
 		// Generate SDK code based on language
-		var files map[string]string
-		switch lang {
-		case "python":
-			generator := python.Generator{}
-			files, err = generator.Generate(context.Background(), yamlContent)
-			if err != nil {
-				return fmt.Errorf("failed to generate Python SDK: %v", err)
-			}
-		default:
-			return fmt.Errorf("unsupported language %q", lang)
-		}
-
-		// Filter files by module if specified
-		if module != "" {
-			filteredFiles := make(map[string]string)
-			for dir, content := range files {
-				if dir == module {
-					filteredFiles[dir] = content
-				}
-			}
-			files = filteredFiles
-		}
-
-		// Create base directory
-		err = os.MkdirAll(outputPath, 0755)
+		files, err := generator.Generate(context.Background(), lang, yamlContent, module)
 		if err != nil {
-			return fmt.Errorf("failed to create output directory: %v", err)
+			return err
 		}
 
-		// Write each generated file
-		for dir, content := range files {
-			// Convert module name (with dots) to directory path
-			dirPath := strings.ReplaceAll(dir, ".", string(os.PathSeparator))
-			outputFilePath := filepath.Join(outputPath, dirPath, "__init__.py")
-
-			// Create subdirectory if needed
-			err = os.MkdirAll(filepath.Dir(outputFilePath), 0755)
-			if err != nil {
-				return fmt.Errorf("failed to create directory for %s: %v", dir, err)
-			}
-
-			err = os.WriteFile(outputFilePath, []byte(content), 0644)
-			if err != nil {
-				return fmt.Errorf("failed to write file %s: %v", dir, err)
-			}
-			log.Printf("Successfully generated Python file at: %s", outputFilePath)
+		// Create directory and files
+		if err = writer.WriteOutput(context.Background(), files, outputPath); err != nil {
+			return err
 		}
 
-		fmt.Println("SDK generation completed successfully!")
-
-		// Run ruff format on the generated files
-		ruffCmd := exec.Command("poetry", "run", "ruff", "format", ".")
-		ruffCmd.Dir = outputPath
-		ruffOutput, err := ruffCmd.CombinedOutput()
-		if err != nil {
-			fmt.Printf("Warning: Failed to run ruff format: %v\nOutput: %s\n", err, ruffOutput)
-		} else {
-			fmt.Println("Successfully formatted code with ruff!")
+		// Run format on the generated files
+		if err := formater.Format(context.Background(), lang, outputPath); err != nil {
+			return err
 		}
 
 		return nil

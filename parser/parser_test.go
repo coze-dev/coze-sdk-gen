@@ -33,6 +33,6 @@ func TestParser_ParseOpenAPI(t *testing.T) {
 
 	// Write to file
 	outputPath := filepath.Join(".", "bots_module.json")
-	err = os.WriteFile(outputPath, jsonData, 0644)
+	err = os.WriteFile(outputPath, jsonData, 0o644)
 	require.NoError(t, err)
 }

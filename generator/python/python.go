@@ -345,7 +345,7 @@ func (g *Generator) convertHandler(handler *parser.HttpHandler) *PythonOperation
 
 	// Convert parameters
 	var headerParams []PythonParam
-	var staticHeaders = make(map[string]string)
+	staticHeaders := make(map[string]string)
 
 	// Handle path parameters
 	for _, param := range handler.PathParams {
