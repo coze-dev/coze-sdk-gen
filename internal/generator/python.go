@@ -287,7 +287,11 @@ func writePythonSDK(
 	if err := writer.write(filepath.Join(rootDir, "model.py"), renderModelPy()); err != nil {
 		return err
 	}
-	if err := writer.write(filepath.Join(rootDir, "request.py"), renderRequestPy()); err != nil {
+	requestPy, err := renderRequestPy()
+	if err != nil {
+		return err
+	}
+	if err := writer.write(filepath.Join(rootDir, "request.py"), requestPy); err != nil {
 		return err
 	}
 	if err := writer.write(filepath.Join(rootDir, "types.py"), renderTypesPy(doc, schemaNames)); err != nil {
@@ -364,95 +368,8 @@ class CozeModel(BaseModel):
 `) + "\n"
 }
 
-func renderRequestPy() string {
-	return strings.TrimSpace(`
-from typing import Any, Dict, Optional, Type, TypeVar
-
-import httpx
-
-T = TypeVar("T")
-
-
-class Requester(object):
-    def __init__(
-        self,
-        token: Optional[str] = None,
-        sync_client: Optional[httpx.Client] = None,
-        async_client: Optional[httpx.AsyncClient] = None,
-    ):
-        self._token = token
-        self._sync_client = sync_client or httpx.Client(timeout=60.0, follow_redirects=True)
-        self._async_client = async_client or httpx.AsyncClient(timeout=60.0, follow_redirects=True)
-
-    def request(
-        self,
-        method: str,
-        url: str,
-        *,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
-        body: Any = None,
-        cast: Optional[Type[T]] = None,
-    ) -> Any:
-        response = self._sync_client.request(
-            method.upper(),
-            url,
-            params=params,
-            headers=self._build_headers(headers),
-            json=body,
-        )
-        response.raise_for_status()
-        return self._cast_data(cast, self._extract_data(response))
-
-    async def arequest(
-        self,
-        method: str,
-        url: str,
-        *,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
-        body: Any = None,
-        cast: Optional[Type[T]] = None,
-    ) -> Any:
-        response = await self._async_client.request(
-            method.upper(),
-            url,
-            params=params,
-            headers=self._build_headers(headers),
-            json=body,
-        )
-        response.raise_for_status()
-        return self._cast_data(cast, self._extract_data(response))
-
-    def _build_headers(self, headers: Optional[Dict[str, str]]) -> Dict[str, str]:
-        output = dict(headers or {})
-        if self._token and "Authorization" not in output:
-            output["Authorization"] = f"Bearer {self._token}"
-        return output
-
-    def _extract_data(self, response: httpx.Response) -> Any:
-        if len(response.content) == 0:
-            return None
-        try:
-            payload = response.json()
-        except Exception:
-            return response.text
-
-        if isinstance(payload, dict) and "data" in payload:
-            return payload["data"]
-        return payload
-
-    def _cast_data(self, cast: Optional[Type[T]], value: Any) -> Any:
-        if cast is None or value is None:
-            return value
-
-        if hasattr(cast, "model_validate"):
-            if isinstance(value, list):
-                return [cast.model_validate(item) for item in value]
-            return cast.model_validate(value)
-
-        return value
-`) + "\n"
+func renderRequestPy() (string, error) {
+	return renderPythonTemplate("request.py.tpl", map[string]any{})
 }
 
 func renderCozePy(packageNames []string, packageMetas map[string]packageMeta) string {
