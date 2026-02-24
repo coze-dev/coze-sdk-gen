@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -11,9 +12,22 @@ import (
 )
 
 type Config struct {
-	Language  string    `yaml:"language"`
-	OutputSDK string    `yaml:"output_sdk"`
-	API       APIConfig `yaml:"api"`
+	Language             string           `yaml:"language"`
+	OutputSDK            string           `yaml:"output_sdk"`
+	CommentOverridesFile string           `yaml:"comment_overrides_file"`
+	API                  APIConfig        `yaml:"api"`
+	CommentOverrides     CommentOverrides `yaml:"-"`
+}
+
+type CommentOverrides struct {
+	ClassDocstrings         map[string]string   `yaml:"class_docstrings"`
+	ClassDocstringStyles    map[string]string   `yaml:"class_docstring_styles"`
+	MethodDocstrings        map[string]string   `yaml:"method_docstrings"`
+	MethodDocstringStyles   map[string]string   `yaml:"method_docstring_styles"`
+	FieldComments           map[string][]string `yaml:"field_comments"`
+	InlineFieldComments     map[string]string   `yaml:"inline_field_comments"`
+	EnumMemberComments      map[string][]string `yaml:"enum_member_comments"`
+	InlineEnumMemberComment map[string]string   `yaml:"inline_enum_member_comments"`
 }
 
 type APIConfig struct {
@@ -29,6 +43,11 @@ type Package struct {
 	SourceDir                 string        `yaml:"source_dir"`
 	PathPrefixes              []string      `yaml:"path_prefixes"`
 	AllowMissingInSwagger     bool          `yaml:"allow_missing_in_swagger"`
+	DisableAutoImports        bool          `yaml:"disable_auto_imports"`
+	SeparateCommentedEnum     bool          `yaml:"separate_commented_enum_members"`
+	SeparateRequiredOptional  bool          `yaml:"separate_required_optional_fields"`
+	SeparateCommentedFields   bool          `yaml:"separate_commented_fields"`
+	BlankLineBeforeChildInits bool          `yaml:"blank_line_before_child_inits"`
 	HTTPRequestFromModel      bool          `yaml:"http_request_from_model"`
 	ClientClass               string        `yaml:"client_class"`
 	AsyncClientClass          string        `yaml:"async_client_class"`
@@ -37,36 +56,58 @@ type Package struct {
 	RawImports                []string      `yaml:"raw_imports"`
 	ModelSchemas              []ModelSchema `yaml:"model_schemas"`
 	EmptyModels               []string      `yaml:"empty_models"`
+	PreModelCode              []string      `yaml:"pre_model_code"`
 	TopLevelCode              []string      `yaml:"top_level_code"`
+	SyncInitPreCode           []string      `yaml:"sync_init_pre_code"`
+	AsyncInitPreCode          []string      `yaml:"async_init_pre_code"`
+	BlankLineBeforeSyncInit   bool          `yaml:"blank_line_before_sync_init_code"`
+	BlankLineBeforeAsyncInit  bool          `yaml:"blank_line_before_async_init_code"`
+	SyncInitCode              []string      `yaml:"sync_init_code"`
+	AsyncInitCode             []string      `yaml:"async_init_code"`
 	SyncExtraMethods          []string      `yaml:"sync_extra_methods"`
 	AsyncExtraMethods         []string      `yaml:"async_extra_methods"`
+	SyncMethodOrder           []string      `yaml:"sync_method_order"`
+	AsyncMethodOrder          []string      `yaml:"async_method_order"`
+	TypeCheckingChildOrder    []string      `yaml:"type_checking_child_order"`
+	InitChildOrder            []string      `yaml:"init_child_order"`
+	SyncChildOrder            []string      `yaml:"sync_child_order"`
+	AsyncChildOrder           []string      `yaml:"async_child_order"`
 	OverridePaginationClasses []string      `yaml:"override_pagination_classes"`
 }
 
 type ChildClient struct {
-	Attribute        string `yaml:"attribute"`
-	Module           string `yaml:"module"`
-	SyncClass        string `yaml:"sync_class"`
-	AsyncClass       string `yaml:"async_class"`
-	NilCheck         string `yaml:"nil_check"`
-	InitWithKeywords bool   `yaml:"init_with_keywords"`
-	DisableTypeHints bool   `yaml:"disable_type_hints"`
+	Attribute           string `yaml:"attribute"`
+	Module              string `yaml:"module"`
+	TypeImportModule    string `yaml:"type_import_module"`
+	TypeImportSyncFirst bool   `yaml:"type_import_sync_first"`
+	SyncClass           string `yaml:"sync_class"`
+	AsyncClass          string `yaml:"async_class"`
+	NilCheck            string `yaml:"nil_check"`
+	InitWithKeywords    bool   `yaml:"init_with_keywords"`
+	DisableTypeHints    bool   `yaml:"disable_type_hints"`
+	MultilineSignature  bool   `yaml:"multiline_signature"`
 }
 
 type ModelSchema struct {
-	Schema                 string            `yaml:"schema"`
-	Name                   string            `yaml:"name"`
-	PrependCode            []string          `yaml:"prepend_code"`
-	FieldOrder             []string          `yaml:"field_order"`
-	RequiredFields         []string          `yaml:"required_fields"`
-	FieldTypes             map[string]string `yaml:"field_types"`
-	FieldDefaults          map[string]string `yaml:"field_defaults"`
-	ExcludeUnorderedFields bool              `yaml:"exclude_unordered_fields"`
-	EnumBase               string            `yaml:"enum_base"`
-	EnumValues             []ModelEnumValue  `yaml:"enum_values"`
-	ExtraFields            []ModelField      `yaml:"extra_fields"`
-	ExtraCode              []string          `yaml:"extra_code"`
-	AllowMissingInSwagger  bool              `yaml:"allow_missing_in_swagger"`
+	Schema                   string            `yaml:"schema"`
+	Name                     string            `yaml:"name"`
+	BaseClasses              []string          `yaml:"base_classes"`
+	BeforeCode               []string          `yaml:"before_code"`
+	PrependCode              []string          `yaml:"prepend_code"`
+	SeparateCommentedEnum    *bool             `yaml:"separate_commented_enum_members"`
+	SeparateRequiredOptional *bool             `yaml:"separate_required_optional_fields"`
+	SeparateCommentedFields  *bool             `yaml:"separate_commented_fields"`
+	BlankLineBeforeFields    []string          `yaml:"blank_line_before_fields"`
+	FieldOrder               []string          `yaml:"field_order"`
+	RequiredFields           []string          `yaml:"required_fields"`
+	FieldTypes               map[string]string `yaml:"field_types"`
+	FieldDefaults            map[string]string `yaml:"field_defaults"`
+	ExcludeUnorderedFields   bool              `yaml:"exclude_unordered_fields"`
+	EnumBase                 string            `yaml:"enum_base"`
+	EnumValues               []ModelEnumValue  `yaml:"enum_values"`
+	ExtraFields              []ModelField      `yaml:"extra_fields"`
+	ExtraCode                []string          `yaml:"extra_code"`
+	AllowMissingInSwagger    bool              `yaml:"allow_missing_in_swagger"`
 }
 
 type ModelField struct {
@@ -87,39 +128,93 @@ type ImportSpec struct {
 }
 
 type OperationMapping struct {
-	Path                      string            `yaml:"path"`
-	Method                    string            `yaml:"method"`
-	Order                     int               `yaml:"order"`
-	SDKMethods                []string          `yaml:"sdk_methods"`
-	AllowMissingInSwagger     bool              `yaml:"allow_missing_in_swagger"`
-	HTTPMethodOverride        string            `yaml:"http_method_override"`
-	DisableRequestBody        bool              `yaml:"disable_request_body"`
-	BodyFields                []string          `yaml:"body_fields"`
-	BodyFixedValues           map[string]string `yaml:"body_fixed_values"`
-	BodyBuilder               string            `yaml:"body_builder"`
-	BodyRequiredFields        []string          `yaml:"body_required_fields"`
-	UseKwargsHeaders          bool              `yaml:"use_kwargs_headers"`
-	ParamAliases              map[string]string `yaml:"param_aliases"`
-	ArgTypes                  map[string]string `yaml:"arg_types"`
-	ResponseType              string            `yaml:"response_type"`
-	ResponseCast              string            `yaml:"response_cast"`
-	QueryFields               []OperationField  `yaml:"query_fields"`
-	Pagination                string            `yaml:"pagination"`
-	PaginationDataClass       string            `yaml:"pagination_data_class"`
-	PaginationItemType        string            `yaml:"pagination_item_type"`
-	PaginationItemsField      string            `yaml:"pagination_items_field"`
-	PaginationTotalField      string            `yaml:"pagination_total_field"`
-	PaginationHasMoreField    string            `yaml:"pagination_has_more_field"`
-	PaginationNextTokenField  string            `yaml:"pagination_next_token_field"`
-	PaginationPageNumField    string            `yaml:"pagination_page_num_field"`
-	PaginationPageSizeField   string            `yaml:"pagination_page_size_field"`
-	PaginationPageTokenField  string            `yaml:"pagination_page_token_field"`
-	PaginationInheritResponse *bool             `yaml:"pagination_inherit_response"`
-	DisableHeadersArg         bool              `yaml:"disable_headers_arg"`
-	IgnoreHeaderParams        bool              `yaml:"ignore_header_params"`
-	DataField                 string            `yaml:"data_field"`
-	RequestStream             bool              `yaml:"request_stream"`
-	QueryBuilder              string            `yaml:"query_builder"`
+	Path                           string            `yaml:"path"`
+	Method                         string            `yaml:"method"`
+	Order                          int               `yaml:"order"`
+	SDKMethods                     []string          `yaml:"sdk_methods"`
+	DelegateTo                     string            `yaml:"delegate_to"`
+	DelegateCallArgs               []string          `yaml:"delegate_call_args"`
+	AsyncDelegateCallArgs          []string          `yaml:"async_delegate_call_args"`
+	DelegateAsyncYield             bool              `yaml:"delegate_async_yield"`
+	SyncOnly                       bool              `yaml:"sync_only"`
+	AsyncOnly                      bool              `yaml:"async_only"`
+	AllowMissingInSwagger          bool              `yaml:"allow_missing_in_swagger"`
+	HTTPMethodOverride             string            `yaml:"http_method_override"`
+	DisableRequestBody             bool              `yaml:"disable_request_body"`
+	BodyFields                     []string          `yaml:"body_fields"`
+	BodyFixedValues                map[string]string `yaml:"body_fixed_values"`
+	BodyBuilder                    string            `yaml:"body_builder"`
+	FilesFields                    []string          `yaml:"files_fields"`
+	FilesFieldValues               map[string]string `yaml:"files_field_values"`
+	BodyAnnotation                 string            `yaml:"body_annotation"`
+	PreBodyCode                    []string          `yaml:"pre_body_code"`
+	BodyRequiredFields             []string          `yaml:"body_required_fields"`
+	UseKwargsHeaders               bool              `yaml:"use_kwargs_headers"`
+	ParamAliases                   map[string]string `yaml:"param_aliases"`
+	ArgTypes                       map[string]string `yaml:"arg_types"`
+	ResponseType                   string            `yaml:"response_type"`
+	AsyncResponseType              string            `yaml:"async_response_type"`
+	OmitReturnType                 bool              `yaml:"omit_return_type"`
+	ResponseCast                   string            `yaml:"response_cast"`
+	CastKeyword                    bool              `yaml:"cast_keyword"`
+	StreamKeyword                  bool              `yaml:"stream_keyword"`
+	QueryFields                    []OperationField  `yaml:"query_fields"`
+	QueryFieldValues               map[string]string `yaml:"query_field_values"`
+	SignatureQueryFields           []string          `yaml:"signature_query_fields"`
+	SignatureArgs                  []string          `yaml:"signature_args"`
+	ArgDefaults                    map[string]string `yaml:"arg_defaults"`
+	Pagination                     string            `yaml:"pagination"`
+	PaginationDataClass            string            `yaml:"pagination_data_class"`
+	PaginationItemType             string            `yaml:"pagination_item_type"`
+	PaginationItemsField           string            `yaml:"pagination_items_field"`
+	PaginationTotalField           string            `yaml:"pagination_total_field"`
+	PaginationHasMoreField         string            `yaml:"pagination_has_more_field"`
+	PaginationNextTokenField       string            `yaml:"pagination_next_token_field"`
+	PaginationPageNumField         string            `yaml:"pagination_page_num_field"`
+	PaginationPageSizeField        string            `yaml:"pagination_page_size_field"`
+	PaginationPageTokenField       string            `yaml:"pagination_page_token_field"`
+	PaginationInheritResponse      *bool             `yaml:"pagination_inherit_response"`
+	PaginationHeadersBeforeParams  bool              `yaml:"pagination_headers_before_params"`
+	PaginationCastBeforeHeaders    bool              `yaml:"pagination_cast_before_headers"`
+	DisableHeadersArg              bool              `yaml:"disable_headers_arg"`
+	AsyncIncludeKwargs             bool              `yaml:"async_include_kwargs"`
+	IgnoreHeaderParams             bool              `yaml:"ignore_header_params"`
+	DataField                      string            `yaml:"data_field"`
+	ResponseUnwrapListFirst        bool              `yaml:"response_unwrap_list_first"`
+	RequestStream                  bool              `yaml:"request_stream"`
+	StreamWrap                     bool              `yaml:"stream_wrap"`
+	StreamWrapHandler              string            `yaml:"stream_wrap_handler"`
+	StreamWrapFields               []string          `yaml:"stream_wrap_fields"`
+	StreamWrapAsyncYield           bool              `yaml:"stream_wrap_async_yield"`
+	StreamWrapSyncResponseVar      string            `yaml:"stream_wrap_sync_response_var"`
+	StreamWrapCompactAsyncReturn   bool              `yaml:"stream_wrap_compact_async_return"`
+	StreamWrapCompactSyncReturn    bool              `yaml:"stream_wrap_compact_sync_return"`
+	StreamWrapBlankLineBeforeAsync bool              `yaml:"stream_wrap_blank_line_before_return_async"`
+	HeadersBeforeBody              bool              `yaml:"headers_before_body"`
+	QueryBuilder                   string            `yaml:"query_builder"`
+	QueryBuilderSync               string            `yaml:"query_builder_sync"`
+	QueryBuilderAsync              string            `yaml:"query_builder_async"`
+	BodyCallExpr                   string            `yaml:"body_call_expr"`
+	BodyFieldValues                map[string]string `yaml:"body_field_values"`
+	CompactSingleItemMaps          bool              `yaml:"compact_single_item_maps"`
+	CompactSingleItemMapsSync      bool              `yaml:"compact_single_item_maps_sync"`
+	CompactSingleItemMapsAsync     bool              `yaml:"compact_single_item_maps_async"`
+	NoBlankLineAfterHeaders        bool              `yaml:"no_blank_line_after_headers"`
+	BlankLineAfterDocstring        bool              `yaml:"blank_line_after_docstring"`
+	BlankLineBeforeReturn          bool              `yaml:"blank_line_before_return"`
+	ForceCompactSignature          bool              `yaml:"force_compact_signature"`
+	ForceMultilineSignature        bool              `yaml:"force_multiline_signature"`
+	ForceCompactSignatureSync      bool              `yaml:"force_compact_signature_sync"`
+	ForceCompactSignatureAsync     bool              `yaml:"force_compact_signature_async"`
+	ForceMultilineSignatureSync    bool              `yaml:"force_multiline_signature_sync"`
+	ForceMultilineSignatureAsync   bool              `yaml:"force_multiline_signature_async"`
+	ForceMultilineRequestCall      bool              `yaml:"force_multiline_request_call"`
+	ForceMultilineRequestCallSync  bool              `yaml:"force_multiline_request_call_sync"`
+	ForceMultilineRequestCallAsync bool              `yaml:"force_multiline_request_call_async"`
+	RequestCallArgOrder            []string          `yaml:"request_call_arg_order"`
+	PaginationHTTPMethod           string            `yaml:"pagination_http_method"`
+	PaginationInitPageTokenExpr    string            `yaml:"pagination_init_page_token_expr"`
+	PaginationParamsVariable       bool              `yaml:"pagination_params_variable"`
 }
 
 type OperationField struct {
@@ -146,7 +241,14 @@ func Load(path string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read config file %q: %w", path, err)
 	}
-	return Parse(content)
+	cfg, err := Parse(content)
+	if err != nil {
+		return nil, err
+	}
+	if err := cfg.loadCommentOverrides(path); err != nil {
+		return nil, err
+	}
+	return cfg, nil
 }
 
 func Parse(content []byte) (*Config, error) {
@@ -165,6 +267,7 @@ func (c *Config) applyDefaults() {
 	if c.API.FieldAliases == nil {
 		c.API.FieldAliases = map[string]map[string]string{}
 	}
+	c.CommentOverrides.ensureMaps()
 	for i := range c.API.OperationMappings {
 		if strings.TrimSpace(c.API.OperationMappings[i].QueryBuilder) == "" {
 			c.API.OperationMappings[i].QueryBuilder = "dump_exclude_none"
@@ -172,6 +275,55 @@ func (c *Config) applyDefaults() {
 		if strings.TrimSpace(c.API.OperationMappings[i].BodyBuilder) == "" {
 			c.API.OperationMappings[i].BodyBuilder = "dump_exclude_none"
 		}
+	}
+}
+
+func (c *Config) loadCommentOverrides(configPath string) error {
+	c.CommentOverrides.ensureMaps()
+	overridesPath := strings.TrimSpace(c.CommentOverridesFile)
+	if overridesPath == "" {
+		return nil
+	}
+	if !filepath.IsAbs(overridesPath) {
+		overridesPath = filepath.Join(filepath.Dir(configPath), overridesPath)
+	}
+	content, err := os.ReadFile(overridesPath)
+	if err != nil {
+		return fmt.Errorf("read comment_overrides_file %q: %w", overridesPath, err)
+	}
+	var overrides CommentOverrides
+	if err := yaml.Unmarshal(content, &overrides); err != nil {
+		return fmt.Errorf("parse comment_overrides_file %q: %w", overridesPath, err)
+	}
+	overrides.ensureMaps()
+	c.CommentOverrides = overrides
+	return nil
+}
+
+func (c *CommentOverrides) ensureMaps() {
+	if c.ClassDocstrings == nil {
+		c.ClassDocstrings = map[string]string{}
+	}
+	if c.ClassDocstringStyles == nil {
+		c.ClassDocstringStyles = map[string]string{}
+	}
+	if c.MethodDocstrings == nil {
+		c.MethodDocstrings = map[string]string{}
+	}
+	if c.MethodDocstringStyles == nil {
+		c.MethodDocstringStyles = map[string]string{}
+	}
+	if c.FieldComments == nil {
+		c.FieldComments = map[string][]string{}
+	}
+	if c.InlineFieldComments == nil {
+		c.InlineFieldComments = map[string]string{}
+	}
+	if c.EnumMemberComments == nil {
+		c.EnumMemberComments = map[string][]string{}
+	}
+	if c.InlineEnumMemberComment == nil {
+		c.InlineEnumMemberComment = map[string]string{}
 	}
 }
 
@@ -250,9 +402,39 @@ func (c *Config) Validate() error {
 				return fmt.Errorf("api.packages[%d].sync_extra_methods[%d] should not be empty", i, j)
 			}
 		}
+		for j, name := range pkg.SyncMethodOrder {
+			if strings.TrimSpace(name) == "" {
+				return fmt.Errorf("api.packages[%d].sync_method_order[%d] should not be empty", i, j)
+			}
+		}
 		for j, block := range pkg.AsyncExtraMethods {
 			if strings.TrimSpace(block) == "" {
 				return fmt.Errorf("api.packages[%d].async_extra_methods[%d] should not be empty", i, j)
+			}
+		}
+		for j, name := range pkg.AsyncMethodOrder {
+			if strings.TrimSpace(name) == "" {
+				return fmt.Errorf("api.packages[%d].async_method_order[%d] should not be empty", i, j)
+			}
+		}
+		for j, name := range pkg.TypeCheckingChildOrder {
+			if strings.TrimSpace(name) == "" {
+				return fmt.Errorf("api.packages[%d].type_checking_child_order[%d] should not be empty", i, j)
+			}
+		}
+		for j, name := range pkg.InitChildOrder {
+			if strings.TrimSpace(name) == "" {
+				return fmt.Errorf("api.packages[%d].init_child_order[%d] should not be empty", i, j)
+			}
+		}
+		for j, name := range pkg.SyncChildOrder {
+			if strings.TrimSpace(name) == "" {
+				return fmt.Errorf("api.packages[%d].sync_child_order[%d] should not be empty", i, j)
+			}
+		}
+		for j, name := range pkg.AsyncChildOrder {
+			if strings.TrimSpace(name) == "" {
+				return fmt.Errorf("api.packages[%d].async_child_order[%d] should not be empty", i, j)
 			}
 		}
 		for j, className := range pkg.OverridePaginationClasses {
@@ -300,6 +482,11 @@ func (c *Config) Validate() error {
 					return fmt.Errorf("api.packages[%d].model_schemas[%d].prepend_code[%d] should not be empty", i, j, k)
 				}
 			}
+			for k, baseClass := range model.BaseClasses {
+				if strings.TrimSpace(baseClass) == "" {
+					return fmt.Errorf("api.packages[%d].model_schemas[%d].base_classes[%d] should not be empty", i, j, k)
+				}
+			}
 			for k, enumValue := range model.EnumValues {
 				if strings.TrimSpace(enumValue.Name) == "" {
 					return fmt.Errorf("api.packages[%d].model_schemas[%d].enum_values[%d].name is required", i, j, k)
@@ -315,6 +502,9 @@ func (c *Config) Validate() error {
 		if err := validateOperationRef(mapping.Path, mapping.Method, fmt.Sprintf("api.operation_mappings[%d]", i)); err != nil {
 			return err
 		}
+		if mapping.SyncOnly && mapping.AsyncOnly {
+			return fmt.Errorf("api.operation_mappings[%d] cannot set both sync_only and async_only", i)
+		}
 		if strings.TrimSpace(mapping.HTTPMethodOverride) != "" {
 			if err := validateOperationRef(mapping.Path, mapping.HTTPMethodOverride, fmt.Sprintf("api.operation_mappings[%d].http_method_override", i)); err != nil {
 				return err
@@ -323,9 +513,54 @@ func (c *Config) Validate() error {
 		if len(mapping.SDKMethods) == 0 {
 			return fmt.Errorf("api.operation_mappings[%d].sdk_methods should not be empty", i)
 		}
+		if strings.TrimSpace(mapping.DelegateTo) == "" && len(mapping.DelegateCallArgs) > 0 {
+			return fmt.Errorf("api.operation_mappings[%d].delegate_call_args requires delegate_to", i)
+		}
+		if strings.TrimSpace(mapping.DelegateTo) == "" && len(mapping.AsyncDelegateCallArgs) > 0 {
+			return fmt.Errorf("api.operation_mappings[%d].async_delegate_call_args requires delegate_to", i)
+		}
+		if strings.TrimSpace(mapping.DelegateTo) == "" && mapping.DelegateAsyncYield {
+			return fmt.Errorf("api.operation_mappings[%d].delegate_async_yield requires delegate_to", i)
+		}
+		for j, arg := range mapping.DelegateCallArgs {
+			if strings.TrimSpace(arg) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].delegate_call_args[%d] should not be empty", i, j)
+			}
+		}
+		for j, arg := range mapping.AsyncDelegateCallArgs {
+			if strings.TrimSpace(arg) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].async_delegate_call_args[%d] should not be empty", i, j)
+			}
+		}
 		for j, field := range mapping.QueryFields {
 			if strings.TrimSpace(field.Name) == "" {
 				return fmt.Errorf("api.operation_mappings[%d].query_fields[%d].name is required", i, j)
+			}
+		}
+		for fieldName, fieldValue := range mapping.QueryFieldValues {
+			if strings.TrimSpace(fieldName) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].query_field_values has empty key", i)
+			}
+			if strings.TrimSpace(fieldValue) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].query_field_values[%q] is empty", i, fieldName)
+			}
+		}
+		for j, fieldName := range mapping.SignatureQueryFields {
+			if strings.TrimSpace(fieldName) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].signature_query_fields[%d] should not be empty", i, j)
+			}
+		}
+		for j, fieldName := range mapping.SignatureArgs {
+			if strings.TrimSpace(fieldName) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].signature_args[%d] should not be empty", i, j)
+			}
+		}
+		for fieldName, fieldValue := range mapping.ArgDefaults {
+			if strings.TrimSpace(fieldName) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].arg_defaults has empty key", i)
+			}
+			if strings.TrimSpace(fieldValue) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].arg_defaults[%q] is empty", i, fieldName)
 			}
 		}
 		for fieldName, fieldValue := range mapping.BodyFixedValues {
@@ -334,6 +569,47 @@ func (c *Config) Validate() error {
 			}
 			if strings.TrimSpace(fieldValue) == "" {
 				return fmt.Errorf("api.operation_mappings[%d].body_fixed_values[%q] is empty", i, fieldName)
+			}
+		}
+		for fieldName, fieldValue := range mapping.BodyFieldValues {
+			if strings.TrimSpace(fieldName) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].body_field_values has empty key", i)
+			}
+			if strings.TrimSpace(fieldValue) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].body_field_values[%q] is empty", i, fieldName)
+			}
+		}
+		for j, fileField := range mapping.FilesFields {
+			if strings.TrimSpace(fileField) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].files_fields[%d] should not be empty", i, j)
+			}
+		}
+		for fieldName, fieldValue := range mapping.FilesFieldValues {
+			if strings.TrimSpace(fieldName) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].files_field_values has empty key", i)
+			}
+			if strings.TrimSpace(fieldValue) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].files_field_values[%q] is empty", i, fieldName)
+			}
+		}
+		for j, codeBlock := range mapping.PreBodyCode {
+			if strings.TrimSpace(codeBlock) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].pre_body_code[%d] should not be empty", i, j)
+			}
+		}
+		for j, fieldName := range mapping.StreamWrapFields {
+			if strings.TrimSpace(fieldName) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].stream_wrap_fields[%d] should not be empty", i, j)
+			}
+		}
+		if mapping.StreamWrap && !mapping.RequestStream {
+			return fmt.Errorf("api.operation_mappings[%d].stream_wrap requires request_stream=true", i)
+		}
+		for j, argName := range mapping.RequestCallArgOrder {
+			switch strings.TrimSpace(argName) {
+			case "stream", "cast", "params", "headers", "body", "files", "data_field":
+			default:
+				return fmt.Errorf("api.operation_mappings[%d].request_call_arg_order[%d] must be one of: stream, cast, params, headers, body, files, data_field", i, j)
 			}
 		}
 		switch strings.TrimSpace(mapping.QueryBuilder) {
@@ -353,6 +629,9 @@ func (c *Config) Validate() error {
 			}
 			if strings.TrimSpace(mapping.PaginationDataClass) == "" || strings.TrimSpace(mapping.PaginationItemType) == "" {
 				return fmt.Errorf("api.operation_mappings[%d].pagination_data_class and pagination_item_type are required for pagination", i)
+			}
+			if mapping.PaginationHeadersBeforeParams && mapping.PaginationCastBeforeHeaders {
+				return fmt.Errorf("api.operation_mappings[%d] cannot set both pagination_headers_before_params and pagination_cast_before_headers", i)
 			}
 		}
 	}

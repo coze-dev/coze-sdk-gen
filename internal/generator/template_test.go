@@ -39,28 +39,42 @@ func TestRenderStaticPythonTemplates(t *testing.T) {
 	if !strings.Contains(utilContent, "def remove_url_trailing_slash") {
 		t.Fatalf("expected remove_url_trailing_slash in util template, got: %q", utilContent)
 	}
+
+	logContent, err := renderLogPy()
+	if err != nil {
+		t.Fatalf("renderLogPy() error = %v", err)
+	}
+	if !strings.Contains(logContent, "def setup_logging") {
+		t.Fatalf("expected setup_logging in log template, got: %q", logContent)
+	}
+
+	exceptionContent, err := renderExceptionPy()
+	if err != nil {
+		t.Fatalf("renderExceptionPy() error = %v", err)
+	}
+	if !strings.Contains(exceptionContent, "class CozeAPIError") {
+		t.Fatalf("expected CozeAPIError in exception template, got: %q", exceptionContent)
+	}
+
+	versionContent, err := renderVersionPy()
+	if err != nil {
+		t.Fatalf("renderVersionPy() error = %v", err)
+	}
+	if !strings.Contains(versionContent, "VERSION = \"0.20.0\"") {
+		t.Fatalf("expected VERSION in version template, got: %q", versionContent)
+	}
+
+	pyprojectContent, err := renderPyprojectToml()
+	if err != nil {
+		t.Fatalf("renderPyprojectToml() error = %v", err)
+	}
+	if !strings.Contains(pyprojectContent, "[tool.poetry]") {
+		t.Fatalf("expected poetry config in pyproject template, got: %q", pyprojectContent)
+	}
 }
 
 func TestRenderPythonTemplateMissing(t *testing.T) {
 	if _, err := renderPythonTemplate("missing.tpl", nil); err == nil {
 		t.Fatal("expected renderPythonTemplate to fail for missing template")
-	}
-}
-
-func TestPythonSupportFiles(t *testing.T) {
-	files, err := listPythonSupportFiles()
-	if err != nil {
-		t.Fatalf("listPythonSupportFiles() error = %v", err)
-	}
-	if len(files) == 0 {
-		t.Fatal("expected embedded support files")
-	}
-
-	content, err := readPythonSupportFile("README.md")
-	if err != nil {
-		t.Fatalf("readPythonSupportFile() error = %v", err)
-	}
-	if !strings.Contains(string(content), "# Coze Python API SDK") {
-		t.Fatalf("unexpected support README content: %q", string(content))
 	}
 }

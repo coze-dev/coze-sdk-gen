@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -105,6 +106,108 @@ func TestDefaultsApplied(t *testing.T) {
 	if cfg.API.FieldAliases == nil {
 		t.Fatal("expected field aliases map to be initialized")
 	}
+	if cfg.CommentOverrides.ClassDocstrings == nil {
+		t.Fatal("expected comment overrides maps to be initialized")
+	}
+	if cfg.CommentOverrides.ClassDocstringStyles == nil {
+		t.Fatal("expected class docstring style map to be initialized")
+	}
+	if cfg.CommentOverrides.InlineFieldComments == nil {
+		t.Fatal("expected inline field comments map to be initialized")
+	}
+	if cfg.CommentOverrides.InlineEnumMemberComment == nil {
+		t.Fatal("expected inline enum comments map to be initialized")
+	}
+}
+
+func TestLoadCommentOverrides(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "generator.yaml")
+	commentsPath := filepath.Join(dir, "comments.yaml")
+	configYAML := `
+language: python
+output_sdk: out
+comment_overrides_file: comments.yaml
+api:
+  packages:
+    - name: chat
+      source_dir: cozepy/chat
+`
+	commentsYAML := `
+class_docstrings:
+  cozepy.chat.Chat: Chat doc
+class_docstring_styles:
+  cozepy.chat.Chat: block
+method_docstrings:
+  cozepy.chat.ChatClient.create: Create chat
+method_docstring_styles:
+  cozepy.chat.ChatClient.create: block
+field_comments:
+  cozepy.chat.Chat.id:
+    - chat id
+inline_field_comments:
+  cozepy.chat.Chat.name: inline field
+enum_member_comments:
+  cozepy.chat.ChatStatus.CREATED:
+    - created status
+inline_enum_member_comments:
+  cozepy.chat.ChatStatus.UNKNOWN: unknown status
+`
+	if err := os.WriteFile(configPath, []byte(configYAML), 0o644); err != nil {
+		t.Fatalf("write config error: %v", err)
+	}
+	if err := os.WriteFile(commentsPath, []byte(commentsYAML), 0o644); err != nil {
+		t.Fatalf("write comments error: %v", err)
+	}
+
+	cfg, err := Load(configPath)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if got := cfg.CommentOverrides.ClassDocstrings["cozepy.chat.Chat"]; got != "Chat doc" {
+		t.Fatalf("unexpected class docstring override: %q", got)
+	}
+	if got := cfg.CommentOverrides.ClassDocstringStyles["cozepy.chat.Chat"]; got != "block" {
+		t.Fatalf("unexpected class docstring style override: %q", got)
+	}
+	if got := cfg.CommentOverrides.MethodDocstrings["cozepy.chat.ChatClient.create"]; got != "Create chat" {
+		t.Fatalf("unexpected method docstring override: %q", got)
+	}
+	if got := cfg.CommentOverrides.MethodDocstringStyles["cozepy.chat.ChatClient.create"]; got != "block" {
+		t.Fatalf("unexpected method docstring style override: %q", got)
+	}
+	if got := cfg.CommentOverrides.FieldComments["cozepy.chat.Chat.id"]; len(got) != 1 || got[0] != "chat id" {
+		t.Fatalf("unexpected field comments override: %#v", got)
+	}
+	if got := cfg.CommentOverrides.EnumMemberComments["cozepy.chat.ChatStatus.CREATED"]; len(got) != 1 || got[0] != "created status" {
+		t.Fatalf("unexpected enum comments override: %#v", got)
+	}
+	if got := cfg.CommentOverrides.InlineFieldComments["cozepy.chat.Chat.name"]; got != "inline field" {
+		t.Fatalf("unexpected inline field comment override: %q", got)
+	}
+	if got := cfg.CommentOverrides.InlineEnumMemberComment["cozepy.chat.ChatStatus.UNKNOWN"]; got != "unknown status" {
+		t.Fatalf("unexpected inline enum comment override: %q", got)
+	}
+}
+
+func TestLoadCommentOverridesMissingFile(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "generator.yaml")
+	configYAML := `
+language: python
+output_sdk: out
+comment_overrides_file: missing-comments.yaml
+api:
+  packages:
+    - name: chat
+      source_dir: cozepy/chat
+`
+	if err := os.WriteFile(configPath, []byte(configYAML), 0o644); err != nil {
+		t.Fatalf("write config error: %v", err)
+	}
+	if _, err := Load(configPath); err == nil {
+		t.Fatal("expected Load() to fail for missing comment overrides file")
+	}
 }
 
 func TestValidateConfigFailures(t *testing.T) {
@@ -150,6 +253,19 @@ api:
 `,
 		},
 		{
+			name: "empty sync method order",
+			content: `
+language: python
+output_sdk: out
+api:
+  packages:
+    - name: chat
+      source_dir: a
+      sync_method_order:
+        - ""
+`,
+		},
+		{
 			name: "invalid method",
 			content: `
 language: python
@@ -158,6 +274,113 @@ api:
   ignore_operations:
     - path: /v3/chat
       method: bad
+`,
+		},
+		{
+			name: "both sync and async only",
+			content: `
+language: python
+output_sdk: out
+api:
+  operation_mappings:
+    - path: /v3/chat
+      method: post
+      sdk_methods:
+        - chat.create
+      sync_only: true
+      async_only: true
+`,
+		},
+		{
+			name: "delegate args without target",
+			content: `
+language: python
+output_sdk: out
+api:
+  operation_mappings:
+    - path: /v3/chat
+      method: post
+      sdk_methods:
+        - chat.create
+      delegate_call_args:
+        - bot_id=bot_id
+`,
+		},
+		{
+			name: "async delegate args without target",
+			content: `
+language: python
+output_sdk: out
+api:
+  operation_mappings:
+    - path: /v3/chat
+      method: post
+      sdk_methods:
+        - chat.stream
+      async_delegate_call_args:
+        - bot_id=bot_id
+`,
+		},
+		{
+			name: "conflicting pagination order flags",
+			content: `
+language: python
+output_sdk: out
+api:
+  operation_mappings:
+    - path: /v1/apps
+      method: get
+      sdk_methods:
+        - apps.list
+      pagination: number
+      pagination_data_class: _PrivateListAppsData
+      pagination_item_type: App
+      pagination_headers_before_params: true
+      pagination_cast_before_headers: true
+`,
+		},
+		{
+			name: "empty pre body code",
+			content: `
+language: python
+output_sdk: out
+api:
+  operation_mappings:
+    - path: /v1/bot/publish
+      method: post
+      sdk_methods:
+        - bots.publish
+      pre_body_code:
+        - ""
+`,
+		},
+		{
+			name: "empty model base class",
+			content: `
+language: python
+output_sdk: out
+api:
+  packages:
+    - name: datasets
+      source_dir: a
+      model_schemas:
+        - name: DemoModel
+          allow_missing_in_swagger: true
+          base_classes:
+            - ""
+`,
+		},
+		{
+			name: "empty async child order",
+			content: `
+language: python
+output_sdk: out
+api:
+  packages:
+    - name: audio
+      source_dir: a
+      async_child_order:
+        - ""
 `,
 		},
 	}

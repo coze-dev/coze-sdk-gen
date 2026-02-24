@@ -33,14 +33,6 @@ type fileWriter struct {
 	written map[string]struct{}
 }
 
-var pythonSupportOverridePaths = map[string]struct{}{
-	"cozepy/files/__init__.py":      {},
-	"cozepy/knowledge/__init__.py":  {},
-	"cozepy/variables/__init__.py":  {},
-	"cozepy/workflows/__init__.py":  {},
-	"cozepy/workspaces/__init__.py": {},
-}
-
 func GeneratePython(cfg *config.Config, doc *openapi.Document) (Result, error) {
 	if cfg == nil {
 		return Result{}, fmt.Errorf("config is required")
@@ -72,7 +64,7 @@ func GeneratePython(cfg *config.Config, doc *openapi.Document) (Result, error) {
 	writer := &fileWriter{
 		written: map[string]struct{}{},
 	}
-	if err := writePythonSDK(cfg.OutputSDK, doc, packages, packageMetas, writer); err != nil {
+	if err := writePythonSDK(cfg, doc, packages, packageMetas, writer); err != nil {
 		return Result{}, err
 	}
 
@@ -264,12 +256,13 @@ func buildPackageMeta(cfg *config.Config, packages map[string][]operationBinding
 }
 
 func writePythonSDK(
-	outputDir string,
+	cfg *config.Config,
 	doc *openapi.Document,
 	packages map[string][]operationBinding,
 	packageMetas map[string]packageMeta,
 	writer *fileWriter,
 ) error {
+	outputDir := cfg.OutputSDK
 	rootDir := filepath.Join(outputDir, "cozepy")
 	if err := os.MkdirAll(rootDir, 0o755); err != nil {
 		return fmt.Errorf("create python package root %q: %w", rootDir, err)
@@ -283,10 +276,7 @@ func writePythonSDK(
 		if _, ok := packages[pkgName]; ok {
 			continue
 		}
-		if meta.Package == nil {
-			continue
-		}
-		if len(meta.Package.ChildClients) > 0 {
+		if packageHasConfiguredContent(meta.Package) {
 			pkgNames = append(pkgNames, pkgName)
 		}
 	}
@@ -320,6 +310,34 @@ func writePythonSDK(
 	if err := writer.write(filepath.Join(rootDir, "request.py"), requestPy); err != nil {
 		return err
 	}
+	logPy, err := renderLogPy()
+	if err != nil {
+		return err
+	}
+	if err := writer.write(filepath.Join(rootDir, "log.py"), logPy); err != nil {
+		return err
+	}
+	exceptionPy, err := renderExceptionPy()
+	if err != nil {
+		return err
+	}
+	if err := writer.write(filepath.Join(rootDir, "exception.py"), exceptionPy); err != nil {
+		return err
+	}
+	versionPy, err := renderVersionPy()
+	if err != nil {
+		return err
+	}
+	if err := writer.write(filepath.Join(rootDir, "version.py"), versionPy); err != nil {
+		return err
+	}
+	pyprojectToml, err := renderPyprojectToml()
+	if err != nil {
+		return err
+	}
+	if err := writer.write(filepath.Join(outputDir, "pyproject.toml"), pyprojectToml); err != nil {
+		return err
+	}
 	if err := writer.write(filepath.Join(rootDir, "py.typed"), ""); err != nil {
 		return err
 	}
@@ -330,17 +348,26 @@ func writePythonSDK(
 		if err := os.MkdirAll(pkgDir, 0o755); err != nil {
 			return fmt.Errorf("create package directory %q: %w", pkgDir, err)
 		}
-		content := renderPackageModule(doc, meta, packages[pkgName])
+		content := renderPackageModule(doc, meta, packages[pkgName], cfg.CommentOverrides)
 		if err := writer.write(filepath.Join(pkgDir, "__init__.py"), content); err != nil {
 			return err
 		}
 	}
 
-	if err := writePythonSupportAssets(outputDir, writer); err != nil {
-		return err
-	}
-
 	return nil
+}
+
+func packageHasConfiguredContent(pkg *config.Package) bool {
+	if pkg == nil {
+		return false
+	}
+	return len(pkg.ChildClients) > 0 ||
+		len(pkg.ModelSchemas) > 0 ||
+		len(pkg.EmptyModels) > 0 ||
+		len(pkg.PreModelCode) > 0 ||
+		len(pkg.TopLevelCode) > 0 ||
+		len(pkg.SyncExtraMethods) > 0 ||
+		len(pkg.AsyncExtraMethods) > 0
 }
 
 func (w *fileWriter) write(path string, content string) error {
@@ -360,29 +387,6 @@ func (w *fileWriter) writeBytes(path string, content []byte) error {
 	return nil
 }
 
-func writePythonSupportAssets(outputDir string, writer *fileWriter) error {
-	supportFiles, err := listPythonSupportFiles()
-	if err != nil {
-		return err
-	}
-	for _, relPath := range supportFiles {
-		targetPath := filepath.Join(outputDir, filepath.FromSlash(relPath))
-		if _, exists := writer.written[filepath.Clean(targetPath)]; exists {
-			if _, override := pythonSupportOverridePaths[filepath.ToSlash(relPath)]; !override {
-				continue
-			}
-		}
-		content, err := readPythonSupportFile(relPath)
-		if err != nil {
-			return err
-		}
-		if err := writer.writeBytes(targetPath, content); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func renderConfigPy() (string, error) {
 	return renderPythonTemplate("config.py.tpl", map[string]any{})
 }
@@ -399,12 +403,55 @@ func renderRequestPy() (string, error) {
 	return renderPythonTemplate("request.py.tpl", map[string]any{})
 }
 
-func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []operationBinding) string {
+func renderLogPy() (string, error) {
+	return renderPythonTemplate("log.py.tpl", map[string]any{})
+}
+
+func renderExceptionPy() (string, error) {
+	return renderPythonTemplate("exception.py.tpl", map[string]any{})
+}
+
+func renderVersionPy() (string, error) {
+	return renderPythonTemplate("version.py.tpl", map[string]any{})
+}
+
+func renderPyprojectToml() (string, error) {
+	return renderPythonTemplate("pyproject.toml.tpl", map[string]any{})
+}
+
+func renderPackageModule(
+	doc *openapi.Document,
+	meta packageMeta,
+	bindings []operationBinding,
+	commentOverrides config.CommentOverrides,
+) string {
 	var buf bytes.Buffer
 	hasChildClients := meta.Package != nil && len(meta.Package.ChildClients) > 0
+	childClientsForType := []config.ChildClient{}
+	childClientsForInit := []config.ChildClient{}
+	childClientsForSync := []config.ChildClient{}
+	childClientsForAsync := []config.ChildClient{}
+	if hasChildClients {
+		childClientsForType = append([]config.ChildClient(nil), meta.Package.ChildClients...)
+		childClientsForInit = append([]config.ChildClient(nil), meta.Package.ChildClients...)
+		childClientsForSync = append([]config.ChildClient(nil), meta.Package.ChildClients...)
+		childClientsForAsync = append([]config.ChildClient(nil), meta.Package.ChildClients...)
+		if len(meta.Package.TypeCheckingChildOrder) > 0 {
+			childClientsForType = orderChildClients(childClientsForType, meta.Package.TypeCheckingChildOrder)
+		}
+		if len(meta.Package.InitChildOrder) > 0 {
+			childClientsForInit = orderChildClients(childClientsForInit, meta.Package.InitChildOrder)
+		}
+		if len(meta.Package.SyncChildOrder) > 0 {
+			childClientsForSync = orderChildClients(childClientsForSync, meta.Package.SyncChildOrder)
+		}
+		if len(meta.Package.AsyncChildOrder) > 0 {
+			childClientsForAsync = orderChildClients(childClientsForAsync, meta.Package.AsyncChildOrder)
+		}
+	}
 	hasTypedChildClients := false
 	if hasChildClients {
-		for _, child := range meta.Package.ChildClients {
+		for _, child := range childClientsForType {
 			if !child.DisableTypeHints {
 				hasTypedChildClients = true
 				break
@@ -416,7 +463,22 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 	hasModelClasses := len(modelDefs) > 0 || (meta.Package != nil && len(meta.Package.EmptyModels) > 0)
 	hasTokenPagination := packageHasTokenPagination(bindings)
 	hasNumberPagination := packageHasNumberPagination(bindings)
+	needsTokenPagedResponseImport := false
+	needsNumberPagedResponseImport := false
+	for _, binding := range bindings {
+		if binding.Mapping == nil {
+			continue
+		}
+		mode := strings.TrimSpace(binding.Mapping.Pagination)
+		if isTokenPagination(mode) && paginationInheritResponse(binding.Mapping) {
+			needsTokenPagedResponseImport = true
+		}
+		if isNumberPagination(mode) && paginationInheritResponse(binding.Mapping) {
+			needsNumberPagedResponseImport = true
+		}
+	}
 	needAny, needDict := packageNeedsAnyDict(doc, bindings, modelDefs)
+	needsListResponseImport := packageNeedsListResponseImport(bindings)
 	hasStandardEnumClasses := false
 	hasIntEnumClasses := false
 	hasDynamicEnumClasses := false
@@ -433,106 +495,12 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 		}
 	}
 
-	if hasStandardEnumClasses || hasIntEnumClasses {
-		buf.WriteString("from enum import Enum\n")
-		if hasIntEnumClasses {
-			buf.WriteString("from enum import IntEnum\n")
+	disableAutoImports := meta.Package != nil && meta.Package.DisableAutoImports
+	wroteNonCozepyExtraImport := false
+	writeExtraImports := func() {
+		if meta.Package == nil || len(meta.Package.ExtraImports) == 0 {
+			return
 		}
-	}
-	typingImports := make([]string, 0)
-	if hasTypedChildClients {
-		typingImports = append(typingImports, "TYPE_CHECKING")
-	}
-	if needAny {
-		typingImports = append(typingImports, "Any")
-	}
-	if needDict {
-		typingImports = append(typingImports, "Dict")
-	}
-	if len(modelDefs) > 0 || hasTokenPagination || hasNumberPagination {
-		typingImports = append(typingImports, "List")
-	}
-	if hasTypedChildClients || len(modelDefs) > 0 || hasTokenPagination || hasNumberPagination || len(bindings) > 0 {
-		typingImports = append(typingImports, "Optional")
-	}
-	if len(typingImports) > 0 {
-		buf.WriteString(fmt.Sprintf("from typing import %s\n\n", strings.Join(typingImports, ", ")))
-	}
-	modelImports := make([]string, 0)
-	requestHTTPFromModel := meta.Package != nil && meta.Package.HTTPRequestFromModel
-	needHTTPRequest := hasTokenPagination || hasNumberPagination
-	if hasTokenPagination {
-		modelImports = append(modelImports, "AsyncTokenPaged")
-	}
-	if hasNumberPagination {
-		modelImports = append(modelImports, "AsyncNumberPaged")
-	}
-	if hasDynamicEnumClasses {
-		modelImports = append(modelImports, "DynamicStrEnum")
-	}
-	if hasModelClasses {
-		modelImports = append(modelImports, "CozeModel")
-	}
-	if hasTokenPagination {
-		modelImports = append(modelImports, "TokenPaged", "TokenPagedResponse")
-	}
-	if hasNumberPagination {
-		modelImports = append(modelImports, "NumberPaged", "NumberPagedResponse")
-	}
-	if needHTTPRequest && requestHTTPFromModel {
-		modelImports = append(modelImports, "HTTPRequest")
-	}
-	if len(modelImports) > 0 {
-		buf.WriteString(fmt.Sprintf("from cozepy.model import %s\n", strings.Join(modelImports, ", ")))
-	}
-	requestImports := []string{"Requester"}
-	if needHTTPRequest && !requestHTTPFromModel {
-		requestImports = append([]string{"HTTPRequest"}, requestImports...)
-	}
-	buf.WriteString(fmt.Sprintf("from cozepy.request import %s\n", strings.Join(requestImports, ", ")))
-	utilImports := []string{"remove_url_trailing_slash"}
-	needDumpExcludeNone := false
-	needRemoveNoneValues := false
-	for _, binding := range bindings {
-		queryBuilder := "dump_exclude_none"
-		bodyBuilder := "dump_exclude_none"
-		if binding.Mapping != nil {
-			queryBuilder = normalizeMapBuilder(binding.Mapping.QueryBuilder)
-			bodyBuilder = normalizeMapBuilder(binding.Mapping.BodyBuilder)
-		}
-		hasQueryFields := len(binding.Details.QueryParameters) > 0
-		if binding.Mapping != nil && len(binding.Mapping.QueryFields) > 0 {
-			hasQueryFields = true
-		}
-		hasBodyMap := binding.Mapping != nil && (len(binding.Mapping.BodyFields) > 0 || len(binding.Mapping.BodyFixedValues) > 0)
-		if hasQueryFields {
-			if queryBuilder == "dump_exclude_none" {
-				needDumpExcludeNone = true
-			}
-			if queryBuilder == "remove_none_values" {
-				needRemoveNoneValues = true
-			}
-		}
-		if hasBodyMap {
-			if bodyBuilder == "dump_exclude_none" {
-				needDumpExcludeNone = true
-			}
-			if bodyBuilder == "remove_none_values" {
-				needRemoveNoneValues = true
-			}
-		}
-		if needDumpExcludeNone && needRemoveNoneValues {
-			break
-		}
-	}
-	if needDumpExcludeNone {
-		utilImports = append([]string{"dump_exclude_none"}, utilImports...)
-	}
-	if needRemoveNoneValues {
-		utilImports = append([]string{"remove_none_values"}, utilImports...)
-	}
-	buf.WriteString(fmt.Sprintf("from cozepy.util import %s\n", strings.Join(utilImports, ", ")))
-	if meta.Package != nil && len(meta.Package.ExtraImports) > 0 {
 		for _, spec := range meta.Package.ExtraImports {
 			moduleName := strings.TrimSpace(spec.Module)
 			if moduleName == "" {
@@ -549,16 +517,170 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 			if len(names) == 0 {
 				continue
 			}
+			if !strings.HasPrefix(moduleName, "cozepy.") {
+				wroteNonCozepyExtraImport = true
+			}
 			buf.WriteString(fmt.Sprintf("from %s import %s\n", moduleName, strings.Join(names, ", ")))
 		}
 	}
+	if !disableAutoImports {
+		if hasStandardEnumClasses || hasIntEnumClasses {
+			buf.WriteString("from enum import Enum\n")
+			if hasIntEnumClasses {
+				buf.WriteString("from enum import IntEnum\n")
+			}
+		}
+		typingImports := make([]string, 0)
+		if hasTypedChildClients {
+			typingImports = append(typingImports, "TYPE_CHECKING")
+		}
+		if needAny {
+			typingImports = append(typingImports, "Any")
+		}
+		if needDict {
+			typingImports = append(typingImports, "Dict")
+		}
+		if len(modelDefs) > 0 || hasTokenPagination || hasNumberPagination {
+			typingImports = append(typingImports, "List")
+		}
+		if hasTypedChildClients || len(modelDefs) > 0 || hasTokenPagination || hasNumberPagination || len(bindings) > 0 {
+			typingImports = append(typingImports, "Optional")
+		}
+		if len(typingImports) > 0 {
+			buf.WriteString(fmt.Sprintf("from typing import %s\n\n", strings.Join(typingImports, ", ")))
+		}
+		writeExtraImports()
+		if wroteNonCozepyExtraImport {
+			buf.WriteString("\n")
+		}
+		modelImports := make([]string, 0)
+		requestHTTPFromModel := meta.Package != nil && meta.Package.HTTPRequestFromModel
+		needHTTPRequest := hasTokenPagination || hasNumberPagination
+		if hasTokenPagination {
+			modelImports = append(modelImports, "AsyncTokenPaged")
+		}
+		if hasNumberPagination {
+			modelImports = append(modelImports, "AsyncNumberPaged")
+		}
+		if hasDynamicEnumClasses {
+			modelImports = append(modelImports, "DynamicStrEnum")
+		}
+		if hasModelClasses {
+			modelImports = append(modelImports, "CozeModel")
+		}
+		if hasTokenPagination {
+			modelImports = append(modelImports, "TokenPaged")
+			if needsTokenPagedResponseImport {
+				modelImports = append(modelImports, "TokenPagedResponse")
+			}
+		}
+		if hasNumberPagination {
+			modelImports = append(modelImports, "NumberPaged")
+			if needsNumberPagedResponseImport {
+				modelImports = append(modelImports, "NumberPagedResponse")
+			}
+		}
+		if needHTTPRequest && requestHTTPFromModel {
+			modelImports = append(modelImports, "HTTPRequest")
+		}
+		if needsListResponseImport {
+			modelImports = append(modelImports, "ListResponse")
+		}
+		modelImports = orderedUniqueByPriority(modelImports, []string{
+			"AsyncTokenPaged",
+			"AsyncNumberPaged",
+			"CozeModel",
+			"DynamicStrEnum",
+			"HTTPRequest",
+			"ListResponse",
+			"TokenPaged",
+			"TokenPagedResponse",
+			"NumberPaged",
+			"NumberPagedResponse",
+		})
+		if len(modelImports) > 0 {
+			buf.WriteString(fmt.Sprintf("from cozepy.model import %s\n", strings.Join(modelImports, ", ")))
+		}
+		requestImports := []string{"Requester"}
+		if needHTTPRequest && !requestHTTPFromModel {
+			requestImports = append([]string{"HTTPRequest"}, requestImports...)
+		}
+		buf.WriteString(fmt.Sprintf("from cozepy.request import %s\n", strings.Join(requestImports, ", ")))
+		utilImports := []string{"remove_url_trailing_slash"}
+		needDumpExcludeNone := false
+		needRemoveNoneValues := false
+		for _, binding := range bindings {
+			queryBuilder := "dump_exclude_none"
+			bodyBuilder := "dump_exclude_none"
+			queryBuilderSync := ""
+			queryBuilderAsync := ""
+			if binding.Mapping != nil {
+				queryBuilder = normalizeMapBuilder(binding.Mapping.QueryBuilder)
+				if override := strings.TrimSpace(binding.Mapping.QueryBuilderSync); override != "" {
+					queryBuilderSync = normalizeMapBuilder(override)
+				}
+				if override := strings.TrimSpace(binding.Mapping.QueryBuilderAsync); override != "" {
+					queryBuilderAsync = normalizeMapBuilder(override)
+				}
+				bodyBuilder = normalizeMapBuilder(binding.Mapping.BodyBuilder)
+			}
+			hasQueryFields := len(binding.Details.QueryParameters) > 0
+			if binding.Mapping != nil && len(binding.Mapping.QueryFields) > 0 {
+				hasQueryFields = true
+			}
+			hasBodyMap := binding.Mapping != nil && (len(binding.Mapping.BodyFields) > 0 || len(binding.Mapping.BodyFixedValues) > 0)
+			if hasQueryFields {
+				builders := []string{queryBuilder}
+				if queryBuilderSync != "" {
+					builders = append(builders, queryBuilderSync)
+				}
+				if queryBuilderAsync != "" {
+					builders = append(builders, queryBuilderAsync)
+				}
+				for _, builder := range builders {
+					if builder == "dump_exclude_none" {
+						needDumpExcludeNone = true
+					}
+					if builder == "remove_none_values" {
+						needRemoveNoneValues = true
+					}
+				}
+			}
+			if hasBodyMap {
+				if bodyBuilder == "dump_exclude_none" {
+					needDumpExcludeNone = true
+				}
+				if bodyBuilder == "remove_none_values" {
+					needRemoveNoneValues = true
+				}
+			}
+			if needDumpExcludeNone && needRemoveNoneValues {
+				break
+			}
+		}
+		if needDumpExcludeNone {
+			utilImports = append([]string{"dump_exclude_none"}, utilImports...)
+		}
+		if needRemoveNoneValues {
+			utilImports = append([]string{"remove_none_values"}, utilImports...)
+		}
+		utilImports = orderedUniqueByPriority(utilImports, []string{
+			"dump_exclude_none",
+			"remove_none_values",
+			"remove_url_trailing_slash",
+		})
+		buf.WriteString(fmt.Sprintf("from cozepy.util import %s\n", strings.Join(utilImports, ", ")))
+	} else {
+		writeExtraImports()
+	}
 	if meta.Package != nil && len(meta.Package.RawImports) > 0 {
 		for _, rawImport := range meta.Package.RawImports {
-			line := strings.TrimSpace(rawImport)
-			if line == "" {
+			block := strings.TrimRight(rawImport, "\n")
+			if strings.TrimSpace(block) == "" {
+				buf.WriteString("\n")
 				continue
 			}
-			buf.WriteString(line)
+			buf.WriteString(block)
 			buf.WriteString("\n")
 		}
 	}
@@ -570,25 +692,46 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 
 	if hasTypedChildClients {
 		buf.WriteString("\nif TYPE_CHECKING:\n")
-		for _, child := range meta.Package.ChildClients {
+		for _, child := range childClientsForType {
 			if child.DisableTypeHints {
 				continue
 			}
-			typeModule := strings.TrimSpace(child.Module)
+			typeModule := strings.TrimSpace(child.TypeImportModule)
+			if typeModule == "" {
+				typeModule = strings.TrimSpace(child.Module)
+			}
 			if !strings.HasPrefix(typeModule, ".") {
 				typeModule = childTypeImportModule(meta, typeModule)
 			}
 			if typeModule == "" {
 				continue
 			}
-			buf.WriteString(fmt.Sprintf("    from %s import %s, %s\n", typeModule, child.AsyncClass, child.SyncClass))
+			if child.TypeImportSyncFirst {
+				buf.WriteString(fmt.Sprintf("    from %s import %s, %s\n", typeModule, child.SyncClass, child.AsyncClass))
+			} else {
+				buf.WriteString(fmt.Sprintf("    from %s import %s, %s\n", typeModule, child.AsyncClass, child.SyncClass))
+			}
 		}
 	}
-	buf.WriteString("\n\n")
+	if meta.Package != nil && len(meta.Package.PreModelCode) > 0 {
+		buf.WriteString("\n")
+	} else {
+		buf.WriteString("\n\n")
+	}
+
+	if meta.Package != nil && len(meta.Package.PreModelCode) > 0 {
+		for _, block := range meta.Package.PreModelCode {
+			appendIndentedCode(&buf, block, 0)
+			buf.WriteString("\n")
+		}
+		if hasModelClasses {
+			buf.WriteString("\n")
+		}
+	}
 
 	if hasModelClasses {
-		buf.WriteString(renderPackageModelDefinitions(doc, meta, modelDefs, schemaAliases))
-		buf.WriteString("\n")
+		buf.WriteString(renderPackageModelDefinitions(doc, meta, modelDefs, schemaAliases, commentOverrides))
+		buf.WriteString("\n\n\n")
 	}
 	if hasTokenPagination || hasNumberPagination {
 		overridePaginationClasses := map[string]struct{}{}
@@ -601,8 +744,11 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 				overridePaginationClasses[trimmed] = struct{}{}
 			}
 		}
-		buf.WriteString(renderPagedResponseClasses(bindings, overridePaginationClasses))
-		buf.WriteString("\n")
+		pagedResponseClasses := renderPagedResponseClasses(bindings, overridePaginationClasses)
+		if strings.TrimSpace(pagedResponseClasses) != "" {
+			buf.WriteString(pagedResponseClasses)
+			buf.WriteString("\n")
+		}
 	}
 	if meta.Package != nil && len(meta.Package.TopLevelCode) > 0 {
 		for _, block := range meta.Package.TopLevelCode {
@@ -613,13 +759,40 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 
 	syncClass := packageClientClassName(meta, false)
 	asyncClass := packageClientClassName(meta, true)
+	syncClassKey := "cozepy." + meta.ModulePath + "." + syncClass
+	asyncClassKey := "cozepy." + meta.ModulePath + "." + asyncClass
+	blankLineBeforeChildInits := meta.Package != nil && meta.Package.BlankLineBeforeChildInits
+	blankLineBeforeSyncInitCode := meta.Package != nil && meta.Package.BlankLineBeforeSyncInit
+	blankLineBeforeAsyncInitCode := meta.Package != nil && meta.Package.BlankLineBeforeAsyncInit
 
+	ensureTrailingNewlines(&buf, 3)
 	buf.WriteString(fmt.Sprintf("class %s(object):\n", syncClass))
+	if classDoc := strings.TrimSpace(commentOverrides.ClassDocstrings[syncClassKey]); classDoc != "" {
+		style := strings.TrimSpace(commentOverrides.ClassDocstringStyles[syncClassKey])
+		writeClassDocstring(&buf, 1, classDoc, style)
+	}
 	buf.WriteString("    def __init__(self, base_url: str, requester: Requester):\n")
+	if meta.Package != nil && len(meta.Package.SyncInitPreCode) > 0 {
+		for _, block := range meta.Package.SyncInitPreCode {
+			appendIndentedCode(&buf, block, 2)
+		}
+	}
 	buf.WriteString("        self._base_url = remove_url_trailing_slash(base_url)\n")
-	buf.WriteString("        self._requester = requester\n\n")
+	buf.WriteString("        self._requester = requester\n")
+	if meta.Package != nil && len(meta.Package.SyncInitCode) > 0 {
+		if blankLineBeforeSyncInitCode {
+			buf.WriteString("\n")
+		}
+		for _, block := range meta.Package.SyncInitCode {
+			appendIndentedCode(&buf, block, 2)
+			buf.WriteString("\n")
+		}
+	}
 	if hasChildClients {
-		for _, child := range meta.Package.ChildClients {
+		if blankLineBeforeChildInits {
+			buf.WriteString("\n")
+		}
+		for _, child := range childClientsForInit {
 			attribute := normalizePythonIdentifier(child.Attribute)
 			if child.DisableTypeHints {
 				buf.WriteString(fmt.Sprintf("        self._%s = None\n", attribute))
@@ -628,31 +801,74 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 			}
 		}
 		buf.WriteString("\n")
+	} else if meta.Package == nil || len(meta.Package.SyncInitCode) == 0 {
+		buf.WriteString("\n")
 	}
+	syncMethodBlocks := make([]classMethodBlock, 0)
 	if hasChildClients {
-		for _, child := range meta.Package.ChildClients {
-			buf.WriteString(renderChildClientProperty(meta, child, false))
-			buf.WriteString("\n")
+		for _, child := range childClientsForSync {
+			attribute := normalizePythonIdentifier(child.Attribute)
+			syncMethodBlocks = append(syncMethodBlocks, classMethodBlock{
+				Name:    attribute,
+				Content: renderChildClientProperty(meta, child, false, syncClassKey, commentOverrides),
+			})
 		}
 	}
-
 	for _, binding := range bindings {
-		buf.WriteString(renderOperationMethod(doc, binding, false))
-		buf.WriteString("\n")
+		if !mappingGeneratesSync(binding.Mapping) {
+			continue
+		}
+		syncMethodBlocks = append(syncMethodBlocks, classMethodBlock{
+			Name:    binding.MethodName,
+			Content: renderOperationMethodWithComments(doc, binding, false, "cozepy."+meta.ModulePath, syncClass, commentOverrides),
+		})
 	}
 	if meta.Package != nil && len(meta.Package.SyncExtraMethods) > 0 {
 		for _, block := range meta.Package.SyncExtraMethods {
-			appendIndentedCode(&buf, block, 1)
+			content := indentCodeBlock(block, 1)
+			content = applyMethodDocstringOverrides(content, syncClassKey, commentOverrides)
+			syncMethodBlocks = append(syncMethodBlocks, classMethodBlock{
+				Name:    detectMethodBlockName(block),
+				Content: content,
+			})
+		}
+	}
+	if meta.Package != nil && len(meta.Package.SyncMethodOrder) > 0 {
+		syncMethodBlocks = orderClassMethodBlocks(syncMethodBlocks, meta.Package.SyncMethodOrder)
+	}
+	for _, block := range syncMethodBlocks {
+		buf.WriteString(strings.TrimRight(block.Content, "\n"))
+		buf.WriteString("\n\n")
+	}
+	buf.WriteString("\n")
+
+	buf.WriteString(fmt.Sprintf("class %s(object):\n", asyncClass))
+	if classDoc := strings.TrimSpace(commentOverrides.ClassDocstrings[asyncClassKey]); classDoc != "" {
+		style := strings.TrimSpace(commentOverrides.ClassDocstringStyles[asyncClassKey])
+		writeClassDocstring(&buf, 1, classDoc, style)
+	}
+	buf.WriteString("    def __init__(self, base_url: str, requester: Requester):\n")
+	if meta.Package != nil && len(meta.Package.AsyncInitPreCode) > 0 {
+		for _, block := range meta.Package.AsyncInitPreCode {
+			appendIndentedCode(&buf, block, 2)
+		}
+	}
+	buf.WriteString("        self._base_url = remove_url_trailing_slash(base_url)\n")
+	buf.WriteString("        self._requester = requester\n")
+	if meta.Package != nil && len(meta.Package.AsyncInitCode) > 0 {
+		if blankLineBeforeAsyncInitCode {
+			buf.WriteString("\n")
+		}
+		for _, block := range meta.Package.AsyncInitCode {
+			appendIndentedCode(&buf, block, 2)
 			buf.WriteString("\n")
 		}
 	}
-
-	buf.WriteString(fmt.Sprintf("class %s(object):\n", asyncClass))
-	buf.WriteString("    def __init__(self, base_url: str, requester: Requester):\n")
-	buf.WriteString("        self._base_url = remove_url_trailing_slash(base_url)\n")
-	buf.WriteString("        self._requester = requester\n\n")
 	if hasChildClients {
-		for _, child := range meta.Package.ChildClients {
+		if blankLineBeforeChildInits {
+			buf.WriteString("\n")
+		}
+		for _, child := range childClientsForInit {
 			attribute := normalizePythonIdentifier(child.Attribute)
 			if child.DisableTypeHints {
 				buf.WriteString(fmt.Sprintf("        self._%s = None\n", attribute))
@@ -661,26 +877,47 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 			}
 		}
 		buf.WriteString("\n")
+	} else if meta.Package == nil || len(meta.Package.AsyncInitCode) == 0 {
+		buf.WriteString("\n")
 	}
+	asyncMethodBlocks := make([]classMethodBlock, 0)
 	if hasChildClients {
-		for _, child := range meta.Package.ChildClients {
-			buf.WriteString(renderChildClientProperty(meta, child, true))
-			buf.WriteString("\n")
+		for _, child := range childClientsForAsync {
+			attribute := normalizePythonIdentifier(child.Attribute)
+			asyncMethodBlocks = append(asyncMethodBlocks, classMethodBlock{
+				Name:    attribute,
+				Content: renderChildClientProperty(meta, child, true, asyncClassKey, commentOverrides),
+			})
 		}
 	}
-
 	for _, binding := range bindings {
-		buf.WriteString(renderOperationMethod(doc, binding, true))
-		buf.WriteString("\n")
+		if !mappingGeneratesAsync(binding.Mapping) {
+			continue
+		}
+		asyncMethodBlocks = append(asyncMethodBlocks, classMethodBlock{
+			Name:    binding.MethodName,
+			Content: renderOperationMethodWithComments(doc, binding, true, "cozepy."+meta.ModulePath, asyncClass, commentOverrides),
+		})
 	}
 	if meta.Package != nil && len(meta.Package.AsyncExtraMethods) > 0 {
 		for _, block := range meta.Package.AsyncExtraMethods {
-			appendIndentedCode(&buf, block, 1)
-			buf.WriteString("\n")
+			content := indentCodeBlock(block, 1)
+			content = applyMethodDocstringOverrides(content, asyncClassKey, commentOverrides)
+			asyncMethodBlocks = append(asyncMethodBlocks, classMethodBlock{
+				Name:    detectMethodBlockName(block),
+				Content: content,
+			})
 		}
 	}
+	if meta.Package != nil && len(meta.Package.AsyncMethodOrder) > 0 {
+		asyncMethodBlocks = orderClassMethodBlocks(asyncMethodBlocks, meta.Package.AsyncMethodOrder)
+	}
+	for _, block := range asyncMethodBlocks {
+		buf.WriteString(strings.TrimRight(block.Content, "\n"))
+		buf.WriteString("\n\n")
+	}
 
-	content := buf.String()
+	content := strings.TrimRight(buf.String(), "\n") + "\n"
 	if !strings.Contains(content, "(str, Enum):") {
 		content = strings.Replace(content, "from enum import Enum\n", "", 1)
 	}
@@ -861,6 +1098,25 @@ func packageNeedsAnyDict(doc *openapi.Document, bindings []operationBinding, mod
 	return needAny, needDict
 }
 
+func packageNeedsListResponseImport(bindings []operationBinding) bool {
+	for _, binding := range bindings {
+		if binding.Mapping == nil {
+			continue
+		}
+		candidates := []string{
+			binding.Mapping.ResponseType,
+			binding.Mapping.AsyncResponseType,
+			binding.Mapping.ResponseCast,
+		}
+		for _, candidate := range candidates {
+			if strings.Contains(strings.TrimSpace(candidate), "ListResponse[") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func renderPagedResponseClasses(bindings []operationBinding, overriddenClasses map[string]struct{}) string {
 	seen := map[string]struct{}{}
 	ordered := make([]operationBinding, 0, len(bindings))
@@ -967,8 +1223,10 @@ func renderPagedResponseClasses(bindings []operationBinding, overriddenClasses m
 type packageModelDefinition struct {
 	SchemaName            string
 	Name                  string
+	BaseClasses           []string
 	Schema                *openapi.Schema
 	IsEnum                bool
+	BeforeCode            []string
 	PrependCode           []string
 	FieldOrder            []string
 	RequiredFields        []string
@@ -980,6 +1238,10 @@ type packageModelDefinition struct {
 	ExtraCode             []string
 	AllowMissingInSwagger bool
 	ExcludeUnordered      bool
+	SeparateCommentedEnum *bool
+	SeparateRequired      *bool
+	SeparateCommented     *bool
+	BlankLineBeforeFields []string
 }
 
 func packageSchemaAliases(meta packageMeta) map[string]string {
@@ -1027,8 +1289,10 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 			result = append(result, packageModelDefinition{
 				SchemaName:            schemaName,
 				Name:                  modelName,
+				BaseClasses:           append([]string(nil), model.BaseClasses...),
 				Schema:                nil,
 				IsEnum:                isEnum,
+				BeforeCode:            append([]string(nil), model.BeforeCode...),
 				PrependCode:           append([]string(nil), model.PrependCode...),
 				FieldOrder:            append([]string(nil), model.FieldOrder...),
 				RequiredFields:        append([]string(nil), model.RequiredFields...),
@@ -1040,6 +1304,10 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 				ExtraCode:             append([]string(nil), model.ExtraCode...),
 				AllowMissingInSwagger: model.AllowMissingInSwagger,
 				ExcludeUnordered:      model.ExcludeUnorderedFields,
+				SeparateCommentedEnum: model.SeparateCommentedEnum,
+				SeparateRequired:      model.SeparateRequiredOptional,
+				SeparateCommented:     model.SeparateCommentedFields,
+				BlankLineBeforeFields: append([]string(nil), model.BlankLineBeforeFields...),
 			})
 			continue
 		}
@@ -1052,8 +1320,10 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 			result = append(result, packageModelDefinition{
 				SchemaName:            schemaName,
 				Name:                  modelName,
+				BaseClasses:           append([]string(nil), model.BaseClasses...),
 				Schema:                nil,
 				IsEnum:                isEnum,
+				BeforeCode:            append([]string(nil), model.BeforeCode...),
 				PrependCode:           append([]string(nil), model.PrependCode...),
 				FieldOrder:            append([]string(nil), model.FieldOrder...),
 				RequiredFields:        append([]string(nil), model.RequiredFields...),
@@ -1065,6 +1335,10 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 				ExtraCode:             append([]string(nil), model.ExtraCode...),
 				AllowMissingInSwagger: model.AllowMissingInSwagger,
 				ExcludeUnordered:      model.ExcludeUnorderedFields,
+				SeparateCommentedEnum: model.SeparateCommentedEnum,
+				SeparateRequired:      model.SeparateRequiredOptional,
+				SeparateCommented:     model.SeparateCommentedFields,
+				BlankLineBeforeFields: append([]string(nil), model.BlankLineBeforeFields...),
 			})
 			continue
 		}
@@ -1076,8 +1350,10 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 		result = append(result, packageModelDefinition{
 			SchemaName:            schemaName,
 			Name:                  modelName,
+			BaseClasses:           append([]string(nil), model.BaseClasses...),
 			Schema:                resolved,
 			IsEnum:                isEnum,
+			BeforeCode:            append([]string(nil), model.BeforeCode...),
 			PrependCode:           append([]string(nil), model.PrependCode...),
 			FieldOrder:            append([]string(nil), model.FieldOrder...),
 			RequiredFields:        append([]string(nil), model.RequiredFields...),
@@ -1089,6 +1365,10 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 			ExtraCode:             append([]string(nil), model.ExtraCode...),
 			AllowMissingInSwagger: model.AllowMissingInSwagger,
 			ExcludeUnordered:      model.ExcludeUnorderedFields,
+			SeparateCommentedEnum: model.SeparateCommentedEnum,
+			SeparateRequired:      model.SeparateRequiredOptional,
+			SeparateCommented:     model.SeparateCommentedFields,
+			BlankLineBeforeFields: append([]string(nil), model.BlankLineBeforeFields...),
 		})
 	}
 	return result
@@ -1099,10 +1379,42 @@ func renderPackageModelDefinitions(
 	meta packageMeta,
 	models []packageModelDefinition,
 	schemaAliases map[string]string,
+	commentOverrides config.CommentOverrides,
 ) string {
 	var buf bytes.Buffer
+	modulePrefix := "cozepy." + meta.ModulePath
+	separateCommentedEnum := meta.Package != nil && meta.Package.SeparateCommentedEnum
+	separateRequiredOptional := meta.Package != nil && meta.Package.SeparateRequiredOptional
+	separateCommentedFields := meta.Package != nil && meta.Package.SeparateCommentedFields
 
 	for _, model := range models {
+		classKey := modulePrefix + "." + model.Name
+		if len(model.BeforeCode) > 0 {
+			for _, block := range model.BeforeCode {
+				appendIndentedCode(&buf, block, 0)
+				buf.WriteString("\n")
+			}
+		}
+		modelSeparateCommentedEnum := separateCommentedEnum
+		if model.SeparateCommentedEnum != nil {
+			modelSeparateCommentedEnum = *model.SeparateCommentedEnum
+		}
+		modelSeparateRequiredOptional := separateRequiredOptional
+		if model.SeparateRequired != nil {
+			modelSeparateRequiredOptional = *model.SeparateRequired
+		}
+		modelSeparateCommentedFields := separateCommentedFields
+		if model.SeparateCommented != nil {
+			modelSeparateCommentedFields = *model.SeparateCommented
+		}
+		blankLineBeforeFieldSet := map[string]struct{}{}
+		for _, rawFieldName := range model.BlankLineBeforeFields {
+			fieldName := strings.TrimSpace(rawFieldName)
+			if fieldName == "" {
+				continue
+			}
+			blankLineBeforeFieldSet[fieldName] = struct{}{}
+		}
 		if model.IsEnum {
 			if model.EnumBase == "dynamic_str" {
 				buf.WriteString(fmt.Sprintf("class %s(DynamicStrEnum):\n", model.Name))
@@ -1110,6 +1422,10 @@ func renderPackageModelDefinitions(
 				buf.WriteString(fmt.Sprintf("class %s(IntEnum):\n", model.Name))
 			} else {
 				buf.WriteString(fmt.Sprintf("class %s(str, Enum):\n", model.Name))
+			}
+			if docstring := strings.TrimSpace(commentOverrides.ClassDocstrings[classKey]); docstring != "" && !modelHasCustomClassDocstring(model) {
+				style := strings.TrimSpace(commentOverrides.ClassDocstringStyles[classKey])
+				writeClassDocstring(&buf, 1, docstring, style)
 			}
 			enumItems := make([]config.ModelEnumValue, 0)
 			if len(model.EnumValues) > 0 {
@@ -1126,18 +1442,64 @@ func renderPackageModelDefinitions(
 				buf.WriteString("    pass\n\n")
 				continue
 			}
-			for _, enumValue := range enumItems {
+			for i, enumValue := range enumItems {
 				memberName := strings.TrimSpace(enumValue.Name)
 				if memberName == "" {
 					memberName = enumMemberName(fmt.Sprintf("%v", enumValue.Value))
 				}
-				buf.WriteString(fmt.Sprintf("    %s = %s\n", memberName, renderEnumValueLiteral(enumValue.Value)))
+				inlineEnumComment := strings.TrimSpace(commentOverrides.InlineEnumMemberComment[classKey+"."+memberName])
+				if inlineEnumComment != "" {
+					inlineEnumComment = strings.TrimPrefix(inlineEnumComment, "#")
+					inlineEnumComment = strings.TrimSpace(inlineEnumComment)
+				}
+				enumComment := linesFromCommentOverride(commentOverrides.EnumMemberComments[classKey+"."+memberName])
+				if len(enumComment) > 0 && inlineEnumComment == "" {
+					writeLineComments(&buf, 1, enumComment)
+				}
+				if inlineEnumComment != "" {
+					buf.WriteString(fmt.Sprintf("    %s = %s  # %s\n", memberName, renderEnumValueLiteral(enumValue.Value), inlineEnumComment))
+				} else {
+					buf.WriteString(fmt.Sprintf("    %s = %s\n", memberName, renderEnumValueLiteral(enumValue.Value)))
+				}
+				if modelSeparateCommentedEnum && i < len(enumItems)-1 {
+					nextHasComment := false
+					nextName := strings.TrimSpace(enumItems[i+1].Name)
+					if nextName == "" {
+						nextName = enumMemberName(fmt.Sprintf("%v", enumItems[i+1].Value))
+					}
+					nextInlineComment := strings.TrimSpace(commentOverrides.InlineEnumMemberComment[classKey+"."+nextName])
+					nextComment := linesFromCommentOverride(commentOverrides.EnumMemberComments[classKey+"."+nextName])
+					if nextInlineComment != "" || len(nextComment) > 0 {
+						nextHasComment = true
+					}
+					if len(enumComment) > 0 || inlineEnumComment != "" || nextHasComment {
+						buf.WriteString("\n")
+					}
+				}
 			}
-			buf.WriteString("\n")
+			buf.WriteString("\n\n")
 			continue
 		}
 
-		buf.WriteString(fmt.Sprintf("class %s(CozeModel):\n", model.Name))
+		baseExpr := "CozeModel"
+		if len(model.BaseClasses) > 0 {
+			baseList := make([]string, 0, len(model.BaseClasses))
+			for _, baseClass := range model.BaseClasses {
+				trimmed := strings.TrimSpace(baseClass)
+				if trimmed == "" {
+					continue
+				}
+				baseList = append(baseList, trimmed)
+			}
+			if len(baseList) > 0 {
+				baseExpr = strings.Join(baseList, ", ")
+			}
+		}
+		buf.WriteString(fmt.Sprintf("class %s(%s):\n", model.Name, baseExpr))
+		if docstring := strings.TrimSpace(commentOverrides.ClassDocstrings[classKey]); docstring != "" && !modelHasCustomClassDocstring(model) {
+			style := strings.TrimSpace(commentOverrides.ClassDocstringStyles[classKey])
+			writeClassDocstring(&buf, 1, docstring, style)
+		}
 		properties := map[string]*openapi.Schema{}
 		if model.Schema != nil {
 			properties = model.Schema.Properties
@@ -1158,67 +1520,166 @@ func renderPackageModelDefinitions(
 				requiredSet[requiredName] = true
 			}
 		}
+		clearRequired := false
+		configRequired := make([]string, 0, len(model.RequiredFields))
 		for _, requiredName := range model.RequiredFields {
 			requiredName = strings.TrimSpace(requiredName)
 			if requiredName == "" {
 				continue
 			}
-			requiredSet[requiredName] = true
-		}
-		if requiredSet["__none__"] {
-			requiredSet = map[string]bool{}
-		}
-		propertyNames := make([]string, 0, len(properties))
-		seenProperties := map[string]bool{}
-		for _, propertyName := range model.FieldOrder {
-			if _, ok := properties[propertyName]; !ok {
+			if requiredName == "__none__" {
+				clearRequired = true
 				continue
 			}
-			propertyNames = append(propertyNames, propertyName)
-			seenProperties[propertyName] = true
+			configRequired = append(configRequired, requiredName)
 		}
-		if !model.ExcludeUnordered {
-			remaining := make([]string, 0, len(properties))
-			for propertyName := range properties {
-				if seenProperties[propertyName] {
-					continue
-				}
-				remaining = append(remaining, propertyName)
-			}
-			sort.Strings(remaining)
-			propertyNames = append(propertyNames, remaining...)
+		if clearRequired {
+			requiredSet = map[string]bool{}
 		}
-		for _, propertyName := range propertyNames {
-			propertySchema := properties[propertyName]
-			typeName := modelFieldType(model, propertyName, pythonTypeForSchemaWithAliases(doc, propertySchema, requiredSet[propertyName], schemaAliases))
-			fieldName := normalizePythonIdentifier(propertyName)
-			if requiredSet[propertyName] {
-				buf.WriteString(fmt.Sprintf("    %s: %s\n", fieldName, typeName))
-			} else {
-				defaultValue := modelFieldDefault(model, propertyName)
-				if defaultValue == "None" && !strings.HasPrefix(typeName, "Optional[") {
-					typeName = "Optional[" + typeName + "]"
-				} else if defaultValue != "None" {
-					typeName = unwrapOptionalType(typeName)
-				}
-				buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", fieldName, typeName, defaultValue))
-			}
+		for _, requiredName := range configRequired {
+			requiredSet[requiredName] = true
 		}
+		extraFieldByName := map[string]config.ModelField{}
+		extraFieldNames := make([]string, 0, len(model.ExtraFields))
 		for _, extraField := range model.ExtraFields {
 			rawName := strings.TrimSpace(extraField.Name)
 			if rawName == "" {
 				continue
 			}
-			if _, exists := properties[rawName]; exists {
+			if _, exists := extraFieldByName[rawName]; exists {
 				continue
 			}
-			fieldName := normalizePythonIdentifier(rawName)
+			extraFieldByName[rawName] = extraField
+			extraFieldNames = append(extraFieldNames, rawName)
+		}
+
+		fieldNames := make([]string, 0, len(properties)+len(extraFieldNames))
+		seenFields := map[string]bool{}
+		for _, fieldName := range model.FieldOrder {
+			if _, ok := properties[fieldName]; ok {
+				fieldNames = append(fieldNames, fieldName)
+				seenFields[fieldName] = true
+				continue
+			}
+			if _, ok := extraFieldByName[fieldName]; ok {
+				if _, exists := properties[fieldName]; exists {
+					continue
+				}
+				fieldNames = append(fieldNames, fieldName)
+				seenFields[fieldName] = true
+			}
+		}
+		if !model.ExcludeUnordered {
+			remaining := make([]string, 0, len(properties))
+			for propertyName := range properties {
+				if seenFields[propertyName] {
+					continue
+				}
+				remaining = append(remaining, propertyName)
+			}
+			sort.Strings(remaining)
+			fieldNames = append(fieldNames, remaining...)
+		}
+		for _, extraName := range extraFieldNames {
+			if _, exists := properties[extraName]; exists {
+				continue
+			}
+			if seenFields[extraName] {
+				continue
+			}
+			fieldNames = append(fieldNames, extraName)
+		}
+
+		prevHasField := false
+		prevRequired := false
+		for _, fieldName := range fieldNames {
+			if propertySchema, ok := properties[fieldName]; ok {
+				currentRequired := requiredSet[fieldName]
+				if _, ok := blankLineBeforeFieldSet[fieldName]; ok && prevHasField {
+					buf.WriteString("\n")
+				}
+				if modelSeparateRequiredOptional && prevHasField && prevRequired && !currentRequired {
+					buf.WriteString("\n")
+				}
+				typeName := modelFieldType(model, fieldName, pythonTypeForSchemaWithAliases(doc, propertySchema, requiredSet[fieldName], schemaAliases))
+				normalizedFieldName := normalizePythonIdentifier(fieldName)
+				inlineFieldComment := strings.TrimSpace(commentOverrides.InlineFieldComments[classKey+"."+normalizedFieldName])
+				if inlineFieldComment != "" {
+					inlineFieldComment = strings.TrimPrefix(inlineFieldComment, "#")
+					inlineFieldComment = strings.TrimSpace(inlineFieldComment)
+				}
+				fieldComment := linesFromCommentOverride(commentOverrides.FieldComments[classKey+"."+normalizedFieldName])
+				if modelSeparateCommentedFields && prevHasField && len(fieldComment) > 0 {
+					buf.WriteString("\n")
+				}
+				if len(fieldComment) > 0 && inlineFieldComment == "" {
+					writeLineComments(&buf, 1, fieldComment)
+				}
+				if requiredSet[fieldName] {
+					if inlineFieldComment != "" {
+						buf.WriteString(fmt.Sprintf("    %s: %s  # %s\n", normalizedFieldName, typeName, inlineFieldComment))
+					} else {
+						buf.WriteString(fmt.Sprintf("    %s: %s\n", normalizedFieldName, typeName))
+					}
+				} else {
+					defaultValue := modelFieldDefault(model, fieldName)
+					if defaultValue == "None" && !strings.HasPrefix(typeName, "Optional[") {
+						typeName = "Optional[" + typeName + "]"
+					} else if defaultValue != "None" {
+						if !hasModelFieldTypeOverride(model, fieldName) {
+							typeName = unwrapOptionalType(typeName)
+						}
+					}
+					if inlineFieldComment != "" {
+						buf.WriteString(fmt.Sprintf("    %s: %s = %s  # %s\n", normalizedFieldName, typeName, defaultValue, inlineFieldComment))
+					} else {
+						buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, defaultValue))
+					}
+				}
+				prevHasField = true
+				prevRequired = currentRequired
+				continue
+			}
+
+			extraField, ok := extraFieldByName[fieldName]
+			if !ok {
+				continue
+			}
+			if _, exists := properties[fieldName]; exists {
+				continue
+			}
+			currentRequired := extraField.Required
+			if _, ok := blankLineBeforeFieldSet[fieldName]; ok && prevHasField {
+				buf.WriteString("\n")
+			}
+			if modelSeparateRequiredOptional && prevHasField && prevRequired && !currentRequired {
+				buf.WriteString("\n")
+			}
+			normalizedFieldName := normalizePythonIdentifier(fieldName)
 			typeName := strings.TrimSpace(extraField.Type)
 			if typeName == "" {
 				typeName = "Any"
 			}
+			inlineFieldComment := strings.TrimSpace(commentOverrides.InlineFieldComments[classKey+"."+normalizedFieldName])
+			if inlineFieldComment != "" {
+				inlineFieldComment = strings.TrimPrefix(inlineFieldComment, "#")
+				inlineFieldComment = strings.TrimSpace(inlineFieldComment)
+			}
+			fieldComment := linesFromCommentOverride(commentOverrides.FieldComments[classKey+"."+normalizedFieldName])
+			if modelSeparateCommentedFields && prevHasField && len(fieldComment) > 0 {
+				buf.WriteString("\n")
+			}
+			if len(fieldComment) > 0 && inlineFieldComment == "" {
+				writeLineComments(&buf, 1, fieldComment)
+			}
 			if extraField.Required {
-				buf.WriteString(fmt.Sprintf("    %s: %s\n", fieldName, typeName))
+				if inlineFieldComment != "" {
+					buf.WriteString(fmt.Sprintf("    %s: %s  # %s\n", normalizedFieldName, typeName, inlineFieldComment))
+				} else {
+					buf.WriteString(fmt.Sprintf("    %s: %s\n", normalizedFieldName, typeName))
+				}
+				prevHasField = true
+				prevRequired = currentRequired
 				continue
 			}
 			defaultValue := strings.TrimSpace(extraField.Default)
@@ -1228,22 +1689,34 @@ func renderPackageModelDefinitions(
 			if defaultValue == "None" && !strings.HasPrefix(typeName, "Optional[") {
 				typeName = "Optional[" + typeName + "]"
 			}
-			buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", fieldName, typeName, defaultValue))
+			if inlineFieldComment != "" {
+				buf.WriteString(fmt.Sprintf("    %s: %s = %s  # %s\n", normalizedFieldName, typeName, defaultValue, inlineFieldComment))
+			} else {
+				buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, defaultValue))
+			}
+			prevHasField = true
+			prevRequired = currentRequired
+		}
+		if prevHasField && len(model.ExtraCode) > 0 {
+			buf.WriteString("\n")
 		}
 		for _, block := range model.ExtraCode {
 			appendIndentedCode(&buf, block, 1)
 		}
-		buf.WriteString("\n")
+		buf.WriteString("\n\n")
 	}
 
 	if meta.Package != nil && len(meta.Package.EmptyModels) > 0 {
-		for _, modelName := range meta.Package.EmptyModels {
+		for i, modelName := range meta.Package.EmptyModels {
 			name := strings.TrimSpace(modelName)
 			if name == "" {
 				continue
 			}
 			buf.WriteString(fmt.Sprintf("class %s(CozeModel):\n", name))
 			buf.WriteString("    pass\n\n")
+			if i < len(meta.Package.EmptyModels)-1 {
+				buf.WriteString("\n")
+			}
 		}
 	}
 
@@ -1258,6 +1731,14 @@ func modelFieldType(model packageModelDefinition, propertyName string, fallback 
 		return strings.TrimSpace(fieldType)
 	}
 	return fallback
+}
+
+func hasModelFieldTypeOverride(model packageModelDefinition, propertyName string) bool {
+	if len(model.FieldTypes) == 0 {
+		return false
+	}
+	fieldType, ok := model.FieldTypes[propertyName]
+	return ok && strings.TrimSpace(fieldType) != ""
 }
 
 func modelFieldDefault(model packageModelDefinition, propertyName string) string {
@@ -1319,6 +1800,155 @@ func appendIndentedCode(buf *bytes.Buffer, code string, indentLevel int) {
 		buf.WriteString(cleanLine)
 		buf.WriteString("\n")
 	}
+}
+
+func ensureTrailingNewlines(buf *bytes.Buffer, newlineCount int) {
+	if newlineCount < 0 {
+		newlineCount = 0
+	}
+	content := strings.TrimRight(buf.String(), "\n")
+	buf.Reset()
+	buf.WriteString(content)
+	if newlineCount > 0 {
+		buf.WriteString(strings.Repeat("\n", newlineCount))
+	}
+}
+
+func linesFromCommentOverride(lines []string) []string {
+	out := make([]string, 0, len(lines))
+	for _, raw := range lines {
+		line := strings.TrimRight(raw, "\r")
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		if strings.HasPrefix(line, "#") {
+			line = strings.TrimPrefix(line, "#")
+		}
+		line = strings.TrimRight(line, " \t")
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		out = append(out, line)
+	}
+	return out
+}
+
+func codeBlocksHaveLeadingDocstring(blocks []string) bool {
+	for _, raw := range blocks {
+		block := strings.TrimSpace(raw)
+		if block == "" {
+			continue
+		}
+		return strings.HasPrefix(block, "\"\"\"") || strings.HasPrefix(block, "'''")
+	}
+	return false
+}
+
+func modelHasCustomClassDocstring(model packageModelDefinition) bool {
+	return codeBlocksHaveLeadingDocstring(model.PrependCode) || codeBlocksHaveLeadingDocstring(model.ExtraCode)
+}
+
+func writeLineComments(buf *bytes.Buffer, indentLevel int, lines []string) {
+	if len(lines) == 0 {
+		return
+	}
+	indent := strings.Repeat("    ", indentLevel)
+	for _, line := range lines {
+		buf.WriteString(indent)
+		buf.WriteString("# ")
+		buf.WriteString(line)
+		buf.WriteString("\n")
+	}
+}
+
+func normalizedDocstringLines(docstring string) []string {
+	text := strings.ReplaceAll(docstring, "\r\n", "\n")
+	lines := strings.Split(text, "\n")
+	start := 0
+	for start < len(lines) && strings.TrimSpace(lines[start]) == "" {
+		start++
+	}
+	end := len(lines)
+	for end > start && strings.TrimSpace(lines[end-1]) == "" {
+		end--
+	}
+	out := make([]string, 0, end-start)
+	for _, line := range lines[start:end] {
+		out = append(out, strings.TrimRight(line, "\r"))
+	}
+	return out
+}
+
+func writeClassDocstring(buf *bytes.Buffer, indentLevel int, docstring string, style string) {
+	lines := normalizedDocstringLines(docstring)
+	if len(lines) == 0 {
+		return
+	}
+	indent := strings.Repeat("    ", indentLevel)
+	if style == "inline" && len(lines) == 1 {
+		buf.WriteString(indent)
+		buf.WriteString(fmt.Sprintf("\"\"\"%s\"\"\"\n", lines[0]))
+		buf.WriteString("\n")
+		return
+	}
+	buf.WriteString(indent)
+	buf.WriteString("\"\"\"\n")
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			buf.WriteString("\n")
+			continue
+		}
+		buf.WriteString(indent)
+		buf.WriteString(line)
+		buf.WriteString("\n")
+	}
+	buf.WriteString(indent)
+	buf.WriteString("\"\"\"\n")
+	buf.WriteString("\n")
+}
+
+func writeMethodDocstring(buf *bytes.Buffer, indentLevel int, docstring string, style string) {
+	lines := normalizedDocstringLines(docstring)
+	if len(lines) == 0 {
+		return
+	}
+	indent := strings.Repeat("    ", indentLevel)
+	if style == "block" {
+		buf.WriteString(indent)
+		buf.WriteString("\"\"\"\n")
+		for _, line := range lines {
+			if strings.TrimSpace(line) == "" {
+				buf.WriteString("\n")
+				continue
+			}
+			buf.WriteString(indent)
+			buf.WriteString(line)
+			buf.WriteString("\n")
+		}
+		buf.WriteString(indent)
+		buf.WriteString("\"\"\"\n")
+		return
+	}
+	if len(lines) == 1 {
+		buf.WriteString(indent)
+		buf.WriteString(fmt.Sprintf("\"\"\"%s\"\"\"\n", escapeDocstring(lines[0])))
+		return
+	}
+	buf.WriteString(indent)
+	buf.WriteString("\"\"\"")
+	buf.WriteString(lines[0])
+	buf.WriteString("\n")
+	for _, line := range lines[1:] {
+		if strings.TrimSpace(line) == "" {
+			buf.WriteString("\n")
+			continue
+		}
+		buf.WriteString(indent)
+		buf.WriteString(line)
+		buf.WriteString("\n")
+	}
+	buf.WriteString(indent)
+	buf.WriteString("\"\"\"\n")
 }
 
 func renderEnumValueLiteral(value interface{}) string {
@@ -1394,7 +2024,215 @@ func childTypeImportModule(meta packageMeta, module string) string {
 	return "cozepy." + strings.TrimPrefix(module, ".")
 }
 
-func renderChildClientProperty(meta packageMeta, child config.ChildClient, async bool) string {
+type classMethodBlock struct {
+	Name    string
+	Content string
+}
+
+func mappingGeneratesSync(mapping *config.OperationMapping) bool {
+	if mapping == nil {
+		return true
+	}
+	return !mapping.AsyncOnly
+}
+
+func mappingGeneratesAsync(mapping *config.OperationMapping) bool {
+	if mapping == nil {
+		return true
+	}
+	return !mapping.SyncOnly
+}
+
+func detectMethodBlockName(block string) string {
+	lines := strings.Split(block, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if name, ok := parseDefName(trimmed); ok {
+			return name
+		}
+	}
+	return ""
+}
+
+func parseDefName(trimmedLine string) (string, bool) {
+	defLine := strings.TrimSpace(trimmedLine)
+	if strings.HasPrefix(defLine, "async def ") {
+		defLine = strings.TrimSpace(strings.TrimPrefix(defLine, "async def "))
+	} else if strings.HasPrefix(defLine, "def ") {
+		defLine = strings.TrimSpace(strings.TrimPrefix(defLine, "def "))
+	} else {
+		return "", false
+	}
+	name := strings.TrimSpace(strings.SplitN(defLine, "(", 2)[0])
+	if name == "" {
+		return "", false
+	}
+	return name, true
+}
+
+func isDocstringLine(trimmedLine string) bool {
+	return strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''")
+}
+
+func renderMethodDocstringLines(docstring string, style string, indent string) []string {
+	lines := normalizedDocstringLines(docstring)
+	if len(lines) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(lines)+3)
+	if style == "block" {
+		out = append(out, indent+"\"\"\"")
+		for _, line := range lines {
+			if strings.TrimSpace(line) == "" {
+				out = append(out, "")
+				continue
+			}
+			out = append(out, indent+line)
+		}
+		out = append(out, indent+"\"\"\"")
+		return out
+	}
+	if len(lines) == 1 {
+		out = append(out, indent+fmt.Sprintf("\"\"\"%s\"\"\"", escapeDocstring(lines[0])))
+		return out
+	}
+	out = append(out, indent+"\"\"\""+lines[0])
+	for _, line := range lines[1:] {
+		if strings.TrimSpace(line) == "" {
+			out = append(out, "")
+			continue
+		}
+		out = append(out, indent+line)
+	}
+	out = append(out, indent+"\"\"\"")
+	return out
+}
+
+func applyMethodDocstringOverrides(block string, classKey string, commentOverrides config.CommentOverrides) string {
+	trimmedBlock := strings.TrimRight(block, "\n")
+	if strings.TrimSpace(trimmedBlock) == "" {
+		return block
+	}
+	lines := strings.Split(trimmedBlock, "\n")
+	out := make([]string, 0, len(lines))
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+		name, ok := parseDefName(strings.TrimSpace(line))
+		if !ok {
+			out = append(out, line)
+			continue
+		}
+
+		signatureEnd := i
+		for signatureEnd+1 < len(lines) && !strings.HasSuffix(strings.TrimSpace(lines[signatureEnd]), ":") {
+			signatureEnd++
+		}
+		for j := i; j <= signatureEnd && j < len(lines); j++ {
+			out = append(out, lines[j])
+		}
+
+		methodKey := strings.TrimSpace(classKey) + "." + name
+		rawDoc, exists := commentOverrides.MethodDocstrings[methodKey]
+		if exists {
+			docstring := strings.TrimSpace(rawDoc)
+			if docstring != "" {
+				nextNonEmpty := signatureEnd + 1
+				for nextNonEmpty < len(lines) && strings.TrimSpace(lines[nextNonEmpty]) == "" {
+					nextNonEmpty++
+				}
+				if nextNonEmpty >= len(lines) || !isDocstringLine(strings.TrimSpace(lines[nextNonEmpty])) {
+					indent := line[:len(line)-len(strings.TrimLeft(line, " "))]
+					docLines := renderMethodDocstringLines(
+						docstring,
+						strings.TrimSpace(commentOverrides.MethodDocstringStyles[methodKey]),
+						indent+"    ",
+					)
+					out = append(out, docLines...)
+				}
+			}
+		}
+		i = signatureEnd
+	}
+	return strings.Join(out, "\n")
+}
+
+func orderClassMethodBlocks(blocks []classMethodBlock, orderedNames []string) []classMethodBlock {
+	if len(blocks) == 0 || len(orderedNames) == 0 {
+		return blocks
+	}
+	used := make([]bool, len(blocks))
+	ordered := make([]classMethodBlock, 0, len(blocks))
+	for _, rawName := range orderedNames {
+		name := strings.TrimSpace(rawName)
+		if name == "" {
+			continue
+		}
+		for i, block := range blocks {
+			if used[i] {
+				continue
+			}
+			if block.Name != name {
+				continue
+			}
+			ordered = append(ordered, block)
+			used[i] = true
+			break
+		}
+	}
+	for i, block := range blocks {
+		if used[i] {
+			continue
+		}
+		ordered = append(ordered, block)
+	}
+	return ordered
+}
+
+func orderChildClients(children []config.ChildClient, orderedAttrs []string) []config.ChildClient {
+	if len(children) == 0 || len(orderedAttrs) == 0 {
+		return children
+	}
+	used := make([]bool, len(children))
+	ordered := make([]config.ChildClient, 0, len(children))
+	for _, rawAttr := range orderedAttrs {
+		attr := strings.TrimSpace(rawAttr)
+		if attr == "" {
+			continue
+		}
+		for i, child := range children {
+			if used[i] {
+				continue
+			}
+			if strings.TrimSpace(child.Attribute) != attr {
+				continue
+			}
+			ordered = append(ordered, child)
+			used[i] = true
+			break
+		}
+	}
+	for i, child := range children {
+		if used[i] {
+			continue
+		}
+		ordered = append(ordered, child)
+	}
+	return ordered
+}
+
+func indentCodeBlock(block string, level int) string {
+	var buf bytes.Buffer
+	appendIndentedCode(&buf, block, level)
+	return buf.String()
+}
+
+func renderChildClientProperty(
+	meta packageMeta,
+	child config.ChildClient,
+	async bool,
+	classKey string,
+	commentOverrides config.CommentOverrides,
+) string {
 	attribute := normalizePythonIdentifier(child.Attribute)
 	typeName := child.SyncClass
 	if async {
@@ -1410,10 +2248,30 @@ func renderChildClientProperty(meta packageMeta, child config.ChildClient, async
 
 	var buf bytes.Buffer
 	buf.WriteString("    @property\n")
-	if child.DisableTypeHints {
-		buf.WriteString(fmt.Sprintf("    def %s(self):\n", attribute))
+	if child.MultilineSignature {
+		if child.DisableTypeHints {
+			buf.WriteString(fmt.Sprintf("    def %s(\n", attribute))
+			buf.WriteString("        self,\n")
+			buf.WriteString("    ):\n")
+		} else {
+			buf.WriteString(fmt.Sprintf("    def %s(\n", attribute))
+			buf.WriteString("        self,\n")
+			buf.WriteString(fmt.Sprintf("    ) -> \"%s\":\n", typeName))
+		}
 	} else {
-		buf.WriteString(fmt.Sprintf("    def %s(self) -> \"%s\":\n", attribute, typeName))
+		if child.DisableTypeHints {
+			buf.WriteString(fmt.Sprintf("    def %s(self):\n", attribute))
+		} else {
+			buf.WriteString(fmt.Sprintf("    def %s(self) -> \"%s\":\n", attribute, typeName))
+		}
+	}
+	methodKey := strings.TrimSpace(classKey) + "." + attribute
+	if docstring, ok := commentOverrides.MethodDocstrings[methodKey]; ok {
+		docstring = strings.TrimSpace(docstring)
+		if docstring != "" {
+			style := strings.TrimSpace(commentOverrides.MethodDocstringStyles[methodKey])
+			writeMethodDocstring(&buf, 2, docstring, style)
+		}
 	}
 	if nilCheckIsNone {
 		buf.WriteString(fmt.Sprintf("        if self._%s is None:\n", attribute))
@@ -1496,6 +2354,11 @@ func buildRenderQueryFields(
 					valueExpr = fmt.Sprintf("%s.value if %s else None", argName, argName)
 				}
 			}
+			if mapping != nil && len(mapping.QueryFieldValues) > 0 {
+				if override, ok := mapping.QueryFieldValues[rawName]; ok && strings.TrimSpace(override) != "" {
+					valueExpr = strings.TrimSpace(override)
+				}
+			}
 			typeName := strings.TrimSpace(field.Type)
 			if typeName == "" {
 				typeName = "Any"
@@ -1518,10 +2381,16 @@ func buildRenderQueryFields(
 	for _, param := range details.QueryParameters {
 		argName := operationArgName(param.Name, paramAliases)
 		typeName := typeOverride(param.Name, param.Required, pythonTypeForSchema(doc, param.Schema, param.Required), argTypes)
+		valueExpr := argName
+		if mapping != nil && len(mapping.QueryFieldValues) > 0 {
+			if override, ok := mapping.QueryFieldValues[param.Name]; ok && strings.TrimSpace(override) != "" {
+				valueExpr = strings.TrimSpace(override)
+			}
+		}
 		fields = append(fields, renderQueryField{
 			RawName:      param.Name,
 			ArgName:      argName,
-			ValueExpr:    argName,
+			ValueExpr:    valueExpr,
 			TypeName:     typeName,
 			Required:     param.Required,
 			DefaultValue: "",
@@ -1530,7 +2399,270 @@ func buildRenderQueryFields(
 	return fields
 }
 
+func orderSignatureQueryFields(fields []renderQueryField, orderedRawNames []string) []renderQueryField {
+	if len(fields) == 0 || len(orderedRawNames) == 0 {
+		return fields
+	}
+	fieldByName := make(map[string]renderQueryField, len(fields))
+	for _, field := range fields {
+		fieldByName[field.RawName] = field
+	}
+	result := make([]renderQueryField, 0, len(fields))
+	seen := make(map[string]struct{}, len(fields))
+	for _, rawName := range orderedRawNames {
+		name := strings.TrimSpace(rawName)
+		if name == "" {
+			continue
+		}
+		field, ok := fieldByName[name]
+		if !ok {
+			continue
+		}
+		result = append(result, field)
+		seen[name] = struct{}{}
+	}
+	for _, field := range fields {
+		if _, ok := seen[field.RawName]; ok {
+			continue
+		}
+		result = append(result, field)
+	}
+	return result
+}
+
+func signatureArgName(argDecl string) string {
+	trimmed := strings.TrimSpace(argDecl)
+	if trimmed == "" {
+		return ""
+	}
+	if strings.HasPrefix(trimmed, "**") {
+		name := strings.TrimSpace(strings.TrimPrefix(trimmed, "**"))
+		name = strings.TrimSpace(strings.SplitN(name, ":", 2)[0])
+		name = strings.TrimSpace(strings.SplitN(name, "=", 2)[0])
+		return name
+	}
+	name := strings.TrimSpace(strings.SplitN(trimmed, ":", 2)[0])
+	name = strings.TrimSpace(strings.SplitN(name, "=", 2)[0])
+	return name
+}
+
+func isKwargsSignatureArg(argDecl string) bool {
+	return strings.HasPrefix(strings.TrimSpace(argDecl), "**")
+}
+
+func orderSignatureArgs(signatureArgs []string, orderedNames []string) []string {
+	if len(signatureArgs) == 0 || len(orderedNames) == 0 {
+		return signatureArgs
+	}
+	argByName := make(map[string]string, len(signatureArgs))
+	argOrder := make([]string, 0, len(signatureArgs))
+	for _, argDecl := range signatureArgs {
+		name := signatureArgName(argDecl)
+		if name == "" {
+			continue
+		}
+		if _, exists := argByName[name]; exists {
+			continue
+		}
+		argByName[name] = argDecl
+		argOrder = append(argOrder, name)
+	}
+	result := make([]string, 0, len(signatureArgs))
+	seen := map[string]struct{}{}
+	for _, rawName := range orderedNames {
+		name := strings.TrimSpace(rawName)
+		if name == "" {
+			continue
+		}
+		argDecl, ok := argByName[name]
+		if !ok {
+			continue
+		}
+		result = append(result, argDecl)
+		seen[name] = struct{}{}
+	}
+	for _, name := range argOrder {
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		result = append(result, argByName[name])
+	}
+	return result
+}
+
+func normalizeSignatureArgs(signatureArgs []string) []string {
+	if len(signatureArgs) <= 1 {
+		return signatureArgs
+	}
+	normal := make([]string, 0, len(signatureArgs))
+	kwargs := make([]string, 0, 1)
+	for _, argDecl := range signatureArgs {
+		if isKwargsSignatureArg(argDecl) {
+			kwargs = append(kwargs, argDecl)
+			continue
+		}
+		normal = append(normal, argDecl)
+	}
+	return append(normal, kwargs...)
+}
+
+func orderedUniqueByPriority(values []string, priority []string) []string {
+	if len(values) == 0 {
+		return values
+	}
+	seen := make(map[string]struct{}, len(values))
+	ordered := make([]string, 0, len(values))
+	for _, name := range priority {
+		trimmed := strings.TrimSpace(name)
+		if trimmed == "" {
+			continue
+		}
+		for _, value := range values {
+			if strings.TrimSpace(value) != trimmed {
+				continue
+			}
+			if _, ok := seen[trimmed]; ok {
+				break
+			}
+			ordered = append(ordered, trimmed)
+			seen[trimmed] = struct{}{}
+			break
+		}
+	}
+	for _, value := range values {
+		trimmed := strings.TrimSpace(value)
+		if trimmed == "" {
+			continue
+		}
+		if _, ok := seen[trimmed]; ok {
+			continue
+		}
+		ordered = append(ordered, trimmed)
+		seen[trimmed] = struct{}{}
+	}
+	return ordered
+}
+
+func operationArgDefault(mapping *config.OperationMapping, rawName string, argName string) (string, bool) {
+	if mapping == nil || len(mapping.ArgDefaults) == 0 {
+		return "", false
+	}
+	if argName = strings.TrimSpace(argName); argName != "" {
+		if value, ok := mapping.ArgDefaults[argName]; ok && strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value), true
+		}
+	}
+	if rawName = strings.TrimSpace(rawName); rawName != "" {
+		if value, ok := mapping.ArgDefaults[rawName]; ok && strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value), true
+		}
+	}
+	return "", false
+}
+
+func buildDelegateCallArgs(signatureArgs []string, mapping *config.OperationMapping, async bool) []string {
+	if mapping != nil {
+		explicitArgs := mapping.DelegateCallArgs
+		if async && len(mapping.AsyncDelegateCallArgs) > 0 {
+			explicitArgs = mapping.AsyncDelegateCallArgs
+		}
+		if len(explicitArgs) > 0 {
+			args := make([]string, 0, len(explicitArgs))
+			for _, arg := range explicitArgs {
+				trimmed := strings.TrimSpace(arg)
+				if trimmed == "" {
+					continue
+				}
+				args = append(args, trimmed)
+			}
+			return args
+		}
+	}
+	args := make([]string, 0, len(signatureArgs))
+	for _, argDecl := range signatureArgs {
+		trimmed := strings.TrimSpace(argDecl)
+		if trimmed == "" {
+			continue
+		}
+		if trimmed == "*" {
+			continue
+		}
+		name := signatureArgName(trimmed)
+		if name == "" {
+			continue
+		}
+		if name == "self" {
+			continue
+		}
+		if isKwargsSignatureArg(trimmed) {
+			args = append(args, fmt.Sprintf("**%s", name))
+			continue
+		}
+		args = append(args, fmt.Sprintf("%s=%s", name, name))
+	}
+	return args
+}
+
+func renderDelegatedCall(buf *bytes.Buffer, target string, args []string, async bool, asyncYield bool) {
+	target = strings.TrimSpace(target)
+	if target == "" {
+		return
+	}
+	qualifier := fmt.Sprintf("self.%s", target)
+	if len(args) == 0 {
+		if async && asyncYield {
+			buf.WriteString(fmt.Sprintf("        async for item in await %s():\n", qualifier))
+			buf.WriteString("            yield item\n")
+			return
+		}
+		if async {
+			buf.WriteString(fmt.Sprintf("        return await %s()\n", qualifier))
+			return
+		}
+		buf.WriteString(fmt.Sprintf("        return %s()\n", qualifier))
+		return
+	}
+
+	if async && asyncYield {
+		buf.WriteString(fmt.Sprintf("        async for item in await %s(\n", qualifier))
+		for _, arg := range args {
+			trimmed := strings.TrimSpace(arg)
+			if trimmed == "" {
+				continue
+			}
+			buf.WriteString(fmt.Sprintf("            %s,\n", trimmed))
+		}
+		buf.WriteString("        ):\n")
+		buf.WriteString("            yield item\n")
+		return
+	}
+	if async {
+		buf.WriteString(fmt.Sprintf("        return await %s(\n", qualifier))
+		for _, arg := range args {
+			buf.WriteString(fmt.Sprintf("            %s,\n", arg))
+		}
+		buf.WriteString("        )\n")
+		return
+	}
+	buf.WriteString(fmt.Sprintf("        return %s(\n", qualifier))
+	for _, arg := range args {
+		buf.WriteString(fmt.Sprintf("            %s,\n", arg))
+	}
+	buf.WriteString("        )\n")
+}
+
 func renderOperationMethod(doc *openapi.Document, binding operationBinding, async bool) string {
+	return renderOperationMethodWithComments(doc, binding, async, "", "", config.CommentOverrides{})
+}
+
+func renderOperationMethodWithComments(
+	doc *openapi.Document,
+	binding operationBinding,
+	async bool,
+	modulePath string,
+	className string,
+	commentOverrides config.CommentOverrides,
+) string {
 	details := binding.Details
 	requestMethod := strings.ToLower(strings.TrimSpace(details.Method))
 	paginationMode := ""
@@ -1539,8 +2671,27 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	useKwargsHeaders := binding.Mapping != nil && binding.Mapping.UseKwargsHeaders
 	disableHeadersArg := binding.Mapping != nil && binding.Mapping.DisableHeadersArg
 	ignoreHeaderParams := binding.Mapping != nil && binding.Mapping.IgnoreHeaderParams
+	castKeyword := binding.Mapping != nil && binding.Mapping.CastKeyword
+	streamKeyword := binding.Mapping != nil && binding.Mapping.StreamKeyword
+	streamWrap := binding.Mapping != nil && binding.Mapping.StreamWrap
+	headersBeforeBody := binding.Mapping != nil && binding.Mapping.HeadersBeforeBody
+	omitReturnType := binding.Mapping != nil && binding.Mapping.OmitReturnType
+	asyncIncludeKwargs := async && binding.Mapping != nil && binding.Mapping.AsyncIncludeKwargs
+	paginationHeadersBeforeParams := binding.Mapping != nil && binding.Mapping.PaginationHeadersBeforeParams
+	paginationCastBeforeHeaders := binding.Mapping != nil && binding.Mapping.PaginationCastBeforeHeaders
+	delegateTo := ""
+	delegateAsyncYield := false
+	streamWrapHandler := ""
+	streamWrapFields := []string{}
+	streamWrapAsyncYield := false
+	streamWrapSyncResponseVar := "response"
+	streamWrapCompactAsyncReturn := false
+	streamWrapCompactSyncReturn := false
+	streamWrapBlankLineBeforeAsyncReturn := false
+	bodyFieldValues := map[string]string{}
 	paramAliases := map[string]string{}
 	argTypes := map[string]string{}
+	bodyCallExprOverride := ""
 	if binding.Mapping != nil && len(binding.Mapping.ParamAliases) > 0 {
 		paramAliases = binding.Mapping.ParamAliases
 	}
@@ -1549,7 +2700,7 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	}
 	if binding.Mapping != nil {
 		if methodOverride := strings.TrimSpace(binding.Mapping.HTTPMethodOverride); methodOverride != "" {
-			requestMethod = strings.ToLower(methodOverride)
+			requestMethod = methodOverride
 		}
 		paginationMode = strings.TrimSpace(binding.Mapping.Pagination)
 		if isTokenPagination(paginationMode) || isNumberPagination(paginationMode) {
@@ -1573,10 +2724,34 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		if mappedReturnType := strings.TrimSpace(binding.Mapping.ResponseType); mappedReturnType != "" {
 			returnType = mappedReturnType
 		}
+		if async {
+			if mappedAsyncReturnType := strings.TrimSpace(binding.Mapping.AsyncResponseType); mappedAsyncReturnType != "" {
+				returnType = mappedAsyncReturnType
+			}
+		}
 		if mappedReturnCast := strings.TrimSpace(binding.Mapping.ResponseCast); mappedReturnCast != "" {
 			returnCast = mappedReturnCast
 		} else if strings.TrimSpace(binding.Mapping.ResponseType) != "" {
 			returnCast = strings.TrimSpace(binding.Mapping.ResponseType)
+		}
+		delegateTo = strings.TrimSpace(binding.Mapping.DelegateTo)
+		delegateAsyncYield = binding.Mapping.DelegateAsyncYield
+		streamWrapHandler = strings.TrimSpace(binding.Mapping.StreamWrapHandler)
+		if len(binding.Mapping.StreamWrapFields) > 0 {
+			streamWrapFields = append(streamWrapFields, binding.Mapping.StreamWrapFields...)
+		}
+		streamWrapAsyncYield = binding.Mapping.StreamWrapAsyncYield
+		if varName := strings.TrimSpace(binding.Mapping.StreamWrapSyncResponseVar); varName != "" {
+			streamWrapSyncResponseVar = varName
+		}
+		streamWrapCompactAsyncReturn = binding.Mapping.StreamWrapCompactAsyncReturn
+		streamWrapCompactSyncReturn = binding.Mapping.StreamWrapCompactSyncReturn
+		streamWrapBlankLineBeforeAsyncReturn = binding.Mapping.StreamWrapBlankLineBeforeAsync
+		bodyCallExprOverride = strings.TrimSpace(binding.Mapping.BodyCallExpr)
+		if len(binding.Mapping.BodyFieldValues) > 0 {
+			for k, v := range binding.Mapping.BodyFieldValues {
+				bodyFieldValues[k] = v
+			}
 		}
 	}
 	if ignoreHeaderParams {
@@ -1586,20 +2761,49 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	requestStream := false
 	queryBuilder := "dump_exclude_none"
 	bodyBuilder := "dump_exclude_none"
+	bodyAnnotation := ""
+	compactSingleItemMaps := false
 	if binding.Mapping != nil {
 		dataField = strings.TrimSpace(binding.Mapping.DataField)
 		requestStream = binding.Mapping.RequestStream
 		queryBuilder = normalizeMapBuilder(binding.Mapping.QueryBuilder)
+		if async {
+			if override := strings.TrimSpace(binding.Mapping.QueryBuilderAsync); override != "" {
+				queryBuilder = normalizeMapBuilder(override)
+			}
+		} else {
+			if override := strings.TrimSpace(binding.Mapping.QueryBuilderSync); override != "" {
+				queryBuilder = normalizeMapBuilder(override)
+			}
+		}
 		bodyBuilder = normalizeMapBuilder(binding.Mapping.BodyBuilder)
+		bodyAnnotation = strings.TrimSpace(binding.Mapping.BodyAnnotation)
+		compactSingleItemMaps = binding.Mapping.CompactSingleItemMaps
+		if async && binding.Mapping.CompactSingleItemMapsAsync {
+			compactSingleItemMaps = true
+		}
+		if !async && binding.Mapping.CompactSingleItemMapsSync {
+			compactSingleItemMaps = true
+		}
 	}
 	bodyFieldNames := make([]string, 0)
 	bodyFixedValues := map[string]string{}
+	filesFieldNames := make([]string, 0)
+	filesFieldValues := map[string]string{}
 	if binding.Mapping != nil && len(binding.Mapping.BodyFields) > 0 {
 		bodyFieldNames = append(bodyFieldNames, binding.Mapping.BodyFields...)
 	}
 	if binding.Mapping != nil && len(binding.Mapping.BodyFixedValues) > 0 {
 		for k, v := range binding.Mapping.BodyFixedValues {
 			bodyFixedValues[k] = v
+		}
+	}
+	if binding.Mapping != nil && len(binding.Mapping.FilesFields) > 0 {
+		filesFieldNames = append(filesFieldNames, binding.Mapping.FilesFields...)
+	}
+	if binding.Mapping != nil && len(binding.Mapping.FilesFieldValues) > 0 {
+		for k, v := range binding.Mapping.FilesFieldValues {
+			filesFieldValues[k] = v
 		}
 	}
 	if binding.Mapping != nil && binding.Mapping.DisableRequestBody {
@@ -1609,6 +2813,10 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		bodyFixedValues = map[string]string{}
 	}
 	queryFields := buildRenderQueryFields(doc, details, binding.Mapping, paramAliases, argTypes)
+	signatureQueryFields := queryFields
+	if binding.Mapping != nil && len(binding.Mapping.SignatureQueryFields) > 0 {
+		signatureQueryFields = orderSignatureQueryFields(queryFields, binding.Mapping.SignatureQueryFields)
+	}
 	bodyRequiredSet := map[string]bool{}
 	if details.RequestBodySchema != nil {
 		for _, requiredName := range details.RequestBodySchema.Required {
@@ -1624,48 +2832,87 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 
 	pathParamNameMap := map[string]string{}
 	signatureArgs := make([]string, 0)
+	signatureArgNames := map[string]struct{}{}
 	for _, param := range details.PathParameters {
 		name := operationArgName(param.Name, paramAliases)
 		pathParamNameMap[param.Name] = name
 		typeName := typeOverride(param.Name, true, pythonTypeForSchema(doc, param.Schema, true), argTypes)
 		signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s", name, typeName))
+		signatureArgNames[name] = struct{}{}
 	}
-	for _, field := range queryFields {
-		if field.Required && field.DefaultValue == "" {
+	for _, field := range signatureQueryFields {
+		defaultValue := strings.TrimSpace(field.DefaultValue)
+		if defaultValue == "" {
+			if override, ok := operationArgDefault(binding.Mapping, field.RawName, field.ArgName); ok {
+				defaultValue = override
+			}
+		}
+		if field.Required && defaultValue == "" {
 			signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s", field.ArgName, field.TypeName))
-		} else if field.DefaultValue != "" {
-			signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s = %s", field.ArgName, field.TypeName, field.DefaultValue))
+		} else if defaultValue != "" {
+			signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s = %s", field.ArgName, field.TypeName, defaultValue))
 		} else {
 			signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s = None", field.ArgName, field.TypeName))
 		}
+		signatureArgNames[field.ArgName] = struct{}{}
 	}
 	for _, param := range details.HeaderParameters {
 		name := operationArgName(param.Name, paramAliases)
 		typeName := typeOverride(param.Name, param.Required, pythonTypeForSchema(doc, param.Schema, param.Required), argTypes)
-		if param.Required {
+		if defaultValue, ok := operationArgDefault(binding.Mapping, param.Name, name); ok {
+			signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s = %s", name, typeName, defaultValue))
+		} else if param.Required {
 			signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s", name, typeName))
 		} else {
 			signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s = None", name, typeName))
 		}
+		signatureArgNames[name] = struct{}{}
 	}
 
 	if len(bodyFieldNames) > 0 {
 		for _, bodyField := range bodyFieldNames {
 			argName := operationArgName(bodyField, paramAliases)
+			if _, exists := signatureArgNames[argName]; exists {
+				continue
+			}
 			fieldSchema := bodyFieldSchema(doc, details.RequestBodySchema, bodyField)
 			required := bodyRequiredSet[bodyField]
 			typeName := typeOverride(bodyField, required, pythonTypeForSchema(doc, fieldSchema, required), argTypes)
-			if required {
+			if defaultValue, ok := operationArgDefault(binding.Mapping, bodyField, argName); ok {
+				signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s = %s", argName, typeName, defaultValue))
+			} else if required {
 				signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s", argName, typeName))
 			} else {
 				signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s = None", argName, typeName))
 			}
+			signatureArgNames[argName] = struct{}{}
 		}
 	} else if requestBodyType != "" {
-		if bodyRequired {
+		if defaultValue, ok := operationArgDefault(binding.Mapping, "body", "body"); ok {
+			signatureArgs = append(signatureArgs, fmt.Sprintf("body: Optional[%s] = %s", requestBodyType, defaultValue))
+		} else if bodyRequired {
 			signatureArgs = append(signatureArgs, fmt.Sprintf("body: %s", requestBodyType))
 		} else {
 			signatureArgs = append(signatureArgs, fmt.Sprintf("body: Optional[%s] = None", requestBodyType))
+		}
+	}
+	if len(filesFieldNames) > 0 {
+		for _, filesField := range filesFieldNames {
+			argName := operationArgName(filesField, paramAliases)
+			if _, exists := signatureArgNames[argName]; exists {
+				continue
+			}
+			fieldSchema := bodyFieldSchema(doc, details.RequestBodySchema, filesField)
+			required := bodyRequiredSet[filesField]
+			typeName := typeOverride(filesField, required, pythonTypeForSchema(doc, fieldSchema, required), argTypes)
+			if defaultValue, ok := operationArgDefault(binding.Mapping, filesField, argName); ok {
+				signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s = %s", argName, typeName, defaultValue))
+			} else if required {
+				signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s", argName, typeName))
+			} else {
+				signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s = None", argName, typeName))
+			}
+			signatureArgNames[argName] = struct{}{}
 		}
 	}
 	includeKwargsHeaders := useKwargsHeaders && !disableHeadersArg
@@ -1675,6 +2922,13 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	} else if includeExplicitHeadersArg {
 		signatureArgs = append(signatureArgs, "headers: Optional[Dict[str, str]] = None")
 	}
+	if asyncIncludeKwargs && !includeKwargsHeaders {
+		signatureArgs = append(signatureArgs, "**kwargs")
+	}
+	if binding.Mapping != nil && len(binding.Mapping.SignatureArgs) > 0 {
+		signatureArgs = orderSignatureArgs(signatureArgs, binding.Mapping.SignatureArgs)
+	}
+	signatureArgs = normalizeSignatureArgs(signatureArgs)
 
 	methodKeyword := "def"
 	requestCall := "self._requester.request"
@@ -1682,14 +2936,44 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		methodKeyword = "async def"
 		requestCall = "await self._requester.arequest"
 	}
+	headersAssigned := false
 
 	var buf bytes.Buffer
+	returnAnnotation := ""
+	if !omitReturnType {
+		returnAnnotation = fmt.Sprintf(" -> %s", returnType)
+	}
 	compactSignature := len(bodyFieldNames) == 0 && requestBodyType == "" && len(signatureArgs) <= 2
+	if binding.Mapping != nil {
+		if binding.Mapping.ForceMultilineSignature {
+			compactSignature = false
+		}
+		if binding.Mapping.ForceCompactSignature {
+			compactSignature = true
+		}
+		if async {
+			if binding.Mapping.ForceMultilineSignatureAsync {
+				compactSignature = false
+			}
+			if binding.Mapping.ForceCompactSignatureAsync {
+				compactSignature = true
+			}
+		} else {
+			if binding.Mapping.ForceMultilineSignatureSync {
+				compactSignature = false
+			}
+			if binding.Mapping.ForceCompactSignatureSync {
+				compactSignature = true
+			}
+		}
+	}
 	if compactSignature {
 		if len(signatureArgs) == 0 {
-			buf.WriteString(fmt.Sprintf("    %s %s(self) -> %s:\n", methodKeyword, binding.MethodName, returnType))
+			buf.WriteString(fmt.Sprintf("    %s %s(self)%s:\n", methodKeyword, binding.MethodName, returnAnnotation))
+		} else if len(signatureArgs) == 1 && isKwargsSignatureArg(signatureArgs[0]) {
+			buf.WriteString(fmt.Sprintf("    %s %s(self, %s)%s:\n", methodKeyword, binding.MethodName, signatureArgs[0], returnAnnotation))
 		} else {
-			buf.WriteString(fmt.Sprintf("    %s %s(self, *, %s) -> %s:\n", methodKeyword, binding.MethodName, strings.Join(signatureArgs, ", "), returnType))
+			buf.WriteString(fmt.Sprintf("    %s %s(self, *, %s)%s:\n", methodKeyword, binding.MethodName, strings.Join(signatureArgs, ", "), returnAnnotation))
 		}
 	} else {
 		buf.WriteString(fmt.Sprintf("    %s %s(\n", methodKeyword, binding.MethodName))
@@ -1698,21 +2982,50 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		for _, arg := range signatureArgs {
 			buf.WriteString(fmt.Sprintf("        %s,\n", arg))
 		}
-		buf.WriteString(fmt.Sprintf("    ) -> %s:\n", returnType))
+		buf.WriteString(fmt.Sprintf("    )%s:\n", returnAnnotation))
 	}
-	summary := details.Summary
-	if binding.Mapping != nil {
-		pagination := strings.TrimSpace(binding.Mapping.Pagination)
-		if pagination == "token" || pagination == "number" {
-			summary = ""
+	overrideDocstring := ""
+	overrideDocstringStyle := ""
+	overrideDocstringExists := false
+	if modulePath != "" && className != "" {
+		key := strings.TrimSpace(modulePath) + "." + strings.TrimSpace(className) + "." + binding.MethodName
+		rawDocstring, ok := commentOverrides.MethodDocstrings[key]
+		if ok {
+			overrideDocstringExists = true
+			overrideDocstring = strings.TrimSpace(rawDocstring)
 		}
-		if methodOverride := strings.TrimSpace(binding.Mapping.HTTPMethodOverride); methodOverride != "" &&
-			strings.ToLower(methodOverride) != strings.ToLower(details.Method) {
-			summary = ""
+		overrideDocstringStyle = strings.TrimSpace(commentOverrides.MethodDocstringStyles[key])
+	}
+	if overrideDocstringExists {
+		if overrideDocstring == "" {
+			// Explicitly disabled via comment overrides.
+		} else {
+			writeMethodDocstring(&buf, 2, overrideDocstring, overrideDocstringStyle)
+		}
+	} else {
+		summary := details.Summary
+		if binding.Mapping != nil {
+			pagination := strings.TrimSpace(binding.Mapping.Pagination)
+			if pagination == "token" || pagination == "number" {
+				summary = ""
+			}
+			if methodOverride := strings.TrimSpace(binding.Mapping.HTTPMethodOverride); methodOverride != "" &&
+				strings.ToLower(methodOverride) != strings.ToLower(details.Method) {
+				summary = ""
+			}
+		}
+		summary = strings.TrimSpace(summary)
+		if summary != "" {
+			buf.WriteString(fmt.Sprintf("        \"\"\"%s\"\"\"\n", escapeDocstring(summary)))
 		}
 	}
-	if summary != "" {
-		buf.WriteString(fmt.Sprintf("        \"\"\"%s\"\"\"\n", escapeDocstring(summary)))
+	if delegateTo != "" {
+		callArgs := buildDelegateCallArgs(signatureArgs, binding.Mapping, async)
+		renderDelegatedCall(&buf, delegateTo, callArgs, async, delegateAsyncYield)
+		return buf.String()
+	}
+	if binding.Mapping != nil && binding.Mapping.BlankLineAfterDocstring {
+		buf.WriteString("\n")
 	}
 
 	urlPath := details.Path
@@ -1726,28 +3039,52 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 
 	if len(queryFields) > 0 && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) {
 		if queryBuilder == "raw" {
-			buf.WriteString("        params = {\n")
-		} else {
-			buf.WriteString(fmt.Sprintf("        params = %s(\n", queryBuilder))
-			buf.WriteString("            {\n")
-		}
-		for _, field := range queryFields {
-			valueExpr := field.ValueExpr
-			if strings.TrimSpace(valueExpr) == "" {
-				valueExpr = field.ArgName
+			if compactSingleItemMaps && len(queryFields) == 1 {
+				field := queryFields[0]
+				valueExpr := field.ValueExpr
+				if strings.TrimSpace(valueExpr) == "" {
+					valueExpr = field.ArgName
+				}
+				buf.WriteString(fmt.Sprintf("        params = {%q: %s}\n", field.RawName, valueExpr))
+			} else {
+				buf.WriteString("        params = {\n")
+				itemIndent := "            "
+				for _, field := range queryFields {
+					valueExpr := field.ValueExpr
+					if strings.TrimSpace(valueExpr) == "" {
+						valueExpr = field.ArgName
+					}
+					buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
+				}
+				buf.WriteString("        }\n")
 			}
-			buf.WriteString(fmt.Sprintf("                %q: %s,\n", field.RawName, valueExpr))
-		}
-		if queryBuilder == "raw" {
-			buf.WriteString("        }\n")
 		} else {
-			buf.WriteString("            }\n")
-			buf.WriteString("        )\n")
+			if compactSingleItemMaps && len(queryFields) == 1 {
+				field := queryFields[0]
+				valueExpr := field.ValueExpr
+				if strings.TrimSpace(valueExpr) == "" {
+					valueExpr = field.ArgName
+				}
+				buf.WriteString(fmt.Sprintf("        params = %s({%q: %s})\n", queryBuilder, field.RawName, valueExpr))
+			} else {
+				buf.WriteString(fmt.Sprintf("        params = %s(\n", queryBuilder))
+				buf.WriteString("            {\n")
+				itemIndent := "                "
+				for _, field := range queryFields {
+					valueExpr := field.ValueExpr
+					if strings.TrimSpace(valueExpr) == "" {
+						valueExpr = field.ArgName
+					}
+					buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
+				}
+				buf.WriteString("            }\n")
+				buf.WriteString("        )\n")
+			}
 		}
 	}
 
 	if includeKwargsHeaders && (isTokenPagination(paginationMode) || isNumberPagination(paginationMode) || len(details.HeaderParameters) > 0) {
-		buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n")
+		buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n\n")
 	}
 
 	if len(details.HeaderParameters) > 0 {
@@ -1767,10 +3104,17 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		}
 		buf.WriteString("        headers = header_values\n")
 	}
+	includePaginationHeaders := !disableHeadersArg || len(details.HeaderParameters) > 0
+	paginationRequestMethod := strings.ToUpper(requestMethod)
+	if binding.Mapping != nil {
+		if override := strings.TrimSpace(binding.Mapping.PaginationHTTPMethod); override != "" {
+			paginationRequestMethod = override
+		}
+	}
 
 	if isTokenPagination(paginationMode) && binding.Mapping != nil {
-		upperMethod := strings.ToUpper(requestMethod)
 		dataClass := strings.TrimSpace(binding.Mapping.PaginationDataClass)
+		paginationParamsVariable := binding.Mapping.PaginationParamsVariable
 		pageTokenField := strings.TrimSpace(binding.Mapping.PaginationPageTokenField)
 		if pageTokenField == "" {
 			pageTokenField = "page_token"
@@ -1789,42 +3133,97 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				sizeExpr = field.ArgName
 			}
 		}
+		if tokenInitExpr := strings.TrimSpace(binding.Mapping.PaginationInitPageTokenExpr); tokenInitExpr != "" {
+			tokenExpr = tokenInitExpr
+		}
+		ensureTrailingNewlines(&buf, 2)
 		if async {
 			buf.WriteString("        async def request_maker(i_page_token: str, i_page_size: int) -> HTTPRequest:\n")
+			if paginationParamsVariable {
+				if queryBuilder == "raw" {
+					buf.WriteString("            params = {\n")
+				} else {
+					buf.WriteString(fmt.Sprintf("            params = %s(\n", queryBuilder))
+					buf.WriteString("                {\n")
+				}
+				itemIndent := "                    "
+				if queryBuilder != "raw" {
+					itemIndent = "                    "
+				}
+				for _, field := range queryFields {
+					valueExpr := field.ValueExpr
+					if strings.TrimSpace(valueExpr) == "" {
+						valueExpr = field.ArgName
+					}
+					if field.RawName == pageTokenField {
+						valueExpr = "i_page_token"
+					}
+					if field.RawName == pageSizeField {
+						valueExpr = "i_page_size"
+					}
+					buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
+				}
+				if queryBuilder == "raw" {
+					buf.WriteString("            }\n")
+				} else {
+					buf.WriteString("                }\n")
+					buf.WriteString("            )\n")
+				}
+			}
 			buf.WriteString("            return await self._requester.amake_request(\n")
-			buf.WriteString(fmt.Sprintf("                %q,\n", upperMethod))
+			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
-			if queryBuilder == "raw" {
-				buf.WriteString("                params={\n")
+			if paginationHeadersBeforeParams && includePaginationHeaders {
+				buf.WriteString("                headers=headers,\n")
+			}
+			if paginationParamsVariable {
+				buf.WriteString("                params=params,\n")
 			} else {
-				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
-				buf.WriteString("                    {\n")
+				if queryBuilder == "raw" {
+					buf.WriteString("                params={\n")
+				} else {
+					buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
+					buf.WriteString("                    {\n")
+				}
+				itemIndent := "                        "
+				if queryBuilder == "raw" {
+					itemIndent = "                    "
+				}
+				for _, field := range queryFields {
+					valueExpr := field.ValueExpr
+					if strings.TrimSpace(valueExpr) == "" {
+						valueExpr = field.ArgName
+					}
+					if field.RawName == pageTokenField {
+						valueExpr = "i_page_token"
+					}
+					if field.RawName == pageSizeField {
+						valueExpr = "i_page_size"
+					}
+					buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
+				}
+				if queryBuilder == "raw" {
+					buf.WriteString("                },\n")
+				} else {
+					buf.WriteString("                    }\n")
+					buf.WriteString("                ),\n")
+				}
 			}
-			for _, field := range queryFields {
-				valueExpr := field.ValueExpr
-				if strings.TrimSpace(valueExpr) == "" {
-					valueExpr = field.ArgName
+			if includePaginationHeaders {
+				if paginationCastBeforeHeaders && !paginationHeadersBeforeParams {
+					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+					buf.WriteString("                headers=headers,\n")
+				} else if paginationHeadersBeforeParams {
+					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+				} else {
+					buf.WriteString("                headers=headers,\n")
+					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 				}
-				if field.RawName == pageTokenField {
-					valueExpr = "i_page_token"
-				}
-				if field.RawName == pageSizeField {
-					valueExpr = "i_page_size"
-				}
-				buf.WriteString(fmt.Sprintf("                        %q: %s,\n", field.RawName, valueExpr))
-			}
-			if queryBuilder == "raw" {
-				buf.WriteString("                },\n")
 			} else {
-				buf.WriteString("                    }\n")
-				buf.WriteString("                ),\n")
+				buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 			}
-			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 			if dataField != "" {
 				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
-			}
-			if !disableHeadersArg || len(details.HeaderParameters) > 0 {
-				buf.WriteString("                headers=headers,\n")
 			}
 			buf.WriteString("                stream=False,\n")
 			buf.WriteString("            )\n\n")
@@ -1836,40 +3235,91 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("        )\n")
 		} else {
 			buf.WriteString("        def request_maker(i_page_token: str, i_page_size: int) -> HTTPRequest:\n")
+			if paginationParamsVariable {
+				if queryBuilder == "raw" {
+					buf.WriteString("            params = {\n")
+				} else {
+					buf.WriteString(fmt.Sprintf("            params = %s(\n", queryBuilder))
+					buf.WriteString("                {\n")
+				}
+				itemIndent := "                    "
+				if queryBuilder != "raw" {
+					itemIndent = "                    "
+				}
+				for _, field := range queryFields {
+					valueExpr := field.ValueExpr
+					if strings.TrimSpace(valueExpr) == "" {
+						valueExpr = field.ArgName
+					}
+					if field.RawName == pageTokenField {
+						valueExpr = "i_page_token"
+					}
+					if field.RawName == pageSizeField {
+						valueExpr = "i_page_size"
+					}
+					buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
+				}
+				if queryBuilder == "raw" {
+					buf.WriteString("            }\n")
+				} else {
+					buf.WriteString("                }\n")
+					buf.WriteString("            )\n")
+				}
+			}
 			buf.WriteString("            return self._requester.make_request(\n")
-			buf.WriteString(fmt.Sprintf("                %q,\n", upperMethod))
+			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
-			if queryBuilder == "raw" {
-				buf.WriteString("                params={\n")
+			if paginationHeadersBeforeParams && includePaginationHeaders {
+				buf.WriteString("                headers=headers,\n")
+			}
+			if paginationParamsVariable {
+				buf.WriteString("                params=params,\n")
 			} else {
-				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
-				buf.WriteString("                    {\n")
+				if queryBuilder == "raw" {
+					buf.WriteString("                params={\n")
+				} else {
+					buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
+					buf.WriteString("                    {\n")
+				}
+				itemIndent := "                        "
+				if queryBuilder == "raw" {
+					itemIndent = "                    "
+				}
+				for _, field := range queryFields {
+					valueExpr := field.ValueExpr
+					if strings.TrimSpace(valueExpr) == "" {
+						valueExpr = field.ArgName
+					}
+					if field.RawName == pageTokenField {
+						valueExpr = "i_page_token"
+					}
+					if field.RawName == pageSizeField {
+						valueExpr = "i_page_size"
+					}
+					buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
+				}
+				if queryBuilder == "raw" {
+					buf.WriteString("                },\n")
+				} else {
+					buf.WriteString("                    }\n")
+					buf.WriteString("                ),\n")
+				}
 			}
-			for _, field := range queryFields {
-				valueExpr := field.ValueExpr
-				if strings.TrimSpace(valueExpr) == "" {
-					valueExpr = field.ArgName
+			if includePaginationHeaders {
+				if paginationCastBeforeHeaders && !paginationHeadersBeforeParams {
+					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+					buf.WriteString("                headers=headers,\n")
+				} else if paginationHeadersBeforeParams {
+					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+				} else {
+					buf.WriteString("                headers=headers,\n")
+					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 				}
-				if field.RawName == pageTokenField {
-					valueExpr = "i_page_token"
-				}
-				if field.RawName == pageSizeField {
-					valueExpr = "i_page_size"
-				}
-				buf.WriteString(fmt.Sprintf("                        %q: %s,\n", field.RawName, valueExpr))
-			}
-			if queryBuilder == "raw" {
-				buf.WriteString("                },\n")
 			} else {
-				buf.WriteString("                    }\n")
-				buf.WriteString("                ),\n")
+				buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 			}
-			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 			if dataField != "" {
 				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
-			}
-			if !disableHeadersArg || len(details.HeaderParameters) > 0 {
-				buf.WriteString("                headers=headers,\n")
 			}
 			buf.WriteString("                stream=False,\n")
 			buf.WriteString("            )\n\n")
@@ -1883,7 +3333,6 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		return buf.String()
 	}
 	if isNumberPagination(paginationMode) && binding.Mapping != nil {
-		upperMethod := strings.ToUpper(requestMethod)
 		dataClass := strings.TrimSpace(binding.Mapping.PaginationDataClass)
 		pageNumField := strings.TrimSpace(binding.Mapping.PaginationPageNumField)
 		if pageNumField == "" {
@@ -1903,16 +3352,24 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				sizeExpr = field.ArgName
 			}
 		}
+		ensureTrailingNewlines(&buf, 2)
 		if async {
 			buf.WriteString("        async def request_maker(i_page_num: int, i_page_size: int) -> HTTPRequest:\n")
 			buf.WriteString("            return await self._requester.amake_request(\n")
-			buf.WriteString(fmt.Sprintf("                %q,\n", upperMethod))
+			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
+			if paginationHeadersBeforeParams && includePaginationHeaders {
+				buf.WriteString("                headers=headers,\n")
+			}
 			if queryBuilder == "raw" {
 				buf.WriteString("                params={\n")
 			} else {
 				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
 				buf.WriteString("                    {\n")
+			}
+			itemIndent := "                        "
+			if queryBuilder == "raw" {
+				itemIndent = "                    "
 			}
 			for _, field := range queryFields {
 				valueExpr := field.ValueExpr
@@ -1925,7 +3382,7 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				if field.RawName == pageSizeField {
 					valueExpr = "i_page_size"
 				}
-				buf.WriteString(fmt.Sprintf("                        %q: %s,\n", field.RawName, valueExpr))
+				buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
 			}
 			if queryBuilder == "raw" {
 				buf.WriteString("                },\n")
@@ -1933,12 +3390,21 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				buf.WriteString("                    }\n")
 				buf.WriteString("                ),\n")
 			}
-			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+			if includePaginationHeaders {
+				if paginationCastBeforeHeaders && !paginationHeadersBeforeParams {
+					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+					buf.WriteString("                headers=headers,\n")
+				} else if paginationHeadersBeforeParams {
+					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+				} else {
+					buf.WriteString("                headers=headers,\n")
+					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+				}
+			} else {
+				buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+			}
 			if dataField != "" {
 				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
-			}
-			if !disableHeadersArg || len(details.HeaderParameters) > 0 {
-				buf.WriteString("                headers=headers,\n")
 			}
 			buf.WriteString("                stream=False,\n")
 			buf.WriteString("            )\n\n")
@@ -1951,13 +3417,20 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		} else {
 			buf.WriteString("        def request_maker(i_page_num: int, i_page_size: int) -> HTTPRequest:\n")
 			buf.WriteString("            return self._requester.make_request(\n")
-			buf.WriteString(fmt.Sprintf("                %q,\n", upperMethod))
+			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
+			if paginationHeadersBeforeParams && includePaginationHeaders {
+				buf.WriteString("                headers=headers,\n")
+			}
 			if queryBuilder == "raw" {
 				buf.WriteString("                params={\n")
 			} else {
 				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
 				buf.WriteString("                    {\n")
+			}
+			itemIndent := "                        "
+			if queryBuilder == "raw" {
+				itemIndent = "                    "
 			}
 			for _, field := range queryFields {
 				valueExpr := field.ValueExpr
@@ -1970,7 +3443,7 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				if field.RawName == pageSizeField {
 					valueExpr = "i_page_size"
 				}
-				buf.WriteString(fmt.Sprintf("                        %q: %s,\n", field.RawName, valueExpr))
+				buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
 			}
 			if queryBuilder == "raw" {
 				buf.WriteString("                },\n")
@@ -1978,12 +3451,21 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				buf.WriteString("                    }\n")
 				buf.WriteString("                ),\n")
 			}
-			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+			if includePaginationHeaders {
+				if paginationCastBeforeHeaders && !paginationHeadersBeforeParams {
+					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+					buf.WriteString("                headers=headers,\n")
+				} else if paginationHeadersBeforeParams {
+					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+				} else {
+					buf.WriteString("                headers=headers,\n")
+					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+				}
+			} else {
+				buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
+			}
 			if dataField != "" {
 				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
-			}
-			if !disableHeadersArg || len(details.HeaderParameters) > 0 {
-				buf.WriteString("                headers=headers,\n")
 			}
 			buf.WriteString("                stream=False,\n")
 			buf.WriteString("            )\n\n")
@@ -1997,49 +3479,126 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		return buf.String()
 	}
 
+	if headersBeforeBody && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
+		buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n")
+		headersAssigned = true
+	}
+	if binding.Mapping != nil && len(binding.Mapping.PreBodyCode) > 0 {
+		for _, block := range binding.Mapping.PreBodyCode {
+			appendIndentedCode(&buf, block, 2)
+		}
+	}
+	bodyVarAssign := "body"
+	if bodyAnnotation != "" {
+		bodyVarAssign = fmt.Sprintf("body: %s", bodyAnnotation)
+	}
+
 	if len(bodyFieldNames) > 0 {
-		if bodyBuilder == "raw" {
-			buf.WriteString("        body = {\n")
-		} else {
-			buf.WriteString(fmt.Sprintf("        body = %s(\n", bodyBuilder))
-			buf.WriteString("            {\n")
-		}
-		for _, bodyField := range bodyFieldNames {
-			argName := operationArgName(bodyField, paramAliases)
-			buf.WriteString(fmt.Sprintf("                %q: %s,\n", bodyField, argName))
-		}
-		fixedKeys := make([]string, 0, len(bodyFixedValues))
-		for fieldName := range bodyFixedValues {
-			fixedKeys = append(fixedKeys, fieldName)
-		}
-		sort.Strings(fixedKeys)
-		for _, fieldName := range fixedKeys {
-			buf.WriteString(fmt.Sprintf("                %q: %s,\n", fieldName, bodyFixedValues[fieldName]))
-		}
-		if bodyBuilder == "raw" {
+		totalBodyItems := len(bodyFieldNames) + len(bodyFixedValues)
+		if compactSingleItemMaps && totalBodyItems == 1 {
+			fieldName := ""
+			valueExpr := ""
+			if len(bodyFieldNames) == 1 {
+				fieldName = bodyFieldNames[0]
+				argName := operationArgName(fieldName, paramAliases)
+				valueExpr = argName
+				if override, ok := bodyFieldValues[fieldName]; ok && strings.TrimSpace(override) != "" {
+					valueExpr = strings.TrimSpace(override)
+				}
+			} else {
+				fixedKeys := make([]string, 0, len(bodyFixedValues))
+				for k := range bodyFixedValues {
+					fixedKeys = append(fixedKeys, k)
+				}
+				sort.Strings(fixedKeys)
+				fieldName = fixedKeys[0]
+				valueExpr = bodyFixedValues[fieldName]
+			}
+			if bodyBuilder == "raw" {
+				buf.WriteString(fmt.Sprintf("        %s = {%q: %s}\n", bodyVarAssign, fieldName, valueExpr))
+			} else {
+				buf.WriteString(fmt.Sprintf("        %s = %s({%q: %s})\n", bodyVarAssign, bodyBuilder, fieldName, valueExpr))
+			}
+		} else if bodyBuilder == "raw" {
+			buf.WriteString(fmt.Sprintf("        %s = {\n", bodyVarAssign))
+			itemIndent := "            "
+			for _, bodyField := range bodyFieldNames {
+				argName := operationArgName(bodyField, paramAliases)
+				valueExpr := argName
+				if override, ok := bodyFieldValues[bodyField]; ok && strings.TrimSpace(override) != "" {
+					valueExpr = strings.TrimSpace(override)
+				}
+				buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, bodyField, valueExpr))
+			}
+			fixedKeys := make([]string, 0, len(bodyFixedValues))
+			for fieldName := range bodyFixedValues {
+				fixedKeys = append(fixedKeys, fieldName)
+			}
+			sort.Strings(fixedKeys)
+			for _, fieldName := range fixedKeys {
+				buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, fieldName, bodyFixedValues[fieldName]))
+			}
 			buf.WriteString("        }\n")
 		} else {
+			buf.WriteString(fmt.Sprintf("        %s = %s(\n", bodyVarAssign, bodyBuilder))
+			buf.WriteString("            {\n")
+			itemIndent := "                "
+			for _, bodyField := range bodyFieldNames {
+				argName := operationArgName(bodyField, paramAliases)
+				valueExpr := argName
+				if override, ok := bodyFieldValues[bodyField]; ok && strings.TrimSpace(override) != "" {
+					valueExpr = strings.TrimSpace(override)
+				}
+				buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, bodyField, valueExpr))
+			}
+			fixedKeys := make([]string, 0, len(bodyFixedValues))
+			for fieldName := range bodyFixedValues {
+				fixedKeys = append(fixedKeys, fieldName)
+			}
+			sort.Strings(fixedKeys)
+			for _, fieldName := range fixedKeys {
+				buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, fieldName, bodyFixedValues[fieldName]))
+			}
 			buf.WriteString("            }\n")
 			buf.WriteString("        )\n")
 		}
 	} else if len(bodyFixedValues) > 0 {
-		if bodyBuilder == "raw" {
-			buf.WriteString("        body = {\n")
-		} else {
-			buf.WriteString(fmt.Sprintf("        body = %s(\n", bodyBuilder))
-			buf.WriteString("            {\n")
-		}
-		fixedKeys := make([]string, 0, len(bodyFixedValues))
-		for fieldName := range bodyFixedValues {
-			fixedKeys = append(fixedKeys, fieldName)
-		}
-		sort.Strings(fixedKeys)
-		for _, fieldName := range fixedKeys {
-			buf.WriteString(fmt.Sprintf("                %q: %s,\n", fieldName, bodyFixedValues[fieldName]))
-		}
-		if bodyBuilder == "raw" {
+		if compactSingleItemMaps && len(bodyFixedValues) == 1 {
+			fixedKeys := make([]string, 0, len(bodyFixedValues))
+			for k := range bodyFixedValues {
+				fixedKeys = append(fixedKeys, k)
+			}
+			sort.Strings(fixedKeys)
+			fieldName := fixedKeys[0]
+			if bodyBuilder == "raw" {
+				buf.WriteString(fmt.Sprintf("        %s = {%q: %s}\n", bodyVarAssign, fieldName, bodyFixedValues[fieldName]))
+			} else {
+				buf.WriteString(fmt.Sprintf("        %s = %s({%q: %s})\n", bodyVarAssign, bodyBuilder, fieldName, bodyFixedValues[fieldName]))
+			}
+		} else if bodyBuilder == "raw" {
+			buf.WriteString(fmt.Sprintf("        %s = {\n", bodyVarAssign))
+			itemIndent := "            "
+			fixedKeys := make([]string, 0, len(bodyFixedValues))
+			for fieldName := range bodyFixedValues {
+				fixedKeys = append(fixedKeys, fieldName)
+			}
+			sort.Strings(fixedKeys)
+			for _, fieldName := range fixedKeys {
+				buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, fieldName, bodyFixedValues[fieldName]))
+			}
 			buf.WriteString("        }\n")
 		} else {
+			buf.WriteString(fmt.Sprintf("        %s = %s(\n", bodyVarAssign, bodyBuilder))
+			buf.WriteString("            {\n")
+			itemIndent := "                "
+			fixedKeys := make([]string, 0, len(bodyFixedValues))
+			for fieldName := range bodyFixedValues {
+				fixedKeys = append(fixedKeys, fieldName)
+			}
+			sort.Strings(fixedKeys)
+			for _, fieldName := range fixedKeys {
+				buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, fieldName, bodyFixedValues[fieldName]))
+			}
 			buf.WriteString("            }\n")
 			buf.WriteString("        )\n")
 		}
@@ -2052,8 +3611,44 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("            request_body = body.model_dump(exclude_none=True) if hasattr(body, \"model_dump\") else body\n")
 		}
 	}
-	if includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
-		buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n")
+	if len(filesFieldNames) > 0 {
+		if len(filesFieldNames) == 1 {
+			fieldName := filesFieldNames[0]
+			argName := operationArgName(fieldName, paramAliases)
+			valueExpr := argName
+			if override, ok := filesFieldValues[fieldName]; ok && strings.TrimSpace(override) != "" {
+				valueExpr = strings.TrimSpace(override)
+			}
+			buf.WriteString(fmt.Sprintf("        files = {%q: %s}\n", fieldName, valueExpr))
+		} else {
+			buf.WriteString("        files = {\n")
+			for _, filesField := range filesFieldNames {
+				argName := operationArgName(filesField, paramAliases)
+				valueExpr := argName
+				if override, ok := filesFieldValues[filesField]; ok && strings.TrimSpace(override) != "" {
+					valueExpr = strings.TrimSpace(override)
+				}
+				buf.WriteString(fmt.Sprintf("            %q: %s,\n", filesField, valueExpr))
+			}
+			buf.WriteString("        }\n")
+		}
+	}
+	if !headersAssigned && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
+		needsBlankLine := len(queryFields) > 0 ||
+			len(bodyFieldNames) > 0 ||
+			len(bodyFixedValues) > 0 ||
+			len(filesFieldNames) > 0 ||
+			requestBodyType != "" ||
+			strings.EqualFold(requestMethod, "delete") ||
+			(binding.Mapping != nil && len(binding.Mapping.PreBodyCode) > 0)
+		if binding.Mapping != nil && binding.Mapping.NoBlankLineAfterHeaders {
+			needsBlankLine = false
+		}
+		if needsBlankLine {
+			buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n\n")
+		} else {
+			buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n")
+		}
 	}
 
 	castExpr := "None"
@@ -2071,27 +3666,229 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	callArgs := []string{
 		fmt.Sprintf("%q", requestMethod),
 		"url",
-		func() string {
-			if requestStream {
-				return "True"
-			}
-			return "False"
-		}(),
-		fmt.Sprintf("cast=%s", castExpr),
 	}
+	type requestCallArg struct {
+		Key  string
+		Expr string
+		Pos  bool
+	}
+	optionalArgs := make([]requestCallArg, 0, 8)
+	streamLiteral := "False"
+	if requestStream {
+		streamLiteral = "True"
+	}
+	streamExpr := streamLiteral
+	if streamKeyword {
+		streamExpr = fmt.Sprintf("stream=%s", streamLiteral)
+	}
+	optionalArgs = append(optionalArgs, requestCallArg{Key: "stream", Expr: streamExpr, Pos: !streamKeyword})
+	castExprValue := castExpr
+	if castKeyword {
+		castExprValue = fmt.Sprintf("cast=%s", castExpr)
+	}
+	optionalArgs = append(optionalArgs, requestCallArg{Key: "cast", Expr: castExprValue, Pos: !castKeyword})
 	if len(queryFields) > 0 {
-		callArgs = append(callArgs, "params=params")
+		optionalArgs = append(optionalArgs, requestCallArg{Key: "params", Expr: "params=params"})
+	}
+	if headersBeforeBody && (!disableHeadersArg || len(details.HeaderParameters) > 0) {
+		optionalArgs = append(optionalArgs, requestCallArg{Key: "headers", Expr: "headers=headers"})
 	}
 	if bodyArgExpr != "" {
-		callArgs = append(callArgs, fmt.Sprintf("body=%s", bodyArgExpr))
+		bodyExpr := bodyArgExpr
+		if bodyCallExprOverride != "" {
+			if strings.Contains(bodyCallExprOverride, "{body}") {
+				bodyExpr = strings.ReplaceAll(bodyCallExprOverride, "{body}", bodyArgExpr)
+			} else {
+				bodyExpr = bodyCallExprOverride
+			}
+		}
+		optionalArgs = append(optionalArgs, requestCallArg{Key: "body", Expr: fmt.Sprintf("body=%s", bodyExpr)})
+	}
+	if len(filesFieldNames) > 0 {
+		optionalArgs = append(optionalArgs, requestCallArg{Key: "files", Expr: "files=files"})
 	}
 	if dataField != "" {
-		callArgs = append(callArgs, fmt.Sprintf("data_field=%q", dataField))
+		optionalArgs = append(optionalArgs, requestCallArg{Key: "data_field", Expr: fmt.Sprintf("data_field=%q", dataField)})
 	}
-	if !disableHeadersArg || len(details.HeaderParameters) > 0 {
-		callArgs = append(callArgs, "headers=headers")
+	if !headersBeforeBody && (!disableHeadersArg || len(details.HeaderParameters) > 0) {
+		optionalArgs = append(optionalArgs, requestCallArg{Key: "headers", Expr: "headers=headers"})
 	}
-	buf.WriteString(fmt.Sprintf("        return %s(%s)\n", requestCall, strings.Join(callArgs, ", ")))
+	if binding.Mapping != nil && len(binding.Mapping.RequestCallArgOrder) > 0 {
+		argByKey := map[string]requestCallArg{}
+		defaultOrder := make([]string, 0, len(optionalArgs))
+		for _, item := range optionalArgs {
+			if _, exists := argByKey[item.Key]; exists {
+				continue
+			}
+			argByKey[item.Key] = item
+			defaultOrder = append(defaultOrder, item.Key)
+		}
+		orderedKeys := make([]string, 0, len(optionalArgs))
+		seen := map[string]struct{}{}
+		for _, rawKey := range binding.Mapping.RequestCallArgOrder {
+			key := strings.TrimSpace(rawKey)
+			if key == "" {
+				continue
+			}
+			if _, exists := argByKey[key]; !exists {
+				continue
+			}
+			if _, exists := seen[key]; exists {
+				continue
+			}
+			orderedKeys = append(orderedKeys, key)
+			seen[key] = struct{}{}
+		}
+		for _, key := range defaultOrder {
+			if _, exists := seen[key]; exists {
+				continue
+			}
+			orderedKeys = append(orderedKeys, key)
+			seen[key] = struct{}{}
+		}
+		orderedItems := make([]requestCallArg, 0, len(orderedKeys))
+		for _, key := range orderedKeys {
+			orderedItems = append(orderedItems, argByKey[key])
+		}
+		for _, item := range orderedItems {
+			if item.Pos {
+				callArgs = append(callArgs, item.Expr)
+			}
+		}
+		for _, item := range orderedItems {
+			if !item.Pos {
+				callArgs = append(callArgs, item.Expr)
+			}
+		}
+	} else {
+		for _, item := range optionalArgs {
+			callArgs = append(callArgs, item.Expr)
+		}
+	}
+	requestExpr := fmt.Sprintf("%s(%s)", requestCall, strings.Join(callArgs, ", "))
+	forceMultilineRequestCall := binding.Mapping != nil && binding.Mapping.ForceMultilineRequestCall
+	if binding.Mapping != nil {
+		if async && binding.Mapping.ForceMultilineRequestCallAsync {
+			forceMultilineRequestCall = true
+		}
+		if !async && binding.Mapping.ForceMultilineRequestCallSync {
+			forceMultilineRequestCall = true
+		}
+	}
+	if binding.Mapping != nil && binding.Mapping.BlankLineBeforeReturn {
+		ensureTrailingNewlines(&buf, 2)
+	}
+	if binding.Mapping != nil && binding.Mapping.ResponseUnwrapListFirst {
+		buf.WriteString(fmt.Sprintf("        res = %s\n", requestExpr))
+		buf.WriteString("        data = res.data[0]\n")
+		buf.WriteString("        data._raw_response = res._raw_response\n")
+		buf.WriteString("        return data\n")
+		return buf.String()
+	}
+	if requestStream && streamWrap {
+		fieldLiterals := make([]string, 0, len(streamWrapFields))
+		for _, field := range streamWrapFields {
+			trimmed := strings.TrimSpace(field)
+			if trimmed == "" {
+				continue
+			}
+			fieldLiterals = append(fieldLiterals, fmt.Sprintf("%q", trimmed))
+		}
+		if async {
+			if forceMultilineRequestCall {
+				buf.WriteString(fmt.Sprintf("        resp: AsyncIteratorHTTPResponse[str] = %s(\n", requestCall))
+				for _, arg := range callArgs {
+					buf.WriteString(fmt.Sprintf("            %s,\n", arg))
+				}
+				buf.WriteString("        )\n")
+			} else {
+				buf.WriteString(fmt.Sprintf("        resp: AsyncIteratorHTTPResponse[str] = %s\n", requestExpr))
+			}
+			if streamWrapAsyncYield {
+				buf.WriteString("        async for item in AsyncStream(\n")
+				buf.WriteString("            resp.data,\n")
+				if len(fieldLiterals) > 0 {
+					buf.WriteString(fmt.Sprintf("            fields=[%s],\n", strings.Join(fieldLiterals, ", ")))
+				}
+				if streamWrapHandler != "" {
+					buf.WriteString(fmt.Sprintf("            handler=%s,\n", streamWrapHandler))
+				}
+				buf.WriteString("            raw_response=resp._raw_response,\n")
+				buf.WriteString("        ):\n")
+				buf.WriteString("            yield item\n")
+			} else {
+				if streamWrapBlankLineBeforeAsyncReturn {
+					buf.WriteString("\n")
+				}
+				if streamWrapCompactAsyncReturn {
+					asyncStreamArgs := []string{"resp.data"}
+					if len(fieldLiterals) > 0 {
+						asyncStreamArgs = append(asyncStreamArgs, fmt.Sprintf("fields=[%s]", strings.Join(fieldLiterals, ", ")))
+					}
+					if streamWrapHandler != "" {
+						asyncStreamArgs = append(asyncStreamArgs, fmt.Sprintf("handler=%s", streamWrapHandler))
+					}
+					asyncStreamArgs = append(asyncStreamArgs, "raw_response=resp._raw_response")
+					buf.WriteString(fmt.Sprintf("        return AsyncStream(%s)\n", strings.Join(asyncStreamArgs, ", ")))
+				} else {
+					buf.WriteString("        return AsyncStream(\n")
+					buf.WriteString("            resp.data,\n")
+					if len(fieldLiterals) > 0 {
+						buf.WriteString(fmt.Sprintf("            fields=[%s],\n", strings.Join(fieldLiterals, ", ")))
+					}
+					if streamWrapHandler != "" {
+						buf.WriteString(fmt.Sprintf("            handler=%s,\n", streamWrapHandler))
+					}
+					buf.WriteString("            raw_response=resp._raw_response,\n")
+					buf.WriteString("        )\n")
+				}
+			}
+		} else {
+			if forceMultilineRequestCall {
+				buf.WriteString(fmt.Sprintf("        %s: IteratorHTTPResponse[str] = %s(\n", streamWrapSyncResponseVar, requestCall))
+				for _, arg := range callArgs {
+					buf.WriteString(fmt.Sprintf("            %s,\n", arg))
+				}
+				buf.WriteString("        )\n")
+			} else {
+				buf.WriteString(fmt.Sprintf("        %s: IteratorHTTPResponse[str] = %s\n", streamWrapSyncResponseVar, requestExpr))
+			}
+			if streamWrapCompactSyncReturn {
+				streamArgs := []string{
+					fmt.Sprintf("%s._raw_response", streamWrapSyncResponseVar),
+					fmt.Sprintf("%s.data", streamWrapSyncResponseVar),
+				}
+				if len(fieldLiterals) > 0 {
+					streamArgs = append(streamArgs, fmt.Sprintf("fields=[%s]", strings.Join(fieldLiterals, ", ")))
+				}
+				if streamWrapHandler != "" {
+					streamArgs = append(streamArgs, fmt.Sprintf("handler=%s", streamWrapHandler))
+				}
+				buf.WriteString(fmt.Sprintf("        return Stream(%s)\n", strings.Join(streamArgs, ", ")))
+			} else {
+				buf.WriteString("        return Stream(\n")
+				buf.WriteString(fmt.Sprintf("            %s._raw_response,\n", streamWrapSyncResponseVar))
+				buf.WriteString(fmt.Sprintf("            %s.data,\n", streamWrapSyncResponseVar))
+				if len(fieldLiterals) > 0 {
+					buf.WriteString(fmt.Sprintf("            fields=[%s],\n", strings.Join(fieldLiterals, ", ")))
+				}
+				if streamWrapHandler != "" {
+					buf.WriteString(fmt.Sprintf("            handler=%s,\n", streamWrapHandler))
+				}
+				buf.WriteString("        )\n")
+			}
+		}
+	} else {
+		if forceMultilineRequestCall {
+			buf.WriteString(fmt.Sprintf("        return %s(\n", requestCall))
+			for _, arg := range callArgs {
+				buf.WriteString(fmt.Sprintf("            %s,\n", arg))
+			}
+			buf.WriteString("        )\n")
+		} else {
+			buf.WriteString(fmt.Sprintf("        return %s\n", requestExpr))
+		}
+	}
 
 	return buf.String()
 }

@@ -1,11 +1,14 @@
 language: python
 output_sdk: exist-repo/coze-py-generated
+comment_overrides_file: comment_overrides.yaml
 api:
+  generate_only_mapped: true
   packages:
     - name: api_apps
       source_dir: cozepy/api_apps
       client_class: APIAppsClient
       async_client_class: AsyncAPIAppsClient
+      blank_line_before_child_inits: true
       model_schemas:
         - schema: AppTypeOpen
           name: AppType
@@ -24,12 +27,59 @@ api:
       child_clients:
         - attribute: events
           module: .events
+          type_import_module: cozepy.api_apps.events
+          type_import_sync_first: true
           sync_class: APIAppsEventsClient
           async_class: AsyncAPIAppsEventsClient
       path_prefixes:
         - /v1/api_apps
+    - name: api_apps_events
+      source_dir: cozepy/api_apps/events
+      client_class: APIAppsEventsClient
+      async_client_class: AsyncAPIAppsEventsClient
+      http_request_from_model: true
+      override_pagination_classes:
+        - _PrivateListAPIAppsEventsData
+      model_schemas:
+        - name: APIAppEvent
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: api_app_id
+              type: str
+              required: true
+            - name: name
+              type: str
+              required: true
+            - name: description
+              type: str
+              required: true
+            - name: event_type
+              type: str
+              required: true
+      empty_models:
+        - CreateAPIAppsEventsResp
+        - UpdateAPIAppsEventsResp
+        - DeleteAPIAppsEventsResp
+      top_level_code:
+        - |
+          class _PrivateListAPIAppsEventsData(CozeModel, TokenPagedResponse[APIAppEvent]):
+              items: List[APIAppEvent]
+              next_page_token: Optional[str] = None
+              has_more: bool
+
+              def get_next_page_token(self) -> Optional[str]:
+                  return self.next_page_token
+
+              def get_has_more(self) -> Optional[bool]:
+                  return self.has_more
+
+              def get_items(self) -> List[APIAppEvent]:
+                  return self.items
+      path_prefixes:
+        - /v1/api_apps
     - name: apps
       source_dir: cozepy/apps
+      separate_required_optional_fields: true
       extra_imports:
         - module: cozepy.bots
           names:
@@ -55,10 +105,55 @@ api:
             - is_published
             - owner_user_id
             - updated_at
+      top_level_code:
+        - |
+          class _PrivateListAppsData(CozeModel, NumberPagedResponse[SimpleApp]):
+              items: List[SimpleApp]
+              total: int
+
+              def get_total(self) -> Optional[int]:
+                  return self.total
+
+              def get_has_more(self) -> Optional[bool]:
+                  return None
+
+              def get_items(self) -> List[SimpleApp]:
+                  return self.items
+      override_pagination_classes:
+        - _PrivateListAppsData
       path_prefixes:
         - /v1/apps
     - name: audio
       source_dir: cozepy/audio
+      blank_line_before_child_inits: true
+      type_checking_child_order:
+        - live
+        - rooms
+        - speech
+        - transcriptions
+        - voiceprint_groups
+        - voices
+      init_child_order:
+        - rooms
+        - voices
+        - speech
+        - transcriptions
+        - voiceprint_groups
+        - live
+      sync_child_order:
+        - rooms
+        - speech
+        - transcriptions
+        - voices
+        - voiceprint_groups
+        - live
+      async_child_order:
+        - rooms
+        - speech
+        - voices
+        - transcriptions
+        - voiceprint_groups
+        - live
       child_clients:
         - attribute: rooms
           module: .rooms
@@ -98,6 +193,291 @@ api:
           init_with_keywords: true
       path_prefixes:
         - /v1/audio
+    - name: audio_rooms
+      source_dir: cozepy/audio/rooms
+      disable_auto_imports: true
+      client_class: RoomsClient
+      async_client_class: AsyncRoomsClient
+      raw_imports:
+        - |
+          from typing import Optional
+
+          from pydantic import Field
+
+          from cozepy.model import CozeModel, DynamicStrEnum
+          from cozepy.request import Requester
+          from cozepy.util import remove_none_values, remove_url_trailing_slash
+      model_schemas:
+        - name: RoomAudioConfig
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: codec
+              type: Optional[str]
+              required: true
+        - name: RoomVideoConfig
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: codec
+              type: Optional[str]
+              required: true
+            - name: stream_video_type
+              type: Optional[str]
+              required: true
+            - name: video_frame_rate
+              type: Optional[int]
+              required: true
+            - name: video_frame_expire_duration
+              type: Optional[int]
+              required: true
+        - name: RoomMode
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: DEFAULT
+              value: default
+            - name: S2S
+              value: s2s
+            - name: PODCAST
+              value: podcast
+            - name: TRANSLATE
+              value: translate
+        - name: TranslateConfig
+          allow_missing_in_swagger: true
+          before_code:
+            - |
+              """
+              struct TranslateConfig {
+                  1: optional string From (go.tag = "json:\"from\"") // 翻译源语言
+                  2: optional string To (go.tag = "json:\"to\"") // 翻译目标语言
+              }
+              """
+          extra_code:
+            - |
+              from_: Optional[str] = Field(alias="from")
+              to: Optional[str]
+        - name: RoomConfig
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: audio_config
+              type: Optional[RoomAudioConfig]
+              required: true
+            - name: video_config
+              type: Optional[RoomVideoConfig]
+              required: true
+            - name: prologue_content
+              type: Optional[str]
+              required: true
+            - name: room_mode
+              type: Optional[RoomMode]
+              required: true
+            - name: translate_config
+              type: Optional[TranslateConfig]
+              required: true
+            - name: prologue_delay_duration_ms
+              type: Optional[int]
+              required: true
+        - name: CreateRoomResp
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: token
+              type: str
+              required: true
+            - name: uid
+              type: str
+              required: true
+            - name: room_id
+              type: str
+              required: true
+            - name: app_id
+              type: str
+              required: true
+      path_prefixes:
+        - /v1/audio/rooms
+    - name: audio_speech
+      source_dir: cozepy/audio/speech
+      disable_auto_imports: true
+      client_class: SpeechClient
+      async_client_class: AsyncSpeechClient
+      raw_imports:
+        - |
+          from typing import Optional
+
+          from cozepy.model import DynamicStrEnum, FileHTTPResponse
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+      model_schemas:
+        - name: AudioFormat
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: WAV
+              value: wav
+            - name: PCM
+              value: pcm
+            - name: OGG_OPUS
+              value: ogg_opus
+            - name: MP3
+              value: mp3
+        - name: LanguageCode
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: ZH
+              value: zh
+            - name: EN
+              value: en
+            - name: JA
+              value: ja
+            - name: ES
+              value: es
+            - name: ID
+              value: id
+            - name: PT
+              value: pt
+      path_prefixes:
+        - /v1/audio/speech
+    - name: audio_transcriptions
+      source_dir: cozepy/audio/transcriptions
+      disable_auto_imports: true
+      client_class: TranscriptionsClient
+      async_client_class: AsyncTranscriptionsClient
+      raw_imports:
+        - |
+          from typing import Optional
+
+          from cozepy.files import FileTypes, _try_fix_file
+          from cozepy.model import CozeModel
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+      model_schemas:
+        - name: CreateTranscriptionsResp
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: text
+              type: str
+              required: true
+      async_extra_methods:
+        - |
+          async def create(
+              self,
+              *,
+              file: FileTypes,
+              **kwargs,
+          ) -> CreateTranscriptionsResp:
+              """
+              create transcriptions
+
+              :param file: The file to be translated.
+              :return: create transcriptions result
+              """
+              url = f"{self._base_url}/v1/audio/transcriptions"
+              files = {"file": _try_fix_file(file)}
+              headers: Optional[dict] = kwargs.get("headers")
+              return await self._requester.arequest(
+                  "post", url, stream=False, cast=CreateTranscriptionsResp, headers=headers, files=files
+              )
+      async_method_order:
+        - create
+      path_prefixes:
+        - /v1/audio/transcriptions
+    - name: audio_voices
+      source_dir: cozepy/audio/voices
+      disable_auto_imports: true
+      separate_commented_fields: true
+      client_class: VoicesClient
+      async_client_class: AsyncVoicesClient
+      raw_imports:
+        - |
+          from typing import List, Optional
+
+          from cozepy import AudioFormat
+          from cozepy.files import FileTypes, _try_fix_file
+          from cozepy.model import AsyncNumberPaged, CozeModel, DynamicStrEnum, HTTPRequest, NumberPaged, NumberPagedResponse
+          from cozepy.request import Requester
+          from cozepy.util import remove_none_values, remove_url_trailing_slash
+      model_schemas:
+        - name: VoiceState
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: INIT
+              value: init
+            - name: CLONED
+              value: cloned
+            - name: ALL
+              value: all
+        - name: VoiceModelType
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: BIG
+              value: big
+            - name: SMALL
+              value: small
+        - schema: OpenAPIVoiceData
+          name: Voice
+          exclude_unordered_fields: true
+          required_fields:
+            - voice_id
+            - name
+            - is_system_voice
+            - language_code
+            - language_name
+            - preview_text
+            - preview_audio
+            - available_training_times
+            - create_time
+            - update_time
+            - model_type
+            - state
+          field_types:
+            model_type: VoiceModelType
+            state: VoiceState
+          field_order:
+            - voice_id
+            - name
+            - is_system_voice
+            - language_code
+            - language_name
+            - preview_text
+            - preview_audio
+            - available_training_times
+            - create_time
+            - update_time
+            - model_type
+            - state
+        - name: _PrivateListVoiceData
+          allow_missing_in_swagger: true
+          base_classes:
+            - CozeModel
+            - NumberPagedResponse[Voice]
+          extra_fields:
+            - name: voice_list
+              type: List[Voice]
+              required: true
+            - name: has_more
+              type: bool
+              required: true
+          extra_code:
+            - |
+              def get_total(self) -> Optional[int]:
+                  return None
+
+              def get_has_more(self) -> Optional[bool]:
+                  return self.has_more
+
+              def get_items(self) -> List[Voice]:
+                  return self.voice_list
+      override_pagination_classes:
+        - _PrivateListVoiceData
+      sync_method_order:
+        - clone
+        - list
+      async_method_order:
+        - clone
+        - list
+      path_prefixes:
+        - /v1/audio/voices
     - name: bots
       source_dir: cozepy/bots
       extra_imports:
@@ -132,6 +512,7 @@ api:
             search_strategy: "0"
         - schema: properties_model_info_config
           name: BotModelInfo
+          exclude_unordered_fields: true
           prepend_code:
             - |
               class ResponseFormat(DynamicStrEnum):
@@ -140,7 +521,13 @@ api:
                   MARKDOWN = "markdown"
 
               class CacheType(DynamicStrEnum):
+                  """
+                  扣子的部分模型支持开启或关闭上下文缓存中的前缀缓存。开启前缀缓存后，可以将一些公共前缀内容进行缓存，
+                  后续调用模型时无需重复发送，从而加快模型的响应速度并降低使用成本。默认为 closed。支持的取值如下：
+                  """
+                  # 关闭上下文缓存。
                   CLOSED = "closed"
+                  # 前缀缓存模式。
                   PREFIX = "prefix"
           field_order:
             - model_id
@@ -172,7 +559,9 @@ api:
           prepend_code:
             - |
               class PluginIDInfo(CozeModel):
+                  # 智能体绑定的插件 ID
                   plugin_id: str
+                  # 智能体绑定的插件工具 ID
                   api_id: str
           field_types:
             id_list: Optional[List[PluginIDInfo]]
@@ -181,6 +570,7 @@ api:
           prepend_code:
             - |
               class WorkflowIDInfo(CozeModel):
+                  # 智能体绑定的工作流 ID
                   id: str
           field_types:
             ids: Optional[List[WorkflowIDInfo]]
@@ -232,6 +622,9 @@ api:
               value: customized
         - schema: properties_suggest_reply_info
           name: BotSuggestReplyInfo
+          field_order:
+            - reply_mode
+            - customized_prompt
           required_fields:
             - reply_mode
           field_types:
@@ -392,6 +785,7 @@ api:
               required: false
         - schema: BotSimpleInfo
           name: SimpleBot
+          separate_required_optional_fields: true
           field_order:
             - id
             - name
@@ -416,6 +810,7 @@ api:
               required: false
           extra_code:
             - |
+              # compatibility fields
               bot_id: str = Field(alias="id")
               bot_name: str = Field(alias="name")
               publish_time: str = Field(alias="updated_at")
@@ -440,7 +835,7 @@ api:
                   publish_time: str
 
                   def to_simple_bot(self) -> SimpleBot:
-                      return SimpleBot(
+                      return SimpleBot(  # type: ignore[call-arg]
                           id=self.bot_id,
                           name=self.bot_name,
                           description=self.description,
@@ -462,23 +857,29 @@ api:
 
               def get_items(self) -> List[SimpleBot]:
                   return [bot.to_simple_bot() for bot in self.space_bots]
+        - |
+          class _PrivateListBotsDataV2(CozeModel, NumberPagedResponse[SimpleBot]):
+              items: List[SimpleBot]
+              total: int
+
+              def get_total(self) -> Optional[int]:
+                  return self.total
+
+              def get_has_more(self) -> Optional[bool]:
+                  return None
+
+              def get_items(self) -> List[SimpleBot]:
+                  return self.items
       override_pagination_classes:
         - _PrivateListBotsDataV1
+        - _PrivateListBotsDataV2
       sync_extra_methods:
         - |
-          def retrieve(
-              self,
-              *,
-              bot_id: str,
-              is_published: Optional[bool] = None,
-              use_api_version: int = 1,
-              **kwargs,
-          ) -> Bot:
-              if use_api_version == 1:
-                  return self._retrieve_v1(bot_id=bot_id, **kwargs)
+          def retrieve(self, *, bot_id: str, is_published: Optional[bool] = None, use_api_version: int = 1, **kwargs) -> Bot:
               if use_api_version == 2:
                   return self._retrieve_v2(bot_id=bot_id, is_published=is_published, **kwargs)
-              raise ValueError("invalid use_api_version, expected one of: 1, 2")
+              else:
+                  return self._retrieve_v1(bot_id=bot_id, **kwargs)
         - |
           def list(
               self,
@@ -488,40 +889,30 @@ api:
               connector_id: Optional[str] = None,
               page_num: int = 1,
               page_size: int = 20,
-              use_api_version: int = 2,
+              use_api_version: int = 1,
               **kwargs,
           ) -> NumberPaged[SimpleBot]:
-              if use_api_version == 1:
+              if use_api_version == 2:
+                  return self._list_v2(
+                      workspace_id=space_id,
+                      publish_status=publish_status,
+                      connector_id=connector_id,
+                      page_num=page_num,
+                      page_size=page_size,
+                  )
+              else:
                   return self._list_v1(
                       space_id=space_id,
                       page_num=page_num,
                       page_size=page_size,
                   )
-              if use_api_version == 2:
-                  return self._list_v2(
-                      space_id=space_id,
-                      publish_status=publish_status,
-                      connector_id=connector_id,
-                      page_num=page_num,
-                      page_size=page_size,
-                      **kwargs,
-                  )
-              raise ValueError("invalid use_api_version, expected one of: 1, 2")
       async_extra_methods:
         - |
-          async def retrieve(
-              self,
-              *,
-              bot_id: str,
-              is_published: Optional[bool] = None,
-              use_api_version: int = 1,
-              **kwargs,
-          ) -> Bot:
-              if use_api_version == 1:
-                  return await self._retrieve_v1(bot_id=bot_id, **kwargs)
+          async def retrieve(self, *, bot_id: str, is_published: Optional[bool] = None, use_api_version: int = 1, **kwargs) -> Bot:
               if use_api_version == 2:
                   return await self._retrieve_v2(bot_id=bot_id, is_published=is_published, **kwargs)
-              raise ValueError("invalid use_api_version, expected one of: 1, 2")
+              else:
+                  return await self._retrieve_v1(bot_id=bot_id, **kwargs)
         - |
           async def list(
               self,
@@ -531,49 +922,79 @@ api:
               connector_id: Optional[str] = None,
               page_num: int = 1,
               page_size: int = 20,
-              use_api_version: int = 2,
+              use_api_version: int = 1,
               **kwargs,
           ) -> AsyncNumberPaged[SimpleBot]:
-              if use_api_version == 1:
-                  return await self._list_v1(
-                      space_id=space_id,
-                      page_num=page_num,
-                      page_size=page_size,
-                  )
               if use_api_version == 2:
                   return await self._list_v2(
-                      space_id=space_id,
+                      workspace_id=space_id,
                       publish_status=publish_status,
                       connector_id=connector_id,
                       page_num=page_num,
                       page_size=page_size,
                       **kwargs,
                   )
-              raise ValueError("invalid use_api_version, expected one of: 1, 2")
+              else:
+                  return await self._list_v1(space_id=space_id, page_num=page_num, page_size=page_size, **kwargs)
+      sync_method_order:
+        - create
+        - update
+        - publish
+        - unpublish
+        - retrieve
+        - _retrieve_v1
+        - _retrieve_v2
+        - list
+        - _list_v1
+        - _list_v2
+      async_method_order:
+        - create
+        - update
+        - publish
+        - unpublish
+        - retrieve
+        - _retrieve_v1
+        - _retrieve_v2
+        - list
+        - _list_v1
+        - _list_v2
       path_prefixes:
         - /v1/bot
         - /v1/bots
     - name: chat
       source_dir: cozepy/chat
-      extra_imports:
-        - module: cozepy.model
-          names:
-            - ListResponse
-            - Stream
+      disable_auto_imports: true
+      separate_commented_enum_members: true
+      separate_required_optional_fields: false
       raw_imports:
-        - import base64
-        - import json
-        - import time
-        - import httpx
-        - from typing import AsyncIterator, Union, overload
-        - from cozepy.exception import CozeAPIError
-        - from cozepy.model import AsyncIteratorHTTPResponse, AsyncStream, IteratorHTTPResponse
+        - |
+          import base64
+          import json
+          import time
+          from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, List, Optional, Union, overload
+
+          import httpx
+          from typing_extensions import Literal
+
+          from cozepy.exception import CozeAPIError
+          from cozepy.model import (
+              AsyncIteratorHTTPResponse,
+              AsyncStream,
+              CozeModel,
+              DynamicStrEnum,
+              IteratorHTTPResponse,
+              ListResponse,
+              Stream,
+          )
+          from cozepy.request import Requester
+          from cozepy.util import remove_none_values, remove_url_trailing_slash
       child_clients:
         - attribute: messages
           module: .message
           sync_class: ChatMessagesClient
           async_class: AsyncChatMessagesClient
           nil_check: is_none
+          multiline_signature: true
       model_schemas:
         - name: MessageRole
           allow_missing_in_swagger: true
@@ -652,62 +1073,34 @@ api:
               def build_image(file_id: Optional[str] = None, file_url: Optional[str] = None):
                   if not file_id and not file_url:
                       raise ValueError("file_id or file_url must be specified")
+
                   return MessageObjectString(type=MessageObjectStringType.IMAGE, file_id=file_id, file_url=file_url)
 
               @staticmethod
               def build_file(file_id: Optional[str] = None, file_url: Optional[str] = None):
                   if not file_id and not file_url:
                       raise ValueError("file_id or file_url must be specified")
+
                   return MessageObjectString(type=MessageObjectStringType.FILE, file_id=file_id, file_url=file_url)
 
               @staticmethod
               def build_audio(file_id: Optional[str] = None, file_url: Optional[str] = None):
                   if not file_id and not file_url:
                       raise ValueError("file_id or file_url must be specified")
+
                   return MessageObjectString(type=MessageObjectStringType.AUDIO, file_id=file_id, file_url=file_url)
         - schema: InsertedAdditionalMessage
           name: InsertedMessage
           required_fields:
             - id
-        - schema: ChatV3ChatDetail
-          name: Chat
-          exclude_unordered_fields: true
-          required_fields:
-            - __none__
-            - id
-            - conversation_id
-          field_types:
-            meta_data: Optional[Dict[str, str]]
-            last_error: Optional[ChatError]
-            status: ChatStatus
-            required_action: Optional[ChatRequiredAction]
-            usage: Optional[ChatUsage]
-          field_defaults:
-            status: ChatStatus.UNKNOWN
-          field_order:
-            - id
-            - conversation_id
-            - bot_id
-            - created_at
-            - completed_at
-            - failed_at
-            - meta_data
-            - last_error
-            - status
-            - required_action
-            - usage
-            - inserted_additional_messages
-          extra_fields:
-            - name: inserted_additional_messages
-              type: List[InsertedMessage]
-              required: false
         - schema: ChatV3MessageDetail
           name: Message
+          blank_line_before_fields:
+            - id
           exclude_unordered_fields: true
           required_fields:
             - __none__
             - role
-            - type
             - content
             - content_type
           field_types:
@@ -789,6 +1182,8 @@ api:
               value: canceled
         - schema: LastError
           name: ChatError
+          required_fields:
+            - __none__
           field_defaults:
             code: "0"
             msg: '""'
@@ -808,38 +1203,92 @@ api:
               value: function
             - name: REPLY_MESSAGE
               value: reply_message
-        - schema: RequiredAction
-          name: ChatRequiredAction
+        - schema: InterruptFunction
+          name: ChatToolCallFunction
+          separate_commented_fields: true
+          field_order:
+            - name
+            - arguments
           required_fields:
-            - type
-          field_types:
-            type: ChatRequiredActionType
-            submit_tool_outputs: Optional[ChatSubmitToolOutputs]
-        - schema: SubmitToolOutputs
-          name: ChatSubmitToolOutputs
-          required_fields:
-            - tool_calls
-          field_types:
-            tool_calls: List[ChatToolCall]
+            - name
+            - arguments
         - schema: InterruptPlugin
           name: ChatToolCall
+          separate_commented_fields: true
+          field_order:
+            - id
+            - type
+            - function
           required_fields:
             - id
             - type
           field_types:
             type: ChatToolCallType
             function: Optional[ChatToolCallFunction]
-        - schema: InterruptFunction
-          name: ChatToolCallFunction
+        - schema: SubmitToolOutputs
+          name: ChatSubmitToolOutputs
           required_fields:
-            - name
-            - arguments
+            - tool_calls
+          field_types:
+            tool_calls: List[ChatToolCall]
+        - schema: RequiredAction
+          name: ChatRequiredAction
+          separate_commented_fields: true
+          field_order:
+            - type
+            - submit_tool_outputs
+          required_fields:
+            - type
+          field_types:
+            type: ChatRequiredActionType
+            submit_tool_outputs: Optional[ChatSubmitToolOutputs]
         - schema: Usage2
           name: ChatUsage
+          separate_commented_fields: true
+          field_order:
+            - token_count
+            - output_count
+            - input_count
           field_defaults:
             token_count: "0"
             output_count: "0"
             input_count: "0"
+        - schema: ChatV3ChatDetail
+          name: Chat
+          blank_line_before_fields:
+            - required_action
+            - usage
+            - inserted_additional_messages
+          exclude_unordered_fields: true
+          required_fields:
+            - __none__
+            - id
+            - conversation_id
+          field_types:
+            meta_data: Optional[Dict[str, str]]
+            last_error: Optional[ChatError]
+            status: ChatStatus
+            required_action: Optional[ChatRequiredAction]
+            usage: Optional[ChatUsage]
+          field_defaults:
+            status: ChatStatus.UNKNOWN
+          field_order:
+            - id
+            - conversation_id
+            - bot_id
+            - created_at
+            - completed_at
+            - failed_at
+            - meta_data
+            - last_error
+            - status
+            - required_action
+            - usage
+            - inserted_additional_messages
+          extra_fields:
+            - name: inserted_additional_messages
+              type: List[InsertedMessage]
+              required: false
         - name: ChatPoll
           allow_missing_in_swagger: true
           extra_fields:
@@ -888,44 +1337,140 @@ api:
               type: Message
               required: false
             - name: unknown
-              type: Dict[str, Any]
+              type: Dict
               required: false
-        - schema: ToolOutput
-          name: ToolOutput
-          required_fields:
-            - tool_call_id
-            - output
       top_level_code:
         - |
           def _chat_stream_handler(data: Dict, raw_response: httpx.Response) -> Optional[ChatEvent]:
               event = data["event"]
-              event_data = data["data"]
+              event_data = data["data"]  # type: str
               if event == ChatEventType.DONE:
                   return None
-              if event == ChatEventType.ERROR:
-                  raise Exception(f"error event: {event_data}")
-              if event in [
+              elif event == ChatEventType.ERROR:
+                  raise Exception(f"error event: {event_data}")  # TODO: error struct format
+              elif event in [
                   ChatEventType.CONVERSATION_MESSAGE_DELTA,
                   ChatEventType.CONVERSATION_MESSAGE_COMPLETED,
                   ChatEventType.CONVERSATION_AUDIO_DELTA,
               ]:
-                  parsed = ChatEvent(event=event, message=Message.model_validate_json(event_data))
-                  parsed._raw_response = raw_response
-                  return parsed
-              if event in [
+                  event = ChatEvent(event=event, message=Message.model_validate_json(event_data))
+                  event._raw_response = raw_response
+                  return event
+              elif event in [
                   ChatEventType.CONVERSATION_CHAT_CREATED,
                   ChatEventType.CONVERSATION_CHAT_IN_PROGRESS,
                   ChatEventType.CONVERSATION_CHAT_COMPLETED,
                   ChatEventType.CONVERSATION_CHAT_FAILED,
                   ChatEventType.CONVERSATION_CHAT_REQUIRES_ACTION,
               ]:
-                  parsed = ChatEvent(event=event, chat=Chat.model_validate_json(event_data))
-                  parsed._raw_response = raw_response
-                  return parsed
-              parsed = ChatEvent(event=ChatEventType.UNKNOWN, unknown=data)
-              parsed._raw_response = raw_response
-              return parsed
+                  event = ChatEvent(event=event, chat=Chat.model_validate_json(event_data))
+                  event._raw_response = raw_response
+                  return event
+              else:
+                  event = ChatEvent(event=ChatEventType.UNKNOWN, unknown=data)
+                  event._raw_response = raw_response
+                  return event
+        - |
+
+          class ToolOutput(CozeModel):
+              # 上报运行结果的 ID。你可以在扣子智能语音对话信令事件的 tool_calls 字段下查看此 ID。
+              tool_call_id: str
+
+              # 工具的执行结果。
+              output: str
       sync_extra_methods:
+        - |
+          @overload
+          def _create(
+              self,
+              *,
+              bot_id: str,
+              user_id: str,
+              stream: Literal[True],
+              additional_messages: Optional[List[Message]] = ...,
+              custom_variables: Optional[Dict[str, str]] = ...,
+              auto_save_history: bool = ...,
+              meta_data: Optional[Dict[str, str]] = ...,
+              conversation_id: Optional[str] = ...,
+              parameters: Optional[Dict[str, Any]] = ...,
+              enable_card: Optional[bool] = ...,
+          ) -> Stream[ChatEvent]: ...
+
+          @overload
+          def _create(
+              self,
+              *,
+              bot_id: str,
+              user_id: str,
+              stream: Literal[False],
+              additional_messages: Optional[List[Message]] = ...,
+              custom_variables: Optional[Dict[str, str]] = ...,
+              auto_save_history: bool = ...,
+              meta_data: Optional[Dict[str, str]] = ...,
+              conversation_id: Optional[str] = ...,
+              parameters: Optional[Dict[str, Any]] = ...,
+              enable_card: Optional[bool] = ...,
+          ) -> Chat: ...
+
+          def _create(
+              self,
+              *,
+              bot_id: str,
+              user_id: str,
+              stream: Literal[True, False],
+              additional_messages: Optional[List[Message]] = None,
+              custom_variables: Optional[Dict[str, str]] = None,
+              auto_save_history: bool = True,
+              meta_data: Optional[Dict[str, str]] = None,
+              conversation_id: Optional[str] = None,
+              parameters: Optional[Dict[str, Any]] = None,
+              enable_card: Optional[bool] = None,
+              **kwargs,
+          ) -> Union[Chat, Stream[ChatEvent]]:
+              url = f"{self._base_url}/v3/chat"
+              params = {
+                  "conversation_id": conversation_id if conversation_id else None,
+              }
+              body = remove_none_values(
+                  {
+                      "bot_id": bot_id,
+                      "user_id": user_id,
+                      "additional_messages": [i.model_dump() for i in additional_messages] if additional_messages else [],
+                      "stream": stream,
+                      "custom_variables": custom_variables,
+                      "auto_save_history": auto_save_history,
+                      "meta_data": meta_data,
+                      "parameters": parameters,
+                      "enable_card": enable_card,
+                  }
+              )
+              headers: Optional[dict] = kwargs.get("headers")
+              if not stream:
+                  return self._requester.request(
+                      "post",
+                      url,
+                      False,
+                      Chat,
+                      params=params,
+                      headers=headers,
+                      body=body,
+                  )
+
+              response: IteratorHTTPResponse[str] = self._requester.request(
+                  "post",
+                  url,
+                  True,
+                  None,
+                  params=params,
+                  headers=headers,
+                  body=body,
+              )
+              return Stream(
+                  response._raw_response,
+                  response.data,
+                  fields=["event", "data"],
+                  handler=_chat_stream_handler,
+              )
         - |
           def create_and_poll(
               self,
@@ -956,10 +1501,12 @@ api:
               while chat.status == ChatStatus.IN_PROGRESS:
                   if poll_timeout is not None and int(time.time()) - start > poll_timeout:
                       try:
+                          # too long, cancel chat
                           self.cancel(conversation_id=chat.conversation_id, chat_id=chat.id)
                           return ChatPoll(chat=chat)
                       except CozeAPIError as e:
                           if e.code == 4104:
+                              # The current conversation can't be canceled, re-retrieve the chat and continue polling.
                               chat = self.retrieve(conversation_id=chat.conversation_id, chat_id=chat.id)
                               continue
                           raise e
@@ -969,8 +1516,216 @@ api:
 
               messages = self.messages.list(conversation_id=chat.conversation_id, chat_id=chat.id)
               return ChatPoll(chat=chat, messages=messages)
+        - |
+          def submit_tool_outputs(
+              self, *, conversation_id: str, chat_id: str, tool_outputs: List[ToolOutput], stream: bool
+          ) -> Union[Chat, Stream[ChatEvent]]:
+              url = f"{self._base_url}/v3/chat/submit_tool_outputs"
+              params = {
+                  "conversation_id": conversation_id,
+                  "chat_id": chat_id,
+              }
+              body = {
+                  "tool_outputs": [i.model_dump() for i in tool_outputs],
+                  "stream": stream,
+              }
+
+              if not stream:
+                  return self._requester.request(
+                      "post",
+                      url,
+                      False,
+                      Chat,
+                      params=params,
+                      body=body,
+                  )
+
+              resp: IteratorHTTPResponse[str] = self._requester.request(
+                  "post",
+                  url,
+                  True,
+                  None,
+                  params=params,
+                  body=body,
+              )
+              return Stream(resp._raw_response, resp.data, fields=["event", "data"], handler=_chat_stream_handler)
+      async_extra_methods:
+        - |
+          @overload
+          async def _create(
+              self,
+              *,
+              bot_id: str,
+              user_id: str,
+              stream: Literal[True],
+              additional_messages: Optional[List[Message]] = ...,
+              custom_variables: Optional[Dict[str, str]] = ...,
+              auto_save_history: bool = ...,
+              meta_data: Optional[Dict[str, str]] = ...,
+              conversation_id: Optional[str] = ...,
+              parameters: Optional[Dict[str, Any]] = ...,
+              enable_card: Optional[bool] = ...,
+          ) -> AsyncStream[ChatEvent]: ...
+
+          @overload
+          async def _create(
+              self,
+              *,
+              bot_id: str,
+              user_id: str,
+              stream: Literal[False],
+              additional_messages: Optional[List[Message]] = ...,
+              custom_variables: Optional[Dict[str, str]] = ...,
+              auto_save_history: bool = ...,
+              meta_data: Optional[Dict[str, str]] = ...,
+              conversation_id: Optional[str] = ...,
+              parameters: Optional[Dict[str, Any]] = ...,
+              enable_card: Optional[bool] = ...,
+          ) -> Chat: ...
+
+          async def _create(
+              self,
+              *,
+              bot_id: str,
+              user_id: str,
+              stream: Literal[True, False],
+              additional_messages: Optional[List[Message]] = None,
+              custom_variables: Optional[Dict[str, str]] = None,
+              auto_save_history: bool = True,
+              meta_data: Optional[Dict[str, str]] = None,
+              conversation_id: Optional[str] = None,
+              parameters: Optional[Dict[str, Any]] = None,
+              enable_card: Optional[bool] = None,
+              **kwargs,
+          ) -> Union[Chat, AsyncStream[ChatEvent]]:
+              url = f"{self._base_url}/v3/chat"
+              params = {
+                  "conversation_id": conversation_id if conversation_id else None,
+              }
+              body = remove_none_values(
+                  {
+                      "bot_id": bot_id,
+                      "user_id": user_id,
+                      "additional_messages": [i.model_dump() for i in additional_messages] if additional_messages else [],
+                      "stream": stream,
+                      "custom_variables": custom_variables,
+                      "auto_save_history": auto_save_history,
+                      "meta_data": meta_data,
+                      "parameters": parameters,
+                      "enable_card": enable_card,
+                  }
+              )
+              headers: Optional[dict] = kwargs.get("headers")
+              if not stream:
+                  return await self._requester.arequest(
+                      "post",
+                      url,
+                      False,
+                      Chat,
+                      params=params,
+                      body=body,
+                      headers=headers,
+                  )
+
+              resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(
+                  "post",
+                  url,
+                  True,
+                  None,
+                  params=params,
+                  body=body,
+                  headers=headers,
+              )
+
+              return AsyncStream(
+                  resp.data, fields=["event", "data"], handler=_chat_stream_handler, raw_response=resp._raw_response
+              )
+        - |
+          @overload
+          async def _submit_tool_outputs(
+              self, *, conversation_id: str, chat_id: str, stream: Literal[True], tool_outputs: List[ToolOutput]
+          ) -> AsyncStream[ChatEvent]: ...
+
+          @overload
+          async def _submit_tool_outputs(
+              self, *, conversation_id: str, chat_id: str, stream: Literal[False], tool_outputs: List[ToolOutput]
+          ) -> Chat: ...
+
+          async def _submit_tool_outputs(
+              self, *, conversation_id: str, chat_id: str, stream: Literal[True, False], tool_outputs: List[ToolOutput]
+          ) -> Union[Chat, AsyncStream[ChatEvent]]:
+              url = f"{self._base_url}/v3/chat/submit_tool_outputs"
+              params = {
+                  "conversation_id": conversation_id,
+                  "chat_id": chat_id,
+              }
+              body = {
+                  "tool_outputs": [i.model_dump() for i in tool_outputs],
+                  "stream": stream,
+              }
+
+              if not stream:
+                  return await self._requester.arequest("post", url, False, Chat, params=params, body=body)
+
+              resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(
+                  "post", url, True, None, params=params, body=body
+              )
+              return AsyncStream(
+                  resp.data, fields=["event", "data"], handler=_chat_stream_handler, raw_response=resp._raw_response
+              )
+        - |
+          async def submit_tool_outputs(self, *, conversation_id: str, chat_id: str, tool_outputs: List[ToolOutput]) -> Chat:
+
+              return await self._submit_tool_outputs(
+                  conversation_id=conversation_id, chat_id=chat_id, stream=False, tool_outputs=tool_outputs
+              )
+        - |
+          async def submit_tool_outputs_stream(
+              self,
+              *,
+              conversation_id: str,
+              chat_id: str,
+              tool_outputs: List[ToolOutput],
+          ) -> AsyncIterator[ChatEvent]:
+
+              async for item in await self._submit_tool_outputs(
+                  conversation_id=conversation_id, chat_id=chat_id, stream=True, tool_outputs=tool_outputs
+              ):
+                  yield item
+      sync_method_order:
+        - create
+        - stream
+        - create_and_poll
+        - _create
+        - retrieve
+        - submit_tool_outputs
+        - cancel
+        - messages
+      async_method_order:
+        - create
+        - stream
+        - _create
+        - retrieve
+        - submit_tool_outputs
+        - submit_tool_outputs_stream
+        - _submit_tool_outputs
+        - cancel
+        - messages
       path_prefixes:
         - /v3/chat
+    - name: chat_message
+      source_dir: cozepy/chat/message
+      disable_auto_imports: true
+      client_class: ChatMessagesClient
+      async_client_class: AsyncChatMessagesClient
+      raw_imports:
+        - |
+          from cozepy.chat import Message
+          from cozepy.model import ListResponse
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+      path_prefixes:
+        - /v3/chat/message
     - name: connectors
       source_dir: cozepy/connectors
       child_clients:
@@ -1015,13 +1770,223 @@ api:
             - connector_id
         - schema: Section
           name: Section
+          field_order:
+            - id
+            - conversation_id
           required_fields:
             - id
             - conversation_id
-      empty_models:
-        - DeleteConversationResp
+        - name: DeleteConversationResp
+          allow_missing_in_swagger: true
+          extra_code:
+            - |
+              """
+              删除会话的响应结构体
+              不包含任何字段，仅用于表示操作成功
+              """
+      sync_method_order:
+        - create
+        - list
+        - retrieve
+        - clear
+        - update
+        - delete
+        - messages
+      async_method_order:
+        - create
+        - list
+        - retrieve
+        - clear
+        - update
+        - delete
+        - messages
       path_prefixes:
         - /v1/conversation
+        - /v1/conversations
+    - name: conversations_message
+      source_dir: cozepy/conversations/message
+      disable_auto_imports: true
+      blank_line_before_sync_init_code: true
+      blank_line_before_async_init_code: true
+      client_class: MessagesClient
+      async_client_class: AsyncMessagesClient
+      raw_imports:
+        - |
+          from typing import TYPE_CHECKING, Dict, List, Optional
+
+          from cozepy.chat import Message, MessageContentType, MessageRole
+          from cozepy.model import AsyncLastIDPaged, CozeModel, HTTPRequest, LastIDPaged, LastIDPagedResponse
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+
+          if TYPE_CHECKING:
+              from .feedback import AsyncMessagesFeedbackClient, ConversationsMessagesFeedbackClient
+      sync_init_code:
+        - |
+
+          self._feedback: Optional["ConversationsMessagesFeedbackClient"] = None
+      async_init_code:
+        - |
+
+          self._feedback: Optional["AsyncMessagesFeedbackClient"] = None
+      model_schemas:
+        - name: _PrivateListMessageResp
+          allow_missing_in_swagger: true
+          base_classes:
+            - CozeModel
+            - LastIDPagedResponse[Message]
+          extra_fields:
+            - name: first_id
+              type: str
+              required: true
+            - name: last_id
+              type: str
+              required: true
+            - name: has_more
+              type: bool
+              required: true
+            - name: items
+              type: List[Message]
+              required: true
+          extra_code:
+            - |
+              def get_first_id(self) -> str:
+                  return self.first_id
+
+              def get_last_id(self) -> str:
+                  return self.last_id
+
+              def get_has_more(self) -> bool:
+                  return self.has_more
+
+              def get_items(self) -> List[Message]:
+                  return self.items
+      sync_extra_methods:
+        - |
+          @property
+          def feedback(self) -> "ConversationsMessagesFeedbackClient":
+              if not self._feedback:
+                  from .feedback import ConversationsMessagesFeedbackClient
+
+                  self._feedback = ConversationsMessagesFeedbackClient(self._base_url, self._requester)
+              return self._feedback
+        - |
+          def list(
+              self,
+              *,
+              conversation_id: str,
+              order: str = "desc",
+              chat_id: Optional[str] = None,
+              before_id: Optional[str] = None,
+              after_id: Optional[str] = None,
+              limit: int = 50,
+          ) -> LastIDPaged[Message]:
+              url = f"{self._base_url}/v1/conversation/message/list"
+              params = {
+                  "conversation_id": conversation_id,
+              }
+
+              def request_maker(i_before_id: str, i_after_id: str) -> HTTPRequest:
+                  return self._requester.make_request(
+                      "POST",
+                      url,
+                      json={
+                          "order": order,
+                          "chat_id": chat_id,
+                          "before_id": i_before_id if i_before_id else None,
+                          "after_id": i_after_id if i_after_id else None,
+                          "limit": limit,
+                      },
+                      params=params,
+                      cast=_PrivateListMessageResp,
+                      stream=False,
+                  )
+
+              return LastIDPaged(
+                  before_id=before_id or "",
+                  after_id=after_id or "",
+                  requestor=self._requester,
+                  request_maker=request_maker,
+              )
+      async_extra_methods:
+        - |
+          @property
+          def feedback(self) -> "AsyncMessagesFeedbackClient":
+              if not self._feedback:
+                  from .feedback import AsyncMessagesFeedbackClient
+
+                  self._feedback = AsyncMessagesFeedbackClient(self._base_url, self._requester)
+              return self._feedback
+        - |
+          async def list(
+              self,
+              *,
+              conversation_id: str,
+              order: str = "desc",
+              chat_id: Optional[str] = None,
+              before_id: Optional[str] = None,
+              after_id: Optional[str] = None,
+              limit: int = 50,
+          ) -> AsyncLastIDPaged[Message]:
+              url = f"{self._base_url}/v1/conversation/message/list"
+              params = {
+                  "conversation_id": conversation_id,
+              }
+
+              async def request_maker(i_before_id: str, i_after_id: str) -> HTTPRequest:
+                  return await self._requester.amake_request(
+                      "POST",
+                      url,
+                      json={
+                          "order": order,
+                          "chat_id": chat_id,
+                          "before_id": i_before_id if i_before_id else None,
+                          "after_id": i_after_id if i_after_id else None,
+                          "limit": limit,
+                      },
+                      params=params,
+                      cast=_PrivateListMessageResp,
+                      stream=False,
+                  )
+
+              return await AsyncLastIDPaged.build(
+                  before_id=before_id or "",
+                  after_id=after_id or "",
+                  requestor=self._requester,
+                  request_maker=request_maker,
+              )
+      sync_method_order:
+        - feedback
+        - create
+        - list
+        - retrieve
+        - update
+        - delete
+      async_method_order:
+        - feedback
+        - create
+        - list
+        - retrieve
+        - update
+        - delete
+      path_prefixes:
+        - /v1/conversation/message
+    - name: conversations_message_feedback
+      source_dir: cozepy/conversations/message/feedback
+      client_class: ConversationsMessagesFeedbackClient
+      async_client_class: AsyncMessagesFeedbackClient
+      model_schemas:
+        - name: FeedbackType
+          allow_missing_in_swagger: true
+          enum_values:
+            - name: LIKE
+              value: like
+            - name: UNLIKE
+              value: unlike
+      empty_models:
+        - CreateConversationMessageFeedbackResp
+        - DeleteConversationMessageFeedbackResp
+      path_prefixes:
         - /v1/conversations
     - name: datasets
       source_dir: cozepy/datasets
@@ -1046,9 +2011,6 @@ api:
             - DocumentFormatType
             - DocumentStatus
             - DocumentUpdateType
-        - module: cozepy.model
-          names:
-            - ListResponse
       model_schemas:
         - schema: CreateDatasetOpenApiData
           name: CreateDatasetResp
@@ -1117,6 +2079,28 @@ api:
             - creator_name
             - create_time
             - update_time
+        - name: _PrivateListDatasetsData
+          allow_missing_in_swagger: true
+          base_classes:
+            - CozeModel
+            - NumberPagedResponse[Dataset]
+          extra_fields:
+            - name: total_count
+              type: int
+              required: true
+            - name: dataset_list
+              type: List[Dataset]
+              required: true
+          extra_code:
+            - |
+              def get_total(self) -> Optional[int]:
+                  return self.total_count
+
+              def get_has_more(self) -> Optional[bool]:
+                  return None
+
+              def get_items(self) -> List[Dataset]:
+                  return self.dataset_list
         - schema: DocumentProgress
           name: DocumentProgress
           field_order:
@@ -1141,7 +2125,10 @@ api:
             document_id: '""'
             url: '""'
             size: "0"
-            type: '""'
+            type: |-
+              (
+                  ""  # Local file format, i.e., the file extension, such as txt. Format supports pdf, txt, doc, docx types.
+              )
             progress: "0"
             document_name: '""'
             remaining_time: "0"
@@ -1150,10 +2137,123 @@ api:
       empty_models:
         - UpdateDatasetRes
         - DeleteDatasetRes
+      override_pagination_classes:
+        - _PrivateListDatasetsData
+      path_prefixes:
+        - /v1/datasets
+    - name: datasets_images
+      source_dir: cozepy/datasets/images
+      http_request_from_model: true
+      client_class: DatasetsImagesClient
+      async_client_class: AsyncDatasetsImagesClient
+      extra_imports:
+        - module: cozepy.datasets.documents
+          names:
+            - DocumentSourceType
+      model_schemas:
+        - name: PhotoStatus
+          allow_missing_in_swagger: true
+          enum_base: int
+          enum_values:
+            - name: IN_PROCESSING
+              value: 0
+            - name: COMPLETED
+              value: 1
+            - name: PROCESSING_FAILED
+              value: 9
+        - name: Photo
+          allow_missing_in_swagger: true
+          field_order:
+            - document_id
+            - url
+            - name
+            - size
+            - type
+            - status
+            - caption
+            - creator_id
+            - source_type
+            - create_time
+            - update_time
+          extra_fields:
+            - name: document_id
+              type: str
+              required: true
+            - name: url
+              type: str
+              required: false
+              default: '""'
+            - name: name
+              type: str
+              required: false
+              default: '""'
+            - name: size
+              type: int
+              required: false
+              default: "0"
+            - name: type
+              type: str
+              required: false
+              default: '""'
+            - name: status
+              type: PhotoStatus
+              required: true
+            - name: caption
+              type: str
+              required: false
+              default: '""'
+            - name: creator_id
+              type: str
+              required: false
+              default: '""'
+            - name: source_type
+              type: DocumentSourceType
+              required: true
+            - name: create_time
+              type: int
+              required: false
+              default: "0"
+            - name: update_time
+              type: int
+              required: false
+              default: "0"
+        - name: UpdateImageRes
+          allow_missing_in_swagger: true
+        - name: _PrivateListPhotosData
+          allow_missing_in_swagger: true
+          base_classes:
+            - CozeModel
+            - NumberPagedResponse[Photo]
+          extra_fields:
+            - name: photo_infos
+              type: List[Photo]
+              required: true
+            - name: total_count
+              type: int
+              required: true
+          extra_code:
+            - |
+              def get_total(self) -> Optional[int]:
+                  return self.total_count
+
+              def get_has_more(self) -> Optional[bool]:
+                  return None
+
+              def get_items(self) -> List[Photo]:
+                  return self.photo_infos
+      override_pagination_classes:
+        - _PrivateListPhotosData
+      sync_method_order:
+        - update
+        - list
+      async_method_order:
+        - update
+        - list
       path_prefixes:
         - /v1/datasets
     - name: enterprises
       source_dir: cozepy/enterprises
+      blank_line_before_child_inits: true
       child_clients:
         - attribute: members
           module: .members
@@ -1161,13 +2261,126 @@ api:
           async_class: AsyncEnterprisesMembersClient
       path_prefixes:
         - /v1/enterprises
+    - name: enterprises_members
+      source_dir: cozepy/enterprises/members
+      client_class: EnterprisesMembersClient
+      async_client_class: AsyncEnterprisesMembersClient
+      model_schemas:
+        - name: EnterpriseMemberRole
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: ENTERPRISE_ADMIN
+              value: enterprise_admin
+            - name: ENTERPRISE_MEMBER
+              value: enterprise_member
+        - name: EnterpriseMember
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: user_id
+              type: str
+              required: true
+            - name: role
+              type: EnterpriseMemberRole
+              required: true
+      empty_models:
+        - CreateEnterpriseMemberResp
+        - DeleteEnterpriseMemberResp
+        - UpdateEnterpriseMemberResp
+      sync_method_order:
+        - create
+        - delete
+        - update
+      async_method_order:
+        - create
+        - delete
+        - update
+      path_prefixes:
+        - /v1/enterprises
     - name: files
       source_dir: cozepy/files
+      disable_auto_imports: true
+      separate_commented_fields: true
+      raw_imports:
+        - |
+          import os
+          from pathlib import Path
+          from typing import IO, Optional, Tuple, Union
+
+          from cozepy.model import CozeModel
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+      pre_model_code:
+        - |
+          FileContent = Union[IO[bytes], bytes, str, Path]
+          FileTypes = Union[
+              # file (or bytes)
+              FileContent,
+              # (filename, file (or bytes))
+              Tuple[Optional[str], FileContent],
+          ]
+      model_schemas:
+        - schema: File
+          name: File
+          field_order:
+            - id
+            - bytes
+            - created_at
+            - file_name
+          required_fields:
+            - id
+          field_types:
+            bytes: Optional[int]
+            created_at: Optional[int]
+            file_name: Optional[str]
+      top_level_code:
+        - |
+          def _try_fix_file(file: FileTypes) -> FileTypes:
+              if isinstance(file, Path):
+                  if not file.exists():
+                      raise ValueError(f"File not found: {file}")
+                  return open(file, "rb")
+
+              if isinstance(file, str):
+                  if not os.path.isfile(file):
+                      raise ValueError(f"File not found: {file}")
+                  return open(file, "rb")
+
+              return file
+      sync_extra_methods:
+        - |
+          def upload(self, *, file: FileTypes) -> File:
+              url = f"{self._base_url}/v1/files/upload"
+              files = {"file": _try_fix_file(file)}
+              return self._requester.request("post", url, False, File, files=files)
+        - |
+          def retrieve(self, *, file_id: str):
+              url = f"{self._base_url}/v1/files/retrieve"
+              params = {"file_id": file_id}
+              return self._requester.request("get", url, False, File, params=params)
+      async_extra_methods:
+        - |
+          async def upload(self, *, file: FileTypes) -> File:
+              url = f"{self._base_url}/v1/files/upload"
+              files = {"file": _try_fix_file(file)}
+              return await self._requester.arequest("post", url, False, File, files=files)
+        - |
+          async def retrieve(self, *, file_id: str):
+              url = f"{self._base_url}/v1/files/retrieve"
+              params = {"file_id": file_id}
+              return await self._requester.arequest("get", url, False, File, params=params)
+      sync_method_order:
+        - upload
+        - retrieve
+      async_method_order:
+        - upload
+        - retrieve
       path_prefixes:
         - /v1/files
     - name: folders
       source_dir: cozepy/folders
       http_request_from_model: true
+      separate_required_optional_fields: true
       model_schemas:
         - schema: FolderType
           name: FolderType
@@ -1197,29 +2410,1159 @@ api:
         - /v1/folders
     - name: knowledge
       source_dir: cozepy/knowledge
+      disable_auto_imports: true
+      raw_imports:
+        - |
+          import warnings
+          from typing import TYPE_CHECKING, Optional
+
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+      pre_model_code:
+        - |
+          if TYPE_CHECKING:
+              from .documents import AsyncDocumentsClient, DocumentsClient
+      sync_init_pre_code:
+        - |
+          warnings.warn(
+              "The 'coze.knowledge' module is deprecated and will be removed in a future version. "
+              "Please use 'coze.datasets' instead.",
+              DeprecationWarning,
+              stacklevel=2,
+          )
+      sync_init_code:
+        - |
+          self._documents: Optional[DocumentsClient] = None
+      async_init_pre_code:
+        - |
+          warnings.warn(
+              "The 'coze.knowledge' module is deprecated and will be removed in a future version. "
+              "Please use 'coze.datasets' instead.",
+              DeprecationWarning,
+              stacklevel=2,
+          )
+      async_init_code:
+        - |
+          self._documents: Optional[AsyncDocumentsClient] = None
+      sync_extra_methods:
+        - |
+          @property
+          def documents(self) -> "DocumentsClient":
+              warnings.warn(
+                  "The 'coze.knowledge.documents' module is deprecated and will be removed in a future version. "
+                  "Please use 'coze.datasets.documents' instead.",
+                  DeprecationWarning,
+                  stacklevel=2,
+              )
+              if self._documents is None:
+                  from .documents import DocumentsClient
+
+                  self._documents = DocumentsClient(base_url=self._base_url, requester=self._requester)
+              return self._documents
+      async_extra_methods:
+        - |
+          @property
+          def documents(self) -> "AsyncDocumentsClient":
+              warnings.warn(
+                  "The 'coze.knowledge.documents' module is deprecated and will be removed in a future version. "
+                  "Please use 'coze.datasets.documents' instead.",
+                  DeprecationWarning,
+                  stacklevel=2,
+              )
+              if self._documents is None:
+                  from .documents import AsyncDocumentsClient
+
+                  self._documents = AsyncDocumentsClient(base_url=self._base_url, requester=self._requester)
+              return self._documents
+      sync_method_order:
+        - documents
+      async_method_order:
+        - documents
       path_prefixes:
         - /open_api/knowledge/document
     - name: templates
       source_dir: cozepy/templates
+      disable_auto_imports: true
+      raw_imports:
+        - |
+          from typing import Optional
+
+          from cozepy.model import CozeModel, DynamicStrEnum
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+      model_schemas:
+        - name: TemplateEntityType
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: AGENT
+              value: agent
+        - name: TemplateDuplicateResp
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: entity_id
+              type: str
+              required: true
+            - name: entity_type
+              type: TemplateEntityType
+              required: true
       path_prefixes:
         - /v1/templates
       allow_missing_in_swagger: true
     - name: users
       source_dir: cozepy/users
+      disable_auto_imports: true
+      raw_imports:
+        - |
+          from typing import Optional
+
+          from cozepy.model import CozeModel
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+      model_schemas:
+        - name: User
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: user_id
+              type: str
+              required: true
+            - name: user_name
+              type: str
+              required: true
+            - name: nick_name
+              type: str
+              required: true
+            - name: avatar_url
+              type: str
+              required: true
       path_prefixes:
         - /v1/users
       allow_missing_in_swagger: true
     - name: variables
       source_dir: cozepy/variables
+      disable_auto_imports: true
+      raw_imports:
+        - |
+          from typing import List, Optional
+
+          from cozepy.model import CozeModel, ListResponse
+          from cozepy.request import Requester
+          from cozepy.util import remove_none_values, remove_url_trailing_slash
+      model_schemas:
+        - name: VariableValue
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: keyword
+              type: str
+              required: true
+            - name: value
+              type: str
+              required: true
+            - name: create_time
+              type: int
+              required: false
+              default: "0"
+            - name: update_time
+              type: int
+              required: false
+              default: "0"
+        - name: _PrivateVariablesRetrieveData
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: items
+              type: List[VariableValue]
+              required: true
+      empty_models:
+        - UpdateVariableResp
+      sync_extra_methods:
+        - |
+          def retrieve(
+              self,
+              *,
+              connector_uid: str,
+              keywords: List[str],
+              app_id: Optional[str] = None,
+              bot_id: Optional[str] = None,
+              connector_id: Optional[str] = None,
+          ) -> ListResponse[VariableValue]:
+              url = f"{self._base_url}/v1/variables"
+              params = remove_none_values(
+                  {
+                      "app_id": app_id,
+                      "bot_id": bot_id,
+                      "connector_id": connector_id,
+                      "connector_uid": connector_uid,
+                      "keywords": ",".join(keywords),
+                  }
+              )
+              res = self._requester.request("get", url, False, _PrivateVariablesRetrieveData, params=params)
+              return ListResponse[VariableValue](raw_response=res.response._raw_response, data=res.items)
+        - |
+          def update(
+              self,
+              *,
+              connector_uid: str,
+              data: List[VariableValue],
+              app_id: Optional[str] = None,
+              bot_id: Optional[str] = None,
+              connector_id: Optional[str] = None,
+          ) -> UpdateVariableResp:
+              url = f"{self._base_url}/v1/variables"
+              body = remove_none_values(
+                  {
+                      "app_id": app_id,
+                      "bot_id": bot_id,
+                      "connector_id": connector_id,
+                      "connector_uid": connector_uid,
+                      "data": [
+                          {
+                              "keyword": v.keyword,
+                              "value": v.value,
+                          }
+                          for v in data
+                      ],
+                  }
+              )
+              return self._requester.request(
+                  "put",
+                  url,
+                  False,
+                  cast=UpdateVariableResp,
+                  body=body,
+              )
+      async_extra_methods:
+        - |
+          async def retrieve(
+              self,
+              *,
+              connector_uid: str,
+              keywords: List[str],
+              app_id: Optional[str] = None,
+              bot_id: Optional[str] = None,
+              connector_id: Optional[str] = None,
+          ) -> ListResponse[VariableValue]:
+              url = f"{self._base_url}/v1/variables"
+              params = remove_none_values(
+                  {
+                      "app_id": app_id,
+                      "bot_id": bot_id,
+                      "connector_id": connector_id,
+                      "connector_uid": connector_uid,
+                      "keywords": ",".join(keywords),
+                  }
+              )
+              res = await self._requester.arequest("get", url, False, _PrivateVariablesRetrieveData, params=params)
+              return ListResponse[VariableValue](raw_response=res.response._raw_response, data=res.items)
+        - |
+          async def update(
+              self,
+              *,
+              connector_uid: str,
+              data: List[VariableValue],
+              app_id: Optional[str] = None,
+              bot_id: Optional[str] = None,
+              connector_id: Optional[str] = None,
+          ) -> UpdateVariableResp:
+              url = f"{self._base_url}/v1/variables"
+              body = remove_none_values(
+                  {
+                      "app_id": app_id,
+                      "bot_id": bot_id,
+                      "connector_id": connector_id,
+                      "connector_uid": connector_uid,
+                      "data": [
+                          {
+                              "keyword": v.keyword,
+                              "value": v.value,
+                          }
+                          for v in data
+                      ],
+                  }
+              )
+              return await self._requester.arequest(
+                  "put",
+                  url,
+                  False,
+                  cast=UpdateVariableResp,
+                  body=body,
+              )
+      sync_method_order:
+        - retrieve
+        - update
+      async_method_order:
+        - retrieve
+        - update
       path_prefixes:
         - /v1/variables
     - name: workflows
       source_dir: cozepy/workflows
+      disable_auto_imports: true
+      separate_required_optional_fields: true
+      separate_commented_fields: true
+      raw_imports:
+        - |
+          from typing import TYPE_CHECKING, List, Optional
+
+          from cozepy.bots import PublishStatus
+          from cozepy.model import AsyncNumberPaged, CozeModel, DynamicStrEnum, HTTPRequest, NumberPaged, NumberPagedResponse
+          from cozepy.request import Requester
+          from cozepy.util import remove_none_values, remove_url_trailing_slash
+
+          from .versions import WorkflowUserInfo
+      child_clients:
+        - attribute: runs
+          module: .runs
+          sync_class: WorkflowsRunsClient
+          async_class: AsyncWorkflowsRunsClient
+        - attribute: chat
+          module: .chat
+          sync_class: WorkflowsChatClient
+          async_class: AsyncWorkflowsChatClient
+        - attribute: versions
+          module: .versions
+          sync_class: WorkflowsVersionsClient
+          async_class: AsyncWorkflowsVersionsClient
+      type_checking_child_order:
+        - chat
+        - runs
+        - versions
+      sync_child_order:
+        - runs
+        - chat
+        - versions
+      async_child_order:
+        - runs
+        - chat
+        - versions
+      model_schemas:
+        - schema: OpenAPIWorkflowMode
+          name: WorkflowMode
+          enum_base: dynamic_str
+          enum_values:
+            - name: WORKFLOW
+              value: workflow
+            - name: CHATFLOW
+              value: chatflow
+        - schema: OpenAPIWorkflowBasic
+          name: WorkflowBasic
+          field_order:
+            - workflow_id
+            - workflow_name
+            - description
+            - icon_url
+            - app_id
+            - created_at
+            - updated_at
+            - creator
+          required_fields:
+            - workflow_id
+            - workflow_name
+            - description
+            - icon_url
+            - app_id
+          field_types:
+            created_at: Optional[int]
+            updated_at: Optional[int]
+            creator: Optional[WorkflowUserInfo]
+        - name: WorkflowInfo
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: workflow_detail
+              type: WorkflowBasic
+              required: true
+        - name: _PrivateListWorkflowData
+          allow_missing_in_swagger: true
+          base_classes:
+            - CozeModel
+            - NumberPagedResponse[WorkflowBasic]
+          extra_fields:
+            - name: items
+              type: List[WorkflowBasic]
+              required: true
+            - name: has_more
+              type: bool
+              required: true
+          extra_code:
+            - |
+              def get_total(self) -> Optional[int]:
+                  return None
+
+              def get_has_more(self) -> Optional[bool]:
+                  return self.has_more
+
+              def get_items(self) -> List[WorkflowBasic]:
+                  return self.items
+      sync_extra_methods:
+        - |
+          def retrieve(
+              self,
+              *,
+              workflow_id: str,
+              **kwargs,
+          ) -> WorkflowInfo:
+              url = f"{self._base_url}/v1/workflows/{workflow_id}"
+              headers: Optional[dict] = kwargs.get("headers")
+              return self._requester.request("get", url, False, WorkflowInfo, headers=headers)
+        - |
+          def list(
+              self,
+              *,
+              workspace_id: Optional[str] = None,
+              workflow_mode: Optional[WorkflowMode] = None,
+              app_id: Optional[str] = None,
+              publish_status: Optional[PublishStatus] = None,
+              page_num: int = 1,
+              page_size: int = 100,
+          ) -> NumberPaged[WorkflowBasic]:
+              url = f"{self._base_url}/v1/workflows"
+
+              def request_maker(i_page_num: int, i_page_size: int) -> HTTPRequest:
+                  return self._requester.make_request(
+                      "GET",
+                      url,
+                      params=remove_none_values(
+                          {
+                              "workspace_id": workspace_id,
+                              "workflow_mode": workflow_mode,
+                              "app_id": app_id,
+                              "publish_status": publish_status,
+                              "page_num": i_page_num,
+                              "page_size": i_page_size,
+                          }
+                      ),
+                      cast=_PrivateListWorkflowData,
+                      stream=False,
+                  )
+
+              return NumberPaged(
+                  page_num=page_num,
+                  page_size=page_size,
+                  requestor=self._requester,
+                  request_maker=request_maker,
+              )
+      async_extra_methods:
+        - |
+          async def retrieve(
+              self,
+              *,
+              workflow_id: str,
+              **kwargs,
+          ) -> WorkflowInfo:
+              url = f"{self._base_url}/v1/workflows/{workflow_id}"
+              headers: Optional[dict] = kwargs.get("headers")
+              return await self._requester.arequest("get", url, False, WorkflowInfo, headers=headers)
+        - |
+          async def list(
+              self,
+              *,
+              workspace_id: Optional[str] = None,
+              workflow_mode: Optional[WorkflowMode] = None,
+              app_id: Optional[str] = None,
+              publish_status: Optional[PublishStatus] = None,
+              page_num: int = 1,
+              page_size: int = 100,
+              **kwargs,
+          ) -> AsyncNumberPaged[WorkflowBasic]:
+              url = f"{self._base_url}/v1/workflows"
+              headers: Optional[dict] = kwargs.get("headers")
+
+              async def request_maker(i_page_num: int, i_page_size: int) -> HTTPRequest:
+                  return await self._requester.amake_request(
+                      "GET",
+                      url,
+                      params=remove_none_values(
+                          {
+                              "workspace_id": workspace_id,
+                              "workflow_mode": workflow_mode,
+                              "app_id": app_id,
+                              "publish_status": publish_status,
+                              "page_num": i_page_num,
+                              "page_size": i_page_size,
+                          }
+                      ),
+                      headers=headers,
+                      cast=_PrivateListWorkflowData,
+                      stream=False,
+                  )
+
+              return await AsyncNumberPaged.build(
+                  page_num=page_num,
+                  page_size=page_size,
+                  requestor=self._requester,
+                  request_maker=request_maker,
+              )
+      sync_method_order:
+        - runs
+        - chat
+        - versions
+        - retrieve
+        - list
+      async_method_order:
+        - runs
+        - chat
+        - versions
+        - retrieve
+        - list
       path_prefixes:
         - /v1/workflow
         - /v1/workflows
+    - name: workflows_chat
+      source_dir: cozepy/workflows/chat
+      disable_auto_imports: true
+      client_class: WorkflowsChatClient
+      async_client_class: AsyncWorkflowsChatClient
+      raw_imports:
+        - |
+          from typing import Any, AsyncIterator, Dict, List, Optional
+
+          from cozepy.chat import (
+              ChatEvent,
+              Message,
+              _chat_stream_handler,
+          )
+          from cozepy.model import AsyncIteratorHTTPResponse, AsyncStream, IteratorHTTPResponse, Stream
+          from cozepy.request import Requester
+          from cozepy.util import remove_none_values, remove_url_trailing_slash
+      sync_method_order:
+        - stream
+        - _create
+      async_method_order:
+        - stream
+        - _create
+      path_prefixes:
+        - /v1/workflows/chat
+    - name: workflows_runs
+      source_dir: cozepy/workflows/runs
+      disable_auto_imports: true
+      separate_commented_fields: true
+      separate_commented_enum_members: true
+      blank_line_before_child_inits: true
+      client_class: WorkflowsRunsClient
+      async_client_class: AsyncWorkflowsRunsClient
+      raw_imports:
+        - |
+          from enum import Enum
+          from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, Optional
+
+          import httpx
+
+          from cozepy.chat import ChatUsage
+          from cozepy.model import AsyncIteratorHTTPResponse, AsyncStream, CozeModel, IteratorHTTPResponse, Stream
+          from cozepy.request import Requester
+          from cozepy.util import remove_none_values, remove_url_trailing_slash
+      child_clients:
+        - attribute: run_histories
+          module: .run_histories
+          sync_class: WorkflowsRunsRunHistoriesClient
+          async_class: AsyncWorkflowsRunsRunHistoriesClient
+      model_schemas:
+        - name: WorkflowRunResult
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: debug_url
+              type: str
+              required: true
+            - name: data
+              type: Optional[str]
+              required: false
+              default: '""'
+            - name: execute_id
+              type: Optional[str]
+              required: false
+              default: '""'
+            - name: usage
+              type: Optional[ChatUsage]
+              required: false
+              default: "None"
+        - name: WorkflowEventType
+          allow_missing_in_swagger: true
+          enum_values:
+            - name: MESSAGE
+              value: Message
+            - name: ERROR
+              value: Error
+            - name: DONE
+              value: Done
+            - name: INTERRUPT
+              value: Interrupt
+            - name: UNKNOWN
+              value: unknown
+        - name: WorkflowEventMessage
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: content
+              type: str
+              required: true
+            - name: node_title
+              type: str
+              required: true
+            - name: node_seq_id
+              type: str
+              required: true
+            - name: node_is_finish
+              type: bool
+              required: true
+            - name: ext
+              type: Optional[Dict[str, Any]]
+              required: false
+              default: "None"
+            - name: usage
+              type: Optional[ChatUsage]
+              required: false
+              default: "None"
+        - name: WorkflowEventInterruptData
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: event_id
+              type: str
+              required: true
+            - name: type
+              type: int
+              required: true
+        - name: WorkflowEventInterrupt
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: interrupt_data
+              type: WorkflowEventInterruptData
+              required: true
+            - name: node_title
+              type: str
+              required: true
+        - name: WorkflowEventError
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: error_code
+              type: int
+              required: true
+            - name: error_message
+              type: str
+              required: true
+        - name: WorkflowEvent
+          allow_missing_in_swagger: true
+          blank_line_before_fields:
+            - message
+            - interrupt
+            - error
+            - unknown
+          extra_fields:
+            - name: id
+              type: int
+              required: true
+            - name: event
+              type: WorkflowEventType
+              required: true
+            - name: message
+              type: Optional[WorkflowEventMessage]
+              required: false
+              default: "None"
+            - name: interrupt
+              type: Optional[WorkflowEventInterrupt]
+              required: false
+              default: "None"
+            - name: error
+              type: Optional[WorkflowEventError]
+              required: false
+              default: "None"
+            - name: unknown
+              type: Optional[Dict]
+              required: false
+              default: "None"
+      top_level_code:
+        - |
+          def _workflow_stream_handler(data: Dict[str, str], raw_response: httpx.Response) -> Optional[WorkflowEvent]:
+              id = int(data["id"])
+              event = data["event"]
+              event_data = data["data"]  # type: str
+              if event == WorkflowEventType.DONE:
+                  return None
+              elif event == WorkflowEventType.MESSAGE:
+                  return WorkflowEvent(
+                      id=id,
+                      event=event,
+                      message=WorkflowEventMessage.model_validate_json(event_data),
+                  )
+              elif event == WorkflowEventType.ERROR:
+                  return WorkflowEvent(id=id, event=event, error=WorkflowEventError.model_validate_json(event_data))
+              elif event == WorkflowEventType.INTERRUPT:
+                  return WorkflowEvent(
+                      id=id,
+                      event=event,
+                      interrupt=WorkflowEventInterrupt.model_validate_json(event_data),
+                  )
+              else:
+                  return WorkflowEvent(id=id, event=WorkflowEventType.UNKNOWN, unknown=data)
+      sync_method_order:
+        - create
+        - stream
+        - resume
+        - run_histories
+      async_method_order:
+        - create
+        - stream
+        - resume
+        - run_histories
+      path_prefixes:
+        - /v1/workflow
+    - name: workflows_runs_run_histories
+      source_dir: cozepy/workflows/runs/run_histories
+      disable_auto_imports: true
+      blank_line_before_child_inits: true
+      client_class: WorkflowsRunsRunHistoriesClient
+      async_client_class: AsyncWorkflowsRunsRunHistoriesClient
+      raw_imports:
+        - |
+          from enum import Enum, IntEnum
+          from typing import TYPE_CHECKING, Dict, Optional
+
+          from pydantic import field_validator
+
+          from cozepy.chat import ChatUsage
+          from cozepy.model import CozeModel, ListResponse
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+      child_clients:
+        - attribute: execute_nodes
+          module: .execute_nodes
+          sync_class: WorkflowsRunsRunHistoriesExecuteNodesClient
+          async_class: AsyncWorkflowsRunsRunHistoriesExecuteNodesClient
+          nil_check: is_none
+          init_with_keywords: true
+      model_schemas:
+        - name: WorkflowExecuteStatus
+          allow_missing_in_swagger: true
+          enum_values:
+            - name: SUCCESS
+              value: Success
+            - name: RUNNING
+              value: Running
+            - name: FAIL
+              value: Fail
+        - schema: WorkflowRunMode
+          name: WorkflowRunMode
+          enum_base: int
+          enum_values:
+            - name: SYNCHRONOUS
+              value: 0
+            - name: STREAMING
+              value: 1
+            - name: ASYNCHRONOUS
+              value: 2
+        - name: WorkflowRunHistoryNodeExecuteStatus
+          schema: NodeExecuteStatus
+          field_order:
+            - node_id
+            - is_finish
+            - update_time
+            - node_execute_uuid
+            - loop_index
+            - batch_index
+            - sub_execute_id
+          required_fields:
+            - node_id
+            - is_finish
+            - update_time
+            - node_execute_uuid
+          field_types:
+            loop_index: Optional[int]
+            batch_index: Optional[int]
+            sub_execute_id: Optional[str]
+          field_defaults:
+            loop_index: "None"
+            batch_index: "None"
+            sub_execute_id: "None"
+        - schema: WorkflowExecuteHistory
+          name: WorkflowRunHistory
+          separate_commented_fields: true
+          exclude_unordered_fields: true
+          blank_line_before_fields:
+            - node_execute_status
+          field_order:
+            - execute_id
+            - execute_status
+            - bot_id
+            - connector_id
+            - connector_uid
+            - run_mode
+            - logid
+            - create_time
+            - update_time
+            - output
+            - error_code
+            - error_message
+            - debug_url
+            - node_execute_status
+            - usage
+            - is_output_trimmed
+          required_fields:
+            - execute_id
+            - execute_status
+            - bot_id
+            - connector_id
+            - connector_uid
+            - run_mode
+            - logid
+            - create_time
+            - update_time
+            - output
+            - error_code
+            - debug_url
+            - is_output_trimmed
+          field_types:
+            execute_status: WorkflowExecuteStatus
+            run_mode: WorkflowRunMode
+            error_code: int
+            error_message: Optional[str]
+            node_execute_status: Optional[Dict[str, WorkflowRunHistoryNodeExecuteStatus]]
+            usage: Optional[ChatUsage]
+          field_defaults:
+            error_message: '""'
+            node_execute_status: "None"
+            usage: "None"
+          extra_code:
+            - |
+              @field_validator("error_code", mode="before")
+              @classmethod
+              def error_code_empty_str_to_zero(cls, v):
+                  if v == "":
+                      return 0
+                  return v
+      sync_method_order:
+        - execute_nodes
+        - retrieve
+      async_method_order:
+        - execute_nodes
+        - retrieve
+      path_prefixes:
+        - /v1/workflows
+    - name: workflows_runs_run_histories_execute_nodes
+      source_dir: cozepy/workflows/runs/run_histories/execute_nodes
+      disable_auto_imports: true
+      client_class: WorkflowsRunsRunHistoriesExecuteNodesClient
+      async_client_class: AsyncWorkflowsRunsRunHistoriesExecuteNodesClient
+      raw_imports:
+        - |
+          from typing import Optional
+
+          from cozepy.model import CozeModel
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+      model_schemas:
+        - schema: WorkflowNodeExecuteHistory
+          name: WorkflowNodeExecuteHistory
+          field_order:
+            - is_finish
+            - node_output
+          required_fields:
+            - is_finish
+          field_types:
+            node_output: Optional[str]
+          field_defaults:
+            node_output: "None"
+      path_prefixes:
+        - /v1/workflows
+    - name: workflows_versions
+      source_dir: cozepy/workflows/versions
+      disable_auto_imports: true
+      separate_commented_fields: true
+      client_class: WorkflowsVersionsClient
+      async_client_class: AsyncWorkflowsVersionsClient
+      raw_imports:
+        - |
+          from typing import List, Optional
+
+          from cozepy.bots import PublishStatus
+          from cozepy.model import AsyncTokenPaged, CozeModel, HTTPRequest, TokenPaged, TokenPagedResponse
+          from cozepy.request import Requester
+          from cozepy.util import dump_exclude_none, remove_none_values, remove_url_trailing_slash
+      model_schemas:
+        - schema: OpenAPIUserInfo
+          name: WorkflowUserInfo
+          field_order:
+            - id
+            - name
+          required_fields:
+            - id
+            - name
+        - schema: OpenAPIVersionMetaInfo
+          name: WorkflowVersionInfo
+          exclude_unordered_fields: true
+          field_order:
+            - version
+            - description
+            - created_at
+            - updated_at
+            - workflow_id
+            - creator
+          required_fields:
+            - version
+            - description
+            - created_at
+            - updated_at
+            - workflow_id
+            - creator
+          field_types:
+            creator: WorkflowUserInfo
+        - schema: OpenAPIListVersionData
+          name: _PrivateListWorkflowVersionData
+          base_classes:
+            - CozeModel
+            - TokenPagedResponse[WorkflowVersionInfo]
+          field_order:
+            - items
+            - has_more
+            - next_page_token
+          required_fields:
+            - items
+            - has_more
+          field_types:
+            items: List[WorkflowVersionInfo]
+          field_defaults:
+            next_page_token: "None"
+          extra_code:
+            - |
+              def get_next_page_token(self) -> Optional[str]:
+                  return self.next_page_token
+
+              def get_has_more(self) -> Optional[bool]:
+                  return self.has_more
+
+              def get_items(self) -> List[WorkflowVersionInfo]:
+                  return self.items
+      override_pagination_classes:
+        - _PrivateListWorkflowVersionData
+      path_prefixes:
+        - /v1/workflows
     - name: workspaces
       source_dir: cozepy/workspaces
+      disable_auto_imports: true
+      blank_line_before_child_inits: true
+      raw_imports:
+        - |
+          from typing import TYPE_CHECKING, List, Optional
+
+          from cozepy.model import AsyncNumberPaged, CozeModel, DynamicStrEnum, HTTPRequest, NumberPaged, NumberPagedResponse
+          from cozepy.request import Requester
+          from cozepy.util import remove_none_values, remove_url_trailing_slash
+      child_clients:
+        - attribute: members
+          module: .members
+          sync_class: WorkspacesMembersClient
+          async_class: AsyncWorkspacesMembersClient
+      model_schemas:
+        - schema: WorkspaceRoleType
+          name: WorkspaceRoleType
+          enum_base: dynamic_str
+          enum_values:
+            - name: OWNER
+              value: owner
+            - name: ADMIN
+              value: admin
+            - name: MEMBER
+              value: member
+        - name: WorkspaceType
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: PERSONAL
+              value: personal
+            - name: TEAM
+              value: team
+        - schema: OpenSpace
+          name: Workspace
+          exclude_unordered_fields: true
+          field_order:
+            - id
+            - name
+            - icon_url
+            - role_type
+            - workspace_type
+            - enterprise_id
+          required_fields:
+            - id
+            - name
+            - icon_url
+            - role_type
+            - workspace_type
+            - enterprise_id
+          field_types:
+            role_type: WorkspaceRoleType
+            workspace_type: WorkspaceType
+        - name: _PrivateListWorkspacesData
+          allow_missing_in_swagger: true
+          base_classes:
+            - CozeModel
+            - NumberPagedResponse[Workspace]
+          extra_fields:
+            - name: total_count
+              type: int
+              required: true
+            - name: workspaces
+              type: List[Workspace]
+              required: true
+          extra_code:
+            - |
+              def get_total(self) -> Optional[int]:
+                  return self.total_count
+
+              def get_has_more(self) -> Optional[bool]:
+                  return None
+
+              def get_items(self) -> List[Workspace]:
+                  return self.workspaces
+      sync_extra_methods:
+        - |
+          def list(
+              self,
+              *,
+              user_id: Optional[str] = None,
+              coze_account_id: Optional[str] = None,
+              page_num: int = 1,
+              page_size: int = 20,
+              **kwargs,
+          ) -> NumberPaged[Workspace]:
+              url = f"{self._base_url}/v1/workspaces"
+              headers: Optional[dict] = kwargs.get("headers")
+
+              def request_maker(i_page_num: int, i_page_size: int) -> HTTPRequest:
+                  return self._requester.make_request(
+                      "GET",
+                      url,
+                      headers=headers,
+                      params=remove_none_values(
+                          {
+                              "page_size": i_page_size,
+                              "page_num": i_page_num,
+                              "user_id": user_id,
+                              "coze_account_id": coze_account_id,
+                          }
+                      ),
+                      cast=_PrivateListWorkspacesData,
+                      stream=False,
+                  )
+
+              return NumberPaged(
+                  page_num=page_num,
+                  page_size=page_size,
+                  requestor=self._requester,
+                  request_maker=request_maker,
+              )
+      async_extra_methods:
+        - |
+          async def list(
+              self,
+              *,
+              user_id: Optional[str] = None,
+              coze_account_id: Optional[str] = None,
+              page_num: int = 1,
+              page_size: int = 20,
+              **kwargs,
+          ) -> AsyncNumberPaged[Workspace]:
+              url = f"{self._base_url}/v1/workspaces"
+              headers: Optional[dict] = kwargs.get("headers")
+
+              async def request_maker(i_page_num: int, i_page_size: int) -> HTTPRequest:
+                  return await self._requester.amake_request(
+                      "GET",
+                      url,
+                      headers=headers,
+                      params=remove_none_values(
+                          {
+                              "page_size": i_page_size,
+                              "page_num": i_page_num,
+                              "user_id": user_id,
+                              "coze_account_id": coze_account_id,
+                          }
+                      ),
+                      cast=_PrivateListWorkspacesData,
+                      stream=False,
+                  )
+
+              return await AsyncNumberPaged.build(
+                  page_num=page_num,
+                  page_size=page_size,
+                  requestor=self._requester,
+                  request_maker=request_maker,
+              )
+      sync_method_order:
+        - members
+        - list
+      async_method_order:
+        - members
+        - list
+      path_prefixes:
+        - /v1/workspaces
+    - name: workspaces_members
+      source_dir: cozepy/workspaces/members
+      client_class: WorkspacesMembersClient
+      async_client_class: AsyncWorkspacesMembersClient
+      disable_auto_imports: true
+      http_request_from_model: true
+      override_pagination_classes:
+        - WorkspaceMember
+      separate_required_optional_fields: true
+      raw_imports:
+        - |
+          from typing import List, Optional
+
+          from cozepy.model import AsyncNumberPaged, CozeModel, HTTPRequest, NumberPaged
+          from cozepy.request import Requester
+          from cozepy.util import remove_none_values, remove_url_trailing_slash
+          from cozepy.workspaces import WorkspaceRoleType
+      model_schemas:
+        - name: WorkspaceMember
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: user_id
+              type: str
+              required: true
+            - name: role_type
+              type: WorkspaceRoleType
+              required: true
+            - name: user_nickname
+              type: str
+              required: false
+            - name: user_unique_name
+              type: str
+              required: false
+            - name: avatar_url
+              type: str
+              required: false
+        - name: CreateWorkspaceMemberResp
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: added_success_user_ids
+              type: List[str]
+              required: true
+            - name: invited_success_user_ids
+              type: List[str]
+              required: true
+            - name: not_exist_user_ids
+              type: List[str]
+              required: true
+            - name: already_joined_user_ids
+              type: List[str]
+              required: true
+            - name: already_invited_user_ids
+              type: List[str]
+              required: true
+        - name: DeleteWorkspaceMemberResp
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: removed_success_user_ids
+              type: List[str]
+              required: true
+            - name: not_in_workspace_user_ids
+              type: List[str]
+              required: true
+            - name: owner_not_support_remove_user_ids
+              type: List[str]
+              required: true
+      sync_method_order:
+        - create
+        - delete
+      async_method_order:
+        - create
+        - delete
       path_prefixes:
         - /v1/workspaces
     - name: websockets
@@ -1231,10 +3574,44 @@ api:
       order: 1
       sdk_methods:
         - chat.create
+      delegate_to: _create
+      delegate_call_args:
+        - bot_id=bot_id
+        - user_id=user_id
+        - stream=False
+        - additional_messages=additional_messages
+        - custom_variables=custom_variables
+        - auto_save_history=auto_save_history
+        - meta_data=meta_data
+        - conversation_id=conversation_id
+        - parameters=parameters
+      async_delegate_call_args:
+        - bot_id=bot_id
+        - user_id=user_id
+        - additional_messages=additional_messages
+        - stream=False
+        - custom_variables=custom_variables
+        - auto_save_history=auto_save_history
+        - meta_data=meta_data
+        - conversation_id=conversation_id
+        - parameters=parameters
+      query_builder: raw
+      disable_headers_arg: true
       query_fields:
         - name: conversation_id
           type: str
           required: false
+      signature_args:
+        - bot_id
+        - user_id
+        - conversation_id
+        - additional_messages
+        - custom_variables
+        - auto_save_history
+        - meta_data
+        - parameters
+      query_field_values:
+        conversation_id: conversation_id if conversation_id else None
       body_fields:
         - bot_id
         - user_id
@@ -1243,17 +3620,23 @@ api:
         - auto_save_history
         - meta_data
         - parameters
+      body_builder: remove_none_values
       body_fixed_values:
         stream: "False"
+      body_field_values:
+        additional_messages: "[i.model_dump() for i in additional_messages] if additional_messages else []"
       body_required_fields:
         - bot_id
         - user_id
+        - auto_save_history
+      arg_defaults:
+        auto_save_history: "True"
       arg_types:
         additional_messages: List[Message]
         custom_variables: Dict[str, str]
+        auto_save_history: bool
         meta_data: Dict[str, str]
         parameters: Dict[str, Any]
-      disable_headers_arg: true
       response_type: Chat
       response_cast: Chat
     - path: /v3/chat
@@ -1261,10 +3644,51 @@ api:
       order: 2
       sdk_methods:
         - chat.stream
+      delegate_to: _create
+      delegate_call_args:
+        - bot_id=bot_id
+        - user_id=user_id
+        - stream=True
+        - additional_messages=additional_messages
+        - custom_variables=custom_variables
+        - auto_save_history=auto_save_history
+        - meta_data=meta_data
+        - conversation_id=conversation_id
+        - parameters=parameters
+        - enable_card=enable_card
+        - "**kwargs"
+      async_delegate_call_args:
+        - bot_id=bot_id
+        - user_id=user_id
+        - additional_messages=additional_messages
+        - stream=True
+        - custom_variables=custom_variables
+        - auto_save_history=auto_save_history
+        - meta_data=meta_data
+        - conversation_id=conversation_id
+        - parameters=parameters
+        - enable_card=enable_card
+        - "**kwargs"
+      delegate_async_yield: true
+      query_builder: raw
+      use_kwargs_headers: true
       query_fields:
         - name: conversation_id
           type: str
           required: false
+      signature_args:
+        - bot_id
+        - user_id
+        - additional_messages
+        - custom_variables
+        - auto_save_history
+        - meta_data
+        - conversation_id
+        - parameters
+        - enable_card
+        - kwargs
+      query_field_values:
+        conversation_id: conversation_id if conversation_id else None
       body_fields:
         - bot_id
         - user_id
@@ -1274,26 +3698,47 @@ api:
         - meta_data
         - enable_card
         - parameters
+      body_builder: remove_none_values
       body_fixed_values:
         stream: "True"
+      body_field_values:
+        additional_messages: "[i.model_dump() for i in additional_messages] if additional_messages else []"
       body_required_fields:
         - bot_id
         - user_id
+        - auto_save_history
+      arg_defaults:
+        auto_save_history: "True"
       arg_types:
         additional_messages: List[Message]
         custom_variables: Dict[str, str]
+        auto_save_history: bool
         meta_data: Dict[str, str]
         parameters: Dict[str, Any]
-      disable_headers_arg: true
       request_stream: true
+      stream_wrap: true
+      stream_wrap_handler: _chat_stream_handler
+      stream_wrap_fields:
+        - event
+        - data
       response_type: Stream[ChatEvent]
+      async_response_type: AsyncIterator[ChatEvent]
       response_cast: None
     - path: /v3/chat/retrieve
       method: get
       order: 3
       sdk_methods:
         - chat.retrieve
+      force_multiline_signature: true
       http_method_override: post
+      query_builder: raw
+      query_fields:
+        - name: conversation_id
+          type: str
+          required: true
+        - name: chat_id
+          type: str
+          required: true
       disable_headers_arg: true
       response_type: Chat
       response_cast: Chat
@@ -1301,36 +3746,34 @@ api:
       method: get
       order: 4
       sdk_methods:
-        - chat._messages_list
+        - chat_message.list
+      force_multiline_signature: true
+      query_builder: raw
+      signature_query_fields:
+        - conversation_id
+        - chat_id
+      query_fields:
+        - name: conversation_id
+          type: str
+          required: true
+        - name: chat_id
+          type: str
+          required: true
       disable_headers_arg: true
       response_type: ListResponse[Message]
       response_cast: ListResponse[Message]
-    - path: /v3/chat/submit_tool_outputs
-      method: post
-      order: 5
-      sdk_methods:
-        - chat.submit_tool_outputs
-      body_fields:
-        - tool_outputs
-        - stream
-      body_required_fields:
-        - tool_outputs
-      arg_types:
-        tool_outputs: List[ToolOutput]
-      disable_headers_arg: true
-      response_type: Chat
-      response_cast: Chat
     - path: /v3/chat/cancel
       method: post
-      order: 6
+      order: 7
       sdk_methods:
         - chat.cancel
+      body_builder: raw
       body_fields:
-        - chat_id
         - conversation_id
+        - chat_id
       body_required_fields:
-        - chat_id
         - conversation_id
+        - chat_id
       disable_headers_arg: true
       response_type: Chat
       response_cast: Chat
@@ -1346,6 +3789,7 @@ api:
       body_required_fields:
         - app_type
       use_kwargs_headers: true
+      cast_keyword: true
       arg_types:
         app_type: AppType
       response_type: APIApp
@@ -1355,10 +3799,12 @@ api:
       order: 20
       sdk_methods:
         - api_apps.update
+      force_multiline_request_call: true
       body_fields:
         - name
         - callback_url
       use_kwargs_headers: true
+      cast_keyword: true
       param_aliases:
         api_app_id: app_id
       response_type: UpdateAPIAppsResp
@@ -1371,6 +3817,7 @@ api:
       http_method_override: delete
       disable_request_body: true
       use_kwargs_headers: true
+      cast_keyword: true
       param_aliases:
         api_app_id: app_id
       response_type: DeleteAPIAppsResp
@@ -1380,6 +3827,7 @@ api:
       order: 40
       sdk_methods:
         - api_apps.list
+      force_compact_signature: true
       http_method_override: get
       disable_request_body: true
       use_kwargs_headers: true
@@ -1395,9 +3843,14 @@ api:
           type: str
           required: true
           default: '""'
+      signature_query_fields:
+        - app_type
+        - page_token
+        - page_size
       pagination: token
       pagination_data_class: _PrivateListAPIAppsData
       pagination_item_type: APIApp
+      pagination_cast_before_headers: true
     - path: /v1/apps
       method: get
       order: 50
@@ -1405,6 +3858,12 @@ api:
         - apps.list
       query_builder: remove_none_values
       use_kwargs_headers: true
+      signature_query_fields:
+        - workspace_id
+        - publish_status
+        - connector_id
+        - page_index
+        - page_size
       query_fields:
         - name: workspace_id
           type: str
@@ -1440,10 +3899,17 @@ api:
         - conversations.create
       body_fields:
         - messages
+        - meta_data
+        - bot_id
+        - name
+        - connector_id
+      signature_args:
+        - messages
         - bot_id
         - name
         - connector_id
         - meta_data
+      body_annotation: Dict[str, Any]
       arg_types:
         messages: List[Message]
         meta_data: Dict[str, str]
@@ -1452,7 +3918,7 @@ api:
       response_cast: Conversation
     - path: /v1/conversation/retrieve
       method: get
-      order: 56
+      order: 57
       sdk_methods:
         - conversations.retrieve
       query_builder: raw
@@ -1461,10 +3927,11 @@ api:
       response_cast: Conversation
     - path: /v1/conversations
       method: get
-      order: 57
+      order: 56
       sdk_methods:
         - conversations.list
       query_builder: raw
+      omit_return_type: true
       pagination_inherit_response: false
       query_fields:
         - name: bot_id
@@ -1500,6 +3967,9 @@ api:
       order: 59
       sdk_methods:
         - conversations.update
+      force_compact_signature: true
+      compact_single_item_maps: true
+      body_builder: raw
       body_fields:
         - name
       body_required_fields:
@@ -1522,6 +3992,7 @@ api:
       order: 61
       sdk_methods:
         - datasets.create
+      force_multiline_request_call: true
       body_builder: raw
       allow_missing_in_swagger: true
       body_fields:
@@ -1550,8 +4021,15 @@ api:
       order: 62
       sdk_methods:
         - datasets.list
+      blank_line_after_docstring: true
       query_builder: raw
       use_kwargs_headers: true
+      signature_query_fields:
+        - space_id
+        - name
+        - format_type
+        - page_num
+        - page_size
       query_fields:
         - name: space_id
           type: str
@@ -1577,11 +4055,13 @@ api:
       pagination_total_field: total_count
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
+      pagination_headers_before_params: true
     - path: /v1/datasets/{dataset_id}
       method: put
       order: 63
       sdk_methods:
         - datasets.update
+      force_multiline_request_call: true
       body_builder: raw
       body_fields:
         - name
@@ -1590,6 +4070,7 @@ api:
       param_aliases:
         file_id: icon_file_id
       disable_headers_arg: true
+      cast_keyword: true
       response_type: UpdateDatasetRes
       response_cast: UpdateDatasetRes
     - path: /v1/datasets/{dataset_id}
@@ -1597,9 +4078,12 @@ api:
       order: 64
       sdk_methods:
         - datasets.delete
+      force_multiline_signature: true
+      force_multiline_request_call: true
       allow_missing_in_swagger: true
       disable_request_body: true
       disable_headers_arg: true
+      cast_keyword: true
       response_type: DeleteDatasetRes
       response_cast: DeleteDatasetRes
     - path: /v1/datasets/{dataset_id}/process
@@ -1607,11 +4091,13 @@ api:
       order: 65
       sdk_methods:
         - datasets.process
+      force_multiline_request_call: true
       body_builder: raw
       body_fields:
         - document_ids
       disable_headers_arg: true
       ignore_header_params: true
+      cast_keyword: true
       response_type: ListResponse[DocumentProgress]
       response_cast: ListResponse[DocumentProgress]
       data_field: data.data
@@ -1646,6 +4132,7 @@ api:
       order: 67
       sdk_methods:
         - bots.update
+      force_multiline_request_call_sync: true
       body_fields:
         - bot_id
         - name
@@ -1663,6 +4150,7 @@ api:
         suggest_reply_info: BotSuggestReplyInfo
         model_info_config: BotModelInfo
       use_kwargs_headers: true
+      cast_keyword: true
       response_type: UpdateBotResp
       response_cast: UpdateBotResp
     - path: /v1/bot/publish
@@ -1670,13 +4158,21 @@ api:
       order: 68
       sdk_methods:
         - bots.publish
+      blank_line_before_return: true
+      force_compact_signature_sync: true
+      force_multiline_signature_async: true
       body_builder: raw
+      pre_body_code:
+        - |
+          if not connector_ids:
+              connector_ids = ["1024"]
       body_fields:
         - bot_id
         - connector_ids
       body_required_fields:
         - bot_id
       use_kwargs_headers: true
+      headers_before_body: true
       response_type: Bot
       response_cast: Bot
     - path: /v1/bots/{bot_id}/unpublish
@@ -1684,11 +4180,15 @@ api:
       order: 69
       sdk_methods:
         - bots.unpublish
+      force_compact_signature_sync: true
+      force_compact_signature_async: true
       body_builder: raw
       body_fields:
+        - bot_id
         - connector_id
         - unpublish_reason
       use_kwargs_headers: true
+      headers_before_body: true
       response_type: UnpublishBotResp
       response_cast: UnpublishBotResp
     - path: /v1/bot/get_online_info
@@ -1696,6 +4196,8 @@ api:
       order: 70
       sdk_methods:
         - bots._retrieve_v1
+      compact_single_item_maps: true
+      query_builder: raw
       use_kwargs_headers: true
       response_type: Bot
       response_cast: Bot
@@ -1704,6 +4206,8 @@ api:
       order: 71
       sdk_methods:
         - bots._retrieve_v2
+      force_compact_signature: true
+      compact_single_item_maps: true
       query_builder: remove_none_values
       use_kwargs_headers: true
       response_type: Bot
@@ -1713,8 +4217,15 @@ api:
       order: 72
       sdk_methods:
         - bots._list_v1
+      force_compact_signature_sync: true
+      force_compact_signature_async: true
       query_builder: raw
+      async_include_kwargs: true
       disable_headers_arg: true
+      signature_query_fields:
+        - space_id
+        - page_index
+        - page_size
       query_fields:
         - name: space_id
           type: str
@@ -1743,10 +4254,24 @@ api:
         - bots._list_v2
       query_builder: remove_none_values
       use_kwargs_headers: true
+      signature_query_fields:
+        - workspace_id
+        - publish_status
+        - connector_id
+        - page_index
+        - page_size
       query_fields:
         - name: workspace_id
           type: str
           required: true
+        - name: page_size
+          type: int
+          required: true
+          default: "20"
+        - name: page_index
+          type: int
+          required: true
+          default: "1"
         - name: publish_status
           type: PublishStatus
           required: false
@@ -1754,29 +4279,26 @@ api:
         - name: connector_id
           type: str
           required: false
-        - name: page_size
-          type: int
-          required: true
-          default: "20"
-        - name: page_num
-          type: int
-          required: true
-          default: "1"
       param_aliases:
-        workspace_id: space_id
+        page_index: page_num
       pagination: number
       pagination_data_class: _PrivateListBotsDataV2
       pagination_item_type: SimpleBot
       pagination_items_field: items
       pagination_total_field: total
-      pagination_page_num_field: page_num
+      pagination_page_num_field: page_index
       pagination_page_size_field: page_size
     - path: /v1/folders/{folder_id}
       method: get
       order: 74
       sdk_methods:
         - folders.retrieve
+      no_blank_line_after_headers: true
+      force_multiline_signature: true
+      http_method_override: GET
       use_kwargs_headers: true
+      cast_keyword: true
+      stream_keyword: true
       response_type: SimpleFolder
       response_cast: SimpleFolder
     - path: /v1/folders
@@ -1785,6 +4307,12 @@ api:
       sdk_methods:
         - folders.list
       use_kwargs_headers: true
+      signature_query_fields:
+        - workspace_id
+        - folder_type
+        - parent_folder_id
+        - page_num
+        - page_size
       query_fields:
         - name: page_size
           type: int
@@ -1810,55 +4338,846 @@ api:
       pagination_total_field: total_count
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
-    - path: /v1/workflows/chat
+      pagination_headers_before_params: true
+    - path: /v1/api_apps/{api_app_id}/events
       method: post
+      order: 76
       sdk_methods:
-        - workflows.chat.create
-        - workflows.chat.stream
+        - api_apps_events.create
+      body_builder: dump_exclude_none
+      body_fields:
+        - event_types
+      body_required_fields:
+        - event_types
+      arg_types:
+        event_types: List[str]
+      use_kwargs_headers: true
+      cast_keyword: true
+      response_type: CreateAPIAppsEventsResp
+      response_cast: CreateAPIAppsEventsResp
+    - path: /v1/api_apps/{api_app_id}/events
+      method: delete
+      order: 77
+      sdk_methods:
+        - api_apps_events.delete
+      allow_missing_in_swagger: true
+      body_builder: dump_exclude_none
+      body_fields:
+        - event_types
+      body_required_fields:
+        - event_types
+      arg_types:
+        event_types: List[str]
+      use_kwargs_headers: true
+      cast_keyword: true
+      force_compact_signature: true
+      response_type: DeleteAPIAppsEventsResp
+      response_cast: DeleteAPIAppsEventsResp
+    - path: /v1/api_apps/{api_app_id}/events
+      method: get
+      order: 78
+      sdk_methods:
+        - api_apps_events.list
+      allow_missing_in_swagger: true
+      query_builder: remove_none_values
+      signature_query_fields:
+        - page_token
+        - page_size
+      query_fields:
+        - name: page_size
+          type: int
+          required: true
+          default: "20"
+        - name: page_token
+          type: str
+          required: true
+          default: '""'
+      pagination: token
+      pagination_data_class: _PrivateListAPIAppsEventsData
+      pagination_item_type: APIAppEvent
+      pagination_items_field: items
+      pagination_has_more_field: has_more
+      pagination_next_token_field: next_page_token
+      pagination_page_token_field: page_token
+      pagination_page_size_field: page_size
+      pagination_cast_before_headers: true
+      force_compact_signature: true
+      use_kwargs_headers: true
+    - path: /v1/audio/rooms
+      method: post
+      order: 79
+      sdk_methods:
+        - audio_rooms.create
+      body_builder: remove_none_values
+      body_fields:
+        - bot_id
+        - voice_id
+        - conversation_id
+        - uid
+        - workflow_id
+        - config
+      body_required_fields:
+        - bot_id
+      body_field_values:
+        config: config.model_dump() if config else None
+      arg_types:
+        bot_id: str
+        voice_id: str
+        conversation_id: str
+        uid: str
+        workflow_id: str
+        config: RoomConfig
+      disable_headers_arg: true
+      stream_keyword: true
+      cast_keyword: true
+      response_type: CreateRoomResp
+      response_cast: CreateRoomResp
+    - path: /v1/audio/speech
+      method: post
+      order: 80
+      sdk_methods:
+        - audio_speech.create
+      body_builder: raw
+      body_fields:
+        - input
+        - voice_id
+        - response_format
+        - speed
+        - sample_rate
+      body_required_fields:
+        - input
+        - voice_id
+        - response_format
+        - speed
+        - sample_rate
+      arg_types:
+        input: str
+        voice_id: str
+        response_format: AudioFormat
+        speed: float
+        sample_rate: int
+      arg_defaults:
+        response_format: AudioFormat.MP3
+        speed: "1"
+        sample_rate: "24000"
+      use_kwargs_headers: true
+      headers_before_body: true
+      stream_keyword: true
+      cast_keyword: true
+      response_type: FileHTTPResponse
+      response_cast: FileHTTPResponse
+    - path: /v1/audio/transcriptions
+      method: post
+      order: 81
+      sdk_methods:
+        - audio_transcriptions.create
+      sync_only: true
+      force_multiline_signature: true
+      disable_request_body: true
+      files_fields:
+        - file
+      files_field_values:
+        file: _try_fix_file(file)
+      arg_types:
+        file: FileTypes
+      use_kwargs_headers: true
+      headers_before_body: true
+      stream_keyword: true
+      cast_keyword: true
+      response_type: CreateTranscriptionsResp
+      response_cast: CreateTranscriptionsResp
+    - path: /v1/audio/voices
+      method: get
+      order: 82
+      sdk_methods:
+        - audio_voices.list
+      query_builder: remove_none_values
+      query_fields:
+        - name: filter_system_voice
+          type: bool
+          required: true
+          default: "False"
+        - name: voice_state
+          type: VoiceState
+          required: false
+        - name: model_type
+          type: VoiceModelType
+          required: false
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
+        - name: page_size
+          type: int
+          required: true
+          default: "100"
+      query_field_values:
+        model_type: model_type.value if model_type else None
+        voice_state: voice_state.value if voice_state else None
+      signature_query_fields:
+        - filter_system_voice
+        - model_type
+        - voice_state
+        - page_num
+        - page_size
+      pagination: number_has_more
+      pagination_data_class: _PrivateListVoiceData
+      pagination_item_type: Voice
+      pagination_items_field: voice_list
+      pagination_has_more_field: has_more
+      pagination_page_num_field: page_num
+      pagination_page_size_field: page_size
+      use_kwargs_headers: true
+      response_type: NumberPaged[Voice]
+      async_response_type: AsyncNumberPaged[Voice]
+    - path: /v1/audio/voices/clone
+      method: post
+      order: 83
+      sdk_methods:
+        - audio_voices.clone
+      body_builder: remove_none_values
+      body_fields:
+        - voice_name
+        - audio_format
+        - language
+        - voice_id
+        - preview_text
+        - text
+        - space_id
+        - description
+      body_required_fields:
+        - voice_name
+        - audio_format
+        - file
+      signature_args:
+        - voice_name
+        - file
+        - audio_format
+        - language
+        - voice_id
+        - preview_text
+        - text
+        - space_id
+        - description
+      files_fields:
+        - file
+      files_field_values:
+        file: _try_fix_file(file)
+      arg_types:
+        voice_name: str
+        file: FileTypes
+        audio_format: AudioFormat
+        language: str
+        voice_id: str
+        preview_text: str
+        text: str
+        space_id: str
+        description: str
+      use_kwargs_headers: true
+      headers_before_body: true
+      blank_line_before_return: true
+      response_type: Voice
+      response_cast: Voice
+    - path: /v1/conversation/message/create
+      method: post
+      order: 84
+      sdk_methods:
+        - conversations_message.create
+      query_builder: raw
+      body_builder: raw
+      body_fields:
+        - role
+        - content
+        - content_type
+        - meta_data
+      body_required_fields:
+        - role
+        - content
+        - content_type
+      arg_types:
+        role: MessageRole
+        content: str
+        content_type: MessageContentType
+        meta_data: Dict[str, str]
+      disable_headers_arg: true
+      blank_line_before_return: true
+      response_type: Message
+      response_cast: Message
+    - path: /v1/conversation/message/delete
+      method: post
+      order: 85
+      sdk_methods:
+        - conversations_message.delete
+      query_builder: raw
+      disable_request_body: true
+      disable_headers_arg: true
+      force_multiline_signature: true
+      blank_line_before_return: true
+      response_type: Message
+      response_cast: Message
+    - path: /v1/conversation/message/modify
+      method: post
+      order: 86
+      sdk_methods:
+        - conversations_message.update
+      query_builder: raw
+      body_builder: raw
+      body_fields:
+        - content
+        - content_type
+        - meta_data
+      arg_types:
+        content: str
+        content_type: MessageContentType
+        meta_data: Dict[str, str]
+      disable_headers_arg: true
+      blank_line_before_return: true
+      response_type: Message
+      response_cast: Message
+      data_field: message
+    - path: /v1/conversation/message/retrieve
+      method: get
+      order: 87
+      sdk_methods:
+        - conversations_message.retrieve
+      query_builder: raw
+      disable_request_body: true
+      disable_headers_arg: true
+      force_multiline_signature: true
+      blank_line_before_return: true
+      response_type: Message
+      response_cast: Message
+    - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
+      method: post
+      order: 88
+      sdk_methods:
+        - conversations_message_feedback.create
+      allow_missing_in_swagger: true
+      body_builder: remove_none_values
+      body_fields:
+        - feedback_type
+        - reason_types
+        - comment
+      body_required_fields:
+        - feedback_type
+      arg_types:
+        feedback_type: FeedbackType
+        reason_types: List[str]
+        comment: str
+      use_kwargs_headers: true
+      headers_before_body: true
+      request_call_arg_order:
+        - body
+        - cast
+        - headers
+      cast_keyword: true
+      blank_line_before_return: true
+      response_type: CreateConversationMessageFeedbackResp
+      response_cast: CreateConversationMessageFeedbackResp
+    - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
+      method: delete
+      order: 89
+      sdk_methods:
+        - conversations_message_feedback.delete
+      disable_request_body: true
+      use_kwargs_headers: true
+      cast_keyword: true
+      response_type: DeleteConversationMessageFeedbackResp
+      response_cast: DeleteConversationMessageFeedbackResp
+    - path: /v1/datasets/{dataset_id}/images
+      method: get
+      order: 90
+      sdk_methods:
+        - datasets_images.list
+      query_builder: raw
+      query_fields:
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
+        - name: page_size
+          type: int
+          required: true
+          default: "10"
+        - name: keyword
+          type: str
+          required: false
+        - name: has_caption
+          type: bool
+          required: false
+      signature_query_fields:
+        - keyword
+        - has_caption
+        - page_num
+        - page_size
+      pagination: number
+      pagination_data_class: _PrivateListPhotosData
+      pagination_item_type: Photo
+      pagination_items_field: photo_infos
+      pagination_total_field: total_count
+      pagination_page_num_field: page_num
+      pagination_page_size_field: page_size
+      pagination_http_method: get
+      pagination_headers_before_params: true
+      use_kwargs_headers: true
+    - path: /v1/datasets/{dataset_id}/images/{document_id}
+      method: put
+      order: 91
+      sdk_methods:
+        - datasets_images.update
+      allow_missing_in_swagger: true
+      body_builder: raw
+      body_fields:
+        - caption
+      body_required_fields:
+        - caption
+      arg_types:
+        caption: str
+      use_kwargs_headers: true
+      headers_before_body: true
+      request_call_arg_order:
+        - cast
+        - headers
+        - body
+      cast_keyword: true
+      response_type: UpdateImageRes
+      response_cast: UpdateImageRes
+    - path: /v1/enterprises/{enterprise_id}/members
+      method: post
+      order: 87
+      sdk_methods:
+        - enterprises_members.create
+      body_builder: dump_exclude_none
+      body_fields:
+        - users
+      body_required_fields:
+        - users
+      compact_single_item_maps_async: true
+      arg_types:
+        users: List[EnterpriseMember]
+      use_kwargs_headers: true
+      headers_before_body: true
+      cast_keyword: true
+      stream_keyword: true
+      response_type: CreateEnterpriseMemberResp
+      response_cast: CreateEnterpriseMemberResp
+    - path: /v1/enterprises/{enterprise_id}/members/{user_id}
+      method: put
+      order: 88
+      sdk_methods:
+        - enterprises_members.update
+      body_builder: dump_exclude_none
+      body_fields:
+        - role
+      body_required_fields:
+        - role
+      arg_types:
+        role: EnterpriseMemberRole
+      use_kwargs_headers: true
+      headers_before_body: true
+      cast_keyword: true
+      stream_keyword: true
+      response_type: UpdateEnterpriseMemberResp
+      response_cast: UpdateEnterpriseMemberResp
+    - path: /v1/enterprises/{enterprise_id}/members/{user_id}
+      method: delete
+      order: 89
+      sdk_methods:
+        - enterprises_members.delete
+      allow_missing_in_swagger: true
+      body_builder: dump_exclude_none
+      body_fields:
+        - receiver_user_id
+      body_required_fields:
+        - receiver_user_id
+      arg_types:
+        receiver_user_id: str
+      use_kwargs_headers: true
+      headers_before_body: true
+      cast_keyword: true
+      stream_keyword: true
+      response_type: DeleteEnterpriseMemberResp
+      response_cast: DeleteEnterpriseMemberResp
     - path: /v1/workflow/run
       method: post
+      order: 90
       sdk_methods:
-        - workflows.runs.create
+        - workflows_runs.create
+      body_builder: raw
+      body_fields:
+        - workflow_id
+        - parameters
+        - bot_id
+        - app_id
+        - is_async
+        - ext
+      body_required_fields:
+        - workflow_id
+        - is_async
+      signature_args:
+        - workflow_id
+        - parameters
+        - bot_id
+        - app_id
+        - is_async
+        - ext
+      arg_types:
+        workflow_id: str
+        parameters: Dict[str, Any]
+        bot_id: str
+        app_id: str
+        is_async: bool
+        ext: Dict[str, Any]
+      arg_defaults:
+        is_async: "False"
+      body_call_expr: remove_none_values(body)
+      disable_headers_arg: true
+      response_type: WorkflowRunResult
+      response_cast: WorkflowRunResult
     - path: /v1/workflow/stream_run
       method: post
+      order: 91
       sdk_methods:
-        - workflows.runs.stream
+        - workflows_runs.stream
+      body_builder: raw
+      body_fields:
+        - workflow_id
+        - parameters
+        - bot_id
+        - app_id
+        - ext
+      body_required_fields:
+        - workflow_id
+      signature_args:
+        - workflow_id
+        - parameters
+        - bot_id
+        - app_id
+        - ext
+      arg_types:
+        workflow_id: str
+        parameters: Dict[str, Any]
+        bot_id: str
+        app_id: str
+        ext: Dict[str, Any]
+      body_call_expr: remove_none_values(body)
+      disable_headers_arg: true
+      request_stream: true
+      stream_wrap: true
+      stream_wrap_handler: _workflow_stream_handler
+      stream_wrap_fields:
+        - id
+        - event
+        - data
+      stream_wrap_async_yield: true
+      stream_wrap_sync_response_var: resp
+      stream_wrap_compact_sync_return: true
+      force_multiline_request_call: true
+      response_type: Stream[WorkflowEvent]
+      async_response_type: AsyncIterator[WorkflowEvent]
+      response_cast: None
+    - path: /v1/workflow/stream_resume
+      method: post
+      order: 92
+      sdk_methods:
+        - workflows_runs.resume
+      body_builder: raw
+      body_fields:
+        - workflow_id
+        - event_id
+        - resume_data
+        - interrupt_type
+      body_required_fields:
+        - workflow_id
+        - event_id
+        - resume_data
+        - interrupt_type
+      signature_args:
+        - workflow_id
+        - event_id
+        - resume_data
+        - interrupt_type
+      arg_types:
+        workflow_id: str
+        event_id: str
+        resume_data: str
+        interrupt_type: int
+      disable_headers_arg: true
+      request_stream: true
+      stream_wrap: true
+      stream_wrap_handler: _workflow_stream_handler
+      stream_wrap_fields:
+        - id
+        - event
+        - data
+      stream_wrap_async_yield: true
+      stream_wrap_sync_response_var: resp
+      stream_wrap_compact_sync_return: true
+      force_multiline_request_call: true
+      response_type: Stream[WorkflowEvent]
+      async_response_type: AsyncIterator[WorkflowEvent]
+      response_cast: None
+    - path: /v1/workflows/{workflow_id}/run_histories/{execute_id}
+      method: get
+      order: 93
+      sdk_methods:
+        - workflows_runs_run_histories.retrieve
+      use_kwargs_headers: true
+      signature_args:
+        - workflow_id
+        - execute_id
+      force_compact_signature: true
+      response_type: WorkflowRunHistory
+      response_cast: ListResponse[WorkflowRunHistory]
+      response_unwrap_list_first: true
+    - path: /v1/workflows/{workflow_id}/run_histories/{execute_id}/execute_nodes/{node_execute_uuid}
+      method: get
+      order: 94
+      sdk_methods:
+        - workflows_runs_run_histories_execute_nodes.retrieve
+      use_kwargs_headers: true
+      signature_args:
+        - workflow_id
+        - execute_id
+        - node_execute_uuid
+      force_compact_signature: true
+      response_type: WorkflowNodeExecuteHistory
+      response_cast: WorkflowNodeExecuteHistory
+      cast_keyword: true
+    - path: /v1/workflows/{workflow_id}/versions
+      method: get
+      order: 95
+      sdk_methods:
+        - workflows_versions.list
+      query_builder: dump_exclude_none
+      query_builder_sync: dump_exclude_none
+      query_builder_async: remove_none_values
+      query_fields:
+        - name: publish_status
+          type: PublishStatus
+          required: false
+        - name: page_size
+          type: int
+          required: true
+          default: "10"
+        - name: page_token
+          type: str
+          required: false
+      signature_query_fields:
+        - publish_status
+        - page_size
+        - page_token
+      pagination: token
+      pagination_data_class: _PrivateListWorkflowVersionData
+      pagination_item_type: WorkflowVersionInfo
+      pagination_items_field: items
+      pagination_has_more_field: has_more
+      pagination_next_token_field: next_page_token
+      pagination_page_token_field: page_token
+      pagination_page_size_field: page_size
+      pagination_init_page_token_expr: page_token or ""
+      pagination_params_variable: true
+      use_kwargs_headers: true
+    - path: /v1/workflows/chat
+      method: post
+      order: 96
+      sdk_methods:
+        - workflows_chat.stream
+      delegate_to: _create
+      delegate_async_yield: true
+      body_fields:
+        - workflow_id
+        - additional_messages
+        - parameters
+        - app_id
+        - bot_id
+        - conversation_id
+        - ext
+      body_required_fields:
+        - workflow_id
+      signature_args:
+        - workflow_id
+        - additional_messages
+        - parameters
+        - app_id
+        - bot_id
+        - conversation_id
+        - ext
+      arg_types:
+        workflow_id: str
+        additional_messages: List[Message]
+        parameters: Dict[str, Any]
+        app_id: str
+        bot_id: str
+        conversation_id: str
+        ext: Dict[str, str]
+      response_type: Stream[ChatEvent]
+      async_response_type: AsyncIterator[ChatEvent]
+      use_kwargs_headers: true
+    - path: /v1/workflows/chat
+      method: post
+      order: 97
+      sdk_methods:
+        - workflows_chat._create
+      request_stream: true
+      body_builder: remove_none_values
+      body_fields:
+        - workflow_id
+        - additional_messages
+        - parameters
+        - app_id
+        - bot_id
+        - conversation_id
+        - ext
+      body_required_fields:
+        - workflow_id
+      body_field_values:
+        additional_messages: |-
+          [i.model_dump() for i in additional_messages] if additional_messages else []
+      signature_args:
+        - workflow_id
+        - additional_messages
+        - parameters
+        - app_id
+        - bot_id
+        - conversation_id
+        - ext
+      arg_types:
+        workflow_id: str
+        additional_messages: List[Message]
+        parameters: Dict[str, Any]
+        app_id: str
+        bot_id: str
+        conversation_id: str
+        ext: Dict[str, str]
+      stream_wrap: true
+      stream_wrap_handler: _chat_stream_handler
+      stream_wrap_fields:
+        - event
+        - data
+      request_call_arg_order:
+        - stream
+        - cast
+        - headers
+        - body
+      no_blank_line_after_headers: true
+      force_multiline_request_call: true
+      stream_wrap_compact_async_return: true
+      stream_wrap_blank_line_before_return_async: true
+      response_type: Stream[ChatEvent]
+      async_response_type: AsyncIterator[ChatEvent]
+      response_cast: None
+      use_kwargs_headers: true
+    - path: /v1/workspaces/{workspace_id}/members
+      method: delete
+      order: 97
+      sdk_methods:
+        - workspaces_members.delete
+      body_builder: remove_none_values
+      body_fields:
+        - user_ids
+      body_required_fields:
+        - user_ids
+      arg_types:
+        user_ids: List[str]
+      use_kwargs_headers: true
+      headers_before_body: true
+      cast_keyword: true
+      stream_keyword: true
+      response_type: DeleteWorkspaceMemberResp
+      response_cast: DeleteWorkspaceMemberResp
+    - path: /v1/workspaces/{workspace_id}/members
+      method: post
+      order: 98
+      sdk_methods:
+        - workspaces_members.create
+      allow_missing_in_swagger: true
+      body_builder: remove_none_values
+      body_fields:
+        - users
+      body_required_fields:
+        - users
+      body_field_values:
+        users: |-
+          [
+              {
+                  "user_id": user.user_id,
+                  "role_type": user.role_type,
+              }
+              for user in users
+          ]
+      arg_types:
+        users: List[WorkspaceMember]
+      use_kwargs_headers: true
+      headers_before_body: true
+      cast_keyword: true
+      stream_keyword: true
+      response_type: CreateWorkspaceMemberResp
+      response_cast: CreateWorkspaceMemberResp
+    - path: /v1/workspaces/{workspace_id}/members
+      method: get
+      order: 99
+      sdk_methods:
+        - workspaces_members.list
+      allow_missing_in_swagger: true
+      query_builder: remove_none_values
+      signature_query_fields:
+        - page_num
+        - page_size
+      query_fields:
+        - name: page_size
+          type: int
+          required: true
+          default: "20"
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
+      pagination: number
+      pagination_data_class: WorkspaceMember
+      pagination_item_type: WorkspaceMember
+      pagination_headers_before_params: true
+      pagination_page_num_field: page_num
+      pagination_page_size_field: page_size
+      use_kwargs_headers: true
     - path: /v1/templates/{template_id}/duplicate
       method: post
       sdk_methods:
         - templates.duplicate
+      force_compact_signature: true
+      use_kwargs_headers: true
+      headers_before_body: true
+      body_builder: raw
+      body_fields:
+        - workspace_id
+        - name
+      body_required_fields:
+        - workspace_id
+      arg_types:
+        workspace_id: str
+        name: str
+      response_type: TemplateDuplicateResp
+      response_cast: TemplateDuplicateResp
       allow_missing_in_swagger: true
     - path: /v1/users/me
       method: get
       sdk_methods:
         - users.me
+      disable_request_body: true
+      use_kwargs_headers: true
+      response_type: User
+      response_cast: User
       allow_missing_in_swagger: true
   ignore_operations:
     - path: /v1/apps/{app_id}/collaborators
       method: post
     - path: /v1/apps/{app_id}/collaborators/{user_id}
       method: delete
-    - path: /v1/audio/rooms
-      method: post
-    - path: /v1/audio/speech
-      method: post
-    - path: /v1/audio/transcriptions
-      method: post
-    - path: /v1/audio/voices
-      method: get
-    - path: /v1/audio/voices/clone
-      method: post
     - path: /v1/connectors/{connector_id}/install
       method: post
     - path: /v1/connectors/{connector_id}/user_configs
       method: post
-    - path: /v1/enterprises/{enterprise_id}/members
-      method: post
-    - path: /v1/enterprises/{enterprise_id}/members/{user_id}
-      method: put
     - path: /v1/enterprises/{enterprise_id}/organizations
-      method: post
-    - path: /v1/api_apps/{api_app_id}/events
       method: post
     - path: /v1/commerce/benefit/benefits/get
       method: get
@@ -1866,22 +5185,10 @@ api:
       method: get
     - path: /v1/commerce/benefit/limitations
       method: post
-    - path: /v1/conversation/message/create
-      method: post
-    - path: /v1/conversation/message/delete
-      method: post
     - path: /v1/conversation/message/list
       method: post
-    - path: /v1/conversation/message/modify
+    - path: /v3/chat/submit_tool_outputs
       method: post
-    - path: /v1/conversation/message/retrieve
-      method: get
-    - path: /v3/chat/message/list
-      method: get
-    - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
-      method: delete
-    - path: /v1/datasets/{dataset_id}/images
-      method: get
     - path: /v1/bots/{bot_id}/collaboration_mode
       method: post
     - path: /v1/bots/{bot_id}/collaborators

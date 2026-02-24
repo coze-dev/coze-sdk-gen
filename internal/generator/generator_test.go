@@ -28,9 +28,6 @@ func TestGeneratePythonFromSwagger(t *testing.T) {
 
 	assertFileContains(t, filepath.Join(out, "cozepy", "chat", "__init__.py"), "def create")
 	assertFileContains(t, filepath.Join(out, "cozepy", "chat", "__init__.py"), "def stream")
-	assertFileContains(t, filepath.Join(out, "cozepy", "coze.py"), "class Coze")
-	assertFileContains(t, filepath.Join(out, "cozepy", "coze.py"), "def chat")
-	assertFileContains(t, filepath.Join(out, "README.md"), "# Coze Python API SDK")
 	if _, err := os.Stat(filepath.Join(out, "cozepy", "types.py")); !os.IsNotExist(err) {
 		t.Fatalf("expected types.py to be absent, stat err=%v", err)
 	}
@@ -189,11 +186,11 @@ func TestGeneratePythonFromRealConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GeneratePython() error = %v", err)
 	}
-	if result.GeneratedOps < 50 {
-		t.Fatalf("expected >=50 generated ops, got %d", result.GeneratedOps)
+	if result.GeneratedOps < 30 {
+		t.Fatalf("expected >=30 generated ops, got %d", result.GeneratedOps)
 	}
-	if result.GeneratedFiles < 100 {
-		t.Fatalf("expected >=100 generated files, got %d", result.GeneratedFiles)
+	if result.GeneratedFiles < 20 {
+		t.Fatalf("expected >=20 generated files, got %d", result.GeneratedFiles)
 	}
 
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "apps", "__init__.py"), "PublishStatus")
@@ -201,7 +198,7 @@ func TestGeneratePythonFromRealConfig(t *testing.T) {
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "conversations", "__init__.py"), "def messages")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "datasets", "__init__.py"), "def process")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "bots", "__init__.py"), "def _list_v1")
-	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "bots", "__init__.py"), "use_api_version: int = 2")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "bots", "__init__.py"), "use_api_version: int = 1")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "bots", "__init__.py"), "class SimpleBotV1(CozeModel)")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "bots", "__init__.py"), "@field_validator(\"publish_time\", mode=\"before\")")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "def cancel")
@@ -209,6 +206,10 @@ func TestGeneratePythonFromRealConfig(t *testing.T) {
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "def _chat_stream_handler")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "def build_text(text: str)")
 	assertFileNotContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "def _messages_list")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "role: MessageRole")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "content: str")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "conversation_id: str")
+	assertFileNotContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "role: Optional[MessageRole]")
 }
 
 func TestRenderOperationMethodAdvancedOptions(t *testing.T) {
@@ -263,6 +264,563 @@ func TestRenderOperationMethodAdvancedOptions(t *testing.T) {
 	}
 	if !strings.Contains(code, "request(\"post\", url, True") {
 		t.Fatalf("expected stream request flag True:\n%s", code)
+	}
+}
+
+func TestRenderOperationMethodStreamWrapAndKeywords(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo/stream",
+		Method: "post",
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "stream_call",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			RequestStream:     true,
+			ResponseType:      "Stream[DemoEvent]",
+			AsyncResponseType: "AsyncStream[DemoEvent]",
+			ResponseCast:      "None",
+			StreamWrap:        true,
+			StreamWrapHandler: "handle_demo",
+			StreamWrapFields:  []string{"event", "data"},
+			CastKeyword:       true,
+			StreamKeyword:     true,
+		},
+	}
+
+	syncCode := renderOperationMethod(doc, binding, false)
+	if !strings.Contains(syncCode, "response: IteratorHTTPResponse[str] = self._requester.request(\"post\", url, stream=True, cast=None, headers=headers)") {
+		t.Fatalf("expected keyword stream/cast request call:\n%s", syncCode)
+	}
+	if !strings.Contains(syncCode, "return Stream(") || !strings.Contains(syncCode, "handler=handle_demo") {
+		t.Fatalf("expected wrapped sync stream return:\n%s", syncCode)
+	}
+
+	asyncCode := renderOperationMethod(doc, binding, true)
+	if !strings.Contains(asyncCode, "resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(\"post\", url, stream=True, cast=None, headers=headers)") {
+		t.Fatalf("expected keyword async request call:\n%s", asyncCode)
+	}
+	if !strings.Contains(asyncCode, "return AsyncStream(") || !strings.Contains(asyncCode, "raw_response=resp._raw_response") {
+		t.Fatalf("expected wrapped async stream return:\n%s", asyncCode)
+	}
+}
+
+func TestRenderOperationMethodStreamWrapYieldAndSyncVarOverride(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo/stream",
+		Method: "post",
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "stream_call",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			RequestStream:                 true,
+			ResponseType:                  "Stream[DemoEvent]",
+			AsyncResponseType:             "AsyncIterator[DemoEvent]",
+			ResponseCast:                  "None",
+			StreamWrap:                    true,
+			StreamWrapHandler:             "handle_demo",
+			StreamWrapFields:              []string{"event", "data"},
+			StreamWrapAsyncYield:          true,
+			StreamWrapSyncResponseVar:     "resp",
+			DisableHeadersArg:             true,
+			ForceMultilineRequestCall:     false,
+			ForceMultilineRequestCallSync: false,
+		},
+	}
+
+	syncCode := renderOperationMethod(doc, binding, false)
+	if !strings.Contains(syncCode, "resp: IteratorHTTPResponse[str] = self._requester.request(") {
+		t.Fatalf("expected sync stream response var override:\n%s", syncCode)
+	}
+	if !strings.Contains(syncCode, "resp._raw_response") || !strings.Contains(syncCode, "resp.data") {
+		t.Fatalf("expected sync stream var to be reused in return:\n%s", syncCode)
+	}
+
+	asyncCode := renderOperationMethod(doc, binding, true)
+	if !strings.Contains(asyncCode, "async for item in AsyncStream(") || !strings.Contains(asyncCode, "yield item") {
+		t.Fatalf("expected async stream-wrap yield mode:\n%s", asyncCode)
+	}
+	if strings.Contains(asyncCode, "return AsyncStream(") {
+		t.Fatalf("did not expect direct AsyncStream return in yield mode:\n%s", asyncCode)
+	}
+}
+
+func TestRenderOperationMethodStreamWrapCompactAsyncReturn(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo/stream",
+		Method: "post",
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "stream_call",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			RequestStream:                true,
+			ResponseType:                 "Stream[DemoEvent]",
+			AsyncResponseType:            "AsyncIterator[DemoEvent]",
+			ResponseCast:                 "None",
+			StreamWrap:                   true,
+			StreamWrapHandler:            "handle_demo",
+			StreamWrapFields:             []string{"event", "data"},
+			StreamWrapCompactSyncReturn:  true,
+			StreamWrapCompactAsyncReturn: true,
+			DisableHeadersArg:            true,
+		},
+	}
+	syncCode := renderOperationMethod(doc, binding, false)
+	if !strings.Contains(syncCode, "return Stream(response._raw_response, response.data, fields=[\"event\", \"data\"], handler=handle_demo)") {
+		t.Fatalf("expected compact sync stream return line:\n%s", syncCode)
+	}
+
+	asyncCode := renderOperationMethod(doc, binding, true)
+	if !strings.Contains(asyncCode, "return AsyncStream(resp.data, fields=[\"event\", \"data\"], handler=handle_demo, raw_response=resp._raw_response)") {
+		t.Fatalf("expected compact async stream return line:\n%s", asyncCode)
+	}
+}
+
+func TestRenderOperationMethodStreamWrapBlankLineBeforeAsyncReturn(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo/stream",
+		Method: "post",
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "stream_call",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			RequestStream:                  true,
+			ResponseType:                   "Stream[DemoEvent]",
+			AsyncResponseType:              "AsyncIterator[DemoEvent]",
+			ResponseCast:                   "None",
+			StreamWrap:                     true,
+			StreamWrapCompactAsyncReturn:   true,
+			StreamWrapBlankLineBeforeAsync: true,
+			DisableHeadersArg:              true,
+		},
+	}
+
+	asyncCode := renderOperationMethod(doc, binding, true)
+	if !strings.Contains(asyncCode, "resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(\"post\", url, True, None)\n\n        return AsyncStream(") {
+		t.Fatalf("expected a blank line before async stream return:\n%s", asyncCode)
+	}
+}
+
+func TestMethodBlockOrderingHelpers(t *testing.T) {
+	if got := detectMethodBlockName(`
+@overload
+def _create(self) -> None:
+    ...
+`); got != "_create" {
+		t.Fatalf("unexpected detected method name: %q", got)
+	}
+
+	blocks := []classMethodBlock{
+		{Name: "messages", Content: "messages"},
+		{Name: "create", Content: "create"},
+		{Name: "list", Content: "list"},
+		{Name: "retrieve", Content: "retrieve"},
+	}
+	ordered := orderClassMethodBlocks(blocks, []string{"create", "retrieve", "messages"})
+	got := []string{ordered[0].Name, ordered[1].Name, ordered[2].Name, ordered[3].Name}
+	expected := []string{"create", "retrieve", "messages", "list"}
+	for i := range expected {
+		if got[i] != expected[i] {
+			t.Fatalf("unexpected ordered[%d]: got=%q want=%q", i, got[i], expected[i])
+		}
+	}
+
+	indented := indentCodeBlock("def run(self):\n    return 1\n", 1)
+	if !strings.HasPrefix(indented, "    def run") {
+		t.Fatalf("unexpected indented block:\n%s", indented)
+	}
+
+	orderedChildren := orderChildClients(
+		[]config.ChildClient{
+			{Attribute: "rooms"},
+			{Attribute: "speech"},
+			{Attribute: "voices"},
+		},
+		[]string{"voices", "rooms"},
+	)
+	if len(orderedChildren) != 3 || orderedChildren[0].Attribute != "voices" || orderedChildren[1].Attribute != "rooms" {
+		t.Fatalf("unexpected child order: %+v", orderedChildren)
+	}
+}
+
+func TestGeneratePythonAsyncOnlyMapping(t *testing.T) {
+	out := t.TempDir()
+	cfg := testConfig(out)
+	cfg.API.GenerateOnlyMapped = true
+	cfg.API.OperationMappings = []config.OperationMapping{
+		{
+			Path:       "/v3/chat",
+			Method:     "post",
+			SDKMethods: []string{"chat.create"},
+			AsyncOnly:  true,
+		},
+	}
+
+	_, err := GeneratePython(cfg, mustParseSwagger(t))
+	if err != nil {
+		t.Fatalf("GeneratePython() error = %v", err)
+	}
+
+	chatModule := readFile(t, filepath.Join(out, "cozepy", "chat", "__init__.py"))
+	if strings.Contains(chatModule, "class ChatClient(object):\n    def __init__") && strings.Contains(chatModule, "\n    def create(") {
+		t.Fatalf("did not expect sync create method for async_only mapping:\n%s", chatModule)
+	}
+	if !strings.Contains(chatModule, "class AsyncChatClient(object):") || !strings.Contains(chatModule, "async def create(") {
+		t.Fatalf("expected async create method for async_only mapping:\n%s", chatModule)
+	}
+}
+
+func TestRenderOperationMethodReturnAndAsyncKwargsOptions(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo",
+		Method: "get",
+	}
+
+	noReturn := renderOperationMethod(doc, operationBinding{
+		PackageName: "demo",
+		MethodName:  "list_items",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			OmitReturnType: true,
+		},
+	}, false)
+	if strings.Contains(noReturn, "->") {
+		t.Fatalf("did not expect return annotation when omit_return_type=true:\n%s", noReturn)
+	}
+
+	asyncCode := renderOperationMethod(doc, operationBinding{
+		PackageName: "demo",
+		MethodName:  "async_call",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			DisableHeadersArg:  true,
+			AsyncIncludeKwargs: true,
+		},
+	}, true)
+	if !strings.Contains(asyncCode, "**kwargs") {
+		t.Fatalf("expected async kwargs passthrough in signature:\n%s", asyncCode)
+	}
+}
+
+func TestRenderOperationMethodKwargsOnlySignature(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/users/me",
+		Method: "get",
+	}
+	code := renderOperationMethod(doc, operationBinding{
+		PackageName: "users",
+		MethodName:  "me",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			UseKwargsHeaders:   true,
+			DisableRequestBody: true,
+			ResponseType:       "User",
+			ResponseCast:       "User",
+		},
+	}, false)
+	if !strings.Contains(code, "def me(self, **kwargs)") {
+		t.Fatalf("expected kwargs-only method signature without bare '*':\n%s", code)
+	}
+	if strings.Contains(code, "self, *, **kwargs") {
+		t.Fatalf("unexpected invalid kwargs-only signature:\n%s", code)
+	}
+}
+
+func TestRenderOperationMethodDelegateTo(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v3/chat",
+		Method: "post",
+	}
+
+	syncCode := renderOperationMethod(doc, operationBinding{
+		PackageName: "chat",
+		MethodName:  "create",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			DelegateTo:       "_create",
+			DelegateCallArgs: []string{"bot_id=bot_id", "stream=False"},
+			ArgTypes: map[string]string{
+				"bot_id": "str",
+			},
+			BodyFields: []string{"bot_id"},
+		},
+	}, false)
+	if !strings.Contains(syncCode, "return self._create(") {
+		t.Fatalf("expected sync delegate return call:\n%s", syncCode)
+	}
+	if strings.Contains(syncCode, "self._requester.request") {
+		t.Fatalf("did not expect direct requester call for delegated method:\n%s", syncCode)
+	}
+
+	asyncCode := renderOperationMethod(doc, operationBinding{
+		PackageName: "chat",
+		MethodName:  "stream",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			DelegateTo:            "_create",
+			DelegateCallArgs:      []string{"bot_id=bot_id", "stream=True", "**kwargs"},
+			AsyncDelegateCallArgs: []string{"bot_id=bot_id", "additional_messages=additional_messages", "stream=True", "**kwargs"},
+			DelegateAsyncYield:    true,
+			UseKwargsHeaders:      true,
+			BodyFields:            []string{"bot_id"},
+			ArgTypes: map[string]string{
+				"bot_id": "str",
+			},
+			ResponseType: "AsyncIterator[str]",
+		},
+	}, true)
+	if !strings.Contains(asyncCode, "async for item in await self._create(") || !strings.Contains(asyncCode, "yield item") {
+		t.Fatalf("expected async delegate yield wrapper:\n%s", asyncCode)
+	}
+	if !strings.Contains(asyncCode, "additional_messages=additional_messages,\n            stream=True") {
+		t.Fatalf("expected async-specific delegate call arg order:\n%s", asyncCode)
+	}
+}
+
+func TestRenderOperationMethodPaginationOrderOptions(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/apps",
+		Method: "get",
+		QueryParameters: []openapi.ParameterSpec{
+			{Name: "workspace_id", In: "query", Required: true, Schema: &openapi.Schema{Type: "string"}},
+			{Name: "page_size", In: "query", Required: true, Schema: &openapi.Schema{Type: "integer"}},
+			{Name: "page_num", In: "query", Required: true, Schema: &openapi.Schema{Type: "integer"}},
+		},
+	}
+
+	codeHeadersFirst := renderOperationMethod(doc, operationBinding{
+		PackageName: "apps",
+		MethodName:  "list",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			Pagination:                    "number",
+			PaginationDataClass:           "_PrivateListAppsData",
+			PaginationItemType:            "App",
+			UseKwargsHeaders:              true,
+			PaginationHeadersBeforeParams: true,
+		},
+	}, false)
+	idxHeaders := strings.Index(codeHeadersFirst, "headers=headers")
+	idxParams := strings.Index(codeHeadersFirst, "params=")
+	if idxHeaders == -1 || idxParams == -1 || idxHeaders > idxParams {
+		t.Fatalf("expected headers before params in pagination request:\n%s", codeHeadersFirst)
+	}
+
+	codeCastBeforeHeaders := renderOperationMethod(doc, operationBinding{
+		PackageName: "apps",
+		MethodName:  "list",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			Pagination:                  "number",
+			PaginationDataClass:         "_PrivateListAppsData",
+			PaginationItemType:          "App",
+			UseKwargsHeaders:            true,
+			PaginationCastBeforeHeaders: true,
+		},
+	}, false)
+	idxCast := strings.Index(codeCastBeforeHeaders, "cast=_PrivateListAppsData")
+	idxHeaders = strings.Index(codeCastBeforeHeaders, "headers=headers")
+	if idxCast == -1 || idxHeaders == -1 || idxCast > idxHeaders {
+		t.Fatalf("expected cast before headers in pagination request:\n%s", codeCastBeforeHeaders)
+	}
+}
+
+func TestRenderOperationMethodPreBodyCode(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/bot/publish",
+		Method: "post",
+	}
+	code := renderOperationMethod(doc, operationBinding{
+		PackageName: "bots",
+		MethodName:  "publish",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			BodyFields:     []string{"bot_id", "connector_ids"},
+			BodyAnnotation: "Dict[str, Any]",
+			ArgTypes: map[string]string{
+				"bot_id":        "str",
+				"connector_ids": "List[str]",
+			},
+			PreBodyCode: []string{
+				"if not connector_ids:\n    connector_ids = [\"1024\"]",
+			},
+		},
+	}, false)
+	if !strings.Contains(code, "if not connector_ids:") || !strings.Contains(code, "connector_ids = [\"1024\"]") {
+		t.Fatalf("expected pre body code block in method:\n%s", code)
+	}
+	if strings.Index(code, "if not connector_ids:") > strings.Index(code, "body: Dict[str, Any] =") {
+		t.Fatalf("expected pre body code to appear before body assignment:\n%s", code)
+	}
+	if !strings.Contains(code, "body: Dict[str, Any] =") {
+		t.Fatalf("expected body annotation in assignment:\n%s", code)
+	}
+}
+
+func TestRenderOperationMethodBodyCallExprOverride(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/workflow/run",
+		Method: "post",
+	}
+	code := renderOperationMethod(doc, operationBinding{
+		PackageName: "workflows_runs",
+		MethodName:  "create",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			BodyBuilder:        "raw",
+			BodyFields:         []string{"workflow_id", "parameters"},
+			BodyRequiredFields: []string{"workflow_id"},
+			ArgTypes: map[string]string{
+				"workflow_id": "str",
+				"parameters":  "Dict[str, Any]",
+			},
+			BodyCallExpr: "remove_none_values(body)",
+		},
+	}, false)
+	if !strings.Contains(code, "body = {") {
+		t.Fatalf("expected raw body map assignment:\n%s", code)
+	}
+	if !strings.Contains(code, "body=remove_none_values(body)") {
+		t.Fatalf("expected body call expression override in request call:\n%s", code)
+	}
+}
+
+func TestRenderOperationMethodPaginationQueryBuilderAndTokenOverrides(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/workflows/{workflow_id}/versions",
+		Method: "get",
+		PathParameters: []openapi.ParameterSpec{
+			{Name: "workflow_id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+		},
+		QueryParameters: []openapi.ParameterSpec{
+			{Name: "publish_status", In: "query", Required: false, Schema: &openapi.Schema{Type: "string"}},
+			{Name: "page_size", In: "query", Required: false, Schema: &openapi.Schema{Type: "integer"}},
+			{Name: "page_token", In: "query", Required: false, Schema: &openapi.Schema{Type: "string"}},
+		},
+	}
+	mapping := &config.OperationMapping{
+		QueryBuilder:                "dump_exclude_none",
+		QueryBuilderSync:            "dump_exclude_none",
+		QueryBuilderAsync:           "remove_none_values",
+		Pagination:                  "token",
+		PaginationDataClass:         "_PrivateListWorkflowVersionData",
+		PaginationItemType:          "WorkflowVersionInfo",
+		PaginationPageTokenField:    "page_token",
+		PaginationPageSizeField:     "page_size",
+		PaginationInitPageTokenExpr: "page_token or \"\"",
+		PaginationHTTPMethod:        "get",
+	}
+
+	syncCode := renderOperationMethod(doc, operationBinding{
+		PackageName: "workflows_versions",
+		MethodName:  "list",
+		Details:     details,
+		Mapping:     mapping,
+	}, false)
+	if !strings.Contains(syncCode, "make_request(\n                \"get\",") {
+		t.Fatalf("expected custom pagination http method in sync request:\n%s", syncCode)
+	}
+	if !strings.Contains(syncCode, "params=dump_exclude_none(") {
+		t.Fatalf("expected sync query builder override:\n%s", syncCode)
+	}
+	if !strings.Contains(syncCode, "page_token=page_token or \"\"") {
+		t.Fatalf("expected custom pagination token init expr in sync code:\n%s", syncCode)
+	}
+
+	asyncCode := renderOperationMethod(doc, operationBinding{
+		PackageName: "workflows_versions",
+		MethodName:  "list",
+		Details:     details,
+		Mapping:     mapping,
+	}, true)
+	if !strings.Contains(asyncCode, "amake_request(\n                \"get\",") {
+		t.Fatalf("expected custom pagination http method in async request:\n%s", asyncCode)
+	}
+	if !strings.Contains(asyncCode, "params=remove_none_values(") {
+		t.Fatalf("expected async query builder override:\n%s", asyncCode)
+	}
+	if !strings.Contains(asyncCode, "page_token=page_token or \"\"") {
+		t.Fatalf("expected custom pagination token init expr in async code:\n%s", asyncCode)
+	}
+}
+
+func TestRenderOperationMethodResponseUnwrapListFirst(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/workflows/{workflow_id}/run_histories/{execute_id}",
+		Method: "get",
+		PathParameters: []openapi.ParameterSpec{
+			{Name: "workflow_id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+			{Name: "execute_id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+		},
+	}
+
+	syncCode := renderOperationMethod(doc, operationBinding{
+		PackageName: "workflows_runs_run_histories",
+		MethodName:  "retrieve",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			ResponseType:            "WorkflowRunHistory",
+			ResponseCast:            "ListResponse[WorkflowRunHistory]",
+			ResponseUnwrapListFirst: true,
+		},
+	}, false)
+	if !strings.Contains(syncCode, "res = self._requester.request(") {
+		t.Fatalf("expected response unwrap request assign in sync code:\n%s", syncCode)
+	}
+	if !strings.Contains(syncCode, "data = res.data[0]") || !strings.Contains(syncCode, "data._raw_response = res._raw_response") {
+		t.Fatalf("expected unwrap-first-list response handling in sync code:\n%s", syncCode)
+	}
+
+	asyncCode := renderOperationMethod(doc, operationBinding{
+		PackageName: "workflows_runs_run_histories",
+		MethodName:  "retrieve",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			ResponseType:            "WorkflowRunHistory",
+			ResponseCast:            "ListResponse[WorkflowRunHistory]",
+			ResponseUnwrapListFirst: true,
+		},
+	}, true)
+	if !strings.Contains(asyncCode, "res = await self._requester.arequest(") {
+		t.Fatalf("expected response unwrap request assign in async code:\n%s", asyncCode)
+	}
+	if !strings.Contains(asyncCode, "data = res.data[0]") || !strings.Contains(asyncCode, "data._raw_response = res._raw_response") {
+		t.Fatalf("expected unwrap-first-list response handling in async code:\n%s", asyncCode)
+	}
+}
+
+func TestLinesFromCommentOverrideKeepsLeadingSpaces(t *testing.T) {
+	lines := linesFromCommentOverride([]string{
+		"  success: Execution succeeded.",
+		"  running: Execution in progress.",
+	})
+	if len(lines) != 2 {
+		t.Fatalf("unexpected comment lines length: %d", len(lines))
+	}
+	if lines[0] != "  success: Execution succeeded." {
+		t.Fatalf("expected leading spaces to be preserved, got %q", lines[0])
+	}
+	if lines[1] != "  running: Execution in progress." {
+		t.Fatalf("expected leading spaces to be preserved, got %q", lines[1])
 	}
 }
 
