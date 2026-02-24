@@ -605,6 +605,7 @@ api:
         - /v1/connectors
     - name: conversations
       source_dir: cozepy/conversations
+      http_request_from_model: true
       extra_imports:
         - module: cozepy.chat
           names:
@@ -614,6 +615,7 @@ api:
           module: .message
           sync_class: MessagesClient
           async_class: AsyncMessagesClient
+          disable_type_hints: true
       model_schemas:
         - schema: ConversationData
           name: Conversation
@@ -645,6 +647,7 @@ api:
         - /v1/conversations
     - name: datasets
       source_dir: cozepy/datasets
+      http_request_from_model: true
       child_clients:
         - attribute: documents
           module: .documents
@@ -774,6 +777,7 @@ api:
         - /v1/files
     - name: folders
       source_dir: cozepy/folders
+      http_request_from_model: true
       model_schemas:
         - schema: FolderType
           name: FolderType
@@ -1008,6 +1012,7 @@ api:
       order: 50
       sdk_methods:
         - apps.list
+      query_builder: remove_none_values
       use_kwargs_headers: true
       query_fields:
         - name: workspace_id
@@ -1059,6 +1064,7 @@ api:
       order: 56
       sdk_methods:
         - conversations.retrieve
+      query_builder: raw
       disable_headers_arg: true
       response_type: Conversation
       response_cast: Conversation
@@ -1067,6 +1073,8 @@ api:
       order: 57
       sdk_methods:
         - conversations.list
+      query_builder: raw
+      pagination_inherit_response: false
       query_fields:
         - name: bot_id
           type: str
@@ -1123,6 +1131,7 @@ api:
       order: 61
       sdk_methods:
         - datasets.create
+      body_builder: raw
       allow_missing_in_swagger: true
       body_fields:
         - name
@@ -1150,6 +1159,7 @@ api:
       order: 62
       sdk_methods:
         - datasets.list
+      query_builder: raw
       use_kwargs_headers: true
       query_fields:
         - name: space_id
@@ -1181,6 +1191,7 @@ api:
       order: 63
       sdk_methods:
         - datasets.update
+      body_builder: raw
       body_fields:
         - name
         - description
@@ -1205,6 +1216,7 @@ api:
       order: 65
       sdk_methods:
         - datasets.process
+      body_builder: raw
       body_fields:
         - document_ids
       disable_headers_arg: true
@@ -1267,6 +1279,7 @@ api:
       order: 68
       sdk_methods:
         - bots.publish
+      body_builder: raw
       body_fields:
         - bot_id
         - connector_ids
@@ -1280,6 +1293,7 @@ api:
       order: 69
       sdk_methods:
         - bots.unpublish
+      body_builder: raw
       body_fields:
         - connector_id
         - unpublish_reason
@@ -1300,6 +1314,7 @@ api:
       order: 71
       sdk_methods:
         - bots._retrieve_v2
+      query_builder: remove_none_values
       use_kwargs_headers: true
       response_type: Bot
       response_cast: Bot
@@ -1309,6 +1324,7 @@ api:
       sdk_methods:
         - bots.list
         - bots._list_v1
+      query_builder: raw
       disable_headers_arg: true
       query_fields:
         - name: space_id
@@ -1336,6 +1352,7 @@ api:
       order: 73
       sdk_methods:
         - bots._list_v2
+      query_builder: remove_none_values
       use_kwargs_headers: true
       query_fields:
         - name: workspace_id

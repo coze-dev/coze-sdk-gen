@@ -459,6 +459,8 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 		buf.WriteString(fmt.Sprintf("from typing import %s\n\n", strings.Join(typingImports, ", ")))
 	}
 	modelImports := make([]string, 0)
+	requestHTTPFromModel := meta.Package != nil && meta.Package.HTTPRequestFromModel
+	needHTTPRequest := hasTokenPagination || hasNumberPagination
 	if hasTokenPagination {
 		modelImports = append(modelImports, "AsyncTokenPaged")
 	}
@@ -477,17 +479,57 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 	if hasNumberPagination {
 		modelImports = append(modelImports, "NumberPaged", "NumberPagedResponse")
 	}
+	if needHTTPRequest && requestHTTPFromModel {
+		modelImports = append(modelImports, "HTTPRequest")
+	}
 	if len(modelImports) > 0 {
 		buf.WriteString(fmt.Sprintf("from cozepy.model import %s\n", strings.Join(modelImports, ", ")))
 	}
 	requestImports := []string{"Requester"}
-	if hasTokenPagination || hasNumberPagination {
+	if needHTTPRequest && !requestHTTPFromModel {
 		requestImports = append([]string{"HTTPRequest"}, requestImports...)
 	}
 	buf.WriteString(fmt.Sprintf("from cozepy.request import %s\n", strings.Join(requestImports, ", ")))
 	utilImports := []string{"remove_url_trailing_slash"}
-	if len(bindings) > 0 {
+	needDumpExcludeNone := false
+	needRemoveNoneValues := false
+	for _, binding := range bindings {
+		queryBuilder := "dump_exclude_none"
+		bodyBuilder := "dump_exclude_none"
+		if binding.Mapping != nil {
+			queryBuilder = normalizeMapBuilder(binding.Mapping.QueryBuilder)
+			bodyBuilder = normalizeMapBuilder(binding.Mapping.BodyBuilder)
+		}
+		hasQueryFields := len(binding.Details.QueryParameters) > 0
+		if binding.Mapping != nil && len(binding.Mapping.QueryFields) > 0 {
+			hasQueryFields = true
+		}
+		hasBodyMap := binding.Mapping != nil && (len(binding.Mapping.BodyFields) > 0 || len(binding.Mapping.BodyFixedValues) > 0)
+		if hasQueryFields {
+			if queryBuilder == "dump_exclude_none" {
+				needDumpExcludeNone = true
+			}
+			if queryBuilder == "remove_none_values" {
+				needRemoveNoneValues = true
+			}
+		}
+		if hasBodyMap {
+			if bodyBuilder == "dump_exclude_none" {
+				needDumpExcludeNone = true
+			}
+			if bodyBuilder == "remove_none_values" {
+				needRemoveNoneValues = true
+			}
+		}
+		if needDumpExcludeNone && needRemoveNoneValues {
+			break
+		}
+	}
+	if needDumpExcludeNone {
 		utilImports = append([]string{"dump_exclude_none"}, utilImports...)
+	}
+	if needRemoveNoneValues {
+		utilImports = append([]string{"remove_none_values"}, utilImports...)
 	}
 	buf.WriteString(fmt.Sprintf("from cozepy.util import %s\n", strings.Join(utilImports, ", ")))
 	if meta.Package != nil && len(meta.Package.ExtraImports) > 0 {
@@ -556,7 +598,7 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 			if child.DisableTypeHints {
 				buf.WriteString(fmt.Sprintf("        self._%s = None\n", attribute))
 			} else {
-				buf.WriteString(fmt.Sprintf("        self._%s: Optional[\"%s\"] = None\n", attribute, child.SyncClass))
+				buf.WriteString(fmt.Sprintf("        self._%s: Optional[%s] = None\n", attribute, child.SyncClass))
 			}
 		}
 		buf.WriteString("\n")
@@ -583,7 +625,7 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 			if child.DisableTypeHints {
 				buf.WriteString(fmt.Sprintf("        self._%s = None\n", attribute))
 			} else {
-				buf.WriteString(fmt.Sprintf("        self._%s: Optional[\"%s\"] = None\n", attribute, child.AsyncClass))
+				buf.WriteString(fmt.Sprintf("        self._%s: Optional[%s] = None\n", attribute, child.AsyncClass))
 			}
 		}
 		buf.WriteString("\n")
@@ -623,6 +665,26 @@ func isTokenPagination(mode string) bool {
 func isNumberPagination(mode string) bool {
 	mode = strings.TrimSpace(mode)
 	return mode == "number" || mode == "number_has_more"
+}
+
+func paginationInheritResponse(mapping *config.OperationMapping) bool {
+	if mapping == nil || mapping.PaginationInheritResponse == nil {
+		return true
+	}
+	return *mapping.PaginationInheritResponse
+}
+
+func normalizeMapBuilder(value string) string {
+	v := strings.TrimSpace(value)
+	if v == "" {
+		return "dump_exclude_none"
+	}
+	switch v {
+	case "dump_exclude_none", "remove_none_values", "raw":
+		return v
+	default:
+		return "dump_exclude_none"
+	}
 }
 
 func packageHasTokenPagination(bindings []operationBinding) bool {
@@ -802,7 +864,11 @@ func renderPagedResponseClasses(bindings []operationBinding) string {
 			if nextTokenField == "" {
 				nextTokenField = "next_page_token"
 			}
-			buf.WriteString(fmt.Sprintf("class %s(CozeModel, TokenPagedResponse[%s]):\n", className, itemType))
+			if paginationInheritResponse(binding.Mapping) {
+				buf.WriteString(fmt.Sprintf("class %s(CozeModel, TokenPagedResponse[%s]):\n", className, itemType))
+			} else {
+				buf.WriteString(fmt.Sprintf("class %s(CozeModel):\n", className))
+			}
 			buf.WriteString(fmt.Sprintf("    %s: List[%s]\n", itemsField, itemType))
 			buf.WriteString(fmt.Sprintf("    %s: Optional[str] = None\n", nextTokenField))
 			buf.WriteString(fmt.Sprintf("    %s: bool\n\n", hasMoreField))
@@ -820,7 +886,11 @@ func renderPagedResponseClasses(bindings []operationBinding) string {
 			if hasMoreField == "" {
 				hasMoreField = "has_more"
 			}
-			buf.WriteString(fmt.Sprintf("class %s(CozeModel, NumberPagedResponse[%s]):\n", className, itemType))
+			if paginationInheritResponse(binding.Mapping) {
+				buf.WriteString(fmt.Sprintf("class %s(CozeModel, NumberPagedResponse[%s]):\n", className, itemType))
+			} else {
+				buf.WriteString(fmt.Sprintf("class %s(CozeModel):\n", className))
+			}
 			buf.WriteString(fmt.Sprintf("    %s: bool\n", hasMoreField))
 			buf.WriteString(fmt.Sprintf("    %s: List[%s]\n\n", itemsField, itemType))
 			buf.WriteString("    def get_total(self) -> Optional[int]:\n")
@@ -836,7 +906,11 @@ func renderPagedResponseClasses(bindings []operationBinding) string {
 		if totalField == "" {
 			totalField = "total"
 		}
-		buf.WriteString(fmt.Sprintf("class %s(CozeModel, NumberPagedResponse[%s]):\n", className, itemType))
+		if paginationInheritResponse(binding.Mapping) {
+			buf.WriteString(fmt.Sprintf("class %s(CozeModel, NumberPagedResponse[%s]):\n", className, itemType))
+		} else {
+			buf.WriteString(fmt.Sprintf("class %s(CozeModel):\n", className))
+		}
 		buf.WriteString(fmt.Sprintf("    %s: int\n", totalField))
 		buf.WriteString(fmt.Sprintf("    %s: List[%s]\n\n", itemsField, itemType))
 		buf.WriteString("    def get_total(self) -> Optional[int]:\n")
@@ -1417,9 +1491,13 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	}
 	dataField := ""
 	requestStream := false
+	queryBuilder := "dump_exclude_none"
+	bodyBuilder := "dump_exclude_none"
 	if binding.Mapping != nil {
 		dataField = strings.TrimSpace(binding.Mapping.DataField)
 		requestStream = binding.Mapping.RequestStream
+		queryBuilder = normalizeMapBuilder(binding.Mapping.QueryBuilder)
+		bodyBuilder = normalizeMapBuilder(binding.Mapping.BodyBuilder)
 	}
 	bodyFieldNames := make([]string, 0)
 	bodyFixedValues := map[string]string{}
@@ -1513,7 +1591,7 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	}
 
 	var buf bytes.Buffer
-	compactSignature := len(bodyFieldNames) == 0 && requestBodyType == ""
+	compactSignature := len(bodyFieldNames) == 0 && requestBodyType == "" && len(signatureArgs) <= 2
 	if compactSignature {
 		if len(signatureArgs) == 0 {
 			buf.WriteString(fmt.Sprintf("    %s %s(self) -> %s:\n", methodKeyword, binding.MethodName, returnType))
@@ -1554,8 +1632,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	buf.WriteString(fmt.Sprintf("        url = f\"{self._base_url}%s\"\n", urlPath))
 
 	if len(queryFields) > 0 && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) {
-		buf.WriteString("        params = dump_exclude_none(\n")
-		buf.WriteString("            {\n")
+		if queryBuilder == "raw" {
+			buf.WriteString("        params = {\n")
+		} else {
+			buf.WriteString(fmt.Sprintf("        params = %s(\n", queryBuilder))
+			buf.WriteString("            {\n")
+		}
 		for _, field := range queryFields {
 			valueExpr := field.ValueExpr
 			if strings.TrimSpace(valueExpr) == "" {
@@ -1563,8 +1645,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			}
 			buf.WriteString(fmt.Sprintf("                %q: %s,\n", field.RawName, valueExpr))
 		}
-		buf.WriteString("            }\n")
-		buf.WriteString("        )\n")
+		if queryBuilder == "raw" {
+			buf.WriteString("        }\n")
+		} else {
+			buf.WriteString("            }\n")
+			buf.WriteString("        )\n")
+		}
 	}
 
 	if includeKwargsHeaders && (isTokenPagination(paginationMode) || isNumberPagination(paginationMode) || len(details.HeaderParameters) > 0) {
@@ -1615,8 +1701,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("            return await self._requester.amake_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", upperMethod))
 			buf.WriteString("                url,\n")
-			buf.WriteString("                params=dump_exclude_none(\n")
-			buf.WriteString("                    {\n")
+			if queryBuilder == "raw" {
+				buf.WriteString("                params={\n")
+			} else {
+				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
+				buf.WriteString("                    {\n")
+			}
 			for _, field := range paginationOrderedFields(queryFields, pageSizeField, pageTokenField) {
 				valueExpr := field.ValueExpr
 				if strings.TrimSpace(valueExpr) == "" {
@@ -1630,8 +1720,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				}
 				buf.WriteString(fmt.Sprintf("                        %q: %s,\n", field.RawName, valueExpr))
 			}
-			buf.WriteString("                    }\n")
-			buf.WriteString("                ),\n")
+			if queryBuilder == "raw" {
+				buf.WriteString("                },\n")
+			} else {
+				buf.WriteString("                    }\n")
+				buf.WriteString("                ),\n")
+			}
 			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 			if dataField != "" {
 				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
@@ -1652,8 +1746,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("            return self._requester.make_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", upperMethod))
 			buf.WriteString("                url,\n")
-			buf.WriteString("                params=dump_exclude_none(\n")
-			buf.WriteString("                    {\n")
+			if queryBuilder == "raw" {
+				buf.WriteString("                params={\n")
+			} else {
+				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
+				buf.WriteString("                    {\n")
+			}
 			for _, field := range paginationOrderedFields(queryFields, pageSizeField, pageTokenField) {
 				valueExpr := field.ValueExpr
 				if strings.TrimSpace(valueExpr) == "" {
@@ -1667,8 +1765,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				}
 				buf.WriteString(fmt.Sprintf("                        %q: %s,\n", field.RawName, valueExpr))
 			}
-			buf.WriteString("                    }\n")
-			buf.WriteString("                ),\n")
+			if queryBuilder == "raw" {
+				buf.WriteString("                },\n")
+			} else {
+				buf.WriteString("                    }\n")
+				buf.WriteString("                ),\n")
+			}
 			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 			if dataField != "" {
 				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
@@ -1713,8 +1815,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("            return await self._requester.amake_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", upperMethod))
 			buf.WriteString("                url,\n")
-			buf.WriteString("                params=dump_exclude_none(\n")
-			buf.WriteString("                    {\n")
+			if queryBuilder == "raw" {
+				buf.WriteString("                params={\n")
+			} else {
+				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
+				buf.WriteString("                    {\n")
+			}
 			for _, field := range paginationOrderedFields(queryFields, pageSizeField, pageNumField) {
 				valueExpr := field.ValueExpr
 				if strings.TrimSpace(valueExpr) == "" {
@@ -1728,8 +1834,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				}
 				buf.WriteString(fmt.Sprintf("                        %q: %s,\n", field.RawName, valueExpr))
 			}
-			buf.WriteString("                    }\n")
-			buf.WriteString("                ),\n")
+			if queryBuilder == "raw" {
+				buf.WriteString("                },\n")
+			} else {
+				buf.WriteString("                    }\n")
+				buf.WriteString("                ),\n")
+			}
 			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 			if dataField != "" {
 				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
@@ -1750,8 +1860,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("            return self._requester.make_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", upperMethod))
 			buf.WriteString("                url,\n")
-			buf.WriteString("                params=dump_exclude_none(\n")
-			buf.WriteString("                    {\n")
+			if queryBuilder == "raw" {
+				buf.WriteString("                params={\n")
+			} else {
+				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
+				buf.WriteString("                    {\n")
+			}
 			for _, field := range paginationOrderedFields(queryFields, pageSizeField, pageNumField) {
 				valueExpr := field.ValueExpr
 				if strings.TrimSpace(valueExpr) == "" {
@@ -1765,8 +1879,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				}
 				buf.WriteString(fmt.Sprintf("                        %q: %s,\n", field.RawName, valueExpr))
 			}
-			buf.WriteString("                    }\n")
-			buf.WriteString("                ),\n")
+			if queryBuilder == "raw" {
+				buf.WriteString("                },\n")
+			} else {
+				buf.WriteString("                    }\n")
+				buf.WriteString("                ),\n")
+			}
 			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 			if dataField != "" {
 				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
@@ -1787,8 +1905,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	}
 
 	if len(bodyFieldNames) > 0 {
-		buf.WriteString("        body = dump_exclude_none(\n")
-		buf.WriteString("            {\n")
+		if bodyBuilder == "raw" {
+			buf.WriteString("        body = {\n")
+		} else {
+			buf.WriteString(fmt.Sprintf("        body = %s(\n", bodyBuilder))
+			buf.WriteString("            {\n")
+		}
 		for _, bodyField := range bodyFieldNames {
 			argName := operationArgName(bodyField, paramAliases)
 			buf.WriteString(fmt.Sprintf("                %q: %s,\n", bodyField, argName))
@@ -1801,11 +1923,19 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		for _, fieldName := range fixedKeys {
 			buf.WriteString(fmt.Sprintf("                %q: %s,\n", fieldName, bodyFixedValues[fieldName]))
 		}
-		buf.WriteString("            }\n")
-		buf.WriteString("        )\n")
+		if bodyBuilder == "raw" {
+			buf.WriteString("        }\n")
+		} else {
+			buf.WriteString("            }\n")
+			buf.WriteString("        )\n")
+		}
 	} else if len(bodyFixedValues) > 0 {
-		buf.WriteString("        body = dump_exclude_none(\n")
-		buf.WriteString("            {\n")
+		if bodyBuilder == "raw" {
+			buf.WriteString("        body = {\n")
+		} else {
+			buf.WriteString(fmt.Sprintf("        body = %s(\n", bodyBuilder))
+			buf.WriteString("            {\n")
+		}
 		fixedKeys := make([]string, 0, len(bodyFixedValues))
 		for fieldName := range bodyFixedValues {
 			fixedKeys = append(fixedKeys, fieldName)
@@ -1814,8 +1944,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		for _, fieldName := range fixedKeys {
 			buf.WriteString(fmt.Sprintf("                %q: %s,\n", fieldName, bodyFixedValues[fieldName]))
 		}
-		buf.WriteString("            }\n")
-		buf.WriteString("        )\n")
+		if bodyBuilder == "raw" {
+			buf.WriteString("        }\n")
+		} else {
+			buf.WriteString("            }\n")
+			buf.WriteString("        )\n")
+		}
 	} else if requestBodyType != "" {
 		buf.WriteString("        request_body: Any = None\n")
 		if bodyRequired {

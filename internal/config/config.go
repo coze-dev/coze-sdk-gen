@@ -29,6 +29,7 @@ type Package struct {
 	SourceDir             string        `yaml:"source_dir"`
 	PathPrefixes          []string      `yaml:"path_prefixes"`
 	AllowMissingInSwagger bool          `yaml:"allow_missing_in_swagger"`
+	HTTPRequestFromModel  bool          `yaml:"http_request_from_model"`
 	ClientClass           string        `yaml:"client_class"`
 	AsyncClientClass      string        `yaml:"async_client_class"`
 	ChildClients          []ChildClient `yaml:"child_clients"`
@@ -79,36 +80,39 @@ type ImportSpec struct {
 }
 
 type OperationMapping struct {
-	Path                     string            `yaml:"path"`
-	Method                   string            `yaml:"method"`
-	Order                    int               `yaml:"order"`
-	SDKMethods               []string          `yaml:"sdk_methods"`
-	AllowMissingInSwagger    bool              `yaml:"allow_missing_in_swagger"`
-	HTTPMethodOverride       string            `yaml:"http_method_override"`
-	DisableRequestBody       bool              `yaml:"disable_request_body"`
-	BodyFields               []string          `yaml:"body_fields"`
-	BodyFixedValues          map[string]string `yaml:"body_fixed_values"`
-	BodyRequiredFields       []string          `yaml:"body_required_fields"`
-	UseKwargsHeaders         bool              `yaml:"use_kwargs_headers"`
-	ParamAliases             map[string]string `yaml:"param_aliases"`
-	ArgTypes                 map[string]string `yaml:"arg_types"`
-	ResponseType             string            `yaml:"response_type"`
-	ResponseCast             string            `yaml:"response_cast"`
-	QueryFields              []OperationField  `yaml:"query_fields"`
-	Pagination               string            `yaml:"pagination"`
-	PaginationDataClass      string            `yaml:"pagination_data_class"`
-	PaginationItemType       string            `yaml:"pagination_item_type"`
-	PaginationItemsField     string            `yaml:"pagination_items_field"`
-	PaginationTotalField     string            `yaml:"pagination_total_field"`
-	PaginationHasMoreField   string            `yaml:"pagination_has_more_field"`
-	PaginationNextTokenField string            `yaml:"pagination_next_token_field"`
-	PaginationPageNumField   string            `yaml:"pagination_page_num_field"`
-	PaginationPageSizeField  string            `yaml:"pagination_page_size_field"`
-	PaginationPageTokenField string            `yaml:"pagination_page_token_field"`
-	DisableHeadersArg        bool              `yaml:"disable_headers_arg"`
-	IgnoreHeaderParams       bool              `yaml:"ignore_header_params"`
-	DataField                string            `yaml:"data_field"`
-	RequestStream            bool              `yaml:"request_stream"`
+	Path                      string            `yaml:"path"`
+	Method                    string            `yaml:"method"`
+	Order                     int               `yaml:"order"`
+	SDKMethods                []string          `yaml:"sdk_methods"`
+	AllowMissingInSwagger     bool              `yaml:"allow_missing_in_swagger"`
+	HTTPMethodOverride        string            `yaml:"http_method_override"`
+	DisableRequestBody        bool              `yaml:"disable_request_body"`
+	BodyFields                []string          `yaml:"body_fields"`
+	BodyFixedValues           map[string]string `yaml:"body_fixed_values"`
+	BodyBuilder               string            `yaml:"body_builder"`
+	BodyRequiredFields        []string          `yaml:"body_required_fields"`
+	UseKwargsHeaders          bool              `yaml:"use_kwargs_headers"`
+	ParamAliases              map[string]string `yaml:"param_aliases"`
+	ArgTypes                  map[string]string `yaml:"arg_types"`
+	ResponseType              string            `yaml:"response_type"`
+	ResponseCast              string            `yaml:"response_cast"`
+	QueryFields               []OperationField  `yaml:"query_fields"`
+	Pagination                string            `yaml:"pagination"`
+	PaginationDataClass       string            `yaml:"pagination_data_class"`
+	PaginationItemType        string            `yaml:"pagination_item_type"`
+	PaginationItemsField      string            `yaml:"pagination_items_field"`
+	PaginationTotalField      string            `yaml:"pagination_total_field"`
+	PaginationHasMoreField    string            `yaml:"pagination_has_more_field"`
+	PaginationNextTokenField  string            `yaml:"pagination_next_token_field"`
+	PaginationPageNumField    string            `yaml:"pagination_page_num_field"`
+	PaginationPageSizeField   string            `yaml:"pagination_page_size_field"`
+	PaginationPageTokenField  string            `yaml:"pagination_page_token_field"`
+	PaginationInheritResponse *bool             `yaml:"pagination_inherit_response"`
+	DisableHeadersArg         bool              `yaml:"disable_headers_arg"`
+	IgnoreHeaderParams        bool              `yaml:"ignore_header_params"`
+	DataField                 string            `yaml:"data_field"`
+	RequestStream             bool              `yaml:"request_stream"`
+	QueryBuilder              string            `yaml:"query_builder"`
 }
 
 type OperationField struct {
@@ -153,6 +157,14 @@ func Parse(content []byte) (*Config, error) {
 func (c *Config) applyDefaults() {
 	if c.API.FieldAliases == nil {
 		c.API.FieldAliases = map[string]map[string]string{}
+	}
+	for i := range c.API.OperationMappings {
+		if strings.TrimSpace(c.API.OperationMappings[i].QueryBuilder) == "" {
+			c.API.OperationMappings[i].QueryBuilder = "dump_exclude_none"
+		}
+		if strings.TrimSpace(c.API.OperationMappings[i].BodyBuilder) == "" {
+			c.API.OperationMappings[i].BodyBuilder = "dump_exclude_none"
+		}
 	}
 }
 
@@ -281,6 +293,16 @@ func (c *Config) Validate() error {
 			if strings.TrimSpace(fieldValue) == "" {
 				return fmt.Errorf("api.operation_mappings[%d].body_fixed_values[%q] is empty", i, fieldName)
 			}
+		}
+		switch strings.TrimSpace(mapping.QueryBuilder) {
+		case "", "dump_exclude_none", "remove_none_values", "raw":
+		default:
+			return fmt.Errorf("api.operation_mappings[%d].query_builder must be one of: dump_exclude_none, remove_none_values, raw", i)
+		}
+		switch strings.TrimSpace(mapping.BodyBuilder) {
+		case "", "dump_exclude_none", "remove_none_values", "raw":
+		default:
+			return fmt.Errorf("api.operation_mappings[%d].body_builder must be one of: dump_exclude_none, remove_none_values, raw", i)
 		}
 		if strings.TrimSpace(mapping.Pagination) != "" {
 			pagination := strings.TrimSpace(mapping.Pagination)
