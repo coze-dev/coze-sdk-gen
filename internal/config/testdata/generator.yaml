@@ -39,7 +39,7 @@ api:
       sdk_methods:
         - workflows.chat
   ignore_operations:
-    - path: /v1/workspaces
+    - path: /v1/workspaces/{workspace_id}
       method: get
   field_aliases:
     chat:

@@ -215,3 +215,55 @@ func TestValidateAgainstSwaggerAllowMissing(t *testing.T) {
 		t.Fatalf("expected no errors when allow_missing_in_swagger is set, got %s", report.Error())
 	}
 }
+
+func TestConfigHelpers(t *testing.T) {
+	cfg, err := Load(filepath.Join("testdata", "generator.yaml"))
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if !cfg.IsIgnored("/v1/workspaces/{workspace_id}", "get") {
+		t.Fatal("expected operation to be ignored")
+	}
+	if cfg.IsIgnored("/v1/workspaces/{workspace_id}", "post") {
+		t.Fatal("did not expect post to be ignored")
+	}
+
+	mappings := cfg.FindOperationMappings("/v3/chat", "POST")
+	if len(mappings) != 1 {
+		t.Fatalf("expected one mapping, got %d", len(mappings))
+	}
+
+	pkg, ok := cfg.ResolvePackage("/v3/chat/message/list", "")
+	if !ok || pkg.Name != "chat" {
+		t.Fatalf("unexpected package resolution: %+v, ok=%v", pkg, ok)
+	}
+
+	pkg, ok = cfg.ResolvePackage("/v3/chat/message/list", "workflows")
+	if !ok || pkg.Name != "workflows" {
+		t.Fatalf("expected preferred package workflows, got %+v", pkg)
+	}
+
+	if _, ok := cfg.ResolvePackage("/v2/not-exists", ""); ok {
+		t.Fatal("did not expect package for unknown path")
+	}
+}
+
+func TestParseSDKMethod(t *testing.T) {
+	pkg, method, ok := ParseSDKMethod("chat.stream")
+	if !ok || pkg != "chat" || method != "stream" {
+		t.Fatalf("unexpected parsed sdk method: pkg=%q method=%q ok=%v", pkg, method, ok)
+	}
+
+	pkg, method, ok = ParseSDKMethod("create")
+	if !ok || pkg != "" || method != "create" {
+		t.Fatalf("unexpected parsed sdk method without package: pkg=%q method=%q ok=%v", pkg, method, ok)
+	}
+
+	if _, _, ok := ParseSDKMethod("a.b.c"); ok {
+		t.Fatal("expected invalid sdk method with more than one dot")
+	}
+	if _, _, ok := ParseSDKMethod(".create"); ok {
+		t.Fatal("expected invalid sdk method")
+	}
+}

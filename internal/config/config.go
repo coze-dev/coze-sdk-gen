@@ -24,10 +24,11 @@ type Copy struct {
 }
 
 type APIConfig struct {
-	Packages          []Package                    `yaml:"packages"`
-	OperationMappings []OperationMapping           `yaml:"operation_mappings"`
-	IgnoreOperations  []OperationRef               `yaml:"ignore_operations"`
-	FieldAliases      map[string]map[string]string `yaml:"field_aliases"`
+	Packages           []Package                    `yaml:"packages"`
+	OperationMappings  []OperationMapping           `yaml:"operation_mappings"`
+	IgnoreOperations   []OperationRef               `yaml:"ignore_operations"`
+	GenerateOnlyMapped bool                         `yaml:"generate_only_mapped"`
+	FieldAliases       map[string]map[string]string `yaml:"field_aliases"`
 }
 
 type Package struct {
@@ -149,6 +150,73 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+func (c *Config) IsIgnored(path string, method string) bool {
+	method = normalizeMethod(method)
+	for _, ref := range c.API.IgnoreOperations {
+		if ref.Path == path && normalizeMethod(ref.Method) == method {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Config) FindOperationMappings(path string, method string) []OperationMapping {
+	method = normalizeMethod(method)
+	result := make([]OperationMapping, 0)
+	for _, mapping := range c.API.OperationMappings {
+		if mapping.Path == path && normalizeMethod(mapping.Method) == method {
+			result = append(result, mapping)
+		}
+	}
+	return result
+}
+
+func (c *Config) ResolvePackage(path string, preferred string) (Package, bool) {
+	if preferred != "" {
+		for _, pkg := range c.API.Packages {
+			if pkg.Name == preferred {
+				return pkg, true
+			}
+		}
+	}
+
+	var (
+		found      bool
+		best       Package
+		bestPrefix string
+	)
+	for _, pkg := range c.API.Packages {
+		for _, prefix := range pkg.PathPrefixes {
+			if strings.HasPrefix(path, prefix) {
+				if !found || len(prefix) > len(bestPrefix) {
+					best = pkg
+					bestPrefix = prefix
+					found = true
+				}
+			}
+		}
+	}
+	return best, found
+}
+
+func ParseSDKMethod(value string) (string, string, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "", "", false
+	}
+	parts := strings.Split(value, ".")
+	if len(parts) == 1 {
+		return "", parts[0], true
+	}
+	if len(parts) == 2 {
+		if parts[0] == "" || parts[1] == "" {
+			return "", "", false
+		}
+		return parts[0], parts[1], true
+	}
+	return "", "", false
 }
 
 func (c *Config) ValidateAgainstSwagger(doc *openapi.Document) ValidationReport {

@@ -1,31 +1,152 @@
+openapi: 3.0.0
+components:
+  parameters:
+    workspace_id:
+      name: workspace_id
+      in: path
+      required: true
+      schema:
+        type: string
+  requestBodies:
+    ChatRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OpenApiChatReq'
+  responses:
+    ChatResponse:
+      description: chat response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OpenApiChatResp'
+  schemas:
+    OpenApiChatReq:
+      type: object
+      required:
+        - bot_id
+      properties:
+        bot_id:
+          type: string
+        conversation_id:
+          type: string
+        stream:
+          type: boolean
+    OpenApiChatResp:
+      type: object
+      properties:
+        id:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenApiMessage'
+    OpenApiMessage:
+      type: object
+      properties:
+        content:
+          type: string
+        role:
+          type: string
+    OpenApiWorkspace:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    OpenApiWorkspaceListResp:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenApiWorkspace'
 paths:
   /v3/chat:
     post:
       operationId: OpenApiChat
-      summary: 发送对话
+      summary: send chat
       tags:
         - chat
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+      requestBody:
+        $ref: '#/components/requestBodies/ChatRequest'
+      responses:
+        "200":
+          $ref: '#/components/responses/ChatResponse'
   /v3/chat/cancel:
     post:
       operationId: OpenApiChatCancel
-      summary: 取消对话
+      summary: cancel chat
       tags:
         - chat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chat_id:
+                  type: string
+      responses:
+        "204":
+          description: no content
   /v3/chat/message/list:
     get:
       operationId: OpenApiChatMessageList
-      summary: 查看消息
+      summary: list messages
       tags:
         - chat
+      parameters:
+        - name: conversation_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OpenApiMessage'
   /v1/workflows/chat:
     post:
       operationId: OpenAPIWorkFlowChat
-      summary: 工作流对话
+      summary: workflow chat
       tags:
         - workflow
-  /v1/workspaces:
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenApiChatResp'
+  /v1/workspaces/{workspace_id}:
+    parameters:
+      - $ref: '#/components/parameters/workspace_id'
     get:
-      operationId: OpenAPIWorkspacesList
-      summary: 工作空间列表
+      operationId: OpenAPIWorkspacesRetrieve
+      summary: workspace retrieve
       tags:
         - workspace
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenApiWorkspaceListResp'

@@ -67,6 +67,81 @@ func TestPathsWithPrefix(t *testing.T) {
 	}
 }
 
+func TestOperationDetailsAndSchemaResolution(t *testing.T) {
+	doc, err := Load(filepath.Join("testdata", "swagger_fragment.yaml"))
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	details, ok := doc.OperationDetails("/v3/chat", "post")
+	if !ok {
+		t.Fatal("expected operation details")
+	}
+	if details.RequestBodySchema == nil {
+		t.Fatal("expected request body schema")
+	}
+	if details.ResponseSchema == nil {
+		t.Fatal("expected response schema")
+	}
+	if details.RequestBodyContentType != "application/json" {
+		t.Fatalf("unexpected request content type: %s", details.RequestBodyContentType)
+	}
+	if details.ResponseContentType != "application/json" {
+		t.Fatalf("unexpected response content type: %s", details.ResponseContentType)
+	}
+	if len(details.QueryParameters) != 1 {
+		t.Fatalf("expected 1 query param, got %d", len(details.QueryParameters))
+	}
+
+	workspaceDetails, ok := doc.OperationDetails("/v1/workspaces/{workspace_id}", "get")
+	if !ok {
+		t.Fatal("expected workspace details")
+	}
+	if len(workspaceDetails.PathParameters) != 1 {
+		t.Fatalf("expected 1 path param, got %d", len(workspaceDetails.PathParameters))
+	}
+	if workspaceDetails.PathParameters[0].Name != "workspace_id" {
+		t.Fatalf("unexpected path param name: %s", workspaceDetails.PathParameters[0].Name)
+	}
+
+	if _, ok := doc.ResolveSchemaRef("#/components/schemas/OpenApiChatReq"); !ok {
+		t.Fatal("expected to resolve OpenApiChatReq")
+	}
+	if _, ok := doc.ResolveSchemaRef("#/components/schemas/NotExist"); ok {
+		t.Fatal("did not expect to resolve missing schema")
+	}
+
+	refs := doc.CollectSchemaRefsFromOperation(*details)
+	if len(refs) == 0 {
+		t.Fatal("expected schema refs from operation")
+	}
+	foundReq := false
+	foundResp := false
+	for _, ref := range refs {
+		if ref == "OpenApiChatReq" {
+			foundReq = true
+		}
+		if ref == "OpenApiChatResp" {
+			foundResp = true
+		}
+	}
+	if !foundReq || !foundResp {
+		t.Fatalf("expected req/resp refs, got %v", refs)
+	}
+}
+
+func TestListOperationDetails(t *testing.T) {
+	doc, err := Load(filepath.Join("testdata", "swagger_fragment.yaml"))
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	details := doc.ListOperationDetails()
+	if len(details) != 5 {
+		t.Fatalf("expected 5 operation details, got %d", len(details))
+	}
+}
+
 func TestParseInvalidYAML(t *testing.T) {
 	if _, err := Parse([]byte("paths: [")); err == nil {
 		t.Fatal("expected Parse() to fail for invalid yaml")
@@ -112,5 +187,125 @@ paths:
 func TestLoadMissingFile(t *testing.T) {
 	if _, err := Load(filepath.Join("testdata", "missing.yaml")); err == nil {
 		t.Fatal("expected error for missing file")
+	}
+}
+
+func TestSelectResponseAndContentTypeHelpers(t *testing.T) {
+	response := selectResponse(map[string]*Response{
+		"default": {Description: "default"},
+		"201":     {Description: "created"},
+		"200":     {Description: "ok"},
+	})
+	if response == nil || response.Description != "ok" {
+		t.Fatalf("expected 200 response first, got %#v", response)
+	}
+
+	response = selectResponse(map[string]*Response{
+		"418": {Description: "teapot"},
+		"500": {Description: "server"},
+	})
+	if response == nil || response.Description != "teapot" {
+		t.Fatalf("expected smallest numeric code response, got %#v", response)
+	}
+
+	response = selectResponse(map[string]*Response{
+		"x-custom": {Description: "custom"},
+		"a-custom": {Description: "custom2"},
+	})
+	if response == nil || response.Description != "custom2" {
+		t.Fatalf("expected lexical fallback response, got %#v", response)
+	}
+
+	contentType, _ := selectContentType(map[string]*MediaType{
+		"text/event-stream": {},
+		"application/json":  {},
+	})
+	if contentType != "application/json" {
+		t.Fatalf("expected application/json priority, got %s", contentType)
+	}
+
+	contentType, _ = selectContentType(map[string]*MediaType{
+		"application/xml": {},
+	})
+	if contentType != "application/xml" {
+		t.Fatalf("expected lexical content-type fallback, got %s", contentType)
+	}
+
+	contentType, mediaType := selectContentType(nil)
+	if contentType != "" || mediaType != nil {
+		t.Fatalf("expected empty content-type and nil media, got %q %#v", contentType, mediaType)
+	}
+}
+
+func TestResolveHelpersWithRefs(t *testing.T) {
+	doc, err := Parse([]byte(`
+components:
+  parameters:
+    q:
+      name: q
+      in: query
+      schema:
+        type: string
+  requestBodies:
+    Body:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+  responses:
+    Resp:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              ok:
+                type: boolean
+  schemas:
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	param := doc.resolveParameter(&Parameter{Ref: "#/components/parameters/q"})
+	if param == nil || param.Name != "q" {
+		t.Fatalf("unexpected resolved param: %#v", param)
+	}
+	if got := doc.resolveParameter(&Parameter{Ref: "#/components/parameters/missing"}); got == nil || got.Ref == "" {
+		t.Fatalf("expected unresolved param to be returned as-is, got %#v", got)
+	}
+
+	body := doc.resolveRequestBody(&RequestBody{Ref: "#/components/requestBodies/Body"})
+	if body == nil || len(body.Content) != 1 {
+		t.Fatalf("unexpected resolved body: %#v", body)
+	}
+	resp := doc.resolveResponse(&Response{Ref: "#/components/responses/Resp"})
+	if resp == nil || len(resp.Content) != 1 {
+		t.Fatalf("unexpected resolved response: %#v", resp)
+	}
+
+	if name, ok := doc.SchemaName(&Schema{Ref: "#/components/schemas/Item"}); !ok || name != "Item" {
+		t.Fatalf("unexpected schema name from ref: name=%q ok=%v", name, ok)
+	}
+	if name, ok := doc.SchemaName(doc.Components.Schemas["Item"]); !ok || name != "Item" {
+		t.Fatalf("unexpected schema name from pointer: name=%q ok=%v", name, ok)
+	}
+	if _, ok := doc.SchemaName(&Schema{}); ok {
+		t.Fatal("did not expect schema name for anonymous schema")
+	}
+
+	if _, ok := refName("#/components/schemas/Item", "#/components/schemas/"); !ok {
+		t.Fatal("expected refName success")
+	}
+	if _, ok := refName("Item", "#/components/schemas/"); ok {
+		t.Fatal("did not expect refName success for invalid ref")
 	}
 }
