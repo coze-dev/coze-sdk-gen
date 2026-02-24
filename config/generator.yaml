@@ -380,6 +380,283 @@ api:
         - create
       path_prefixes:
         - /v1/audio/transcriptions
+    - name: audio_live
+      source_dir: cozepy/audio/live
+      allow_missing_in_swagger: true
+      disable_auto_imports: true
+      client_class: LiveClient
+      async_client_class: AsyncLiveClient
+      raw_imports:
+        - |
+          from enum import Enum
+          from typing import List
+
+          from cozepy.model import CozeModel
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+      model_schemas:
+        - name: LiveType
+          allow_missing_in_swagger: true
+          enum_values:
+            - name: ORIGIN
+              value: origin
+            - name: TRANSLATION
+              value: translation
+        - name: StreamInfo
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: stream_id
+              type: str
+              required: true
+            - name: name
+              type: str
+              required: true
+            - name: live_type
+              type: LiveType
+              required: true
+        - name: LiveInfo
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: app_id
+              type: str
+              required: true
+            - name: stream_infos
+              type: List[StreamInfo]
+              required: true
+      sync_method_order:
+        - retrieve
+      async_method_order:
+        - retrieve
+      path_prefixes:
+        - /v1/audio/live
+    - name: audio_voiceprint_groups
+      source_dir: cozepy/audio/voiceprint_groups
+      allow_missing_in_swagger: true
+      disable_auto_imports: true
+      blank_line_before_child_inits: true
+      client_class: VoiceprintGroupsClient
+      async_client_class: AsyncVoiceprintGroupsClient
+      override_pagination_classes:
+        - _PrivateListVoicePrintGroupData
+      raw_imports:
+        - |
+          from typing import TYPE_CHECKING, List, Optional
+
+          from cozepy.audio.voiceprint_groups.features import UserInfo
+          from cozepy.files import FileTypes, _try_fix_file
+          from cozepy.model import AsyncNumberPaged, CozeModel, HTTPRequest, NumberPaged, NumberPagedResponse
+          from cozepy.request import Requester
+          from cozepy.util import remove_none_values, remove_url_trailing_slash
+      child_clients:
+        - attribute: features
+          module: .features
+          sync_class: VoiceprintGroupsFeaturesClient
+          async_class: AsyncVoiceprintGroupsFeaturesClient
+          nil_check: is_none
+          init_with_keywords: true
+      model_schemas:
+        - name: CreateVoicePrintGroupResp
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: id
+              type: str
+              required: true
+        - name: UpdateVoicePrintGroupResp
+          allow_missing_in_swagger: true
+        - name: DeleteVoicePrintGroupResp
+          allow_missing_in_swagger: true
+        - name: VoicePrintGroup
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: id
+              type: str
+              required: true
+            - name: name
+              type: str
+              required: true
+            - name: desc
+              type: str
+              required: true
+            - name: created_at
+              type: int
+              required: true
+            - name: updated_at
+              type: int
+              required: true
+            - name: icon_url
+              type: str
+              required: true
+            - name: feature_count
+              type: int
+              required: true
+            - name: user_info
+              type: UserInfo
+              required: true
+        - name: FeatureScore
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: feature_id
+              type: str
+              required: true
+            - name: feature_name
+              type: str
+              required: true
+            - name: feature_desc
+              type: str
+              required: true
+            - name: score
+              type: float
+              required: true
+        - name: SpeakerIdentifyResp
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: feature_score_list
+              type: List[FeatureScore]
+              required: true
+        - name: _PrivateListVoicePrintGroupData
+          allow_missing_in_swagger: true
+          base_classes:
+            - CozeModel
+            - NumberPagedResponse[VoicePrintGroup]
+          extra_fields:
+            - name: items
+              type: List[VoicePrintGroup]
+              required: true
+            - name: total
+              type: int
+              required: true
+          extra_code:
+            - |
+              def get_total(self) -> Optional[int]:
+                  return self.total
+
+              def get_has_more(self) -> Optional[bool]:
+                  return None
+
+              def get_items(self) -> List[VoicePrintGroup]:
+                  return self.items
+      sync_method_order:
+        - features
+        - create
+        - update
+        - delete
+        - list
+        - speaker_identify
+      async_method_order:
+        - features
+        - create
+        - update
+        - delete
+        - list
+        - speaker_identify
+      path_prefixes:
+        - /v1/audio/voiceprint_groups
+    - name: audio_voiceprint_groups_features
+      source_dir: cozepy/audio/voiceprint_groups/features
+      allow_missing_in_swagger: true
+      disable_auto_imports: true
+      client_class: VoiceprintGroupsFeaturesClient
+      async_client_class: AsyncVoiceprintGroupsFeaturesClient
+      override_pagination_classes:
+        - _PrivateListVoicePrintGroupFeatureData
+      raw_imports:
+        - |
+          from typing import List, Optional
+
+          from cozepy.files import FileTypes, _try_fix_file
+          from cozepy.model import AsyncNumberPaged, CozeModel, HTTPRequest, NumberPaged, NumberPagedResponse
+          from cozepy.request import Requester
+          from cozepy.util import remove_none_values, remove_url_trailing_slash
+      model_schemas:
+        - name: UserInfo
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: id
+              type: str
+              required: true
+            - name: name
+              type: str
+              required: true
+            - name: nickname
+              type: str
+              required: true
+            - name: avatar_url
+              type: str
+              required: true
+        - name: VoicePrintGroupFeature
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: id
+              type: str
+              required: true
+            - name: group_id
+              type: str
+              required: true
+            - name: name
+              type: str
+              required: true
+            - name: audio_url
+              type: str
+              required: true
+            - name: created_at
+              type: int
+              required: true
+            - name: updated_at
+              type: int
+              required: true
+            - name: desc
+              type: str
+              required: true
+            - name: icon_url
+              type: str
+              required: true
+            - name: user_info
+              type: UserInfo
+              required: true
+        - name: CreateVoicePrintGroupFeatureResp
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: id
+              type: str
+              required: true
+        - name: UpdateVoicePrintGroupFeatureResp
+          allow_missing_in_swagger: true
+        - name: DeleteVoicePrintGroupFeatureResp
+          allow_missing_in_swagger: true
+        - name: _PrivateListVoicePrintGroupFeatureData
+          allow_missing_in_swagger: true
+          base_classes:
+            - CozeModel
+            - NumberPagedResponse[VoicePrintGroupFeature]
+          extra_fields:
+            - name: items
+              type: List[VoicePrintGroupFeature]
+              required: true
+            - name: total
+              type: int
+              required: true
+          extra_code:
+            - |
+              def get_total(self) -> Optional[int]:
+                  return self.total
+
+              def get_has_more(self) -> Optional[bool]:
+                  return None
+
+              def get_items(self) -> List[VoicePrintGroupFeature]:
+                  return self.items
+      sync_method_order:
+        - create
+        - update
+        - delete
+        - list
+      async_method_order:
+        - create
+        - update
+        - delete
+        - list
+      path_prefixes:
+        - /v1/audio/voiceprint_groups
     - name: audio_voices
       source_dir: cozepy/audio/voices
       disable_auto_imports: true
@@ -1736,6 +2013,39 @@ api:
           disable_type_hints: true
       path_prefixes:
         - /v1/connectors
+    - name: connectors_bots
+      source_dir: cozepy/connectors/bots
+      allow_missing_in_swagger: true
+      disable_auto_imports: true
+      client_class: ConnectorsBotsClient
+      async_client_class: AsyncConnectorsBotsClient
+      raw_imports:
+        - |
+          from enum import Enum
+          from typing import Optional
+
+          from cozepy.model import CozeModel
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+      model_schemas:
+        - name: AuditStatus
+          allow_missing_in_swagger: true
+          enum_base: int_enum
+          enum_values:
+            - name: PENDING
+              value: 1
+            - name: APPROVED
+              value: 2
+            - name: REJECTED
+              value: 3
+        - name: UpdateConnectorBotResp
+          allow_missing_in_swagger: true
+      sync_method_order:
+        - update
+      async_method_order:
+        - update
+      path_prefixes:
+        - /v1/connectors
     - name: conversations
       source_dir: cozepy/conversations
       http_request_from_model: true
@@ -2141,6 +2451,269 @@ api:
         - _PrivateListDatasetsData
       path_prefixes:
         - /v1/datasets
+    - name: datasets_documents
+      source_dir: cozepy/datasets/documents
+      disable_auto_imports: true
+      separate_commented_fields: true
+      client_class: DatasetsDocumentsClient
+      async_client_class: AsyncDatasetsDocumentsClient
+      override_pagination_classes:
+        - _PrivateListDocumentsData
+      raw_imports:
+        - |
+          from enum import IntEnum
+          from typing import List, Optional
+
+          from cozepy.model import AsyncNumberPaged, CozeModel, HTTPRequest, ListResponse, NumberPaged, NumberPagedResponse
+          from cozepy.request import Requester
+          from cozepy.util import base64_encode_string, remove_url_trailing_slash
+      model_schemas:
+        - name: DocumentChunkStrategy
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: chunk_type
+              type: Optional[int]
+              required: false
+              default: "None"
+            - name: caption_type
+              type: Optional[int]
+              required: false
+              default: "None"
+            - name: max_tokens
+              type: Optional[int]
+              required: false
+              default: "None"
+            - name: remove_extra_spaces
+              type: Optional[bool]
+              required: false
+              default: "None"
+            - name: remove_urls_emails
+              type: Optional[bool]
+              required: false
+              default: "None"
+            - name: separator
+              type: Optional[str]
+              required: false
+              default: "None"
+          extra_code:
+            - |
+              @staticmethod
+              def build_auto() -> "DocumentChunkStrategy":
+                  return DocumentChunkStrategy(chunk_type=0)
+
+              @staticmethod
+              def build_custom(
+                  max_tokens: int, separator: str, remove_extra_spaces: bool = False, remove_urls_emails: bool = False
+              ) -> "DocumentChunkStrategy":
+                  return DocumentChunkStrategy(
+                      chunk_type=1,
+                      max_tokens=max_tokens,
+                      remove_extra_spaces=remove_extra_spaces,
+                      remove_urls_emails=remove_urls_emails,
+                      separator=separator,
+                  )
+        - name: DocumentFormatType
+          allow_missing_in_swagger: true
+          enum_base: int
+          separate_commented_enum_members: true
+          enum_values:
+            - name: DOCUMENT
+              value: 0
+            - name: SPREADSHEET
+              value: 1
+            - name: IMAGE
+              value: 2
+        - name: DocumentSourceType
+          allow_missing_in_swagger: true
+          enum_base: int
+          enum_values:
+            - name: LOCAL_FILE
+              value: 0
+            - name: ONLINE_WEB
+              value: 1
+            - name: CUSTOM
+              value: 2
+            - name: THIRD_PARTY
+              value: 3
+            - name: FRONT_CRAWL
+              value: 4
+            - name: UPLOAD_FILE_ID
+              value: 5
+            - name: NOTION
+              value: 101
+            - name: GOOGLE_DRIVE
+              value: 102
+            - name: FEISHU_WEB
+              value: 103
+            - name: LARK_WEB
+              value: 104
+        - name: DocumentStatus
+          allow_missing_in_swagger: true
+          enum_base: int
+          separate_commented_enum_members: true
+          enum_values:
+            - name: PROCESSING
+              value: 0
+            - name: COMPLETED
+              value: 1
+            - name: FAILED
+              value: 9
+        - name: DocumentUpdateType
+          allow_missing_in_swagger: true
+          enum_base: int
+          separate_commented_enum_members: true
+          enum_values:
+            - name: NO_AUTO_UPDATE
+              value: 0
+            - name: AUTO_UPDATE
+              value: 1
+        - schema: DocumentInfo
+          name: Document
+          exclude_unordered_fields: true
+          required_fields:
+            - document_id
+            - char_count
+            - format_type
+            - hit_count
+            - name
+            - size
+            - slice_count
+            - source_type
+            - status
+            - type
+            - update_interval
+            - update_type
+            - create_time
+            - update_time
+          field_types:
+            chunk_strategy: Optional[DocumentChunkStrategy]
+            format_type: DocumentFormatType
+            source_type: DocumentSourceType
+            status: DocumentStatus
+            update_type: DocumentUpdateType
+          field_order:
+            - document_id
+            - char_count
+            - chunk_strategy
+            - format_type
+            - hit_count
+            - name
+            - size
+            - slice_count
+            - source_type
+            - status
+            - type
+            - update_interval
+            - update_type
+            - create_time
+            - update_time
+        - name: DocumentSourceInfo
+          allow_missing_in_swagger: true
+          blank_line_before_fields:
+            - source_file_id
+          extra_fields:
+            - name: file_base64
+              type: Optional[str]
+              required: false
+              default: "None"
+            - name: file_type
+              type: Optional[str]
+              required: false
+              default: "None"
+            - name: web_url
+              type: Optional[str]
+              required: false
+              default: "None"
+            - name: source_file_id
+              type: Optional[str]
+              required: false
+              default: "None"
+            - name: document_source
+              type: Optional[DocumentSourceType]
+              required: false
+              default: "None"
+          extra_code:
+            - |
+              @staticmethod
+              def build_local_file(content: str, file_type: str = "txt") -> "DocumentSourceInfo":
+                  return DocumentSourceInfo(file_base64=base64_encode_string(content), file_type=file_type)
+
+              @staticmethod
+              def build_web_page(url: str) -> "DocumentSourceInfo":
+                  return DocumentSourceInfo(web_url=url, document_source=DocumentSourceType.ONLINE_WEB)
+
+              @staticmethod
+              def build_file_id(file_id: str) -> "DocumentSourceInfo":
+                  return DocumentSourceInfo(source_file_id=file_id, document_source=DocumentSourceType.UPLOAD_FILE_ID)
+        - name: DocumentUpdateRule
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: update_type
+              type: DocumentUpdateType
+              required: true
+            - name: update_interval
+              type: int
+              required: true
+          extra_code:
+            - |
+              @staticmethod
+              def build_no_auto_update() -> "DocumentUpdateRule":
+                  return DocumentUpdateRule(update_type=DocumentUpdateType.NO_AUTO_UPDATE, update_interval=24)
+
+              @staticmethod
+              def build_auto_update(interval: int) -> "DocumentUpdateRule":
+                  return DocumentUpdateRule(update_type=DocumentUpdateType.AUTO_UPDATE, update_interval=interval)
+        - schema: DocumentBase
+          name: DocumentBase
+          exclude_unordered_fields: true
+          required_fields:
+            - name
+            - source_info
+          field_types:
+            source_info: DocumentSourceInfo
+            update_rule: Optional[DocumentUpdateRule]
+          field_order:
+            - name
+            - source_info
+            - update_rule
+        - name: UpdateDocumentRes
+          allow_missing_in_swagger: true
+        - name: DeleteDocumentRes
+          allow_missing_in_swagger: true
+        - name: _PrivateListDocumentsData
+          allow_missing_in_swagger: true
+          base_classes:
+            - CozeModel
+            - NumberPagedResponse[Document]
+          extra_fields:
+            - name: document_infos
+              type: List[Document]
+              required: true
+            - name: total
+              type: int
+              required: true
+          extra_code:
+            - |
+              def get_total(self) -> Optional[int]:
+                  return self.total
+
+              def get_has_more(self) -> Optional[bool]:
+                  return None
+
+              def get_items(self) -> List[Document]:
+                  return self.document_infos
+      sync_method_order:
+        - create
+        - update
+        - delete
+        - list
+      async_method_order:
+        - create
+        - update
+        - delete
+        - list
+      path_prefixes:
+        - /open_api/knowledge/document
     - name: datasets_images
       source_dir: cozepy/datasets/images
       http_request_from_model: true
@@ -2478,6 +3051,78 @@ api:
         - documents
       async_method_order:
         - documents
+      path_prefixes:
+        - /open_api/knowledge/document
+    - name: knowledge_documents
+      source_dir: cozepy/knowledge/documents
+      disable_auto_imports: true
+      client_class: DocumentsClient
+      async_client_class: AsyncDocumentsClient
+      override_pagination_classes:
+        - _PrivateListDocumentsData
+      raw_imports:
+        - |
+          import warnings
+          from typing import List, Optional
+
+          from cozepy.datasets.documents import (
+              Document,
+              DocumentBase,
+              DocumentChunkStrategy,
+              DocumentUpdateRule,
+          )
+          from cozepy.model import AsyncNumberPaged, CozeModel, HTTPRequest, NumberPaged, NumberPagedResponse
+          from cozepy.request import Requester
+          from cozepy.util import remove_url_trailing_slash
+      sync_init_pre_code:
+        - |
+          warnings.warn(
+              "The 'coze.knowledge.documents' module is deprecated and will be removed in a future version. "
+              "Please use 'coze.datasets' instead.",
+              DeprecationWarning,
+              stacklevel=2,
+          )
+      async_init_pre_code:
+        - |
+          warnings.warn(
+              "The 'coze.knowledge.documents' module is deprecated and will be removed in a future version. "
+              "Please use 'coze.datasets.documents' instead.",
+              DeprecationWarning,
+              stacklevel=2,
+          )
+      model_schemas:
+        - name: _PrivateListDocumentsData
+          allow_missing_in_swagger: true
+          base_classes:
+            - CozeModel
+            - NumberPagedResponse[Document]
+          extra_fields:
+            - name: document_infos
+              type: List[Document]
+              required: true
+            - name: total
+              type: int
+              required: true
+          extra_code:
+            - |
+              def get_total(self) -> Optional[int]:
+                  return self.total
+
+              def get_has_more(self) -> Optional[bool]:
+                  return None
+
+              def get_items(self) -> List[Document]:
+                  return self.document_infos
+      sync_method_order:
+        - create
+        - update
+        - delete
+        - list
+      async_method_order:
+        - create
+        - update
+        - delete
+        - list
       path_prefixes:
         - /open_api/knowledge/document
     - name: templates
@@ -4101,6 +4746,431 @@ api:
       response_type: ListResponse[DocumentProgress]
       response_cast: ListResponse[DocumentProgress]
       data_field: data.data
+    - path: /v1/connectors/{connector_id}/bots/{bot_id}
+      method: put
+      order: 651
+      sdk_methods:
+        - connectors_bots.update
+      allow_missing_in_swagger: true
+      body_builder: raw
+      body_fields:
+        - audit_status
+        - reason
+      arg_types:
+        bot_id: str
+        connector_id: str
+        audit_status: Optional[AuditStatus]
+        reason: Optional[str]
+      signature_args:
+        - bot_id
+        - connector_id
+        - audit_status
+        - reason
+      use_kwargs_headers: true
+      headers_before_body: true
+      blank_line_after_headers: true
+      response_type: UpdateConnectorBotResp
+      response_cast: UpdateConnectorBotResp
+    - path: /open_api/knowledge/document/create
+      method: post
+      order: 652
+      sdk_methods:
+        - datasets_documents.create
+      sync_only: true
+      body_builder: raw
+      ignore_header_params: true
+      disable_headers_arg: true
+      headers_expr: '{"Agw-Js-Conv": "str"}'
+      headers_before_body: true
+      body_fields:
+        - dataset_id
+        - document_bases
+        - chunk_strategy
+        - format_type
+      body_required_fields:
+        - dataset_id
+        - document_bases
+      body_field_values:
+        document_bases: "[i.model_dump() for i in document_bases]"
+        chunk_strategy: "chunk_strategy.model_dump() if chunk_strategy else None"
+      arg_types:
+        dataset_id: str
+        document_bases: List[DocumentBase]
+        chunk_strategy: Optional[DocumentChunkStrategy]
+        format_type: Optional[DocumentFormatType]
+      signature_args:
+        - dataset_id
+        - document_bases
+        - chunk_strategy
+        - format_type
+      arg_defaults_sync:
+        format_type: "DocumentFormatType.DOCUMENT"
+      response_type: ListResponse[Document]
+      response_cast: ListResponse[Document]
+      data_field: document_infos
+    - path: /open_api/knowledge/document/create
+      method: post
+      order: 653
+      sdk_methods:
+        - datasets_documents.create
+      async_only: true
+      body_builder: raw
+      ignore_header_params: true
+      disable_headers_arg: true
+      headers_expr: '{"Agw-Js-Conv": "str"}'
+      headers_before_body: true
+      body_fields:
+        - dataset_id
+        - document_bases
+        - chunk_strategy
+      body_required_fields:
+        - dataset_id
+        - document_bases
+      body_field_values:
+        document_bases: "[i.model_dump() for i in document_bases]"
+        chunk_strategy: "chunk_strategy.model_dump() if chunk_strategy else None"
+      arg_types:
+        dataset_id: str
+        document_bases: List[DocumentBase]
+        chunk_strategy: Optional[DocumentChunkStrategy]
+      signature_args:
+        - dataset_id
+        - document_bases
+        - chunk_strategy
+      response_type: ListResponse[Document]
+      response_cast: ListResponse[Document]
+      data_field: document_infos
+    - path: /open_api/knowledge/document/update
+      method: post
+      order: 654
+      sdk_methods:
+        - datasets_documents.update
+      allow_missing_in_swagger: true
+      body_builder: raw
+      ignore_header_params: true
+      disable_headers_arg: true
+      headers_expr: '{"Agw-Js-Conv": "str"}'
+      headers_before_body: true
+      body_fields:
+        - document_id
+        - document_name
+        - update_rule
+      body_required_fields:
+        - document_id
+      arg_types:
+        document_id: str
+        document_name: str
+        update_rule: Optional[DocumentUpdateRule]
+      force_multiline_request_call: true
+      cast_keyword: true
+      response_type: UpdateDocumentRes
+      response_cast: UpdateDocumentRes
+    - path: /open_api/knowledge/document/delete
+      method: post
+      order: 655
+      sdk_methods:
+        - datasets_documents.delete
+      body_builder: raw
+      ignore_header_params: true
+      disable_headers_arg: true
+      headers_expr: '{"Agw-Js-Conv": "str"}'
+      headers_before_body: true
+      body_fields:
+        - document_ids
+      arg_types:
+        document_ids: List[str]
+      force_multiline_request_call: true
+      cast_keyword: true
+      response_type: DeleteDocumentRes
+      response_cast: DeleteDocumentRes
+    - path: /open_api/knowledge/document/list
+      method: post
+      order: 656
+      sdk_methods:
+        - datasets_documents.list
+      disable_request_body: true
+      query_builder: raw
+      ignore_header_params: true
+      disable_headers_arg: true
+      headers_expr: '{"Agw-Js-Conv": "str"}'
+      param_aliases:
+        page: page_num
+        size: page_size
+      signature_query_fields:
+        - dataset_id
+        - page_num
+        - page_size
+      query_fields:
+        - name: dataset_id
+          type: str
+          required: true
+        - name: page
+          type: int
+          required: true
+          default: "1"
+        - name: size
+          type: int
+          required: true
+          default: "10"
+      pagination: number
+      pagination_request_arg: json
+      pagination_data_class: _PrivateListDocumentsData
+      pagination_item_type: Document
+      pagination_items_field: document_infos
+      pagination_total_field: total
+      pagination_page_num_field: page
+      pagination_page_size_field: size
+      pagination_headers_before_params: true
+      response_type: NumberPaged[Document]
+      async_response_type: AsyncNumberPaged[Document]
+    - path: /open_api/knowledge/document/create
+      method: post
+      order: 657
+      sdk_methods:
+        - knowledge_documents.create
+      sync_only: true
+      body_builder: raw
+      ignore_header_params: true
+      disable_headers_arg: true
+      headers_expr: '{"Agw-Js-Conv": "str"}'
+      headers_before_body: true
+      body_fields:
+        - dataset_id
+        - document_bases
+        - chunk_strategy
+      body_required_fields:
+        - dataset_id
+        - document_bases
+      body_field_values:
+        document_bases: "[i.model_dump() for i in document_bases]"
+        chunk_strategy: "chunk_strategy.model_dump() if chunk_strategy else None"
+      arg_types:
+        dataset_id: str
+        document_bases: List[DocumentBase]
+        chunk_strategy: Optional[DocumentChunkStrategy]
+      signature_args:
+        - dataset_id
+        - document_bases
+        - chunk_strategy
+      pre_docstring_code:
+        - |
+          warnings.warn(
+              "The 'coze.knowledge.documents.create' method is deprecated and will be removed in a future version. "
+              "Please use 'coze.datasets.documents.create' instead.",
+              DeprecationWarning,
+              stacklevel=2,
+          )
+      response_type: List[Document]
+      response_cast: "[Document]"
+      data_field: document_infos
+    - path: /open_api/knowledge/document/create
+      method: post
+      order: 658
+      sdk_methods:
+        - knowledge_documents.create
+      async_only: true
+      body_builder: raw
+      ignore_header_params: true
+      disable_headers_arg: true
+      headers_expr: '{"Agw-Js-Conv": "str"}'
+      headers_before_body: true
+      body_fields:
+        - dataset_id
+        - document_bases
+        - chunk_strategy
+      body_required_fields:
+        - dataset_id
+        - document_bases
+      body_field_values:
+        document_bases: "[i.model_dump() for i in document_bases]"
+        chunk_strategy: "chunk_strategy.model_dump() if chunk_strategy else None"
+      arg_types:
+        dataset_id: str
+        document_bases: List[DocumentBase]
+        chunk_strategy: Optional[DocumentChunkStrategy]
+      signature_args:
+        - dataset_id
+        - document_bases
+        - chunk_strategy
+      pre_docstring_code:
+        - |
+          warnings.warn(
+              "The 'coze.knowledge.documents.create' method is deprecated and will be removed in a future version. "
+              "Please use 'coze.datasets.documents.create' instead.",
+              DeprecationWarning,
+              stacklevel=2,
+          )
+      response_type: List[Document]
+      response_cast: "[Document]"
+      data_field: document_infos
+    - path: /open_api/knowledge/document/update
+      method: post
+      order: 659
+      sdk_methods:
+        - knowledge_documents.update
+      sync_only: true
+      allow_missing_in_swagger: true
+      body_builder: raw
+      ignore_header_params: true
+      disable_headers_arg: true
+      headers_expr: '{"Agw-Js-Conv": "str"}'
+      headers_before_body: true
+      body_fields:
+        - document_id
+        - document_name
+        - update_rule
+      body_required_fields:
+        - document_id
+      arg_types:
+        document_id: str
+        document_name: str
+        update_rule: Optional[DocumentUpdateRule]
+      pre_docstring_code:
+        - |
+          warnings.warn(
+              "The 'coze.knowledge.documents.update' method is deprecated and will be removed in a future version. "
+              "Please use 'coze.datasets.documents.update' instead.",
+              DeprecationWarning,
+              stacklevel=2,
+          )
+      force_multiline_request_call: true
+      response_type: None
+      response_cast: None
+    - path: /open_api/knowledge/document/update
+      method: post
+      order: 660
+      sdk_methods:
+        - knowledge_documents.update
+      async_only: true
+      allow_missing_in_swagger: true
+      body_builder: raw
+      ignore_header_params: true
+      disable_headers_arg: true
+      headers_expr: '{"Agw-Js-Conv": "str"}'
+      headers_before_body: true
+      body_fields:
+        - document_id
+        - document_name
+        - update_rule
+      body_required_fields:
+        - document_id
+      arg_types:
+        document_id: str
+        document_name: str
+        update_rule: Optional[DocumentUpdateRule]
+      pre_docstring_code:
+        - |
+          warnings.warn(
+              "The 'coze.knowledge.documents.update' method is deprecated and will be removed in a future version. "
+              "Please use 'coze.datasets.documents.update' instead.",
+              DeprecationWarning,
+              stacklevel=2,
+          )
+      force_multiline_request_call: true
+      cast_keyword: true
+      response_type: None
+      response_cast: None
+    - path: /open_api/knowledge/document/delete
+      method: post
+      order: 661
+      sdk_methods:
+        - knowledge_documents.delete
+      sync_only: true
+      body_builder: raw
+      ignore_header_params: true
+      disable_headers_arg: true
+      headers_expr: '{"Agw-Js-Conv": "str"}'
+      headers_before_body: true
+      body_fields:
+        - document_ids
+      arg_types:
+        document_ids: List[str]
+      pre_docstring_code:
+        - |
+          warnings.warn(
+              "The 'coze.knowledge.documents.delete' method is deprecated and will be removed in a future version. "
+              "Please use 'coze.datasets.documents.delete' instead.",
+              DeprecationWarning,
+              stacklevel=2,
+          )
+      force_multiline_request_call: true
+      response_type: None
+      response_cast: None
+    - path: /open_api/knowledge/document/delete
+      method: post
+      order: 662
+      sdk_methods:
+        - knowledge_documents.delete
+      async_only: true
+      body_builder: raw
+      ignore_header_params: true
+      disable_headers_arg: true
+      headers_expr: '{"Agw-Js-Conv": "str"}'
+      headers_before_body: true
+      body_fields:
+        - document_ids
+      arg_types:
+        document_ids: List[str]
+      pre_docstring_code:
+        - |
+          warnings.warn(
+              "The 'coze.knowledge.documents.delete' method is deprecated and will be removed in a future version. "
+              "Please use 'coze.datasets.documents.delete' instead.",
+              DeprecationWarning,
+              stacklevel=2,
+          )
+      force_multiline_request_call: true
+      cast_keyword: true
+      response_type: None
+      response_cast: None
+    - path: /open_api/knowledge/document/list
+      method: post
+      order: 663
+      sdk_methods:
+        - knowledge_documents.list
+      disable_request_body: true
+      query_builder: raw
+      ignore_header_params: true
+      disable_headers_arg: true
+      headers_expr: '{"Agw-Js-Conv": "str"}'
+      param_aliases:
+        page: page_num
+        size: page_size
+      signature_query_fields:
+        - dataset_id
+        - page_num
+        - page_size
+      query_fields:
+        - name: dataset_id
+          type: str
+          required: true
+        - name: page
+          type: int
+          required: true
+          default: "1"
+        - name: size
+          type: int
+          required: true
+          default: "10"
+      pre_docstring_code:
+        - |
+          warnings.warn(
+              "The 'coze.knowledge.documents.list' method is deprecated and will be removed in a future version. "
+              "Please use 'coze.datasets.documents.list' instead.",
+              DeprecationWarning,
+              stacklevel=2,
+          )
+      pagination: number
+      pagination_request_arg: json
+      pagination_data_class: _PrivateListDocumentsData
+      pagination_item_type: Document
+      pagination_items_field: document_infos
+      pagination_total_field: total
+      pagination_page_num_field: page
+      pagination_page_size_field: size
+      pagination_headers_before_params: true
+      response_type: NumberPaged[Document]
+      async_response_type: AsyncNumberPaged[Document]
     - path: /v1/bot/create
       method: post
       order: 66
@@ -4486,6 +5556,277 @@ api:
       cast_keyword: true
       response_type: CreateTranscriptionsResp
       response_cast: CreateTranscriptionsResp
+    - path: /v1/audio/live/{live_id}
+      method: get
+      order: 830
+      sdk_methods:
+        - audio_live.retrieve
+      allow_missing_in_swagger: true
+      disable_request_body: true
+      disable_headers_arg: true
+      stream_keyword: true
+      cast_keyword: true
+      force_multiline_signature: true
+      response_type: LiveInfo
+      response_cast: LiveInfo
+    - path: /v1/audio/voiceprint_groups
+      method: post
+      order: 831
+      sdk_methods:
+        - audio_voiceprint_groups.create
+      allow_missing_in_swagger: true
+      body_builder: remove_none_values
+      body_fields:
+        - name
+        - desc
+      body_required_fields:
+        - name
+      arg_types:
+        name: str
+        desc: str
+      use_kwargs_headers: true
+      headers_before_body: true
+      blank_line_before_return: true
+      cast_keyword: true
+      force_multiline_signature: true
+      response_type: CreateVoicePrintGroupResp
+      response_cast: CreateVoicePrintGroupResp
+    - path: /v1/audio/voiceprint_groups/{group_id}
+      method: put
+      order: 832
+      sdk_methods:
+        - audio_voiceprint_groups.update
+      allow_missing_in_swagger: true
+      body_builder: remove_none_values
+      body_fields:
+        - name
+        - desc
+      arg_types:
+        group_id: str
+        name: str
+        desc: str
+      use_kwargs_headers: true
+      headers_before_body: true
+      blank_line_before_return: true
+      cast_keyword: true
+      force_multiline_signature: true
+      response_type: UpdateVoicePrintGroupResp
+      response_cast: UpdateVoicePrintGroupResp
+    - path: /v1/audio/voiceprint_groups/{group_id}
+      method: delete
+      order: 833
+      sdk_methods:
+        - audio_voiceprint_groups.delete
+      allow_missing_in_swagger: true
+      disable_request_body: true
+      use_kwargs_headers: true
+      cast_keyword: true
+      force_multiline_signature: true
+      response_type: DeleteVoicePrintGroupResp
+      response_cast: DeleteVoicePrintGroupResp
+    - path: /v1/audio/voiceprint_groups
+      method: get
+      order: 834
+      sdk_methods:
+        - audio_voiceprint_groups.list
+      allow_missing_in_swagger: true
+      query_builder: remove_none_values
+      signature_query_fields:
+        - name
+        - group_id
+        - user_id
+        - page_num
+        - page_size
+      query_fields:
+        - name: name
+          type: str
+          required: false
+        - name: group_id
+          type: str
+          required: false
+        - name: user_id
+          type: str
+          required: false
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
+        - name: page_size
+          type: int
+          required: true
+          default: "10"
+      pagination: number
+      pagination_data_class: _PrivateListVoicePrintGroupData
+      pagination_item_type: VoicePrintGroup
+      pagination_items_field: items
+      pagination_total_field: total
+      pagination_page_num_field: page_num
+      pagination_page_size_field: page_size
+      disable_headers_arg: true
+      arg_defaults_async:
+        page_size: "100"
+      response_type: NumberPaged[VoicePrintGroup]
+      async_response_type: AsyncNumberPaged[VoicePrintGroup]
+    - path: /v1/audio/voiceprint_groups/{group_id}/speaker_identify
+      method: post
+      order: 835
+      sdk_methods:
+        - audio_voiceprint_groups.speaker_identify
+      allow_missing_in_swagger: true
+      body_builder: remove_none_values
+      body_fields:
+        - top_k
+        - sample_rate
+        - channel
+      body_required_fields:
+        - file
+      files_fields:
+        - file
+      files_field_values:
+        file: _try_fix_file(file)
+      arg_types:
+        group_id: str
+        file: FileTypes
+        top_k: int
+        sample_rate: int
+        channel: int
+      signature_args:
+        - group_id
+        - file
+        - top_k
+        - sample_rate
+        - channel
+      use_kwargs_headers: true
+      headers_before_body: true
+      files_before_body: true
+      blank_line_before_return: true
+      cast_keyword: true
+      force_multiline_signature: true
+      response_type: SpeakerIdentifyResp
+      response_cast: SpeakerIdentifyResp
+    - path: /v1/audio/voiceprint_groups/{group_id}/features
+      method: post
+      order: 836
+      sdk_methods:
+        - audio_voiceprint_groups_features.create
+      allow_missing_in_swagger: true
+      body_builder: remove_none_values
+      body_fields:
+        - name
+        - desc
+        - sample_rate
+        - channel
+      body_required_fields:
+        - name
+        - file
+      files_fields:
+        - file
+      files_field_values:
+        file: _try_fix_file(file)
+      arg_types:
+        group_id: str
+        name: str
+        file: FileTypes
+        desc: str
+        sample_rate: int
+        channel: int
+      signature_args:
+        - group_id
+        - name
+        - file
+        - desc
+        - sample_rate
+        - channel
+      use_kwargs_headers: true
+      headers_before_body: true
+      files_before_body: true
+      blank_line_before_return: true
+      cast_keyword: true
+      force_multiline_signature: true
+      response_type: CreateVoicePrintGroupFeatureResp
+      response_cast: CreateVoicePrintGroupFeatureResp
+    - path: /v1/audio/voiceprint_groups/{group_id}/features/{feature_id}
+      method: put
+      order: 837
+      sdk_methods:
+        - audio_voiceprint_groups_features.update
+      allow_missing_in_swagger: true
+      body_builder: remove_none_values
+      body_fields:
+        - name
+        - desc
+        - sample_rate
+        - channel
+      files_fields:
+        - file
+      files_expr: '{"file": _try_fix_file(file)} if file else {}'
+      arg_types:
+        group_id: str
+        feature_id: str
+        name: str
+        desc: str
+        file: Optional[FileTypes]
+        sample_rate: int
+        channel: int
+      signature_args:
+        - group_id
+        - feature_id
+        - name
+        - desc
+        - file
+        - sample_rate
+        - channel
+      use_kwargs_headers: true
+      headers_before_body: true
+      files_before_body: true
+      blank_line_before_return: true
+      cast_keyword: true
+      force_multiline_signature: true
+      response_type: UpdateVoicePrintGroupFeatureResp
+      response_cast: UpdateVoicePrintGroupFeatureResp
+    - path: /v1/audio/voiceprint_groups/{group_id}/features/{feature_id}
+      method: delete
+      order: 838
+      sdk_methods:
+        - audio_voiceprint_groups_features.delete
+      allow_missing_in_swagger: true
+      disable_request_body: true
+      use_kwargs_headers: true
+      cast_keyword: true
+      force_multiline_signature: true
+      response_type: DeleteVoicePrintGroupFeatureResp
+      response_cast: DeleteVoicePrintGroupFeatureResp
+    - path: /v1/audio/voiceprint_groups/{group_id}/features
+      method: get
+      order: 839
+      sdk_methods:
+        - audio_voiceprint_groups_features.list
+      allow_missing_in_swagger: true
+      query_builder: remove_none_values
+      signature_query_fields:
+        - page_num
+        - page_size
+      query_fields:
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
+        - name: page_size
+          type: int
+          required: true
+          default: "10"
+      pagination: number
+      pagination_data_class: _PrivateListVoicePrintGroupFeatureData
+      pagination_item_type: VoicePrintGroupFeature
+      pagination_items_field: items
+      pagination_total_field: total
+      pagination_page_num_field: page_num
+      pagination_page_size_field: page_size
+      disable_headers_arg: true
+      arg_defaults_async:
+        page_size: "100"
+      response_type: NumberPaged[VoicePrintGroupFeature]
+      async_response_type: AsyncNumberPaged[VoicePrintGroupFeature]
     - path: /v1/audio/voices
       method: get
       order: 82

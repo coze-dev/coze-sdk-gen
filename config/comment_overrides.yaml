@@ -1,4 +1,6 @@
 class_docstrings:
+  cozepy.audio.live.AsyncLiveClient: Room service async client.
+  cozepy.audio.live.LiveClient: Live service client.
   cozepy.audio.rooms.AsyncRoomsClient: Room service async client.
   cozepy.audio.rooms.RoomsClient: Room service client.
   cozepy.audio.speech.AsyncSpeechClient: speech service client.
@@ -34,7 +36,21 @@ class_docstrings:
 
 
     包含工作流的完整配置和元数据信息。'
+  cozepy.connectors.bots.AuditStatus: '审核状态枚举
+
+
+    用于表示Bot渠道审核的不同状态。'
+  cozepy.connectors.bots.ConnectorsBotsClient: '渠道Bot客户端
+
+
+    提供渠道Bot相关功能的客户端类，包括更新Bot渠道审核结果等功能。'
+  cozepy.connectors.bots.AsyncConnectorsBotsClient: '异步渠道Bot客户端
+
+
+    提供异步渠道Bot相关功能的客户端类，包括更新Bot渠道审核结果等功能。'
 class_docstring_styles:
+  cozepy.audio.live.AsyncLiveClient: block
+  cozepy.audio.live.LiveClient: block
   cozepy.audio.rooms.AsyncRoomsClient: block
   cozepy.audio.rooms.RoomsClient: block
   cozepy.audio.speech.AsyncSpeechClient: block
@@ -57,6 +73,9 @@ class_docstring_styles:
   cozepy.model.DynamicStrEnum: block
   cozepy.request.Requester: block
   cozepy.workflows.WorkflowInfo: block
+  cozepy.connectors.bots.AuditStatus: block
+  cozepy.connectors.bots.ConnectorsBotsClient: block
+  cozepy.connectors.bots.AsyncConnectorsBotsClient: block
 method_docstrings:
   cozepy.api_apps.APIAppsClient.__init__: ''
   cozepy.api_apps.APIAppsClient.create: 'create api app
@@ -169,6 +188,18 @@ method_docstrings:
   cozepy.audio.AudioClient.transcriptions: ''
   cozepy.audio.AudioClient.voiceprint_groups: ''
   cozepy.audio.AudioClient.voices: ''
+  cozepy.audio.live.AsyncLiveClient.retrieve: 'retrieve live
+
+
+    :param live_id: The id of the live.
+
+    :return: live info'
+  cozepy.audio.live.LiveClient.retrieve: 'retrieve live
+
+
+    :param live_id: The id of the live.
+
+    :return: live info'
   cozepy.audio.rooms.AsyncRoomsClient.__init__: ''
   cozepy.audio.rooms.AsyncRoomsClient.create: 'create rtc room
 
@@ -247,6 +278,34 @@ method_docstrings:
     :param file: The file to be translated.
 
     :return: create transcriptions result'
+  cozepy.audio.voiceprint_groups.AsyncVoiceprintGroupsClient.list: 'Get available voices, including system voices + user cloned voices
+
+    Tips: Voices cloned under each Volcano account can be reused within the team
+
+
+    :param filter_system_voice: If True, system voices will not be returned.
+
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+
+    first page.
+
+    :param page_size: The size of pagination. Default is 100, meaning that 100 data entries are returned per page.
+
+    :return: list of Voice'
+  cozepy.audio.voiceprint_groups.VoiceprintGroupsClient.list: 'Get available voices, including system voices + user cloned voices
+
+    Tips: Voices cloned under each Volcano account can be reused within the team
+
+
+    :param filter_system_voice: If True, system voices will not be returned.
+
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+
+    first page.
+
+    :param page_size: The size of pagination. Default is 100, meaning that 100 data entries are returned per page.
+
+    :return: list of Voice'
   cozepy.audio.voices.AsyncVoicesClient.__init__: ''
   cozepy.audio.voices.AsyncVoicesClient.clone: "Clone the user's voice, and use the cloned voice to create voice speech\nEach Volcano account is assigned a voice by default. A voice can be cloned 10 times,\nand repeated cloning of the same voice will overwrite it.\n\n:param voice_name: The name of the cloned voice, cannot be empty, and the length is greater than 6.\n:param file: Audio Files.\n:param audio_format: Only \"wav\", \"mp3\", \"ogg\", \"m4a\", \"aac\", \"pcm\" formats are supported.\n:param language: Only supports \"zh\", \"en\" \"ja\" \"es\" \"id\" \"pt\" languages.\n:param voice_id: If it is passed in, it will be trained on the original voice, covering the previously\ntrained voice.\n:param preview_text: If a text is passed in, a preview audio will be generated based on the text.\n Otherwise, the default text \"你好，我是你的专属AI克隆声音，希望未来可以一起好好相处哦\".\n:param text: Users can recite the text, and the service will compare the audio with the text.\n If the difference is too large, an error\
     \ will be returned.\n:param space_id: The space id of the voice.\n:param description: The description of the voice.\n:return: Voice of the cloned."
@@ -2232,6 +2291,214 @@ method_docstrings:
     :param page_size: 分页大小。取值范围为 1~50，默认为 20。
 
     :return: 空间成员列表。'
+  cozepy.connectors.bots.ConnectorsBotsClient.update: |-
+    更新Bot渠道审核结果
+
+    通过此接口可以更新指定Bot在特定渠道的审核结果，包括通过或拒绝审核。
+
+    docs: https://www.coze.cn/open/docs/developer_guides/update_review_result
+
+    :param bot_id: Bot ID
+    :param connector_id: 渠道ID
+    :param audit_status: 审核结果状态，可选值：AuditStatus.PENDING（1-审核中）、AuditStatus.APPROVED（2-审核通过）、AuditStatus.REJECTED（3-审核不通过）
+    :param reason: 审核意见，当audit_status为3（审核不通过）时必填
+    :return: 返回更新审核结果后的响应信息
+  cozepy.connectors.bots.AsyncConnectorsBotsClient.update: |-
+    异步更新Bot渠道审核结果
+
+    通过此接口可以异步更新指定Bot在特定渠道的审核结果，包括通过或拒绝审核。
+
+    :param bot_id: Bot ID
+    :param connector_id: 渠道ID
+    :param audit_status: 审核结果状态，可选值：AuditStatus.PENDING（1-审核中）、AuditStatus.APPROVED（2-审核通过）、AuditStatus.REJECTED（3-审核不通过）
+    :param reason: 审核意见，当audit_status为3（审核不通过）时必填
+    :return: 返回更新审核结果后的响应信息
+  cozepy.datasets.documents.DatasetsDocumentsClient.create: |-
+    Upload files to the specific knowledge.
+
+    docs en: https://www.coze.com/docs/developer_guides/create_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/create_knowledge_files
+
+    :param dataset_id: The ID of the knowledge base.
+    :param document_bases: The metadata information of the files awaiting upload. The array has a maximum length of
+    10, meaning up to 10 files can be uploaded at a time. For detailed instructions, refer to the DocumentBase
+    object.
+    :param chunk_strategy: Chunk strategy. These rules must be set only when uploading a file to a new knowledge
+    for the first time. For subsequent file uploads to this knowledge, it is not necessary to pass these rules; the
+    default is to continue using the initial settings, and modifications are not supported.
+    For detailed instructions, refer to the ChunkStrategy object.
+    :return: list of Document
+  cozepy.datasets.documents.DatasetsDocumentsClient.update: |-
+    Modify the knowledge base file name and update strategy.
+
+    docs en: https://www.coze.com/docs/developer_guides/modify_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/modify_knowledge_files
+
+    :param document_id: The ID of the knowledge base file.
+    :param document_name: The new name of the knowledge base file.
+    :param update_rule: The update strategy for online web pages. Defaults to no automatic updates.
+    For detailed information, refer to the UpdateRule object.
+    :return: None
+  cozepy.datasets.documents.DatasetsDocumentsClient.delete: |-
+    Delete text, images, sheets, and other files in the knowledge base, supporting batch deletion.
+
+    docs en: https://www.coze.com/docs/developer_guides/delete_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/delete_knowledge_files
+
+    :param document_ids: The list of knowledge base files to be deleted. The maximum length of the array is 100,
+    meaning a maximum of 100 files can be deleted at one time.
+    :return: None
+  cozepy.datasets.documents.DatasetsDocumentsClient.list: |-
+    View the file list of a specified knowledge base, which includes lists of documents, spreadsheets, or images.
+
+    docs en: https://www.coze.com/docs/developer_guides/list_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/list_knowledge_files
+
+    :param dataset_id: The ID of the knowledge base.
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+    first page.
+    :param page_size: The size of pagination. Default is 10, meaning that 10 data entries are returned per page.
+    :return: list of Document
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.create: |-
+    Upload files to the specific knowledge.
+
+    docs en: https://www.coze.com/docs/developer_guides/create_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/create_knowledge_files
+
+    :param dataset_id: The ID of the knowledge base.
+    :param document_bases: The metadata information of the files awaiting upload. The array has a maximum length of
+    10, meaning up to 10 files can be uploaded at a time. For detailed instructions, refer to the DocumentBase
+    object.
+    :param chunk_strategy: Chunk strategy. These rules must be set only when uploading a file to a new knowledge
+    for the first time. For subsequent file uploads to this knowledge, it is not necessary to pass these rules; the
+    default is to continue using the initial settings, and modifications are not supported.
+    For detailed instructions, refer to the ChunkStrategy object.
+    :return: list of Document
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.update: |-
+    Modify the knowledge base file name and update strategy.
+
+    docs en: https://www.coze.com/docs/developer_guides/modify_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/modify_knowledge_files
+
+    :param document_id: The ID of the knowledge base file.
+    :param document_name: The new name of the knowledge base file.
+    :param update_rule: The update strategy for online web pages. Defaults to no automatic updates.
+    For detailed information, refer to the UpdateRule object.
+    :return: None
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.delete: |-
+    Delete text, images, sheets, and other files in the knowledge base, supporting batch deletion.
+
+    docs en: https://www.coze.com/docs/developer_guides/delete_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/delete_knowledge_files
+
+    :param document_ids: The list of knowledge base files to be deleted. The maximum length of the array is 100,
+    meaning a maximum of 100 files can be deleted at one time.
+    :return: None
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.list: |-
+    View the file list of a specified knowledge base, which includes lists of documents, spreadsheets, or images.
+
+    docs en: https://www.coze.com/docs/developer_guides/list_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/list_knowledge_files
+
+    :param dataset_id: The ID of the knowledge base.
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+    first page.
+    :param page_size: The size of pagination. Default is 10, meaning that 10 data entries are returned per page.
+    :return: list of Document
+  cozepy.knowledge.documents.DocumentsClient.create: |-
+    Upload files to the specific knowledge.
+
+    docs en: https://www.coze.com/docs/developer_guides/create_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/create_knowledge_files
+
+    :param dataset_id: The ID of the knowledge base.
+    :param document_bases: The metadata information of the files awaiting upload. The array has a maximum length of
+    10, meaning up to 10 files can be uploaded at a time. For detailed instructions, refer to the DocumentBase
+    object.
+    :param chunk_strategy: Chunk strategy. These rules must be set only when uploading a file to a new knowledge
+    for the first time. For subsequent file uploads to this knowledge, it is not necessary to pass these rules; the
+    default is to continue using the initial settings, and modifications are not supported.
+    For detailed instructions, refer to the ChunkStrategy object.
+    :return: list of Document
+  cozepy.knowledge.documents.DocumentsClient.update: |-
+    Modify the knowledge base file name and update strategy.
+
+    docs en: https://www.coze.com/docs/developer_guides/modify_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/modify_knowledge_files
+
+    :param document_id: The ID of the knowledge base file.
+    :param document_name: The new name of the knowledge base file.
+    :param update_rule: The update strategy for online web pages. Defaults to no automatic updates.
+    For detailed information, refer to the UpdateRule object.
+    :return: None
+  cozepy.knowledge.documents.DocumentsClient.delete: |-
+    Delete text, images, sheets, and other files in the knowledge base, supporting batch deletion.
+
+    docs en: https://www.coze.com/docs/developer_guides/delete_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/delete_knowledge_files
+
+    :param document_ids: The list of knowledge base files to be deleted. The maximum length of the array is 100,
+    meaning a maximum of 100 files can be deleted at one time.
+    :return: None
+  cozepy.knowledge.documents.DocumentsClient.list: |-
+    View the file list of a specified knowledge base, which includes lists of documents, spreadsheets, or images.
+
+    docs en: https://www.coze.com/docs/developer_guides/list_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/list_knowledge_files
+
+
+    :param dataset_id: The ID of the knowledge base.
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+    first page.
+    :param page_size: The size of pagination. Default is 10, meaning that 10 data entries are returned per page.
+    :return: list of Document
+  cozepy.knowledge.documents.AsyncDocumentsClient.create: |-
+    Upload files to the specific knowledge.
+
+    docs en: https://www.coze.com/docs/developer_guides/create_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/create_knowledge_files
+
+    :param dataset_id: The ID of the knowledge base.
+    :param document_bases: The metadata information of the files awaiting upload. The array has a maximum length of
+    10, meaning up to 10 files can be uploaded at a time. For detailed instructions, refer to the DocumentBase
+    object.
+    :param chunk_strategy: Chunk strategy. These rules must be set only when uploading a file to a new knowledge
+    for the first time. For subsequent file uploads to this knowledge, it is not necessary to pass these rules; the
+    default is to continue using the initial settings, and modifications are not supported.
+    For detailed instructions, refer to the ChunkStrategy object.
+    :return: list of Document
+  cozepy.knowledge.documents.AsyncDocumentsClient.update: |-
+    Modify the knowledge base file name and update strategy.
+
+    docs en: https://www.coze.com/docs/developer_guides/modify_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/modify_knowledge_files
+
+    :param document_id: The ID of the knowledge base file.
+    :param document_name: The new name of the knowledge base file.
+    :param update_rule: The update strategy for online web pages. Defaults to no automatic updates.
+    For detailed information, refer to the UpdateRule object.
+    :return: None
+  cozepy.knowledge.documents.AsyncDocumentsClient.delete: |-
+    Delete text, images, sheets, and other files in the knowledge base, supporting batch deletion.
+
+    docs en: https://www.coze.com/docs/developer_guides/delete_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/delete_knowledge_files
+
+    :param document_ids: The list of knowledge base files to be deleted. The maximum length of the array is 100,
+    meaning a maximum of 100 files can be deleted at one time.
+    :return: None
+  cozepy.knowledge.documents.AsyncDocumentsClient.list: |-
+    View the file list of a specified knowledge base, which includes lists of documents, spreadsheets, or images.
+
+    docs en: https://www.coze.com/docs/developer_guides/list_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/list_knowledge_files
+
+
+    :param dataset_id: The ID of the knowledge base.
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+    first page.
+    :param page_size: The size of pagination. Default is 10, meaning that 10 data entries are returned per page.
+    :return: list of Document
 method_docstring_styles:
   cozepy.api_apps.APIAppsClient.create: inline
   cozepy.api_apps.APIAppsClient.update: block
@@ -2241,10 +2508,14 @@ method_docstring_styles:
   cozepy.apps.AsyncAppsClient.list: block
   cozepy.audio.rooms.AsyncRoomsClient.create: block
   cozepy.audio.rooms.RoomsClient.create: block
+  cozepy.audio.live.AsyncLiveClient.retrieve: block
+  cozepy.audio.live.LiveClient.retrieve: block
   cozepy.audio.speech.AsyncSpeechClient.create: block
   cozepy.audio.speech.SpeechClient.create: block
   cozepy.audio.transcriptions.AsyncTranscriptionsClient.create: block
   cozepy.audio.transcriptions.TranscriptionsClient.create: block
+  cozepy.audio.voiceprint_groups.AsyncVoiceprintGroupsClient.list: block
+  cozepy.audio.voiceprint_groups.VoiceprintGroupsClient.list: block
   cozepy.audio.voices.AsyncVoicesClient.clone: block
   cozepy.audio.voices.AsyncVoicesClient.list: block
   cozepy.audio.voices.VoicesClient.clone: block
@@ -2348,6 +2619,24 @@ method_docstring_styles:
   cozepy.workspaces.members.WorkspacesMembersClient.create: inline
   cozepy.workspaces.members.WorkspacesMembersClient.delete: inline
   cozepy.workspaces.members.WorkspacesMembersClient.list: inline
+  cozepy.connectors.bots.ConnectorsBotsClient.update: block
+  cozepy.connectors.bots.AsyncConnectorsBotsClient.update: block
+  cozepy.datasets.documents.DatasetsDocumentsClient.create: block
+  cozepy.datasets.documents.DatasetsDocumentsClient.update: block
+  cozepy.datasets.documents.DatasetsDocumentsClient.delete: block
+  cozepy.datasets.documents.DatasetsDocumentsClient.list: block
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.create: block
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.update: block
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.delete: block
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.list: block
+  cozepy.knowledge.documents.DocumentsClient.create: block
+  cozepy.knowledge.documents.DocumentsClient.update: block
+  cozepy.knowledge.documents.DocumentsClient.delete: block
+  cozepy.knowledge.documents.DocumentsClient.list: block
+  cozepy.knowledge.documents.AsyncDocumentsClient.create: block
+  cozepy.knowledge.documents.AsyncDocumentsClient.update: block
+  cozepy.knowledge.documents.AsyncDocumentsClient.delete: block
+  cozepy.knowledge.documents.AsyncDocumentsClient.list: block
 field_comments:
   cozepy.audio.rooms.CreateRoomResp.app_id:
   - App id to join the room
@@ -2812,6 +3101,131 @@ field_comments:
   - 移除失败，该用户为空间所有者。
   cozepy.workspaces.members.DeleteWorkspaceMemberResp.removed_success_user_ids:
   - 成功移除的成员列表。
+  cozepy.datasets.documents.DocumentChunkStrategy.chunk_type:
+  - 'Segmentation setting. Values include:'
+  - '0: Automatic segmentation and cleaning. Use preset rules for data segmentation and processing.'
+  - '1: Custom. At this time, you need to specify segmentation rule details through separator, max_tokens,'
+  - remove_extra_spaces, and remove_urls_emails.
+  - 分段设置。取值包括：
+  - 0：自动分段与清洗。采用扣子预置规则进行数据分段与处理。
+  - 1：自定义。此时需要通过 separator、max_tokens、remove_extra_spaces 和 remove_urls_emails 分段规则细节。
+  cozepy.datasets.documents.DocumentChunkStrategy.caption_type:
+  - 'Image knowledge base annotation method:'
+  - '0: (Default) System automatically annotates description information'
+  - '1: Manual annotation'
+  cozepy.datasets.documents.DocumentChunkStrategy.max_tokens:
+  - Maximum segment length, with a range of 100 to 2000.
+  - Required when chunk_type=1.
+  - 最大分段长度，取值范围为 100~2000。
+  - 在 chunk_type=1 时必选。
+  cozepy.datasets.documents.DocumentChunkStrategy.remove_extra_spaces:
+  - 'Whether to automatically filter continuous spaces, line breaks, and tabs. Values include:'
+  - 'true: Automatically filter'
+  - 'false: (Default) Do not automatically filter<br>Effective when chunk_type=1.'
+  - 是否自动过滤连续的空格、换行符和制表符。取值包括：
+  - true：自动过滤
+  - false：（默认）不自动过滤
+  - 在 chunk_type=1 时生效。
+  cozepy.datasets.documents.DocumentChunkStrategy.remove_urls_emails:
+  - 'Whether to automatically filter all URLs and email addresses. Values include:'
+  - 'true: Automatically filter'
+  - 'false: (Default) Do not automatically filter'
+  - Effective when chunk_type=1.
+  - 是否自动过滤所有 URL 和电子邮箱地址。取值包括：
+  - true：自动过滤
+  - false：（默认）不自动过滤
+  - 在 chunk_type=1 时生效。
+  cozepy.datasets.documents.DocumentChunkStrategy.separator:
+  - Segmentation identifier.
+  - Required when chunk_type=1.
+  - 分段标识符。
+  - 在 chunk_type=1 时必选。
+  cozepy.datasets.documents.Document.document_id:
+  - File ID.
+  cozepy.datasets.documents.Document.char_count:
+  - Total number of characters in the document content.
+  cozepy.datasets.documents.Document.chunk_strategy:
+  - Segmentation rules.
+  cozepy.datasets.documents.Document.format_type:
+  - 文件的格式类型。取值包括：
+  - 0：文档类型，例如 txt 、pdf 、在线网页等格式均属于文档类型。
+  - 1：表格类型，例如 xls 表格等格式属于表格类型。
+  - 2：照片类型，例如 png 图片等格式属于照片类型。
+  - 'The type of file format. Values include:'
+  - '0: Document type, such as txt, pdf, online web pages, etc.'
+  - '1: Spreadsheet type, such as xls spreadsheets, etc.'
+  - '2: Photo type, such as png images, etc.'
+  cozepy.datasets.documents.Document.hit_count:
+  - The number of times the file has been hit in conversations.
+  - 被对话命中的次数。
+  cozepy.datasets.documents.Document.name:
+  - The name of the file.
+  - 文件的名称。
+  cozepy.datasets.documents.Document.size:
+  - The size of the file in bytes.
+  - 文件的大小，单位为字节。
+  cozepy.datasets.documents.Document.slice_count:
+  - The number of slices the file has been divided into.
+  - 文件的分段数量。
+  cozepy.datasets.documents.Document.source_type:
+  - 'The method of uploading the file. Values include:'
+  - '0: Upload local files.'
+  - '1: Upload online web pages.'
+  - 文件的上传方式。取值包括：
+  - 0：上传本地文件。
+  - 1：上传在线网页。
+  cozepy.datasets.documents.Document.status:
+  - 'The processing status of the file. Values include:'
+  - '0: Processing'
+  - '1: Completed'
+  - '9: Processing failed, it is recommended to re-upload'
+  - 文件的处理状态。取值包括：
+  - 0：处理中
+  - 1：处理完毕
+  - 9：处理失败，建议重新上传
+  cozepy.datasets.documents.Document.type:
+  - The format of the local file, i.e., the file extension, such as "txt". Supported formats include PDF, TXT, DOC,
+  - DOCX.
+  - 本地文件格式，即文件后缀，例如 txt。格式支持 pdf、txt、doc、docx 类型。
+  cozepy.datasets.documents.Document.update_interval:
+  - The frequency of automatic updates for online web pages, in hours.
+  - 在线网页自动更新的频率。单位为小时。
+  cozepy.datasets.documents.Document.update_type:
+  - 'Whether the online web page is automatically updated. Values include:'
+  - '0: Do not automatically update'
+  - '1: Automatically update'
+  - 在线网页是否自动更新。取值包括：
+  - 0：不自动更新
+  - 1：自动更新
+  cozepy.datasets.documents.Document.create_time:
+  - The upload time of the file, in the format of a 10-digit Unix timestamp.
+  cozepy.datasets.documents.Document.update_time:
+  - The last modified time of the file, in the format of a 10-digit Unix timestamp.
+  cozepy.datasets.documents.DocumentSourceInfo.file_base64:
+  - 本地文件的 Base64 编码。
+  - 上传本地文件时必选
+  cozepy.datasets.documents.DocumentSourceInfo.file_type:
+  - 本地文件格式，即文件后缀，例如 txt。格式支持 pdf、txt、doc、docx 类型。
+  - 上传的文件类型应与知识库类型匹配，例如 txt 文件只能上传到文档类型的知识库中。
+  - 上传本地文件时必选
+  cozepy.datasets.documents.DocumentSourceInfo.web_url:
+  - 网页的 URL 地址。
+  - 上传在线网页时必选
+  cozepy.datasets.documents.DocumentSourceInfo.document_source:
+  - 文件的上传方式。支持设置为 1，表示上传在线网页。
+  - 上传在线网页时必选
+  cozepy.datasets.documents.DocumentUpdateRule.update_type:
+  - 在线网页是否自动更新。取值包括：
+  - 0：不自动更新
+  - 1：自动更新
+  cozepy.datasets.documents.DocumentUpdateRule.update_interval:
+  - 在线网页自动更新的频率。单位为小时，最小值为 24。
+  cozepy.datasets.documents.DocumentBase.name:
+  - 文件名称。
+  cozepy.datasets.documents.DocumentBase.source_info:
+  - 文件的元数据信息。详细信息可参考 DocumentSourceInfo object。
+  cozepy.datasets.documents.DocumentBase.update_rule:
+  - 在线网页的更新策略。默认不自动更新。
 inline_field_comments:
   cozepy.chat.InsertedMessage.id: Inserted message id
   cozepy.datasets.Dataset.all_file_size: The total size of all files in the dataset
@@ -2847,6 +3261,7 @@ inline_field_comments:
   cozepy.datasets.DocumentProgress.update_interval: Frequency of automatic updates for online web pages. Unit is hours.
   cozepy.datasets.DocumentProgress.update_type: 'Will the webpage automatically update online. Values include:'
   cozepy.datasets.DocumentProgress.url: File address.
+  cozepy.datasets.documents.DocumentSourceInfo.source_file_id: uploaded by `coze.files.upload`
   cozepy.datasets.images.Photo.caption: Image description information.
   cozepy.datasets.images.Photo.create_time: The creation time of the image.
   cozepy.datasets.images.Photo.creator_id: The ID of the creator.
@@ -3005,6 +3420,30 @@ enum_member_comments:
   - Execution in progress.
   cozepy.workflows.runs.run_histories.WorkflowExecuteStatus.SUCCESS:
   - Execution succeeded.
+  cozepy.datasets.documents.DocumentFormatType.DOCUMENT:
+  - Document type, such as txt, pdf, online web pages, etc.
+  - 文档类型，例如 txt 、pdf 、在线网页等格式均属于文档类型。
+  cozepy.datasets.documents.DocumentFormatType.SPREADSHEET:
+  - 表格类型，例如 xls 表格等格式属于表格类型。
+  - Spreadsheet type, such as xls spreadsheets, etc.
+  cozepy.datasets.documents.DocumentFormatType.IMAGE:
+  - 照片类型，例如 png 图片等格式属于照片类型。
+  - Photo type, such as png images, etc.
+  cozepy.datasets.documents.DocumentStatus.PROCESSING:
+  - Processing
+  - 处理中
+  cozepy.datasets.documents.DocumentStatus.COMPLETED:
+  - Completed
+  - 处理完毕
+  cozepy.datasets.documents.DocumentStatus.FAILED:
+  - Processing failed, it is recommended to re-upload
+  - 处理失败，建议重新上传
+  cozepy.datasets.documents.DocumentUpdateType.NO_AUTO_UPDATE:
+  - Do not automatically update
+  - 不自动更新
+  cozepy.datasets.documents.DocumentUpdateType.AUTO_UPDATE:
+  - Automatically update
+  - 自动更新
 inline_enum_member_comments:
   cozepy.api_apps.AppType.CONNECTOR: 渠道回调
   cozepy.api_apps.AppType.NORMAL: 普通回调
@@ -3028,3 +3467,12 @@ inline_enum_member_comments:
   cozepy.folders.FolderType.DEVELOPMENT: 项目开发
   cozepy.folders.FolderType.LIBRARY: 资源库
   cozepy.workflows.runs.WorkflowEventType.UNKNOWN: 默认的未知值
+  cozepy.connectors.bots.AuditStatus.PENDING: 审核中
+  cozepy.connectors.bots.AuditStatus.APPROVED: 审核通过
+  cozepy.connectors.bots.AuditStatus.REJECTED: 审核不通过
+  cozepy.datasets.documents.DocumentSourceType.LOCAL_FILE: Upload local files.
+  cozepy.datasets.documents.DocumentSourceType.ONLINE_WEB: Upload online web pages.
+  cozepy.datasets.documents.DocumentSourceType.CUSTOM: Custom
+  cozepy.datasets.documents.DocumentSourceType.THIRD_PARTY: Third party
+  cozepy.datasets.documents.DocumentSourceType.FRONT_CRAWL: Front-end crawling
+  cozepy.datasets.documents.DocumentSourceType.UPLOAD_FILE_ID: OpenAPI Upload file_id.

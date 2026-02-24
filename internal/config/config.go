@@ -146,7 +146,10 @@ type OperationMapping struct {
 	BodyBuilder                    string            `yaml:"body_builder"`
 	FilesFields                    []string          `yaml:"files_fields"`
 	FilesFieldValues               map[string]string `yaml:"files_field_values"`
+	FilesExpr                      string            `yaml:"files_expr"`
+	FilesBeforeBody                bool              `yaml:"files_before_body"`
 	BodyAnnotation                 string            `yaml:"body_annotation"`
+	PreDocstringCode               []string          `yaml:"pre_docstring_code"`
 	PreBodyCode                    []string          `yaml:"pre_body_code"`
 	BodyRequiredFields             []string          `yaml:"body_required_fields"`
 	UseKwargsHeaders               bool              `yaml:"use_kwargs_headers"`
@@ -163,6 +166,8 @@ type OperationMapping struct {
 	SignatureQueryFields           []string          `yaml:"signature_query_fields"`
 	SignatureArgs                  []string          `yaml:"signature_args"`
 	ArgDefaults                    map[string]string `yaml:"arg_defaults"`
+	ArgDefaultsSync                map[string]string `yaml:"arg_defaults_sync"`
+	ArgDefaultsAsync               map[string]string `yaml:"arg_defaults_async"`
 	Pagination                     string            `yaml:"pagination"`
 	PaginationDataClass            string            `yaml:"pagination_data_class"`
 	PaginationItemType             string            `yaml:"pagination_item_type"`
@@ -196,9 +201,11 @@ type OperationMapping struct {
 	QueryBuilderAsync              string            `yaml:"query_builder_async"`
 	BodyCallExpr                   string            `yaml:"body_call_expr"`
 	BodyFieldValues                map[string]string `yaml:"body_field_values"`
+	HeadersExpr                    string            `yaml:"headers_expr"`
 	CompactSingleItemMaps          bool              `yaml:"compact_single_item_maps"`
 	CompactSingleItemMapsSync      bool              `yaml:"compact_single_item_maps_sync"`
 	CompactSingleItemMapsAsync     bool              `yaml:"compact_single_item_maps_async"`
+	BlankLineAfterHeaders          bool              `yaml:"blank_line_after_headers"`
 	NoBlankLineAfterHeaders        bool              `yaml:"no_blank_line_after_headers"`
 	BlankLineAfterDocstring        bool              `yaml:"blank_line_after_docstring"`
 	BlankLineBeforeReturn          bool              `yaml:"blank_line_before_return"`
@@ -213,6 +220,7 @@ type OperationMapping struct {
 	ForceMultilineRequestCallAsync bool              `yaml:"force_multiline_request_call_async"`
 	RequestCallArgOrder            []string          `yaml:"request_call_arg_order"`
 	PaginationHTTPMethod           string            `yaml:"pagination_http_method"`
+	PaginationRequestArg           string            `yaml:"pagination_request_arg"`
 	PaginationInitPageTokenExpr    string            `yaml:"pagination_init_page_token_expr"`
 	PaginationParamsVariable       bool              `yaml:"pagination_params_variable"`
 }
@@ -451,9 +459,9 @@ func (c *Config) Validate() error {
 			}
 			if strings.TrimSpace(model.EnumBase) != "" {
 				switch strings.TrimSpace(model.EnumBase) {
-				case "dynamic_str", "int":
+				case "dynamic_str", "int", "int_enum":
 				default:
-					return fmt.Errorf("api.packages[%d].model_schemas[%d].enum_base must be 'dynamic_str' or 'int' when set", i, j)
+					return fmt.Errorf("api.packages[%d].model_schemas[%d].enum_base must be 'dynamic_str', 'int' or 'int_enum' when set", i, j)
 				}
 			}
 			for fieldName, fieldType := range model.FieldTypes {

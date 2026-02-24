@@ -78,3 +78,21 @@ func TestRenderPythonTemplateMissing(t *testing.T) {
 		t.Fatal("expected renderPythonTemplate to fail for missing template")
 	}
 }
+
+func TestRenderPythonRawAsset(t *testing.T) {
+	content, err := renderPythonRawAsset("special/cozepy/websockets/ws.py.raw")
+	if err != nil {
+		t.Fatalf("renderPythonRawAsset() error = %v", err)
+	}
+	if !strings.Contains(content, "class WebsocketsEventType(DynamicStrEnum):") {
+		t.Fatalf("expected websocket event type class in raw asset, got: %q", content[:80])
+	}
+
+	initContent, err := renderPythonRawAsset("special/cozepy/__init__.py.raw")
+	if err != nil {
+		t.Fatalf("renderPythonRawAsset() error = %v", err)
+	}
+	if !strings.Contains(initContent, "from .version import VERSION") {
+		t.Fatalf("expected VERSION import in raw package init, got: %q", initContent)
+	}
+}

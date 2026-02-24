@@ -205,12 +205,31 @@ func syntheticOperationDetails(mapping config.OperationMapping) openapi.Operatio
 }
 
 func deduplicateBindings(bindings []operationBinding) []operationBinding {
-	seen := map[string]int{}
+	syncSeen := map[string]int{}
+	asyncSeen := map[string]int{}
+	nextSuffix := map[string]int{}
 	for i := range bindings {
 		key := bindings[i].PackageName + ":" + bindings[i].MethodName
-		seen[key]++
-		if seen[key] > 1 {
-			bindings[i].MethodName = fmt.Sprintf("%s_%d", bindings[i].MethodName, seen[key])
+		conflict := false
+		if mappingGeneratesSync(bindings[i].Mapping) {
+			syncSeen[key]++
+			if syncSeen[key] > 1 {
+				conflict = true
+			}
+		}
+		if mappingGeneratesAsync(bindings[i].Mapping) {
+			asyncSeen[key]++
+			if asyncSeen[key] > 1 {
+				conflict = true
+			}
+		}
+		if conflict {
+			suffix := nextSuffix[key]
+			if suffix == 0 {
+				suffix = 2
+			}
+			bindings[i].MethodName = fmt.Sprintf("%s_%d", bindings[i].MethodName, suffix)
+			nextSuffix[key] = suffix + 1
 		}
 	}
 	return bindings
@@ -341,6 +360,15 @@ func writePythonSDK(
 	if err := writer.write(filepath.Join(rootDir, "py.typed"), ""); err != nil {
 		return err
 	}
+	cozePy, err := renderCozePy(cfg, packageMetas)
+	if err != nil {
+		return err
+	}
+	if cozePy != "" {
+		if err := writer.write(filepath.Join(rootDir, "coze.py"), cozePy); err != nil {
+			return err
+		}
+	}
 
 	for _, pkgName := range pkgNames {
 		meta := packageMetas[pkgName]
@@ -353,8 +381,349 @@ func writePythonSDK(
 			return err
 		}
 	}
+	if err := writePythonSpecialAssets(rootDir, writer); err != nil {
+		return err
+	}
 
 	return nil
+}
+
+func writePythonSpecialAssets(rootDir string, writer *fileWriter) error {
+	// These modules are not represented by the OpenAPI schema (OAuth/websocket runtime wiring).
+	// Keep them in an explicit, minimal whitelist and render through the generator pipeline.
+	specialAssets := []struct {
+		relPath string
+		asset   string
+	}{
+		{relPath: "__init__.py", asset: "special/cozepy/__init__.py.raw"},
+		{relPath: "auth/__init__.py", asset: "special/cozepy/auth/__init__.py.raw"},
+		{relPath: "websockets/__init__.py", asset: "special/cozepy/websockets/__init__.py.raw"},
+		{relPath: "websockets/audio/__init__.py", asset: "special/cozepy/websockets/audio/__init__.py.raw"},
+		{relPath: "websockets/audio/speech/__init__.py", asset: "special/cozepy/websockets/audio/speech/__init__.py.raw"},
+		{relPath: "websockets/audio/transcriptions/__init__.py", asset: "special/cozepy/websockets/audio/transcriptions/__init__.py.raw"},
+		{relPath: "websockets/chat/__init__.py", asset: "special/cozepy/websockets/chat/__init__.py.raw"},
+		{relPath: "websockets/ws.py", asset: "special/cozepy/websockets/ws.py.raw"},
+	}
+	for _, item := range specialAssets {
+		content, err := renderPythonRawAsset(item.asset)
+		if err != nil {
+			return err
+		}
+		if err := writer.write(filepath.Join(rootDir, item.relPath), content); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type rootService struct {
+	Attribute  string
+	ModuleDir  string
+	SyncClass  string
+	AsyncClass string
+}
+
+func renderCozePy(cfg *config.Config, packageMetas map[string]packageMeta) (string, error) {
+	if cfg == nil {
+		return "", nil
+	}
+	services := collectRootServices(cfg, packageMetas)
+	if len(services) == 0 {
+		return "", nil
+	}
+
+	syncOrder := []string{
+		"bots",
+		"workspaces",
+		"conversations",
+		"chat",
+		"files",
+		"workflows",
+		"knowledge",
+		"datasets",
+		"audio",
+		"templates",
+		"users",
+		"websockets",
+		"variables",
+		"apps",
+		"enterprises",
+		"api_apps",
+		"connectors",
+		"folders",
+	}
+	asyncOrder := []string{
+		"bots",
+		"chat",
+		"conversations",
+		"files",
+		"knowledge",
+		"datasets",
+		"workflows",
+		"workspaces",
+		"audio",
+		"templates",
+		"users",
+		"websockets",
+		"variables",
+		"apps",
+		"enterprises",
+		"api_apps",
+		"connectors",
+		"folders",
+	}
+	syncFieldOrder := []string{
+		"bots",
+		"workspaces",
+		"conversations",
+		"chat",
+		"connectors",
+		"files",
+		"workflows",
+		"knowledge",
+		"datasets",
+		"audio",
+		"templates",
+		"users",
+		"websockets",
+		"variables",
+		"apps",
+		"enterprises",
+		"api_apps",
+		"folders",
+	}
+	asyncFieldOrder := []string{
+		"bots",
+		"chat",
+		"connectors",
+		"conversations",
+		"files",
+		"knowledge",
+		"datasets",
+		"workflows",
+		"workspaces",
+		"audio",
+		"templates",
+		"users",
+		"websockets",
+		"variables",
+		"apps",
+		"enterprises",
+		"api_apps",
+		"folders",
+	}
+	typeCheckingOrder := []string{
+		"api_apps",
+		"apps",
+		"audio",
+		"bots",
+		"chat",
+		"connectors",
+		"conversations",
+		"datasets",
+		"enterprises",
+		"files",
+		"folders",
+		"knowledge",
+		"templates",
+		"users",
+		"variables",
+		"websockets",
+		"workflows",
+		"workspaces",
+	}
+
+	syncServices := orderRootServices(services, syncOrder)
+	asyncServices := orderRootServices(services, asyncOrder)
+	syncFieldServices := orderRootServices(services, syncFieldOrder)
+	asyncFieldServices := orderRootServices(services, asyncFieldOrder)
+	typeCheckingServices := orderRootServices(services, typeCheckingOrder)
+
+	var buf bytes.Buffer
+	buf.WriteString("import warnings\n")
+	buf.WriteString("from typing import TYPE_CHECKING, Optional\n\n")
+	buf.WriteString("from cozepy.auth import Auth, SyncAuth\n")
+	buf.WriteString("from cozepy.config import COZE_COM_BASE_URL\n")
+	buf.WriteString("from cozepy.request import AsyncHTTPClient, Requester, SyncHTTPClient\n")
+	buf.WriteString("from cozepy.util import remove_url_trailing_slash\n\n")
+	buf.WriteString("if TYPE_CHECKING:\n")
+	for _, svc := range typeCheckingServices {
+		importNames := svc.AsyncClass + ", " + svc.SyncClass
+		if svc.Attribute == "api_apps" || svc.Attribute == "apps" {
+			importNames = svc.SyncClass + ", " + svc.AsyncClass
+		}
+		if svc.Attribute == "knowledge" {
+			buf.WriteString(fmt.Sprintf("    from .%s import %s  # deprecated\n", svc.ModuleDir, importNames))
+			continue
+		}
+		buf.WriteString(fmt.Sprintf("    from .%s import %s\n", svc.ModuleDir, importNames))
+	}
+	buf.WriteString("\n\n")
+
+	buf.WriteString("class Coze(object):\n")
+	buf.WriteString("    def __init__(\n")
+	buf.WriteString("        self,\n")
+	buf.WriteString("        auth: Auth,\n")
+	buf.WriteString("        base_url: str = COZE_COM_BASE_URL,\n")
+	buf.WriteString("        http_client: Optional[SyncHTTPClient] = None,\n")
+	buf.WriteString("    ):\n")
+	buf.WriteString("        self._auth = auth\n")
+	buf.WriteString("        self._base_url = remove_url_trailing_slash(base_url)\n")
+	buf.WriteString("        self._requester = Requester(auth=auth, sync_client=http_client)\n\n")
+	buf.WriteString("        # service client\n")
+	for _, svc := range syncFieldServices {
+		line := fmt.Sprintf("        self._%s: Optional[%s] = None\n", svc.Attribute, svc.SyncClass)
+		if svc.Attribute == "knowledge" {
+			line = strings.TrimRight(line, "\n") + "  # deprecated\n"
+		}
+		buf.WriteString(line)
+	}
+	buf.WriteString("\n")
+	for _, svc := range syncServices {
+		buf.WriteString("    @property\n")
+		buf.WriteString(fmt.Sprintf("    def %s(self) -> \"%s\":\n", svc.Attribute, svc.SyncClass))
+		if svc.Attribute == "knowledge" {
+			buf.WriteString("        warnings.warn(\n")
+			buf.WriteString("            \"The 'coze.knowledge' module is deprecated and will be removed in a future version. \"\n")
+			buf.WriteString("            \"Please use 'coze.datasets' instead.\",\n")
+			buf.WriteString("            DeprecationWarning,\n")
+			buf.WriteString("            stacklevel=2,\n")
+			buf.WriteString("        )\n")
+		}
+		buf.WriteString(fmt.Sprintf("        if not self._%s:\n", svc.Attribute))
+		importStmt := fmt.Sprintf("from .%s import %s", svc.ModuleDir, svc.SyncClass)
+		if useAbsoluteServiceImport(svc.Attribute) {
+			importStmt = fmt.Sprintf("from cozepy.%s import %s", svc.ModuleDir, svc.SyncClass)
+		}
+		buf.WriteString(fmt.Sprintf("            %s\n\n", importStmt))
+		buf.WriteString(fmt.Sprintf("            self._%s = %s(self._base_url, self._requester)\n", svc.Attribute, svc.SyncClass))
+		buf.WriteString(fmt.Sprintf("        return self._%s\n\n", svc.Attribute))
+	}
+
+	buf.WriteString("class AsyncCoze(object):\n")
+	buf.WriteString("    def __init__(\n")
+	buf.WriteString("        self,\n")
+	buf.WriteString("        auth: Auth,\n")
+	buf.WriteString("        base_url: str = COZE_COM_BASE_URL,\n")
+	buf.WriteString("        http_client: Optional[AsyncHTTPClient] = None,\n")
+	buf.WriteString("    ):\n")
+	buf.WriteString("        self._auth = auth\n")
+	buf.WriteString("        self._base_url = remove_url_trailing_slash(base_url)\n")
+	buf.WriteString("        if isinstance(auth, SyncAuth):\n")
+	buf.WriteString("            warnings.warn(\n")
+	buf.WriteString("                \"The 'coze.SyncAuth' use for AsyncCoze is deprecated and will be removed in a future version. \"\n")
+	buf.WriteString("                \"Please use 'coze.AsyncAuth' instead.\",\n")
+	buf.WriteString("                DeprecationWarning,\n")
+	buf.WriteString("                stacklevel=2,\n")
+	buf.WriteString("            )\n\n")
+	buf.WriteString("        self._requester = Requester(auth=auth, async_client=http_client)\n\n")
+	buf.WriteString("        # service client\n")
+	for _, svc := range asyncFieldServices {
+		line := fmt.Sprintf("        self._%s: Optional[%s] = None\n", svc.Attribute, svc.AsyncClass)
+		if svc.Attribute == "knowledge" {
+			line = strings.TrimRight(line, "\n") + "  # deprecated\n"
+		}
+		buf.WriteString(line)
+	}
+	buf.WriteString("\n")
+	for _, svc := range asyncServices {
+		buf.WriteString("    @property\n")
+		buf.WriteString(fmt.Sprintf("    def %s(self) -> \"%s\":\n", svc.Attribute, svc.AsyncClass))
+		if svc.Attribute == "knowledge" {
+			buf.WriteString("        warnings.warn(\n")
+			buf.WriteString("            \"The 'coze.knowledge' module is deprecated and will be removed in a future version. \"\n")
+			buf.WriteString("            \"Please use 'coze.datasets' instead.\",\n")
+			buf.WriteString("            DeprecationWarning,\n")
+			buf.WriteString("            stacklevel=2,\n")
+			buf.WriteString("        )\n")
+		}
+		buf.WriteString(fmt.Sprintf("        if not self._%s:\n", svc.Attribute))
+		importStmt := fmt.Sprintf("from .%s import %s", svc.ModuleDir, svc.AsyncClass)
+		if useAbsoluteServiceImport(svc.Attribute) {
+			importStmt = fmt.Sprintf("from cozepy.%s import %s", svc.ModuleDir, svc.AsyncClass)
+		}
+		buf.WriteString(fmt.Sprintf("            %s\n\n", importStmt))
+		buf.WriteString(fmt.Sprintf("            self._%s = %s(self._base_url, self._requester)\n", svc.Attribute, svc.AsyncClass))
+		buf.WriteString(fmt.Sprintf("        return self._%s\n\n", svc.Attribute))
+	}
+
+	return strings.TrimRight(buf.String(), "\n") + "\n", nil
+}
+
+func collectRootServices(cfg *config.Config, packageMetas map[string]packageMeta) []rootService {
+	services := make([]rootService, 0)
+	seen := map[string]struct{}{}
+	for _, pkg := range cfg.API.Packages {
+		name := normalizePackageName(pkg.Name)
+		meta, ok := packageMetas[name]
+		if !ok {
+			continue
+		}
+		dir := strings.TrimSpace(meta.DirPath)
+		if dir == "" || strings.Contains(dir, "/") {
+			continue
+		}
+		attr := normalizePythonIdentifier(dir)
+		if attr == "" {
+			continue
+		}
+		if _, exists := seen[attr]; exists {
+			continue
+		}
+		seen[attr] = struct{}{}
+		services = append(services, rootService{
+			Attribute:  attr,
+			ModuleDir:  dir,
+			SyncClass:  packageClientClassName(meta, false),
+			AsyncClass: packageClientClassName(meta, true),
+		})
+	}
+	return services
+}
+
+func orderRootServices(services []rootService, order []string) []rootService {
+	if len(services) == 0 {
+		return services
+	}
+	byAttr := map[string]rootService{}
+	for _, svc := range services {
+		byAttr[svc.Attribute] = svc
+	}
+	ordered := make([]rootService, 0, len(services))
+	seen := map[string]struct{}{}
+	for _, attr := range order {
+		attr = strings.TrimSpace(attr)
+		if attr == "" {
+			continue
+		}
+		svc, ok := byAttr[attr]
+		if !ok {
+			continue
+		}
+		ordered = append(ordered, svc)
+		seen[attr] = struct{}{}
+	}
+	remaining := make([]string, 0)
+	for attr := range byAttr {
+		if _, ok := seen[attr]; ok {
+			continue
+		}
+		remaining = append(remaining, attr)
+	}
+	sort.Strings(remaining)
+	for _, attr := range remaining {
+		ordered = append(ordered, byAttr[attr])
+	}
+	return ordered
+}
+
+func useAbsoluteServiceImport(attr string) bool {
+	switch strings.TrimSpace(attr) {
+	case "bots", "chat":
+		return true
+	default:
+		return false
+	}
 }
 
 func packageHasConfiguredContent(pkg *config.Package) bool {
@@ -489,7 +858,7 @@ func renderPackageModule(
 				hasDynamicEnumClasses = true
 			} else if enumBase == "int" {
 				hasIntEnumClasses = true
-			} else if enumBase == "" {
+			} else {
 				hasStandardEnumClasses = true
 			}
 		}
@@ -918,7 +1287,7 @@ func renderPackageModule(
 	}
 
 	content := strings.TrimRight(buf.String(), "\n") + "\n"
-	if !strings.Contains(content, "(str, Enum):") {
+	if !strings.Contains(content, "(str, Enum):") && !strings.Contains(content, "(int, Enum):") {
 		content = strings.Replace(content, "from enum import Enum\n", "", 1)
 	}
 	if !strings.Contains(content, "(IntEnum):") {
@@ -1420,6 +1789,8 @@ func renderPackageModelDefinitions(
 				buf.WriteString(fmt.Sprintf("class %s(DynamicStrEnum):\n", model.Name))
 			} else if model.EnumBase == "int" {
 				buf.WriteString(fmt.Sprintf("class %s(IntEnum):\n", model.Name))
+			} else if model.EnumBase == "int_enum" {
+				buf.WriteString(fmt.Sprintf("class %s(int, Enum):\n", model.Name))
 			} else {
 				buf.WriteString(fmt.Sprintf("class %s(str, Enum):\n", model.Name))
 			}
@@ -2543,18 +2914,35 @@ func orderedUniqueByPriority(values []string, priority []string) []string {
 	return ordered
 }
 
-func operationArgDefault(mapping *config.OperationMapping, rawName string, argName string) (string, bool) {
-	if mapping == nil || len(mapping.ArgDefaults) == 0 {
+func operationArgDefault(mapping *config.OperationMapping, rawName string, argName string, async bool) (string, bool) {
+	if mapping == nil {
+		return "", false
+	}
+	defaultMaps := make([]map[string]string, 0, 3)
+	if async && len(mapping.ArgDefaultsAsync) > 0 {
+		defaultMaps = append(defaultMaps, mapping.ArgDefaultsAsync)
+	}
+	if !async && len(mapping.ArgDefaultsSync) > 0 {
+		defaultMaps = append(defaultMaps, mapping.ArgDefaultsSync)
+	}
+	if len(mapping.ArgDefaults) > 0 {
+		defaultMaps = append(defaultMaps, mapping.ArgDefaults)
+	}
+	if len(defaultMaps) == 0 {
 		return "", false
 	}
 	if argName = strings.TrimSpace(argName); argName != "" {
-		if value, ok := mapping.ArgDefaults[argName]; ok && strings.TrimSpace(value) != "" {
-			return strings.TrimSpace(value), true
+		for _, defaults := range defaultMaps {
+			if value, ok := defaults[argName]; ok && strings.TrimSpace(value) != "" {
+				return strings.TrimSpace(value), true
+			}
 		}
 	}
 	if rawName = strings.TrimSpace(rawName); rawName != "" {
-		if value, ok := mapping.ArgDefaults[rawName]; ok && strings.TrimSpace(value) != "" {
-			return strings.TrimSpace(value), true
+		for _, defaults := range defaultMaps {
+			if value, ok := defaults[rawName]; ok && strings.TrimSpace(value) != "" {
+				return strings.TrimSpace(value), true
+			}
 		}
 	}
 	return "", false
@@ -2692,6 +3080,8 @@ func renderOperationMethodWithComments(
 	paramAliases := map[string]string{}
 	argTypes := map[string]string{}
 	bodyCallExprOverride := ""
+	headersExpr := ""
+	paginationRequestArg := "params"
 	if binding.Mapping != nil && len(binding.Mapping.ParamAliases) > 0 {
 		paramAliases = binding.Mapping.ParamAliases
 	}
@@ -2748,6 +3138,10 @@ func renderOperationMethodWithComments(
 		streamWrapCompactSyncReturn = binding.Mapping.StreamWrapCompactSyncReturn
 		streamWrapBlankLineBeforeAsyncReturn = binding.Mapping.StreamWrapBlankLineBeforeAsync
 		bodyCallExprOverride = strings.TrimSpace(binding.Mapping.BodyCallExpr)
+		headersExpr = strings.TrimSpace(binding.Mapping.HeadersExpr)
+		if override := strings.TrimSpace(binding.Mapping.PaginationRequestArg); override != "" {
+			paginationRequestArg = override
+		}
 		if len(binding.Mapping.BodyFieldValues) > 0 {
 			for k, v := range binding.Mapping.BodyFieldValues {
 				bodyFieldValues[k] = v
@@ -2790,6 +3184,8 @@ func renderOperationMethodWithComments(
 	bodyFixedValues := map[string]string{}
 	filesFieldNames := make([]string, 0)
 	filesFieldValues := map[string]string{}
+	filesExpr := ""
+	filesBeforeBody := false
 	if binding.Mapping != nil && len(binding.Mapping.BodyFields) > 0 {
 		bodyFieldNames = append(bodyFieldNames, binding.Mapping.BodyFields...)
 	}
@@ -2805,6 +3201,10 @@ func renderOperationMethodWithComments(
 		for k, v := range binding.Mapping.FilesFieldValues {
 			filesFieldValues[k] = v
 		}
+	}
+	if binding.Mapping != nil {
+		filesExpr = strings.TrimSpace(binding.Mapping.FilesExpr)
+		filesBeforeBody = binding.Mapping.FilesBeforeBody
 	}
 	if binding.Mapping != nil && binding.Mapping.DisableRequestBody {
 		requestBodyType = ""
@@ -2842,10 +3242,8 @@ func renderOperationMethodWithComments(
 	}
 	for _, field := range signatureQueryFields {
 		defaultValue := strings.TrimSpace(field.DefaultValue)
-		if defaultValue == "" {
-			if override, ok := operationArgDefault(binding.Mapping, field.RawName, field.ArgName); ok {
-				defaultValue = override
-			}
+		if override, ok := operationArgDefault(binding.Mapping, field.RawName, field.ArgName, async); ok {
+			defaultValue = override
 		}
 		if field.Required && defaultValue == "" {
 			signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s", field.ArgName, field.TypeName))
@@ -2859,7 +3257,7 @@ func renderOperationMethodWithComments(
 	for _, param := range details.HeaderParameters {
 		name := operationArgName(param.Name, paramAliases)
 		typeName := typeOverride(param.Name, param.Required, pythonTypeForSchema(doc, param.Schema, param.Required), argTypes)
-		if defaultValue, ok := operationArgDefault(binding.Mapping, param.Name, name); ok {
+		if defaultValue, ok := operationArgDefault(binding.Mapping, param.Name, name, async); ok {
 			signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s = %s", name, typeName, defaultValue))
 		} else if param.Required {
 			signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s", name, typeName))
@@ -2878,7 +3276,7 @@ func renderOperationMethodWithComments(
 			fieldSchema := bodyFieldSchema(doc, details.RequestBodySchema, bodyField)
 			required := bodyRequiredSet[bodyField]
 			typeName := typeOverride(bodyField, required, pythonTypeForSchema(doc, fieldSchema, required), argTypes)
-			if defaultValue, ok := operationArgDefault(binding.Mapping, bodyField, argName); ok {
+			if defaultValue, ok := operationArgDefault(binding.Mapping, bodyField, argName, async); ok {
 				signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s = %s", argName, typeName, defaultValue))
 			} else if required {
 				signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s", argName, typeName))
@@ -2888,7 +3286,7 @@ func renderOperationMethodWithComments(
 			signatureArgNames[argName] = struct{}{}
 		}
 	} else if requestBodyType != "" {
-		if defaultValue, ok := operationArgDefault(binding.Mapping, "body", "body"); ok {
+		if defaultValue, ok := operationArgDefault(binding.Mapping, "body", "body", async); ok {
 			signatureArgs = append(signatureArgs, fmt.Sprintf("body: Optional[%s] = %s", requestBodyType, defaultValue))
 		} else if bodyRequired {
 			signatureArgs = append(signatureArgs, fmt.Sprintf("body: %s", requestBodyType))
@@ -2905,7 +3303,7 @@ func renderOperationMethodWithComments(
 			fieldSchema := bodyFieldSchema(doc, details.RequestBodySchema, filesField)
 			required := bodyRequiredSet[filesField]
 			typeName := typeOverride(filesField, required, pythonTypeForSchema(doc, fieldSchema, required), argTypes)
-			if defaultValue, ok := operationArgDefault(binding.Mapping, filesField, argName); ok {
+			if defaultValue, ok := operationArgDefault(binding.Mapping, filesField, argName, async); ok {
 				signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s = %s", argName, typeName, defaultValue))
 			} else if required {
 				signatureArgs = append(signatureArgs, fmt.Sprintf("%s: %s", argName, typeName))
@@ -2996,6 +3394,11 @@ func renderOperationMethodWithComments(
 		}
 		overrideDocstringStyle = strings.TrimSpace(commentOverrides.MethodDocstringStyles[key])
 	}
+	if binding.Mapping != nil && len(binding.Mapping.PreDocstringCode) > 0 {
+		for _, block := range binding.Mapping.PreDocstringCode {
+			appendIndentedCode(&buf, block, 2)
+		}
+	}
 	if overrideDocstringExists {
 		if overrideDocstring == "" {
 			// Explicitly disabled via comment overrides.
@@ -3083,7 +3486,7 @@ func renderOperationMethodWithComments(
 		}
 	}
 
-	if includeKwargsHeaders && (isTokenPagination(paginationMode) || isNumberPagination(paginationMode) || len(details.HeaderParameters) > 0) {
+	if headersExpr == "" && includeKwargsHeaders && (isTokenPagination(paginationMode) || isNumberPagination(paginationMode) || len(details.HeaderParameters) > 0) {
 		buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n\n")
 	}
 
@@ -3104,7 +3507,22 @@ func renderOperationMethodWithComments(
 		}
 		buf.WriteString("        headers = header_values\n")
 	}
-	includePaginationHeaders := !disableHeadersArg || len(details.HeaderParameters) > 0
+	if headersExpr != "" {
+		buf.WriteString(fmt.Sprintf("        headers = %s\n", headersExpr))
+		headersAssigned = true
+		if isTokenPagination(paginationMode) || isNumberPagination(paginationMode) {
+			buf.WriteString("\n")
+		}
+	}
+	if (isTokenPagination(paginationMode) || isNumberPagination(paginationMode)) && binding.Mapping != nil && len(binding.Mapping.PreBodyCode) > 0 {
+		for _, block := range binding.Mapping.PreBodyCode {
+			appendIndentedCode(&buf, block, 2)
+		}
+		if headersExpr == "" {
+			buf.WriteString("\n")
+		}
+	}
+	includePaginationHeaders := headersExpr != "" || !disableHeadersArg || len(details.HeaderParameters) > 0
 	paginationRequestMethod := strings.ToUpper(requestMethod)
 	if binding.Mapping != nil {
 		if override := strings.TrimSpace(binding.Mapping.PaginationHTTPMethod); override != "" {
@@ -3177,12 +3595,12 @@ func renderOperationMethodWithComments(
 				buf.WriteString("                headers=headers,\n")
 			}
 			if paginationParamsVariable {
-				buf.WriteString("                params=params,\n")
+				buf.WriteString(fmt.Sprintf("                %s=params,\n", paginationRequestArg))
 			} else {
 				if queryBuilder == "raw" {
-					buf.WriteString("                params={\n")
+					buf.WriteString(fmt.Sprintf("                %s={\n", paginationRequestArg))
 				} else {
-					buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
+					buf.WriteString(fmt.Sprintf("                %s=%s(\n", paginationRequestArg, queryBuilder))
 					buf.WriteString("                    {\n")
 				}
 				itemIndent := "                        "
@@ -3273,12 +3691,12 @@ func renderOperationMethodWithComments(
 				buf.WriteString("                headers=headers,\n")
 			}
 			if paginationParamsVariable {
-				buf.WriteString("                params=params,\n")
+				buf.WriteString(fmt.Sprintf("                %s=params,\n", paginationRequestArg))
 			} else {
 				if queryBuilder == "raw" {
-					buf.WriteString("                params={\n")
+					buf.WriteString(fmt.Sprintf("                %s={\n", paginationRequestArg))
 				} else {
-					buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
+					buf.WriteString(fmt.Sprintf("                %s=%s(\n", paginationRequestArg, queryBuilder))
 					buf.WriteString("                    {\n")
 				}
 				itemIndent := "                        "
@@ -3362,9 +3780,9 @@ func renderOperationMethodWithComments(
 				buf.WriteString("                headers=headers,\n")
 			}
 			if queryBuilder == "raw" {
-				buf.WriteString("                params={\n")
+				buf.WriteString(fmt.Sprintf("                %s={\n", paginationRequestArg))
 			} else {
-				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
+				buf.WriteString(fmt.Sprintf("                %s=%s(\n", paginationRequestArg, queryBuilder))
 				buf.WriteString("                    {\n")
 			}
 			itemIndent := "                        "
@@ -3423,9 +3841,9 @@ func renderOperationMethodWithComments(
 				buf.WriteString("                headers=headers,\n")
 			}
 			if queryBuilder == "raw" {
-				buf.WriteString("                params={\n")
+				buf.WriteString(fmt.Sprintf("                %s={\n", paginationRequestArg))
 			} else {
-				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
+				buf.WriteString(fmt.Sprintf("                %s=%s(\n", paginationRequestArg, queryBuilder))
 				buf.WriteString("                    {\n")
 			}
 			itemIndent := "                        "
@@ -3479,8 +3897,12 @@ func renderOperationMethodWithComments(
 		return buf.String()
 	}
 
-	if headersBeforeBody && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
-		buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n")
+	if headersExpr == "" && headersBeforeBody && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
+		if binding.Mapping != nil && binding.Mapping.BlankLineAfterHeaders {
+			buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n\n")
+		} else {
+			buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n")
+		}
 		headersAssigned = true
 	}
 	if binding.Mapping != nil && len(binding.Mapping.PreBodyCode) > 0 {
@@ -3491,6 +3913,41 @@ func renderOperationMethodWithComments(
 	bodyVarAssign := "body"
 	if bodyAnnotation != "" {
 		bodyVarAssign = fmt.Sprintf("body: %s", bodyAnnotation)
+	}
+	renderFilesAssignment := func() bool {
+		if filesExpr != "" {
+			buf.WriteString(fmt.Sprintf("        files = %s\n", filesExpr))
+			return true
+		}
+		if len(filesFieldNames) == 0 {
+			return false
+		}
+		if len(filesFieldNames) == 1 {
+			fieldName := filesFieldNames[0]
+			argName := operationArgName(fieldName, paramAliases)
+			valueExpr := argName
+			if override, ok := filesFieldValues[fieldName]; ok && strings.TrimSpace(override) != "" {
+				valueExpr = strings.TrimSpace(override)
+			}
+			buf.WriteString(fmt.Sprintf("        files = {%q: %s}\n", fieldName, valueExpr))
+			return true
+		}
+
+		buf.WriteString("        files = {\n")
+		for _, filesField := range filesFieldNames {
+			argName := operationArgName(filesField, paramAliases)
+			valueExpr := argName
+			if override, ok := filesFieldValues[filesField]; ok && strings.TrimSpace(override) != "" {
+				valueExpr = strings.TrimSpace(override)
+			}
+			buf.WriteString(fmt.Sprintf("            %q: %s,\n", filesField, valueExpr))
+		}
+		buf.WriteString("        }\n")
+		return true
+	}
+
+	if filesBeforeBody {
+		renderFilesAssignment()
 	}
 
 	if len(bodyFieldNames) > 0 {
@@ -3611,32 +4068,14 @@ func renderOperationMethodWithComments(
 			buf.WriteString("            request_body = body.model_dump(exclude_none=True) if hasattr(body, \"model_dump\") else body\n")
 		}
 	}
-	if len(filesFieldNames) > 0 {
-		if len(filesFieldNames) == 1 {
-			fieldName := filesFieldNames[0]
-			argName := operationArgName(fieldName, paramAliases)
-			valueExpr := argName
-			if override, ok := filesFieldValues[fieldName]; ok && strings.TrimSpace(override) != "" {
-				valueExpr = strings.TrimSpace(override)
-			}
-			buf.WriteString(fmt.Sprintf("        files = {%q: %s}\n", fieldName, valueExpr))
-		} else {
-			buf.WriteString("        files = {\n")
-			for _, filesField := range filesFieldNames {
-				argName := operationArgName(filesField, paramAliases)
-				valueExpr := argName
-				if override, ok := filesFieldValues[filesField]; ok && strings.TrimSpace(override) != "" {
-					valueExpr = strings.TrimSpace(override)
-				}
-				buf.WriteString(fmt.Sprintf("            %q: %s,\n", filesField, valueExpr))
-			}
-			buf.WriteString("        }\n")
-		}
+	if !filesBeforeBody {
+		renderFilesAssignment()
 	}
-	if !headersAssigned && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
+	if headersExpr == "" && !headersAssigned && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
 		needsBlankLine := len(queryFields) > 0 ||
 			len(bodyFieldNames) > 0 ||
 			len(bodyFixedValues) > 0 ||
+			filesExpr != "" ||
 			len(filesFieldNames) > 0 ||
 			requestBodyType != "" ||
 			strings.EqualFold(requestMethod, "delete") ||
@@ -3690,7 +4129,8 @@ func renderOperationMethodWithComments(
 	if len(queryFields) > 0 {
 		optionalArgs = append(optionalArgs, requestCallArg{Key: "params", Expr: "params=params"})
 	}
-	if headersBeforeBody && (!disableHeadersArg || len(details.HeaderParameters) > 0) {
+	hasHeadersArg := headersExpr != "" || !disableHeadersArg || len(details.HeaderParameters) > 0
+	if headersBeforeBody && hasHeadersArg {
 		optionalArgs = append(optionalArgs, requestCallArg{Key: "headers", Expr: "headers=headers"})
 	}
 	if bodyArgExpr != "" {
@@ -3704,13 +4144,13 @@ func renderOperationMethodWithComments(
 		}
 		optionalArgs = append(optionalArgs, requestCallArg{Key: "body", Expr: fmt.Sprintf("body=%s", bodyExpr)})
 	}
-	if len(filesFieldNames) > 0 {
+	if filesExpr != "" || len(filesFieldNames) > 0 {
 		optionalArgs = append(optionalArgs, requestCallArg{Key: "files", Expr: "files=files"})
 	}
 	if dataField != "" {
 		optionalArgs = append(optionalArgs, requestCallArg{Key: "data_field", Expr: fmt.Sprintf("data_field=%q", dataField)})
 	}
-	if !headersBeforeBody && (!disableHeadersArg || len(details.HeaderParameters) > 0) {
+	if !headersBeforeBody && hasHeadersArg {
 		optionalArgs = append(optionalArgs, requestCallArg{Key: "headers", Expr: "headers=headers"})
 	}
 	if binding.Mapping != nil && len(binding.Mapping.RequestCallArgOrder) > 0 {

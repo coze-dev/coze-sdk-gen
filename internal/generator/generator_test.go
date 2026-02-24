@@ -194,6 +194,9 @@ func TestGeneratePythonFromRealConfig(t *testing.T) {
 	}
 
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "apps", "__init__.py"), "PublishStatus")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "coze.py"), "class Coze(object):")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "coze.py"), "class AsyncCoze(object):")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "coze.py"), "def bots(self) -> \"BotsClient\":")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "folders", "__init__.py"), "children_count")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "conversations", "__init__.py"), "def messages")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "datasets", "__init__.py"), "def process")
@@ -412,6 +415,126 @@ func TestRenderOperationMethodStreamWrapBlankLineBeforeAsyncReturn(t *testing.T)
 	}
 }
 
+func TestRenderOperationMethodHeadersExpr(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo",
+		Method: "post",
+		RequestBodySchema: &openapi.Schema{
+			Type: "object",
+			Properties: map[string]*openapi.Schema{
+				"name": {Type: "string"},
+			},
+		},
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "create",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			BodyBuilder:        "raw",
+			BodyFields:         []string{"name"},
+			DisableHeadersArg:  true,
+			IgnoreHeaderParams: true,
+			HeadersExpr:        "{\"Agw-Js-Conv\": \"str\"}",
+		},
+	}
+
+	code := renderOperationMethod(doc, binding, false)
+	if !strings.Contains(code, "headers = {\"Agw-Js-Conv\": \"str\"}") {
+		t.Fatalf("expected fixed headers assignment via headers_expr:\n%s", code)
+	}
+	if !strings.Contains(code, "headers=headers") {
+		t.Fatalf("expected request call to include headers arg:\n%s", code)
+	}
+	if strings.Contains(code, "headers: Optional[Dict[str, str]]") {
+		t.Fatalf("did not expect explicit headers signature arg with disable_headers_arg=true:\n%s", code)
+	}
+}
+
+func TestRenderOperationMethodPaginationRequestArg(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo/list",
+		Method: "post",
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "list_items",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			Pagination:              "number",
+			PaginationDataClass:     "DemoListData",
+			PaginationItemType:      "DemoItem",
+			PaginationItemsField:    "items",
+			PaginationTotalField:    "total",
+			PaginationPageNumField:  "page",
+			PaginationPageSizeField: "size",
+			PaginationRequestArg:    "json",
+			DisableHeadersArg:       true,
+			ParamAliases: map[string]string{
+				"page": "page_num",
+				"size": "page_size",
+			},
+			QueryFields: []config.OperationField{
+				{Name: "page", Type: "int", Required: true, Default: "1"},
+				{Name: "size", Type: "int", Required: true, Default: "10"},
+			},
+		},
+	}
+
+	syncCode := renderOperationMethod(doc, binding, false)
+	if !strings.Contains(syncCode, "json=") {
+		t.Fatalf("expected sync pagination request to use json arg:\n%s", syncCode)
+	}
+	if strings.Contains(syncCode, "params={") {
+		t.Fatalf("did not expect sync pagination request to use params arg:\n%s", syncCode)
+	}
+
+	asyncCode := renderOperationMethod(doc, binding, true)
+	if !strings.Contains(asyncCode, "json=") {
+		t.Fatalf("expected async pagination request to use json arg:\n%s", asyncCode)
+	}
+	if strings.Contains(asyncCode, "params={") {
+		t.Fatalf("did not expect async pagination request to use params arg:\n%s", asyncCode)
+	}
+}
+
+func TestRenderOperationMethodPaginationPreBodyCode(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo/list",
+		Method: "post",
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "list_items",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			Pagination:              "number",
+			PaginationDataClass:     "DemoListData",
+			PaginationItemType:      "DemoItem",
+			PaginationItemsField:    "items",
+			PaginationTotalField:    "total",
+			PaginationPageNumField:  "page",
+			PaginationPageSizeField: "size",
+			DisableHeadersArg:       true,
+			QueryFields: []config.OperationField{
+				{Name: "page", Type: "int", Required: true, Default: "1"},
+				{Name: "size", Type: "int", Required: true, Default: "10"},
+			},
+			PreBodyCode: []string{
+				"warnings.warn(\"deprecated\")",
+			},
+		},
+	}
+
+	code := renderOperationMethod(doc, binding, false)
+	if !strings.Contains(code, "warnings.warn(\"deprecated\")") {
+		t.Fatalf("expected pagination method to include pre_body_code:\n%s", code)
+	}
+}
+
 func TestMethodBlockOrderingHelpers(t *testing.T) {
 	if got := detectMethodBlockName(`
 @overload
@@ -451,6 +574,47 @@ def _create(self) -> None:
 	)
 	if len(orderedChildren) != 3 || orderedChildren[0].Attribute != "voices" || orderedChildren[1].Attribute != "rooms" {
 		t.Fatalf("unexpected child order: %+v", orderedChildren)
+	}
+}
+
+func TestDeduplicateBindingsKeepsSyncAsyncPairName(t *testing.T) {
+	bindings := []operationBinding{
+		{
+			PackageName: "demo",
+			MethodName:  "create",
+			Mapping:     &config.OperationMapping{SyncOnly: true},
+		},
+		{
+			PackageName: "demo",
+			MethodName:  "create",
+			Mapping:     &config.OperationMapping{AsyncOnly: true},
+		},
+	}
+	got := deduplicateBindings(bindings)
+	if got[0].MethodName != "create" || got[1].MethodName != "create" {
+		t.Fatalf("expected sync/async-only pair to keep same method name, got %q and %q", got[0].MethodName, got[1].MethodName)
+	}
+}
+
+func TestDeduplicateBindingsRenamesSyncConflicts(t *testing.T) {
+	bindings := []operationBinding{
+		{
+			PackageName: "demo",
+			MethodName:  "create",
+			Mapping:     &config.OperationMapping{SyncOnly: true},
+		},
+		{
+			PackageName: "demo",
+			MethodName:  "create",
+			Mapping:     &config.OperationMapping{SyncOnly: true},
+		},
+	}
+	got := deduplicateBindings(bindings)
+	if got[0].MethodName != "create" {
+		t.Fatalf("unexpected first method name: %q", got[0].MethodName)
+	}
+	if got[1].MethodName != "create_2" {
+		t.Fatalf("expected duplicate sync method to be renamed with suffix, got %q", got[1].MethodName)
 	}
 }
 
@@ -821,6 +985,189 @@ func TestLinesFromCommentOverrideKeepsLeadingSpaces(t *testing.T) {
 	}
 	if lines[1] != "  running: Execution in progress." {
 		t.Fatalf("expected leading spaces to be preserved, got %q", lines[1])
+	}
+}
+
+func TestRenderOperationMethodArgDefaultsAsyncOverride(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo",
+		Method: "get",
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "list_items",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			QueryFields: []config.OperationField{
+				{Name: "page_size", Type: "int", Required: true, Default: "10"},
+			},
+			ArgDefaultsAsync: map[string]string{
+				"page_size": "100",
+			},
+			DisableHeadersArg: true,
+		},
+	}
+
+	syncCode := renderOperationMethod(doc, binding, false)
+	if !strings.Contains(syncCode, "page_size: int = 10") {
+		t.Fatalf("expected sync default page_size=10:\n%s", syncCode)
+	}
+
+	asyncCode := renderOperationMethod(doc, binding, true)
+	if !strings.Contains(asyncCode, "page_size: int = 100") {
+		t.Fatalf("expected async override page_size=100:\n%s", asyncCode)
+	}
+}
+
+func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo/{group_id}/features",
+		Method: "post",
+		PathParameters: []openapi.ParameterSpec{
+			{Name: "group_id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+		},
+		RequestBodySchema: &openapi.Schema{
+			Type: "object",
+			Properties: map[string]*openapi.Schema{
+				"name": {Type: "string"},
+				"file": {Type: "string"},
+			},
+			Required: []string{"name", "file"},
+		},
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "create",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			BodyBuilder:       "remove_none_values",
+			BodyFields:        []string{"name"},
+			FilesFields:       []string{"file"},
+			FilesFieldValues:  map[string]string{"file": "_try_fix_file(file)"},
+			FilesBeforeBody:   true,
+			UseKwargsHeaders:  true,
+			HeadersBeforeBody: true,
+			ArgTypes: map[string]string{
+				"group_id": "str",
+				"name":     "str",
+				"file":     "FileTypes",
+			},
+			SignatureArgs: []string{"group_id", "name", "file"},
+		},
+	}
+
+	code := renderOperationMethod(doc, binding, false)
+	headersIdx := strings.Index(code, "headers: Optional[dict] = kwargs.get(\"headers\")")
+	filesIdx := strings.Index(code, "files = {\"file\": _try_fix_file(file)}")
+	bodyIdx := strings.Index(code, "body = remove_none_values(")
+	if headersIdx < 0 || filesIdx < 0 || bodyIdx < 0 || !(headersIdx < filesIdx && filesIdx < bodyIdx) {
+		t.Fatalf("expected files assignment before body assignment:\n%s", code)
+	}
+}
+
+func TestRenderOperationMethodPreDocstringCode(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo",
+		Method: "post",
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "create",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			DisableHeadersArg: true,
+			PreDocstringCode: []string{
+				`warnings.warn("deprecated", DeprecationWarning, stacklevel=2)`,
+			},
+		},
+	}
+	commentOverrides := config.CommentOverrides{
+		MethodDocstrings: map[string]string{
+			"cozepy.demo.DemoClient.create": "Upload demo item.",
+		},
+	}
+
+	code := renderOperationMethodWithComments(doc, binding, false, "cozepy.demo", "DemoClient", commentOverrides)
+	warnIdx := strings.Index(code, `warnings.warn("deprecated", DeprecationWarning, stacklevel=2)`)
+	docIdx := strings.Index(code, `"""Upload demo item."""`)
+	urlIdx := strings.Index(code, `url = f"{self._base_url}/v1/demo"`)
+	if warnIdx < 0 || docIdx < 0 || urlIdx < 0 || !(warnIdx < docIdx && docIdx < urlIdx) {
+		t.Fatalf("expected pre_docstring_code to be emitted before docstring and url:\n%s", code)
+	}
+}
+
+func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo/{id}",
+		Method: "post",
+		PathParameters: []openapi.ParameterSpec{
+			{Name: "id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+		},
+		RequestBodySchema: &openapi.Schema{
+			Type: "object",
+			Properties: map[string]*openapi.Schema{
+				"name": {Type: "string"},
+			},
+			Required: []string{"name"},
+		},
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "update",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			BodyBuilder:           "raw",
+			BodyFields:            []string{"name"},
+			UseKwargsHeaders:      true,
+			HeadersBeforeBody:     true,
+			BlankLineAfterHeaders: true,
+			ArgTypes: map[string]string{
+				"id":   "str",
+				"name": "str",
+			},
+			SignatureArgs: []string{"id", "name"},
+		},
+	}
+
+	code := renderOperationMethod(doc, binding, false)
+	if !strings.Contains(code, "headers: Optional[dict] = kwargs.get(\"headers\")\n\n        body = {") {
+		t.Fatalf("expected blank line between headers assignment and body when blank_line_after_headers=true:\n%s", code)
+	}
+}
+
+func TestRenderPackageModuleIntEnumMixinBase(t *testing.T) {
+	doc := mustParseSwagger(t)
+	meta := packageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Name:                  "AuditStatus",
+					AllowMissingInSwagger: true,
+					EnumBase:              "int_enum",
+					EnumValues: []config.ModelEnumValue{
+						{Name: "PENDING", Value: 1},
+						{Name: "APPROVED", Value: 2},
+					},
+				},
+			},
+		},
+	}
+
+	code := renderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	if !strings.Contains(code, "from enum import Enum") {
+		t.Fatalf("expected Enum import for int_enum base:\n%s", code)
+	}
+	if strings.Contains(code, "from enum import IntEnum") {
+		t.Fatalf("did not expect IntEnum import for int_enum base:\n%s", code)
+	}
+	if !strings.Contains(code, "class AuditStatus(int, Enum):") {
+		t.Fatalf("expected int+Enum class base for int_enum model:\n%s", code)
 	}
 }
 
