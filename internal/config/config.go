@@ -48,12 +48,17 @@ type ChildClient struct {
 }
 
 type ModelSchema struct {
-	Schema         string       `yaml:"schema"`
-	Name           string       `yaml:"name"`
-	FieldOrder     []string     `yaml:"field_order"`
-	RequiredFields []string     `yaml:"required_fields"`
-	EnumBase       string       `yaml:"enum_base"`
-	ExtraFields    []ModelField `yaml:"extra_fields"`
+	Schema                 string            `yaml:"schema"`
+	Name                   string            `yaml:"name"`
+	FieldOrder             []string          `yaml:"field_order"`
+	RequiredFields         []string          `yaml:"required_fields"`
+	FieldTypes             map[string]string `yaml:"field_types"`
+	FieldDefaults          map[string]string `yaml:"field_defaults"`
+	ExcludeUnorderedFields bool              `yaml:"exclude_unordered_fields"`
+	EnumBase               string            `yaml:"enum_base"`
+	EnumValues             []ModelEnumValue  `yaml:"enum_values"`
+	ExtraFields            []ModelField      `yaml:"extra_fields"`
+	AllowMissingInSwagger  bool              `yaml:"allow_missing_in_swagger"`
 }
 
 type ModelField struct {
@@ -61,6 +66,11 @@ type ModelField struct {
 	Type     string `yaml:"type"`
 	Required bool   `yaml:"required"`
 	Default  string `yaml:"default"`
+}
+
+type ModelEnumValue struct {
+	Name  string      `yaml:"name"`
+	Value interface{} `yaml:"value"`
 }
 
 type ImportSpec struct {
@@ -77,6 +87,7 @@ type OperationMapping struct {
 	HTTPMethodOverride       string            `yaml:"http_method_override"`
 	DisableRequestBody       bool              `yaml:"disable_request_body"`
 	BodyFields               []string          `yaml:"body_fields"`
+	BodyFixedValues          map[string]string `yaml:"body_fixed_values"`
 	BodyRequiredFields       []string          `yaml:"body_required_fields"`
 	UseKwargsHeaders         bool              `yaml:"use_kwargs_headers"`
 	ParamAliases             map[string]string `yaml:"param_aliases"`
@@ -206,14 +217,25 @@ func (c *Config) Validate() error {
 			}
 		}
 		for j, model := range pkg.ModelSchemas {
-			if strings.TrimSpace(model.Schema) == "" || strings.TrimSpace(model.Name) == "" {
-				return fmt.Errorf("api.packages[%d].model_schemas[%d].schema and name are required", i, j)
+			if strings.TrimSpace(model.Name) == "" {
+				return fmt.Errorf("api.packages[%d].model_schemas[%d].name is required", i, j)
+			}
+			if strings.TrimSpace(model.Schema) == "" && !model.AllowMissingInSwagger {
+				return fmt.Errorf("api.packages[%d].model_schemas[%d].schema is required when allow_missing_in_swagger is false", i, j)
 			}
 			if strings.TrimSpace(model.EnumBase) != "" {
 				switch strings.TrimSpace(model.EnumBase) {
-				case "dynamic_str":
+				case "dynamic_str", "int":
 				default:
-					return fmt.Errorf("api.packages[%d].model_schemas[%d].enum_base must be 'dynamic_str' when set", i, j)
+					return fmt.Errorf("api.packages[%d].model_schemas[%d].enum_base must be 'dynamic_str' or 'int' when set", i, j)
+				}
+			}
+			for fieldName, fieldType := range model.FieldTypes {
+				if strings.TrimSpace(fieldName) == "" {
+					return fmt.Errorf("api.packages[%d].model_schemas[%d].field_types has empty key", i, j)
+				}
+				if strings.TrimSpace(fieldType) == "" {
+					return fmt.Errorf("api.packages[%d].model_schemas[%d].field_types[%q] is empty", i, j, fieldName)
 				}
 			}
 			for k, extra := range model.ExtraFields {
@@ -222,6 +244,14 @@ func (c *Config) Validate() error {
 				}
 				if strings.TrimSpace(extra.Type) == "" {
 					return fmt.Errorf("api.packages[%d].model_schemas[%d].extra_fields[%d].type is required", i, j, k)
+				}
+			}
+			for k, enumValue := range model.EnumValues {
+				if strings.TrimSpace(enumValue.Name) == "" {
+					return fmt.Errorf("api.packages[%d].model_schemas[%d].enum_values[%d].name is required", i, j, k)
+				}
+				if enumValue.Value == nil {
+					return fmt.Errorf("api.packages[%d].model_schemas[%d].enum_values[%d].value is required", i, j, k)
 				}
 			}
 		}
@@ -242,6 +272,14 @@ func (c *Config) Validate() error {
 		for j, field := range mapping.QueryFields {
 			if strings.TrimSpace(field.Name) == "" {
 				return fmt.Errorf("api.operation_mappings[%d].query_fields[%d].name is required", i, j)
+			}
+		}
+		for fieldName, fieldValue := range mapping.BodyFixedValues {
+			if strings.TrimSpace(fieldName) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].body_fixed_values has empty key", i)
+			}
+			if strings.TrimSpace(fieldValue) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].body_fixed_values[%q] is empty", i, fieldName)
 			}
 		}
 		if strings.TrimSpace(mapping.Pagination) != "" {

@@ -418,19 +418,26 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 	hasNumberPagination := packageHasNumberPagination(bindings)
 	needAny, needDict := packageNeedsAnyDict(doc, bindings, modelDefs)
 	hasStandardEnumClasses := false
+	hasIntEnumClasses := false
 	hasDynamicEnumClasses := false
 	for _, model := range modelDefs {
 		if model.IsEnum {
-			if model.EnumBase == "dynamic_str" {
+			enumBase := strings.TrimSpace(model.EnumBase)
+			if enumBase == "dynamic_str" {
 				hasDynamicEnumClasses = true
-			} else {
+			} else if enumBase == "int" {
+				hasIntEnumClasses = true
+			} else if enumBase == "" {
 				hasStandardEnumClasses = true
 			}
 		}
 	}
 
-	if hasStandardEnumClasses {
+	if hasStandardEnumClasses || hasIntEnumClasses {
 		buf.WriteString("from enum import Enum\n")
+		if hasIntEnumClasses {
+			buf.WriteString("from enum import IntEnum\n")
+		}
 	}
 	typingImports := make([]string, 0)
 	if hasTypedChildClients {
@@ -696,7 +703,25 @@ func packageNeedsAnyDict(doc *openapi.Document, bindings []operationBinding, mod
 	}
 
 	for _, model := range modelDefs {
+		for _, fieldType := range model.FieldTypes {
+			typeName := strings.TrimSpace(fieldType)
+			if strings.Contains(typeName, "Any") {
+				needAny = true
+			}
+			if strings.Contains(typeName, "Dict") {
+				needDict = true
+			}
+		}
 		if model.IsEnum || model.Schema == nil {
+			for _, extraField := range model.ExtraFields {
+				fieldType := strings.TrimSpace(extraField.Type)
+				if strings.Contains(fieldType, "Any") {
+					needAny = true
+				}
+				if strings.Contains(fieldType, "Dict") {
+					needDict = true
+				}
+			}
 			continue
 		}
 		for propertyName, propertySchema := range model.Schema.Properties {
@@ -818,14 +843,19 @@ func renderPagedResponseClasses(bindings []operationBinding) string {
 }
 
 type packageModelDefinition struct {
-	SchemaName     string
-	Name           string
-	Schema         *openapi.Schema
-	IsEnum         bool
-	FieldOrder     []string
-	RequiredFields []string
-	EnumBase       string
-	ExtraFields    []config.ModelField
+	SchemaName            string
+	Name                  string
+	Schema                *openapi.Schema
+	IsEnum                bool
+	FieldOrder            []string
+	RequiredFields        []string
+	FieldTypes            map[string]string
+	FieldDefaults         map[string]string
+	EnumBase              string
+	EnumValues            []config.ModelEnumValue
+	ExtraFields           []config.ModelField
+	AllowMissingInSwagger bool
+	ExcludeUnordered      bool
 }
 
 func packageSchemaAliases(meta packageMeta) map[string]string {
@@ -852,27 +882,83 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 	for _, model := range meta.Package.ModelSchemas {
 		schemaName := strings.TrimSpace(model.Schema)
 		modelName := strings.TrimSpace(model.Name)
-		if schemaName == "" || modelName == "" {
+		if modelName == "" {
+			continue
+		}
+		fieldTypes := map[string]string{}
+		for k, v := range model.FieldTypes {
+			fieldTypes[k] = v
+		}
+		fieldDefaults := map[string]string{}
+		for k, v := range model.FieldDefaults {
+			fieldDefaults[k] = v
+		}
+		enumValues := append([]config.ModelEnumValue(nil), model.EnumValues...)
+
+		if schemaName == "" {
+			if !model.AllowMissingInSwagger {
+				continue
+			}
+			isEnum := len(enumValues) > 0
+			result = append(result, packageModelDefinition{
+				SchemaName:            schemaName,
+				Name:                  modelName,
+				Schema:                nil,
+				IsEnum:                isEnum,
+				FieldOrder:            append([]string(nil), model.FieldOrder...),
+				RequiredFields:        append([]string(nil), model.RequiredFields...),
+				FieldTypes:            fieldTypes,
+				FieldDefaults:         fieldDefaults,
+				EnumBase:              strings.TrimSpace(model.EnumBase),
+				EnumValues:            enumValues,
+				ExtraFields:           append([]config.ModelField(nil), model.ExtraFields...),
+				AllowMissingInSwagger: model.AllowMissingInSwagger,
+				ExcludeUnordered:      model.ExcludeUnorderedFields,
+			})
 			continue
 		}
 		schema, ok := doc.Components.Schemas[schemaName]
 		if !ok || schema == nil {
+			if !model.AllowMissingInSwagger {
+				continue
+			}
+			isEnum := len(enumValues) > 0
+			result = append(result, packageModelDefinition{
+				SchemaName:            schemaName,
+				Name:                  modelName,
+				Schema:                nil,
+				IsEnum:                isEnum,
+				FieldOrder:            append([]string(nil), model.FieldOrder...),
+				RequiredFields:        append([]string(nil), model.RequiredFields...),
+				FieldTypes:            fieldTypes,
+				FieldDefaults:         fieldDefaults,
+				EnumBase:              strings.TrimSpace(model.EnumBase),
+				EnumValues:            enumValues,
+				ExtraFields:           append([]config.ModelField(nil), model.ExtraFields...),
+				AllowMissingInSwagger: model.AllowMissingInSwagger,
+				ExcludeUnordered:      model.ExcludeUnorderedFields,
+			})
 			continue
 		}
 		resolved := doc.ResolveSchema(schema)
 		if resolved == nil {
 			continue
 		}
-		isEnum := len(resolved.Enum) > 0 && (resolved.Type == "string" || resolved.Type == "")
+		isEnum := len(enumValues) > 0 || (len(resolved.Enum) > 0 && (resolved.Type == "string" || resolved.Type == "integer" || resolved.Type == ""))
 		result = append(result, packageModelDefinition{
-			SchemaName:     schemaName,
-			Name:           modelName,
-			Schema:         resolved,
-			IsEnum:         isEnum,
-			FieldOrder:     append([]string(nil), model.FieldOrder...),
-			RequiredFields: append([]string(nil), model.RequiredFields...),
-			EnumBase:       strings.TrimSpace(model.EnumBase),
-			ExtraFields:    append([]config.ModelField(nil), model.ExtraFields...),
+			SchemaName:            schemaName,
+			Name:                  modelName,
+			Schema:                resolved,
+			IsEnum:                isEnum,
+			FieldOrder:            append([]string(nil), model.FieldOrder...),
+			RequiredFields:        append([]string(nil), model.RequiredFields...),
+			FieldTypes:            fieldTypes,
+			FieldDefaults:         fieldDefaults,
+			EnumBase:              strings.TrimSpace(model.EnumBase),
+			EnumValues:            enumValues,
+			ExtraFields:           append([]config.ModelField(nil), model.ExtraFields...),
+			AllowMissingInSwagger: model.AllowMissingInSwagger,
+			ExcludeUnordered:      model.ExcludeUnorderedFields,
 		})
 	}
 	return result
@@ -890,27 +976,42 @@ func renderPackageModelDefinitions(
 		if model.IsEnum {
 			if model.EnumBase == "dynamic_str" {
 				buf.WriteString(fmt.Sprintf("class %s(DynamicStrEnum):\n", model.Name))
+			} else if model.EnumBase == "int" {
+				buf.WriteString(fmt.Sprintf("class %s(IntEnum):\n", model.Name))
 			} else {
 				buf.WriteString(fmt.Sprintf("class %s(str, Enum):\n", model.Name))
 			}
-			if len(model.Schema.Enum) == 0 {
+			enumItems := make([]config.ModelEnumValue, 0)
+			if len(model.EnumValues) > 0 {
+				enumItems = append(enumItems, model.EnumValues...)
+			} else if model.Schema != nil && len(model.Schema.Enum) > 0 {
+				for _, enumValue := range model.Schema.Enum {
+					enumItems = append(enumItems, config.ModelEnumValue{
+						Name:  enumMemberName(fmt.Sprintf("%v", enumValue)),
+						Value: enumValue,
+					})
+				}
+			}
+			if len(enumItems) == 0 {
 				buf.WriteString("    pass\n\n")
 				continue
 			}
-			for _, enumValue := range model.Schema.Enum {
-				value, ok := enumValue.(string)
-				if !ok {
-					continue
+			for _, enumValue := range enumItems {
+				memberName := strings.TrimSpace(enumValue.Name)
+				if memberName == "" {
+					memberName = enumMemberName(fmt.Sprintf("%v", enumValue.Value))
 				}
-				memberName := enumMemberName(value)
-				buf.WriteString(fmt.Sprintf("    %s = %q\n", memberName, value))
+				buf.WriteString(fmt.Sprintf("    %s = %s\n", memberName, renderEnumValueLiteral(enumValue.Value)))
 			}
 			buf.WriteString("\n")
 			continue
 		}
 
 		buf.WriteString(fmt.Sprintf("class %s(CozeModel):\n", model.Name))
-		properties := model.Schema.Properties
+		properties := map[string]*openapi.Schema{}
+		if model.Schema != nil {
+			properties = model.Schema.Properties
+		}
 		if len(properties) == 0 {
 			if len(model.ExtraFields) == 0 {
 				buf.WriteString("    pass\n\n")
@@ -919,8 +1020,10 @@ func renderPackageModelDefinitions(
 		}
 
 		requiredSet := map[string]bool{}
-		for _, requiredName := range model.Schema.Required {
-			requiredSet[requiredName] = true
+		if model.Schema != nil {
+			for _, requiredName := range model.Schema.Required {
+				requiredSet[requiredName] = true
+			}
 		}
 		for _, requiredName := range model.RequiredFields {
 			requiredName = strings.TrimSpace(requiredName)
@@ -928,6 +1031,9 @@ func renderPackageModelDefinitions(
 				continue
 			}
 			requiredSet[requiredName] = true
+		}
+		if requiredSet["__none__"] {
+			requiredSet = map[string]bool{}
 		}
 		propertyNames := make([]string, 0, len(properties))
 		seenProperties := map[string]bool{}
@@ -938,23 +1044,31 @@ func renderPackageModelDefinitions(
 			propertyNames = append(propertyNames, propertyName)
 			seenProperties[propertyName] = true
 		}
-		remaining := make([]string, 0, len(properties))
-		for propertyName := range properties {
-			if seenProperties[propertyName] {
-				continue
+		if !model.ExcludeUnordered {
+			remaining := make([]string, 0, len(properties))
+			for propertyName := range properties {
+				if seenProperties[propertyName] {
+					continue
+				}
+				remaining = append(remaining, propertyName)
 			}
-			remaining = append(remaining, propertyName)
+			sort.Strings(remaining)
+			propertyNames = append(propertyNames, remaining...)
 		}
-		sort.Strings(remaining)
-		propertyNames = append(propertyNames, remaining...)
 		for _, propertyName := range propertyNames {
 			propertySchema := properties[propertyName]
-			typeName := pythonTypeForSchemaWithAliases(doc, propertySchema, requiredSet[propertyName], schemaAliases)
+			typeName := modelFieldType(model, propertyName, pythonTypeForSchemaWithAliases(doc, propertySchema, requiredSet[propertyName], schemaAliases))
 			fieldName := normalizePythonIdentifier(propertyName)
 			if requiredSet[propertyName] {
 				buf.WriteString(fmt.Sprintf("    %s: %s\n", fieldName, typeName))
 			} else {
-				buf.WriteString(fmt.Sprintf("    %s: %s = None\n", fieldName, typeName))
+				defaultValue := modelFieldDefault(model, propertyName)
+				if defaultValue == "None" && !strings.HasPrefix(typeName, "Optional[") {
+					typeName = "Optional[" + typeName + "]"
+				} else if defaultValue != "None" {
+					typeName = unwrapOptionalType(typeName)
+				}
+				buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", fieldName, typeName, defaultValue))
 			}
 		}
 		for _, extraField := range model.ExtraFields {
@@ -998,6 +1112,62 @@ func renderPackageModelDefinitions(
 	}
 
 	return strings.TrimRight(buf.String(), "\n")
+}
+
+func modelFieldType(model packageModelDefinition, propertyName string, fallback string) string {
+	if len(model.FieldTypes) == 0 {
+		return fallback
+	}
+	if fieldType, ok := model.FieldTypes[propertyName]; ok && strings.TrimSpace(fieldType) != "" {
+		return strings.TrimSpace(fieldType)
+	}
+	return fallback
+}
+
+func modelFieldDefault(model packageModelDefinition, propertyName string) string {
+	if len(model.FieldDefaults) == 0 {
+		return "None"
+	}
+	if value, ok := model.FieldDefaults[propertyName]; ok && strings.TrimSpace(value) != "" {
+		return strings.TrimSpace(value)
+	}
+	return "None"
+}
+
+func unwrapOptionalType(typeName string) string {
+	trimmed := strings.TrimSpace(typeName)
+	if !strings.HasPrefix(trimmed, "Optional[") || !strings.HasSuffix(trimmed, "]") {
+		return typeName
+	}
+	inner := strings.TrimSuffix(strings.TrimPrefix(trimmed, "Optional["), "]")
+	inner = strings.TrimSpace(inner)
+	if inner == "" {
+		return typeName
+	}
+	return inner
+}
+
+func renderEnumValueLiteral(value interface{}) string {
+	switch v := value.(type) {
+	case string:
+		return fmt.Sprintf("%q", v)
+	case int:
+		return fmt.Sprintf("%d", v)
+	case int64:
+		return fmt.Sprintf("%d", v)
+	case float64:
+		if v == float64(int64(v)) {
+			return fmt.Sprintf("%d", int64(v))
+		}
+		return fmt.Sprintf("%v", v)
+	case bool:
+		if v {
+			return "True"
+		}
+		return "False"
+	default:
+		return fmt.Sprintf("%q", fmt.Sprintf("%v", value))
+	}
 }
 
 func enumMemberName(value string) string {
@@ -1245,13 +1415,20 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		requestStream = binding.Mapping.RequestStream
 	}
 	bodyFieldNames := make([]string, 0)
+	bodyFixedValues := map[string]string{}
 	if binding.Mapping != nil && len(binding.Mapping.BodyFields) > 0 {
 		bodyFieldNames = append(bodyFieldNames, binding.Mapping.BodyFields...)
+	}
+	if binding.Mapping != nil && len(binding.Mapping.BodyFixedValues) > 0 {
+		for k, v := range binding.Mapping.BodyFixedValues {
+			bodyFixedValues[k] = v
+		}
 	}
 	if binding.Mapping != nil && binding.Mapping.DisableRequestBody {
 		requestBodyType = ""
 		bodyRequired = false
 		bodyFieldNames = nil
+		bodyFixedValues = map[string]string{}
 	}
 	queryFields := buildRenderQueryFields(doc, details, binding.Mapping, paramAliases, argTypes)
 	bodyRequiredSet := map[string]bool{}
@@ -1609,6 +1786,27 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			argName := operationArgName(bodyField, paramAliases)
 			buf.WriteString(fmt.Sprintf("                %q: %s,\n", bodyField, argName))
 		}
+		fixedKeys := make([]string, 0, len(bodyFixedValues))
+		for fieldName := range bodyFixedValues {
+			fixedKeys = append(fixedKeys, fieldName)
+		}
+		sort.Strings(fixedKeys)
+		for _, fieldName := range fixedKeys {
+			buf.WriteString(fmt.Sprintf("                %q: %s,\n", fieldName, bodyFixedValues[fieldName]))
+		}
+		buf.WriteString("            }\n")
+		buf.WriteString("        )\n")
+	} else if len(bodyFixedValues) > 0 {
+		buf.WriteString("        body = dump_exclude_none(\n")
+		buf.WriteString("            {\n")
+		fixedKeys := make([]string, 0, len(bodyFixedValues))
+		for fieldName := range bodyFixedValues {
+			fixedKeys = append(fixedKeys, fieldName)
+		}
+		sort.Strings(fixedKeys)
+		for _, fieldName := range fixedKeys {
+			buf.WriteString(fmt.Sprintf("                %q: %s,\n", fieldName, bodyFixedValues[fieldName]))
+		}
 		buf.WriteString("            }\n")
 		buf.WriteString("        )\n")
 	} else if requestBodyType != "" {
@@ -1630,6 +1828,8 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	}
 	bodyArgExpr := ""
 	if len(bodyFieldNames) > 0 {
+		bodyArgExpr = "body"
+	} else if len(bodyFixedValues) > 0 {
 		bodyArgExpr = "body"
 	} else if requestBodyType != "" {
 		bodyArgExpr = "request_body"

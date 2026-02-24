@@ -104,8 +104,170 @@ api:
         - schema: PublishStatus
           name: PublishStatus
           enum_base: dynamic_str
+        - schema: PromptInfo
+          name: BotPromptInfo
+          required_fields:
+            - prompt
+        - schema: OnboardingInfoV2
+          name: BotOnboardingInfo
+          field_defaults:
+            prologue: '""'
+            suggested_questions: "[]"
+        - schema: properties_knowledge
+          name: BotKnowledge
+          field_defaults:
+            dataset_ids: "[]"
+            auto_call: "True"
+            search_strategy: "0"
+        - schema: properties_model_info_config
+          name: BotModelInfo
+          required_fields:
+            - model_id
+          field_types:
+            parameters: Optional[Dict[str, str]]
+          extra_fields:
+            - name: model_name
+              type: str
+              required: false
+        - schema: properties_plugin_id_list_properties_id_list_items
+          name: PluginIDInfo
+          required_fields:
+            - plugin_id
+            - api_id
+        - schema: properties_plugin_id_list
+          name: PluginIDList
+          field_types:
+            id_list: Optional[List[PluginIDInfo]]
+        - schema: properties_workflow_id_list_properties_ids_items
+          name: WorkflowIDInfo
+          required_fields:
+            - id
+        - schema: properties_workflow_id_list
+          name: WorkflowIDList
+          field_types:
+            ids: Optional[List[WorkflowIDInfo]]
+        - schema: BotMode
+          name: BotMode
+          enum_base: int
+          enum_values:
+            - name: SINGLE_AGENT
+              value: 0
+            - name: MULTI_AGENT
+              value: 1
+            - name: SINGLE_AGENT_WORKFLOW
+              value: 2
+        - schema: ApiInfo
+          name: BotPluginAPIInfo
+          required_fields:
+            - api_id
+            - name
+            - description
+        - schema: PluginInfo
+          name: BotPluginInfo
+          required_fields:
+            - plugin_id
+            - name
+            - description
+            - icon_url
+            - api_info_list
+          field_types:
+            api_info_list: List[BotPluginAPIInfo]
+        - schema: SuggestReplyMode
+          name: SuggestReplyMode
+          enum_base: dynamic_str
+          enum_values:
+            - name: DISABLE
+              value: disable
+            - name: ENABLE
+              value: enable
+            - name: CUSTOMIZED
+              value: customized
+        - schema: properties_suggest_reply_info
+          name: BotSuggestReplyInfo
+          required_fields:
+            - reply_mode
+          field_types:
+            reply_mode: SuggestReplyMode
+          field_defaults:
+            customized_prompt: '""'
+        - schema: GradientPosition1
+          name: GradientPosition
+        - schema: CanvasPosition1
+          name: CanvasPosition
+        - schema: BackgroundImageDetail
+          name: BackgroundImageInfo
+          field_types:
+            gradient_position: Optional[GradientPosition]
+            canvas_position: Optional[CanvasPosition]
+          field_defaults:
+            image_url: '""'
+        - schema: BackgroundImageInfo1
+          name: BotBackgroundImageInfo
+          field_types:
+            web_background_image: Optional[BackgroundImageInfo]
+            mobile_background_image: Optional[BackgroundImageInfo]
+        - schema: VariableType
+          name: VariableType
+          enum_base: dynamic_str
+        - schema: VariableChannel
+          name: VariableChannel
+          enum_base: dynamic_str
+        - schema: Variable
+          name: BotVariable
+          required_fields:
+            - keyword
+            - default_value
+            - variable_type
+            - channel
+            - description
+            - enable
+            - prompt_enable
+          field_types:
+            channel: VariableChannel
+          extra_fields:
+            - name: variable_type
+              type: VariableType
+              required: true
+        - schema: Voice
+          name: BotVoiceInfo
+          required_fields:
+            - voice_id
+            - language_code
+        - name: UserInputType
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: TEXT
+              value: text
+            - name: CALL
+              value: call
+            - name: VOICE
+              value: voice
+        - schema: WorkflowInfo
+          name: BotWorkflowInfo
+          required_fields:
+            - id
+            - name
+            - description
+            - icon_url
         - schema: BotInfo
           name: Bot
+          exclude_unordered_fields: true
+          required_fields:
+            - bot_id
+          field_types:
+            prompt_info: Optional[BotPromptInfo]
+            onboarding_info: Optional[BotOnboardingInfo]
+            knowledge: Optional[BotKnowledge]
+            bot_mode: Optional[BotMode]
+            plugin_info_list: Optional[List[BotPluginInfo]]
+            model_info: Optional[BotModelInfo]
+            suggest_reply_info: Optional[BotSuggestReplyInfo]
+            background_image_info: Optional[BotBackgroundImageInfo]
+            variables: Optional[List[BotVariable]]
+            voice_info_list: Optional[List[BotVoiceInfo]]
+            default_user_input_type: Optional[UserInputType]
+            workflow_info_list: Optional[List[BotWorkflowInfo]]
           field_order:
             - bot_id
             - name
@@ -128,6 +290,10 @@ api:
             - default_user_input_type
             - workflow_info_list
             - folder_id
+          extra_fields:
+            - name: folder_id
+              type: str
+              required: false
         - schema: BotSimpleInfo
           name: SimpleBot
           field_order:
@@ -148,6 +314,10 @@ api:
             - is_published
             - updated_at
             - owner_user_id
+          extra_fields:
+            - name: folder_id
+              type: str
+              required: false
       empty_models:
         - UpdateBotResp
         - UnpublishBotResp
@@ -156,25 +326,271 @@ api:
         - /v1/bots
     - name: chat
       source_dir: cozepy/chat
+      extra_imports:
+        - module: cozepy.model
+          names:
+            - ListResponse
+            - Stream
       model_schemas:
+        - name: MessageRole
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: USER
+              value: user
+            - name: ASSISTANT
+              value: assistant
+        - name: MessageType
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: UNKNOWN
+              value: ""
+            - name: QUESTION
+              value: question
+            - name: ANSWER
+              value: answer
+            - name: FUNCTION_CALL
+              value: function_call
+            - name: TOOL_OUTPUT
+              value: tool_output
+            - name: TOOL_RESPONSE
+              value: tool_response
+            - name: FOLLOW_UP
+              value: follow_up
+            - name: VERBOSE
+              value: verbose
+        - name: MessageContentType
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: TEXT
+              value: text
+            - name: OBJECT_STRING
+              value: object_string
+            - name: CARD
+              value: card
+            - name: AUDIO
+              value: audio
+        - name: MessageObjectStringType
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: TEXT
+              value: text
+            - name: FILE
+              value: file
+            - name: IMAGE
+              value: image
+            - name: AUDIO
+              value: audio
+        - name: MessageObjectString
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: type
+              type: MessageObjectStringType
+              required: true
+            - name: text
+              type: str
+              required: false
+            - name: file_id
+              type: str
+              required: false
+            - name: file_url
+              type: str
+              required: false
+        - schema: InsertedAdditionalMessage
+          name: InsertedMessage
+          required_fields:
+            - id
         - schema: ChatV3ChatDetail
           name: Chat
+          exclude_unordered_fields: true
+          required_fields:
+            - __none__
+            - id
+            - conversation_id
+          field_types:
+            meta_data: Optional[Dict[str, str]]
+            last_error: Optional[ChatError]
+            status: ChatStatus
+            required_action: Optional[ChatRequiredAction]
+            usage: Optional[ChatUsage]
+          field_defaults:
+            status: ChatStatus.UNKNOWN
+          field_order:
+            - id
+            - conversation_id
+            - bot_id
+            - created_at
+            - completed_at
+            - failed_at
+            - meta_data
+            - last_error
+            - status
+            - required_action
+            - usage
+            - inserted_additional_messages
+          extra_fields:
+            - name: inserted_additional_messages
+              type: List[InsertedMessage]
+              required: false
         - schema: ChatV3MessageDetail
           name: Message
+          exclude_unordered_fields: true
+          required_fields:
+            - __none__
+            - role
+            - type
+            - content
+            - content_type
+          field_types:
+            role: MessageRole
+            type: MessageType
+            content_type: MessageContentType
+            meta_data: Optional[Dict[str, str]]
+          field_defaults:
+            type: MessageType.UNKNOWN
+          field_order:
+            - role
+            - type
+            - content
+            - content_type
+            - meta_data
+            - id
+            - conversation_id
+            - section_id
+            - bot_id
+            - chat_id
+            - created_at
+            - updated_at
+            - reasoning_content
+        - name: ChatStatus
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: UNKNOWN
+              value: ""
+            - name: CREATED
+              value: created
+            - name: IN_PROGRESS
+              value: in_progress
+            - name: COMPLETED
+              value: completed
+            - name: FAILED
+              value: failed
+            - name: REQUIRES_ACTION
+              value: requires_action
+            - name: CANCELED
+              value: canceled
         - schema: LastError
           name: ChatError
+          field_defaults:
+            code: "0"
+            msg: '""'
+        - name: ChatRequiredActionType
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: UNKNOWN
+              value: ""
+            - name: SUBMIT_TOOL_OUTPUTS
+              value: submit_tool_outputs
+        - name: ChatToolCallType
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: FUNCTION
+              value: function
+            - name: REPLY_MESSAGE
+              value: reply_message
         - schema: RequiredAction
           name: ChatRequiredAction
+          required_fields:
+            - type
+          field_types:
+            type: ChatRequiredActionType
+            submit_tool_outputs: Optional[ChatSubmitToolOutputs]
         - schema: SubmitToolOutputs
           name: ChatSubmitToolOutputs
+          required_fields:
+            - tool_calls
+          field_types:
+            tool_calls: List[ChatToolCall]
         - schema: InterruptPlugin
           name: ChatToolCall
+          required_fields:
+            - id
+            - type
+          field_types:
+            type: ChatToolCallType
+            function: Optional[ChatToolCallFunction]
         - schema: InterruptFunction
           name: ChatToolCallFunction
+          required_fields:
+            - name
+            - arguments
         - schema: Usage2
           name: ChatUsage
+          field_defaults:
+            token_count: "0"
+            output_count: "0"
+            input_count: "0"
+        - name: ChatPoll
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: chat
+              type: Chat
+              required: true
+            - name: messages
+              type: ListResponse[Message]
+              required: false
+        - name: ChatEventType
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: CONVERSATION_CHAT_CREATED
+              value: conversation.chat.created
+            - name: CONVERSATION_CHAT_IN_PROGRESS
+              value: conversation.chat.in_progress
+            - name: CONVERSATION_MESSAGE_DELTA
+              value: conversation.message.delta
+            - name: CONVERSATION_MESSAGE_COMPLETED
+              value: conversation.message.completed
+            - name: CONVERSATION_CHAT_COMPLETED
+              value: conversation.chat.completed
+            - name: CONVERSATION_CHAT_FAILED
+              value: conversation.chat.failed
+            - name: CONVERSATION_CHAT_REQUIRES_ACTION
+              value: conversation.chat.requires_action
+            - name: CONVERSATION_AUDIO_DELTA
+              value: conversation.audio.delta
+            - name: ERROR
+              value: error
+            - name: DONE
+              value: done
+            - name: UNKNOWN
+              value: unknown
+        - name: ChatEvent
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: event
+              type: ChatEventType
+              required: true
+            - name: chat
+              type: Chat
+              required: false
+            - name: message
+              type: Message
+              required: false
+            - name: unknown
+              type: Dict[str, Any]
+              required: false
         - schema: ToolOutput
           name: ToolOutput
+          required_fields:
+            - tool_call_id
+            - output
       path_prefixes:
         - /v3/chat
     - name: connectors
@@ -201,6 +617,13 @@ api:
       model_schemas:
         - schema: ConversationData
           name: Conversation
+          required_fields:
+            - id
+            - created_at
+            - meta_data
+            - last_section_id
+          field_types:
+            meta_data: Dict[str, str]
           field_order:
             - id
             - created_at
@@ -212,6 +635,9 @@ api:
             - connector_id
         - schema: Section
           name: Section
+          required_fields:
+            - id
+            - conversation_id
       empty_models:
         - DeleteConversationResp
       path_prefixes:
@@ -245,10 +671,47 @@ api:
       model_schemas:
         - schema: CreateDatasetOpenApiData
           name: CreateDatasetResp
+          required_fields:
+            - dataset_id
         - schema: DatasetStatus
           name: DatasetStatus
+          enum_base: int
+          enum_values:
+            - name: ENABLED
+              value: 1
+            - name: DISABLED
+              value: 3
         - schema: Dataset
           name: Dataset
+          exclude_unordered_fields: true
+          required_fields:
+            - dataset_id
+            - name
+            - description
+            - space_id
+            - status
+            - format_type
+          field_types:
+            status: DatasetStatus
+            format_type: DocumentFormatType
+            chunk_strategy: Optional[DocumentChunkStrategy]
+          field_defaults:
+            can_edit: "False"
+            icon_url: '""'
+            doc_count: "0"
+            file_list: "[]"
+            hit_count: "0"
+            bot_used_count: "0"
+            slice_count: "0"
+            all_file_size: "0"
+            failed_file_list: "[]"
+            processing_file_list: "[]"
+            processing_file_id_list: "[]"
+            avatar_url: '""'
+            creator_id: '""'
+            creator_name: '""'
+            create_time: "0"
+            update_time: "0"
           field_order:
             - dataset_id
             - name
@@ -275,6 +738,22 @@ api:
             - update_time
         - schema: DocumentProgress
           name: DocumentProgress
+          required_fields:
+            - status
+            - update_type
+          field_types:
+            status: DocumentStatus
+            update_type: DocumentUpdateType
+          field_defaults:
+            document_id: '""'
+            url: '""'
+            size: "0"
+            type: '""'
+            progress: "0"
+            document_name: '""'
+            remaining_time: "0"
+            status_descript: '""'
+            update_interval: "0"
       empty_models:
         - UpdateDatasetRes
         - DeleteDatasetRes
@@ -369,19 +848,17 @@ api:
         - custom_variables
         - auto_save_history
         - meta_data
-        - extra_params
-        - stream
-        - publish_status
-        - bot_version
-        - enable_card
         - parameters
-        - shortcut_command
+      body_fixed_values:
+        stream: "False"
       body_required_fields:
         - bot_id
         - user_id
       arg_types:
         additional_messages: List[Message]
-        shortcut_command: Dict[str, Any]
+        custom_variables: Dict[str, str]
+        meta_data: Dict[str, str]
+        parameters: Dict[str, Any]
       disable_headers_arg: true
       response_type: Chat
       response_cast: Chat
@@ -401,22 +878,21 @@ api:
         - custom_variables
         - auto_save_history
         - meta_data
-        - extra_params
-        - stream
-        - publish_status
-        - bot_version
         - enable_card
         - parameters
-        - shortcut_command
+      body_fixed_values:
+        stream: "True"
       body_required_fields:
         - bot_id
         - user_id
       arg_types:
         additional_messages: List[Message]
-        shortcut_command: Dict[str, Any]
+        custom_variables: Dict[str, str]
+        meta_data: Dict[str, str]
+        parameters: Dict[str, Any]
       disable_headers_arg: true
       request_stream: true
-      response_type: Dict[str, Any]
+      response_type: Stream[ChatEvent]
       response_cast: None
     - path: /v3/chat/retrieve
       method: get
@@ -661,7 +1137,11 @@ api:
       param_aliases:
         file_id: icon_file_id
       arg_types:
+        name: str
+        space_id: str
         format_type: DocumentFormatType
+        description: str
+        file_id: str
       disable_headers_arg: true
       response_type: CreateDatasetResp
       response_cast: CreateDatasetResp
@@ -749,12 +1229,12 @@ api:
         - plugin_id_list
         - workflow_id_list
       arg_types:
-        prompt_info: Dict[str, Any]
-        onboarding_info: Dict[str, Any]
-        suggest_reply_info: Dict[str, Any]
-        model_info_config: Dict[str, Any]
-        plugin_id_list: Dict[str, Any]
-        workflow_id_list: Dict[str, Any]
+        prompt_info: BotPromptInfo
+        onboarding_info: BotOnboardingInfo
+        suggest_reply_info: BotSuggestReplyInfo
+        model_info_config: BotModelInfo
+        plugin_id_list: PluginIDList
+        workflow_id_list: WorkflowIDList
       use_kwargs_headers: true
       response_type: Bot
       response_cast: Bot
@@ -774,11 +1254,11 @@ api:
         - suggest_reply_info
         - model_info_config
       arg_types:
-        prompt_info: Dict[str, Any]
-        onboarding_info: Dict[str, Any]
-        knowledge: Dict[str, Any]
-        suggest_reply_info: Dict[str, Any]
-        model_info_config: Dict[str, Any]
+        prompt_info: BotPromptInfo
+        onboarding_info: BotOnboardingInfo
+        knowledge: BotKnowledge
+        suggest_reply_info: BotSuggestReplyInfo
+        model_info_config: BotModelInfo
       use_kwargs_headers: true
       response_type: UpdateBotResp
       response_cast: UpdateBotResp
