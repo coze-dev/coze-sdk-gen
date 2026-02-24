@@ -600,7 +600,14 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 		buf.WriteString("\n")
 	}
 
-	return buf.String()
+	content := buf.String()
+	if !strings.Contains(content, "(str, Enum):") {
+		content = strings.Replace(content, "from enum import Enum\n", "", 1)
+	}
+	if !strings.Contains(content, "(IntEnum):") {
+		content = strings.Replace(content, "from enum import IntEnum\n", "", 1)
+	}
+	return content
 }
 
 func collectTypeImports(doc *openapi.Document, bindings []operationBinding) []string {
