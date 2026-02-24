@@ -6,6 +6,7 @@ Current status:
 - Language support: `python` (implemented), `go` (planned)
 - Source of truth: OpenAPI Swagger + generator config
 - Compatibility target: `exist-repo/coze-py`
+- Generator behavior: generate Python sources from Swagger (not direct SDK copy)
 
 ## Why config is required
 
@@ -25,13 +26,13 @@ The existing Python SDK and Swagger are not perfectly aligned. The generator use
 
 This writes output to `exist-repo/coze-py-generated`.
 
-2. Verify parity with existing SDK:
+2. Compare generated SDK with legacy SDK:
 
 ```bash
 ./scripts/diff.sh
 ```
 
-If no output is printed, the generated SDK matches `exist-repo/coze-py` exactly.
+The script prints file-level differences. The current implementation is Swagger-driven and still iterating toward full legacy parity.
 
 ## Development scripts
 
@@ -52,6 +53,12 @@ make check
 go run ./cmd/coze-sdk-gen \
   --config config/generator.yaml \
   --swagger exist-repo/coze-openapi-swagger.yaml
+```
+
+Output example:
+
+```text
+language=python generated_files=23 generated_ops=69 output=exist-repo/coze-py-generated
 ```
 
 Optional overrides:
