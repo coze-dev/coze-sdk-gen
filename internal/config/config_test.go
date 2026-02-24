@@ -17,8 +17,8 @@ func TestLoadConfigAndValidate(t *testing.T) {
 	if cfg.Language != "python" {
 		t.Fatalf("unexpected language: %q", cfg.Language)
 	}
-	if cfg.SourceSDK == "" || cfg.OutputSDK == "" {
-		t.Fatalf("source/output should not be empty")
+	if cfg.OutputSDK == "" {
+		t.Fatalf("output should not be empty")
 	}
 	if len(cfg.API.OperationMappings) != 3 {
 		t.Fatalf("unexpected operation mappings count: %d", len(cfg.API.OperationMappings))
@@ -26,7 +26,7 @@ func TestLoadConfigAndValidate(t *testing.T) {
 }
 
 func TestParseInvalidConfig(t *testing.T) {
-	_, err := Parse([]byte("language: go\nsource_sdk: a\noutput_sdk: b"))
+	_, err := Parse([]byte("language: go\noutput_sdk: b"))
 	if err == nil {
 		t.Fatal("expected Parse() to fail with unsupported language")
 	}
@@ -97,14 +97,11 @@ func TestValidateAgainstNilSwagger(t *testing.T) {
 }
 
 func TestDefaultsApplied(t *testing.T) {
-	cfg, err := Parse([]byte("language: python\nsource_sdk: src\noutput_sdk: out\n"))
+	cfg, err := Parse([]byte("language: python\noutput_sdk: out\n"))
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
 
-	if len(cfg.Copy.Include) == 0 {
-		t.Fatal("expected default copy.include to be set")
-	}
 	if cfg.API.FieldAliases == nil {
 		t.Fatal("expected field aliases map to be initialized")
 	}
@@ -119,7 +116,6 @@ func TestValidateConfigFailures(t *testing.T) {
 			name: "duplicate package",
 			content: `
 language: python
-source_sdk: src
 output_sdk: out
 api:
   packages:
@@ -133,7 +129,6 @@ api:
 			name: "invalid package prefix",
 			content: `
 language: python
-source_sdk: src
 output_sdk: out
 api:
   packages:
@@ -147,7 +142,6 @@ api:
 			name: "missing sdk methods",
 			content: `
 language: python
-source_sdk: src
 output_sdk: out
 api:
   operation_mappings:
@@ -159,7 +153,6 @@ api:
 			name: "invalid method",
 			content: `
 language: python
-source_sdk: src
 output_sdk: out
 api:
   ignore_operations:
@@ -181,11 +174,7 @@ api:
 func TestValidateAgainstSwaggerAllowMissing(t *testing.T) {
 	cfg := &Config{
 		Language:  "python",
-		SourceSDK: "src",
 		OutputSDK: "out",
-		Copy: Copy{
-			Include: []string{"."},
-		},
 		API: APIConfig{
 			Packages: []Package{
 				{

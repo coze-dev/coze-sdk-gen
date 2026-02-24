@@ -73,37 +73,6 @@ func TestGeneratePythonNilDoc(t *testing.T) {
 	}
 }
 
-func TestGeneratePythonStrictCompatibilityMode(t *testing.T) {
-	source := t.TempDir()
-	out := t.TempDir()
-
-	legacyFile := filepath.Join(source, "cozepy", "chat", "__init__.py")
-	if err := os.MkdirAll(filepath.Dir(legacyFile), 0o755); err != nil {
-		t.Fatalf("mkdir legacy file dir: %v", err)
-	}
-	if err := os.WriteFile(legacyFile, []byte("# legacy\nVALUE = 1\n"), 0o644); err != nil {
-		t.Fatalf("write legacy file: %v", err)
-	}
-
-	cfg := testConfig(out)
-	cfg.SourceSDK = source
-	cfg.Copy.Include = []string{"."}
-	cfg.Compatibility.EnforceZeroDiff = true
-
-	result, err := GeneratePython(cfg, mustParseSwagger(t))
-	if err != nil {
-		t.Fatalf("GeneratePython() error = %v", err)
-	}
-	if result.GeneratedOps == 0 {
-		t.Fatal("expected generated ops in strict compatibility mode")
-	}
-
-	content := readFile(t, filepath.Join(out, "cozepy", "chat", "__init__.py"))
-	if content != "# legacy\nVALUE = 1\n" {
-		t.Fatalf("expected strict compatibility output to preserve legacy file, got:\\n%s", content)
-	}
-}
-
 func TestRunUnsupportedLanguage(t *testing.T) {
 	cfg := &config.Config{Language: "go"}
 	if _, err := Run(cfg, mustParseSwagger(t)); err == nil {
@@ -249,11 +218,7 @@ paths:
 func testConfig(output string) *config.Config {
 	return &config.Config{
 		Language:  "python",
-		SourceSDK: ".",
 		OutputSDK: output,
-		Copy: config.Copy{
-			Include: []string{"."},
-		},
 		API: config.APIConfig{
 			Packages: []config.Package{
 				{

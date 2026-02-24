@@ -11,21 +11,9 @@ import (
 )
 
 type Config struct {
-	Language      string        `yaml:"language"`
-	SourceSDK     string        `yaml:"source_sdk"`
-	OutputSDK     string        `yaml:"output_sdk"`
-	Copy          Copy          `yaml:"copy"`
-	API           APIConfig     `yaml:"api"`
-	Compatibility Compatibility `yaml:"compatibility"`
-}
-
-type Copy struct {
-	Include []string `yaml:"include"`
-	Exclude []string `yaml:"exclude"`
-}
-
-type Compatibility struct {
-	EnforceZeroDiff bool `yaml:"enforce_zero_diff"`
+	Language  string    `yaml:"language"`
+	OutputSDK string    `yaml:"output_sdk"`
+	API       APIConfig `yaml:"api"`
 }
 
 type APIConfig struct {
@@ -82,21 +70,6 @@ func Parse(content []byte) (*Config, error) {
 }
 
 func (c *Config) applyDefaults() {
-	if len(c.Copy.Include) == 0 {
-		c.Copy.Include = []string{
-			"cozepy",
-			"examples",
-			"tests",
-			"README.md",
-			"pyproject.toml",
-			"poetry.lock",
-			"LICENSE",
-			"codecov.yml",
-			".gitignore",
-			".pre-commit-config.yaml",
-			".github",
-		}
-	}
 	if c.API.FieldAliases == nil {
 		c.API.FieldAliases = map[string]map[string]string{}
 	}
@@ -109,14 +82,8 @@ func (c *Config) Validate() error {
 	if strings.ToLower(c.Language) != "python" {
 		return fmt.Errorf("unsupported language %q, only python is supported", c.Language)
 	}
-	if c.SourceSDK == "" {
-		return fmt.Errorf("source_sdk is required")
-	}
 	if c.OutputSDK == "" {
 		return fmt.Errorf("output_sdk is required")
-	}
-	if len(c.Copy.Include) == 0 {
-		return fmt.Errorf("copy.include should not be empty")
 	}
 
 	seenPackageName := map[string]struct{}{}

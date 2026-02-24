@@ -10,7 +10,6 @@ import (
 	"unicode"
 
 	"github.com/coze-dev/coze-sdk-gen/internal/config"
-	"github.com/coze-dev/coze-sdk-gen/internal/fsutil"
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
 )
 
@@ -52,10 +51,6 @@ func GeneratePython(cfg *config.Config, doc *openapi.Document) (Result, error) {
 	packageMetas := buildPackageMeta(cfg, packages)
 	schemaNames := collectSchemaNames(doc, bindings)
 
-	if cfg.Compatibility.EnforceZeroDiff {
-		return generatePythonWithLegacyCompatibility(cfg, doc, packages, packageMetas, schemaNames)
-	}
-
 	if err := os.RemoveAll(cfg.OutputSDK); err != nil {
 		return Result{}, fmt.Errorf("clean output directory %q: %w", cfg.OutputSDK, err)
 	}
@@ -71,46 +66,6 @@ func GeneratePython(cfg *config.Config, doc *openapi.Document) (Result, error) {
 	return Result{
 		GeneratedFiles: writer.count,
 		GeneratedOps:   len(bindings),
-	}, nil
-}
-
-func generatePythonWithLegacyCompatibility(
-	cfg *config.Config,
-	doc *openapi.Document,
-	packages map[string][]operationBinding,
-	packageMetas map[string]packageMeta,
-	schemaNames []string,
-) (Result, error) {
-	tmpDir, err := os.MkdirTemp("", "coze-sdk-gen-swagger-*")
-	if err != nil {
-		return Result{}, fmt.Errorf("create temporary generation directory: %w", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	tmpWriter := &fileWriter{}
-	if err := writePythonSDK(tmpDir, doc, packages, packageMetas, schemaNames, tmpWriter); err != nil {
-		return Result{}, err
-	}
-
-	if err := os.RemoveAll(cfg.OutputSDK); err != nil {
-		return Result{}, fmt.Errorf("clean output directory %q: %w", cfg.OutputSDK, err)
-	}
-	if err := os.MkdirAll(cfg.OutputSDK, 0o755); err != nil {
-		return Result{}, fmt.Errorf("create output directory %q: %w", cfg.OutputSDK, err)
-	}
-
-	excludes := make([]string, 0, len(cfg.Copy.Exclude)+1)
-	excludes = append(excludes, cfg.Copy.Exclude...)
-	excludes = append(excludes, ".git")
-
-	copyResult, err := fsutil.CopySelected(cfg.SourceSDK, cfg.OutputSDK, cfg.Copy.Include, excludes)
-	if err != nil {
-		return Result{}, fmt.Errorf("copy legacy sdk for strict compatibility: %w", err)
-	}
-
-	return Result{
-		GeneratedFiles: copyResult.CopiedFiles,
-		GeneratedOps:   countBindings(packages),
 	}, nil
 }
 
@@ -222,14 +177,6 @@ func collectSchemaNames(doc *openapi.Document, bindings []operationBinding) []st
 	}
 	sort.Strings(result)
 	return result
-}
-
-func countBindings(packages map[string][]operationBinding) int {
-	total := 0
-	for _, bindings := range packages {
-		total += len(bindings)
-	}
-	return total
 }
 
 func buildPackageMeta(cfg *config.Config, packages map[string][]operationBinding) map[string]packageMeta {

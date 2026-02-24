@@ -28,7 +28,6 @@ func run(args []string, stdout io.Writer) error {
 	configPath := fs.String("config", "config/generator.yaml", "path to generator config file")
 	swaggerPath := fs.String("swagger", "exist-repo/coze-openapi-swagger.yaml", "path to OpenAPI swagger yaml file")
 	languageOverride := fs.String("language", "", "override language in config (python/go)")
-	sourceOverride := fs.String("source-sdk", "", "override source sdk directory in config")
 	outputOverride := fs.String("output-sdk", "", "override output sdk directory in config")
 
 	if err := fs.Parse(args); err != nil {
@@ -46,9 +45,6 @@ func run(args []string, stdout io.Writer) error {
 	}
 	if *languageOverride != "" {
 		cfg.Language = strings.ToLower(strings.TrimSpace(*languageOverride))
-	}
-	if *sourceOverride != "" {
-		cfg.SourceSDK = *sourceOverride
 	}
 	if *outputOverride != "" {
 		cfg.OutputSDK = *outputOverride

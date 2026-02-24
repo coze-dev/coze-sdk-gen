@@ -1,19 +1,5 @@
 language: python
-source_sdk: exist-repo/coze-py
 output_sdk: exist-repo/coze-py-generated
-copy:
-  include:
-    - cozepy
-    - tests
-    - examples
-    - README.md
-    - pyproject.toml
-    - poetry.lock
-    - LICENSE
-    - codecov.yml
-    - .gitignore
-    - .pre-commit-config.yaml
-    - .github
 api:
   packages:
     - name: chat

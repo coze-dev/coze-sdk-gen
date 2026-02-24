@@ -20,13 +20,9 @@ func TestRunVersion(t *testing.T) {
 
 func TestRunGenerate(t *testing.T) {
 	tmp := t.TempDir()
-	src := filepath.Join(tmp, "src")
 	outDir := filepath.Join(tmp, "out")
 	cfgPath := filepath.Join(tmp, "generator.yaml")
 	swaggerPath := filepath.Join(tmp, "swagger.yaml")
-
-	writeFile(t, filepath.Join(src, "cozepy", "a.py"), "A")
-	writeFile(t, filepath.Join(src, "README.md"), "R")
 
 	writeFile(t, swaggerPath, `
 paths:
@@ -36,7 +32,6 @@ paths:
 `)
 	writeFile(t, cfgPath, `
 language: python
-source_sdk: `+src+`
 output_sdk: `+outDir+`
 api:
   packages:
