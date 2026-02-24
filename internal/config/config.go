@@ -11,16 +11,21 @@ import (
 )
 
 type Config struct {
-	Language  string    `yaml:"language"`
-	SourceSDK string    `yaml:"source_sdk"`
-	OutputSDK string    `yaml:"output_sdk"`
-	Copy      Copy      `yaml:"copy"`
-	API       APIConfig `yaml:"api"`
+	Language      string        `yaml:"language"`
+	SourceSDK     string        `yaml:"source_sdk"`
+	OutputSDK     string        `yaml:"output_sdk"`
+	Copy          Copy          `yaml:"copy"`
+	API           APIConfig     `yaml:"api"`
+	Compatibility Compatibility `yaml:"compatibility"`
 }
 
 type Copy struct {
 	Include []string `yaml:"include"`
 	Exclude []string `yaml:"exclude"`
+}
+
+type Compatibility struct {
+	EnforceZeroDiff bool `yaml:"enforce_zero_diff"`
 }
 
 type APIConfig struct {

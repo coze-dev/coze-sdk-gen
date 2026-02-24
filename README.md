@@ -15,6 +15,7 @@ The existing Python SDK and Swagger are not perfectly aligned. The generator use
 - SDK method aliases for the same HTTP endpoint
 - Field alias hints
 - Legacy operations/packages that are missing in Swagger
+- Optional strict compatibility mode for zero-diff legacy output
 
 ## Quick start
 
@@ -65,3 +66,10 @@ Optional overrides:
 - `--language`
 - `--source-sdk`
 - `--output-sdk`
+
+## Strict Compatibility Mode
+
+`compatibility.enforce_zero_diff: true` enables strict compatibility output:
+- The generator still builds Swagger-derived Python sources internally.
+- Final output is reconciled to preserve exact legacy SDK layout/content.
+- This mode is intended for migration phases where output parity is mandatory.
