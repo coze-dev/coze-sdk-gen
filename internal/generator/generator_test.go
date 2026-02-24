@@ -169,6 +169,96 @@ func TestRenderOperationMethodAndTypeHelpers(t *testing.T) {
 	}
 }
 
+func TestGeneratePythonFromRealConfig(t *testing.T) {
+	root := filepath.Clean(filepath.Join("..", ".."))
+	cfgPath := filepath.Join(root, "config", "generator.yaml")
+	swaggerPath := filepath.Join(root, "exist-repo", "coze-openapi-swagger.yaml")
+
+	cfg, err := config.Load(cfgPath)
+	if err != nil {
+		t.Fatalf("config.Load(%q) error = %v", cfgPath, err)
+	}
+	cfg.OutputSDK = t.TempDir()
+
+	doc, err := openapi.Load(swaggerPath)
+	if err != nil {
+		t.Fatalf("openapi.Load(%q) error = %v", swaggerPath, err)
+	}
+
+	result, err := GeneratePython(cfg, doc)
+	if err != nil {
+		t.Fatalf("GeneratePython() error = %v", err)
+	}
+	if result.GeneratedOps < 50 {
+		t.Fatalf("expected >=50 generated ops, got %d", result.GeneratedOps)
+	}
+	if result.GeneratedFiles < 100 {
+		t.Fatalf("expected >=100 generated files, got %d", result.GeneratedFiles)
+	}
+
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "apps", "__init__.py"), "PublishStatus")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "folders", "__init__.py"), "children_count")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "conversations", "__init__.py"), "def messages")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "datasets", "__init__.py"), "def process")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "bots", "__init__.py"), "def _list_v1")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "def cancel")
+}
+
+func TestRenderOperationMethodAdvancedOptions(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo/{id}",
+		Method: "post",
+		PathParameters: []openapi.ParameterSpec{
+			{Name: "id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+		},
+		QueryParameters: []openapi.ParameterSpec{
+			{Name: "status", In: "query", Required: false, Schema: &openapi.Schema{Type: "string"}},
+		},
+		HeaderParameters: []openapi.ParameterSpec{
+			{Name: "X-Trace-Id", In: "header", Required: true, Schema: &openapi.Schema{Type: "string"}},
+		},
+		RequestBody: &openapi.RequestBody{Required: true},
+		RequestBodySchema: &openapi.Schema{
+			Type: "object",
+			Properties: map[string]*openapi.Schema{
+				"name": {Type: "string"},
+			},
+			Required: []string{"name"},
+		},
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "stream_call",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			QueryFields: []config.OperationField{
+				{Name: "status", Type: "str", Required: false, UseValue: true},
+			},
+			BodyFields:         []string{"name"},
+			BodyRequiredFields: []string{"name"},
+			DisableHeadersArg:  true,
+			IgnoreHeaderParams: true,
+			RequestStream:      true,
+			DataField:          "data.items",
+		},
+	}
+
+	code := renderOperationMethod(doc, binding, false)
+	if strings.Contains(code, "headers: Optional[Dict[str, str]]") {
+		t.Fatalf("did not expect headers arg when DisableHeadersArg=true:\n%s", code)
+	}
+	if strings.Contains(code, "X-Trace-Id") {
+		t.Fatalf("did not expect header parameter merge when IgnoreHeaderParams=true:\n%s", code)
+	}
+	if !strings.Contains(code, "data_field=\"data.items\"") {
+		t.Fatalf("expected data_field in request call:\n%s", code)
+	}
+	if !strings.Contains(code, "request(\"post\", url, True") {
+		t.Fatalf("expected stream request flag True:\n%s", code)
+	}
+}
+
 func mustParseSwagger(t *testing.T) *openapi.Document {
 	t.Helper()
 	doc, err := openapi.Parse([]byte(`

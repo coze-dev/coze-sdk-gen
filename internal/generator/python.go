@@ -85,8 +85,10 @@ func GeneratePython(cfg *config.Config, doc *openapi.Document) (Result, error) {
 func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []operationBinding {
 	allOps := doc.ListOperationDetails()
 	bindings := make([]operationBinding, 0)
+	existingOps := map[string]struct{}{}
 
 	for _, details := range allOps {
+		existingOps[strings.ToLower(details.Method)+" "+details.Path] = struct{}{}
 		if cfg.IsIgnored(details.Path, details.Method) {
 			continue
 		}
@@ -136,7 +138,78 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []operati
 		})
 	}
 
+	for _, mapping := range cfg.API.OperationMappings {
+		if !mapping.AllowMissingInSwagger {
+			continue
+		}
+		key := strings.ToLower(strings.TrimSpace(mapping.Method)) + " " + strings.TrimSpace(mapping.Path)
+		if _, ok := existingOps[key]; ok {
+			continue
+		}
+		if cfg.IsIgnored(mapping.Path, mapping.Method) {
+			continue
+		}
+		if len(mapping.SDKMethods) == 0 {
+			continue
+		}
+		mappingCopy := mapping
+		details := syntheticOperationDetails(mappingCopy)
+		for methodIndex, sdkMethod := range mappingCopy.SDKMethods {
+			pkgName, methodName, ok := config.ParseSDKMethod(sdkMethod)
+			if !ok {
+				continue
+			}
+			pkg, ok := cfg.ResolvePackage(details.Path, pkgName)
+			if !ok {
+				continue
+			}
+			order := len(bindings)
+			if mappingCopy.Order > 0 {
+				order = mappingCopy.Order + methodIndex
+			}
+			bindings = append(bindings, operationBinding{
+				PackageName: normalizePackageName(pkg.Name),
+				MethodName:  normalizeMethodName(methodName),
+				Details:     details,
+				Mapping:     &mappingCopy,
+				Order:       order,
+			})
+		}
+	}
+
 	return deduplicateBindings(bindings)
+}
+
+func syntheticOperationDetails(mapping config.OperationMapping) openapi.OperationDetails {
+	details := openapi.OperationDetails{
+		Path:   strings.TrimSpace(mapping.Path),
+		Method: strings.ToLower(strings.TrimSpace(mapping.Method)),
+	}
+	path := details.Path
+	for {
+		start := strings.Index(path, "{")
+		if start < 0 {
+			break
+		}
+		endOffset := strings.Index(path[start:], "}")
+		if endOffset <= 1 {
+			break
+		}
+		end := start + endOffset
+		paramName := strings.TrimSpace(path[start+1 : end])
+		if paramName == "" {
+			path = path[end+1:]
+			continue
+		}
+		details.PathParameters = append(details.PathParameters, openapi.ParameterSpec{
+			Name:     paramName,
+			In:       "path",
+			Required: true,
+			Schema:   &openapi.Schema{Type: "string"},
+		})
+		path = path[end+1:]
+	}
+	return details
 }
 
 func deduplicateBindings(bindings []operationBinding) []operationBinding {
@@ -343,7 +416,7 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 	hasModelClasses := len(modelDefs) > 0 || (meta.Package != nil && len(meta.Package.EmptyModels) > 0)
 	hasTokenPagination := packageHasTokenPagination(bindings)
 	hasNumberPagination := packageHasNumberPagination(bindings)
-	needAny, needDict := packageNeedsAnyDict(bindings)
+	needAny, needDict := packageNeedsAnyDict(doc, bindings, modelDefs)
 	hasStandardEnumClasses := false
 	hasDynamicEnumClasses := false
 	for _, model := range modelDefs {
@@ -410,6 +483,26 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 		utilImports = append([]string{"dump_exclude_none"}, utilImports...)
 	}
 	buf.WriteString(fmt.Sprintf("from cozepy.util import %s\n", strings.Join(utilImports, ", ")))
+	if meta.Package != nil && len(meta.Package.ExtraImports) > 0 {
+		for _, spec := range meta.Package.ExtraImports {
+			moduleName := strings.TrimSpace(spec.Module)
+			if moduleName == "" {
+				continue
+			}
+			names := make([]string, 0, len(spec.Names))
+			for _, name := range spec.Names {
+				trimmed := strings.TrimSpace(name)
+				if trimmed == "" {
+					continue
+				}
+				names = append(names, trimmed)
+			}
+			if len(names) == 0 {
+				continue
+			}
+			buf.WriteString(fmt.Sprintf("from %s import %s\n", moduleName, strings.Join(names, ", ")))
+		}
+	}
 
 	imports := collectTypeImports(doc, bindings)
 	if len(imports) > 0 {
@@ -456,7 +549,7 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 			if child.DisableTypeHints {
 				buf.WriteString(fmt.Sprintf("        self._%s = None\n", attribute))
 			} else {
-				buf.WriteString(fmt.Sprintf("        self._%s: Optional[%s] = None\n", attribute, child.SyncClass))
+				buf.WriteString(fmt.Sprintf("        self._%s: Optional[\"%s\"] = None\n", attribute, child.SyncClass))
 			}
 		}
 		buf.WriteString("\n")
@@ -483,7 +576,7 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 			if child.DisableTypeHints {
 				buf.WriteString(fmt.Sprintf("        self._%s = None\n", attribute))
 			} else {
-				buf.WriteString(fmt.Sprintf("        self._%s: Optional[%s] = None\n", attribute, child.AsyncClass))
+				buf.WriteString(fmt.Sprintf("        self._%s: Optional[\"%s\"] = None\n", attribute, child.AsyncClass))
 			}
 		}
 		buf.WriteString("\n")
@@ -509,12 +602,21 @@ func collectTypeImports(doc *openapi.Document, bindings []operationBinding) []st
 	return nil
 }
 
+func isTokenPagination(mode string) bool {
+	return strings.TrimSpace(mode) == "token"
+}
+
+func isNumberPagination(mode string) bool {
+	mode = strings.TrimSpace(mode)
+	return mode == "number" || mode == "number_has_more"
+}
+
 func packageHasTokenPagination(bindings []operationBinding) bool {
 	for _, binding := range bindings {
 		if binding.Mapping == nil {
 			continue
 		}
-		if strings.TrimSpace(binding.Mapping.Pagination) == "token" {
+		if isTokenPagination(binding.Mapping.Pagination) {
 			return true
 		}
 	}
@@ -526,14 +628,14 @@ func packageHasNumberPagination(bindings []operationBinding) bool {
 		if binding.Mapping == nil {
 			continue
 		}
-		if strings.TrimSpace(binding.Mapping.Pagination) == "number" {
+		if isNumberPagination(binding.Mapping.Pagination) {
 			return true
 		}
 	}
 	return false
 }
 
-func packageNeedsAnyDict(bindings []operationBinding) (bool, bool) {
+func packageNeedsAnyDict(doc *openapi.Document, bindings []operationBinding, modelDefs []packageModelDefinition) (bool, bool) {
 	needAny := false
 	needDict := false
 
@@ -544,7 +646,7 @@ func packageNeedsAnyDict(bindings []operationBinding) (bool, bool) {
 			if mapping != nil {
 				paginationMode = strings.TrimSpace(mapping.Pagination)
 			}
-			if paginationMode != "token" && paginationMode != "number" {
+			if !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) {
 				needAny = true
 				needDict = true
 			}
@@ -558,7 +660,7 @@ func packageNeedsAnyDict(bindings []operationBinding) (bool, bool) {
 			}
 		}
 
-		if mapping == nil || !mapping.UseKwargsHeaders {
+		if mapping == nil || (!mapping.UseKwargsHeaders && !mapping.DisableHeadersArg) {
 			needDict = true
 		}
 
@@ -581,6 +683,46 @@ func packageNeedsAnyDict(bindings []operationBinding) (bool, bool) {
 					needDict = true
 				}
 			}
+			for _, typeName := range mapping.ArgTypes {
+				typeName = strings.TrimSpace(typeName)
+				if strings.Contains(typeName, "Any") {
+					needAny = true
+				}
+				if strings.Contains(typeName, "Dict") {
+					needDict = true
+				}
+			}
+		}
+	}
+
+	for _, model := range modelDefs {
+		if model.IsEnum || model.Schema == nil {
+			continue
+		}
+		for propertyName, propertySchema := range model.Schema.Properties {
+			required := false
+			for _, requiredName := range model.Schema.Required {
+				if requiredName == propertyName {
+					required = true
+					break
+				}
+			}
+			fieldType := pythonTypeForSchemaWithAliases(doc, propertySchema, required, nil)
+			if strings.Contains(fieldType, "Any") {
+				needAny = true
+			}
+			if strings.Contains(fieldType, "Dict") {
+				needDict = true
+			}
+		}
+		for _, extraField := range model.ExtraFields {
+			fieldType := strings.TrimSpace(extraField.Type)
+			if strings.Contains(fieldType, "Any") {
+				needAny = true
+			}
+			if strings.Contains(fieldType, "Dict") {
+				needDict = true
+			}
 		}
 	}
 
@@ -595,7 +737,7 @@ func renderPagedResponseClasses(bindings []operationBinding) string {
 			continue
 		}
 		paginationMode := strings.TrimSpace(binding.Mapping.Pagination)
-		if paginationMode != "token" && paginationMode != "number" {
+		if !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) {
 			continue
 		}
 		className := strings.TrimSpace(binding.Mapping.PaginationDataClass)
@@ -641,6 +783,23 @@ func renderPagedResponseClasses(bindings []operationBinding) string {
 			continue
 		}
 
+		if paginationMode == "number_has_more" {
+			hasMoreField := strings.TrimSpace(binding.Mapping.PaginationHasMoreField)
+			if hasMoreField == "" {
+				hasMoreField = "has_more"
+			}
+			buf.WriteString(fmt.Sprintf("class %s(CozeModel, NumberPagedResponse[%s]):\n", className, itemType))
+			buf.WriteString(fmt.Sprintf("    %s: bool\n", hasMoreField))
+			buf.WriteString(fmt.Sprintf("    %s: List[%s]\n\n", itemsField, itemType))
+			buf.WriteString("    def get_total(self) -> Optional[int]:\n")
+			buf.WriteString("        return None\n\n")
+			buf.WriteString("    def get_has_more(self) -> Optional[bool]:\n")
+			buf.WriteString(fmt.Sprintf("        return self.%s\n\n", hasMoreField))
+			buf.WriteString(fmt.Sprintf("    def get_items(self) -> List[%s]:\n", itemType))
+			buf.WriteString(fmt.Sprintf("        return self.%s\n\n", itemsField))
+			continue
+		}
+
 		totalField := strings.TrimSpace(binding.Mapping.PaginationTotalField)
 		if totalField == "" {
 			totalField = "total"
@@ -666,6 +825,7 @@ type packageModelDefinition struct {
 	FieldOrder     []string
 	RequiredFields []string
 	EnumBase       string
+	ExtraFields    []config.ModelField
 }
 
 func packageSchemaAliases(meta packageMeta) map[string]string {
@@ -712,6 +872,7 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 			FieldOrder:     append([]string(nil), model.FieldOrder...),
 			RequiredFields: append([]string(nil), model.RequiredFields...),
 			EnumBase:       strings.TrimSpace(model.EnumBase),
+			ExtraFields:    append([]config.ModelField(nil), model.ExtraFields...),
 		})
 	}
 	return result
@@ -751,8 +912,10 @@ func renderPackageModelDefinitions(
 		buf.WriteString(fmt.Sprintf("class %s(CozeModel):\n", model.Name))
 		properties := model.Schema.Properties
 		if len(properties) == 0 {
-			buf.WriteString("    pass\n\n")
-			continue
+			if len(model.ExtraFields) == 0 {
+				buf.WriteString("    pass\n\n")
+				continue
+			}
 		}
 
 		requiredSet := map[string]bool{}
@@ -793,6 +956,32 @@ func renderPackageModelDefinitions(
 			} else {
 				buf.WriteString(fmt.Sprintf("    %s: %s = None\n", fieldName, typeName))
 			}
+		}
+		for _, extraField := range model.ExtraFields {
+			rawName := strings.TrimSpace(extraField.Name)
+			if rawName == "" {
+				continue
+			}
+			if _, exists := properties[rawName]; exists {
+				continue
+			}
+			fieldName := normalizePythonIdentifier(rawName)
+			typeName := strings.TrimSpace(extraField.Type)
+			if typeName == "" {
+				typeName = "Any"
+			}
+			if extraField.Required {
+				buf.WriteString(fmt.Sprintf("    %s: %s\n", fieldName, typeName))
+				continue
+			}
+			defaultValue := strings.TrimSpace(extraField.Default)
+			if defaultValue == "" {
+				defaultValue = "None"
+			}
+			if defaultValue == "None" && !strings.HasPrefix(typeName, "Optional[") {
+				typeName = "Optional[" + typeName + "]"
+			}
+			buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", fieldName, typeName, defaultValue))
 		}
 		buf.WriteString("\n")
 	}
@@ -905,6 +1094,7 @@ func renderChildClientProperty(meta packageMeta, child config.ChildClient, async
 type renderQueryField struct {
 	RawName      string
 	ArgName      string
+	ValueExpr    string
 	TypeName     string
 	Required     bool
 	DefaultValue string
@@ -954,6 +1144,14 @@ func buildRenderQueryFields(
 				continue
 			}
 			argName := operationArgName(rawName, paramAliases)
+			valueExpr := argName
+			if field.UseValue {
+				if field.Required {
+					valueExpr = fmt.Sprintf("%s.value", argName)
+				} else {
+					valueExpr = fmt.Sprintf("%s.value if %s else None", argName, argName)
+				}
+			}
 			typeName := strings.TrimSpace(field.Type)
 			if typeName == "" {
 				typeName = "Any"
@@ -964,6 +1162,7 @@ func buildRenderQueryFields(
 			fields = append(fields, renderQueryField{
 				RawName:      rawName,
 				ArgName:      argName,
+				ValueExpr:    valueExpr,
 				TypeName:     typeName,
 				Required:     field.Required,
 				DefaultValue: strings.TrimSpace(field.Default),
@@ -978,6 +1177,7 @@ func buildRenderQueryFields(
 		fields = append(fields, renderQueryField{
 			RawName:      param.Name,
 			ArgName:      argName,
+			ValueExpr:    argName,
 			TypeName:     typeName,
 			Required:     param.Required,
 			DefaultValue: "",
@@ -993,6 +1193,8 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	returnType, returnCast := returnTypeInfo(doc, details.ResponseSchema)
 	requestBodyType, bodyRequired := requestBodyTypeInfo(doc, details.RequestBodySchema, details.RequestBody)
 	useKwargsHeaders := binding.Mapping != nil && binding.Mapping.UseKwargsHeaders
+	disableHeadersArg := binding.Mapping != nil && binding.Mapping.DisableHeadersArg
+	ignoreHeaderParams := binding.Mapping != nil && binding.Mapping.IgnoreHeaderParams
 	paramAliases := map[string]string{}
 	argTypes := map[string]string{}
 	if binding.Mapping != nil && len(binding.Mapping.ParamAliases) > 0 {
@@ -1006,10 +1208,10 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			requestMethod = strings.ToLower(methodOverride)
 		}
 		paginationMode = strings.TrimSpace(binding.Mapping.Pagination)
-		if paginationMode == "token" || paginationMode == "number" {
+		if isTokenPagination(paginationMode) || isNumberPagination(paginationMode) {
 			itemType := strings.TrimSpace(binding.Mapping.PaginationItemType)
 			if itemType != "" {
-				if paginationMode == "token" {
+				if isTokenPagination(paginationMode) {
 					if async {
 						returnType = fmt.Sprintf("AsyncTokenPaged[%s]", itemType)
 					} else {
@@ -1032,6 +1234,15 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		} else if strings.TrimSpace(binding.Mapping.ResponseType) != "" {
 			returnCast = strings.TrimSpace(binding.Mapping.ResponseType)
 		}
+	}
+	if ignoreHeaderParams {
+		details.HeaderParameters = nil
+	}
+	dataField := ""
+	requestStream := false
+	if binding.Mapping != nil {
+		dataField = strings.TrimSpace(binding.Mapping.DataField)
+		requestStream = binding.Mapping.RequestStream
 	}
 	bodyFieldNames := make([]string, 0)
 	if binding.Mapping != nil && len(binding.Mapping.BodyFields) > 0 {
@@ -1102,9 +1313,11 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			signatureArgs = append(signatureArgs, fmt.Sprintf("body: Optional[%s] = None", requestBodyType))
 		}
 	}
-	if useKwargsHeaders {
+	includeKwargsHeaders := useKwargsHeaders && !disableHeadersArg
+	includeExplicitHeadersArg := !disableHeadersArg && !includeKwargsHeaders
+	if includeKwargsHeaders {
 		signatureArgs = append(signatureArgs, "**kwargs")
-	} else {
+	} else if includeExplicitHeadersArg {
 		signatureArgs = append(signatureArgs, "headers: Optional[Dict[str, str]] = None")
 	}
 
@@ -1118,7 +1331,11 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	var buf bytes.Buffer
 	compactSignature := len(bodyFieldNames) == 0 && requestBodyType == ""
 	if compactSignature {
-		buf.WriteString(fmt.Sprintf("    %s %s(self, *, %s) -> %s:\n", methodKeyword, binding.MethodName, strings.Join(signatureArgs, ", "), returnType))
+		if len(signatureArgs) == 0 {
+			buf.WriteString(fmt.Sprintf("    %s %s(self) -> %s:\n", methodKeyword, binding.MethodName, returnType))
+		} else {
+			buf.WriteString(fmt.Sprintf("    %s %s(self, *, %s) -> %s:\n", methodKeyword, binding.MethodName, strings.Join(signatureArgs, ", "), returnType))
+		}
 	} else {
 		buf.WriteString(fmt.Sprintf("    %s %s(\n", methodKeyword, binding.MethodName))
 		buf.WriteString("        self,\n")
@@ -1152,22 +1369,30 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	}
 	buf.WriteString(fmt.Sprintf("        url = f\"{self._base_url}%s\"\n", urlPath))
 
-	if len(queryFields) > 0 && paginationMode != "token" && paginationMode != "number" {
+	if len(queryFields) > 0 && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) {
 		buf.WriteString("        params = dump_exclude_none(\n")
 		buf.WriteString("            {\n")
 		for _, field := range queryFields {
-			buf.WriteString(fmt.Sprintf("                %q: %s,\n", field.RawName, field.ArgName))
+			valueExpr := field.ValueExpr
+			if strings.TrimSpace(valueExpr) == "" {
+				valueExpr = field.ArgName
+			}
+			buf.WriteString(fmt.Sprintf("                %q: %s,\n", field.RawName, valueExpr))
 		}
 		buf.WriteString("            }\n")
 		buf.WriteString("        )\n")
 	}
 
-	if useKwargsHeaders && ((paginationMode == "token" || paginationMode == "number") || len(details.HeaderParameters) > 0) {
+	if includeKwargsHeaders && (isTokenPagination(paginationMode) || isNumberPagination(paginationMode) || len(details.HeaderParameters) > 0) {
 		buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n")
 	}
 
 	if len(details.HeaderParameters) > 0 {
-		buf.WriteString("        header_values = dict(headers or {})\n")
+		if disableHeadersArg {
+			buf.WriteString("        header_values = dict()\n")
+		} else {
+			buf.WriteString("        header_values = dict(headers or {})\n")
+		}
 		for _, param := range details.HeaderParameters {
 			name := operationArgName(param.Name, paramAliases)
 			if param.Required {
@@ -1180,7 +1405,7 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		buf.WriteString("        headers = header_values\n")
 	}
 
-	if paginationMode == "token" && binding.Mapping != nil {
+	if isTokenPagination(paginationMode) && binding.Mapping != nil {
 		upperMethod := strings.ToUpper(requestMethod)
 		dataClass := strings.TrimSpace(binding.Mapping.PaginationDataClass)
 		pageTokenField := strings.TrimSpace(binding.Mapping.PaginationPageTokenField)
@@ -1209,7 +1434,10 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("                params=dump_exclude_none(\n")
 			buf.WriteString("                    {\n")
 			for _, field := range paginationOrderedFields(queryFields, pageSizeField, pageTokenField) {
-				valueExpr := field.ArgName
+				valueExpr := field.ValueExpr
+				if strings.TrimSpace(valueExpr) == "" {
+					valueExpr = field.ArgName
+				}
 				if field.RawName == pageTokenField {
 					valueExpr = "i_page_token"
 				}
@@ -1221,7 +1449,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("                    }\n")
 			buf.WriteString("                ),\n")
 			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-			buf.WriteString("                headers=headers,\n")
+			if dataField != "" {
+				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
+			}
+			if !disableHeadersArg || len(details.HeaderParameters) > 0 {
+				buf.WriteString("                headers=headers,\n")
+			}
 			buf.WriteString("                stream=False,\n")
 			buf.WriteString("            )\n\n")
 			buf.WriteString("        return await AsyncTokenPaged.build(\n")
@@ -1238,7 +1471,10 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("                params=dump_exclude_none(\n")
 			buf.WriteString("                    {\n")
 			for _, field := range paginationOrderedFields(queryFields, pageSizeField, pageTokenField) {
-				valueExpr := field.ArgName
+				valueExpr := field.ValueExpr
+				if strings.TrimSpace(valueExpr) == "" {
+					valueExpr = field.ArgName
+				}
 				if field.RawName == pageTokenField {
 					valueExpr = "i_page_token"
 				}
@@ -1250,7 +1486,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("                    }\n")
 			buf.WriteString("                ),\n")
 			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-			buf.WriteString("                headers=headers,\n")
+			if dataField != "" {
+				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
+			}
+			if !disableHeadersArg || len(details.HeaderParameters) > 0 {
+				buf.WriteString("                headers=headers,\n")
+			}
 			buf.WriteString("                stream=False,\n")
 			buf.WriteString("            )\n\n")
 			buf.WriteString("        return TokenPaged(\n")
@@ -1262,7 +1503,7 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 		}
 		return buf.String()
 	}
-	if paginationMode == "number" && binding.Mapping != nil {
+	if isNumberPagination(paginationMode) && binding.Mapping != nil {
 		upperMethod := strings.ToUpper(requestMethod)
 		dataClass := strings.TrimSpace(binding.Mapping.PaginationDataClass)
 		pageNumField := strings.TrimSpace(binding.Mapping.PaginationPageNumField)
@@ -1291,7 +1532,10 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("                params=dump_exclude_none(\n")
 			buf.WriteString("                    {\n")
 			for _, field := range paginationOrderedFields(queryFields, pageSizeField, pageNumField) {
-				valueExpr := field.ArgName
+				valueExpr := field.ValueExpr
+				if strings.TrimSpace(valueExpr) == "" {
+					valueExpr = field.ArgName
+				}
 				if field.RawName == pageNumField {
 					valueExpr = "i_page_num"
 				}
@@ -1303,7 +1547,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("                    }\n")
 			buf.WriteString("                ),\n")
 			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-			buf.WriteString("                headers=headers,\n")
+			if dataField != "" {
+				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
+			}
+			if !disableHeadersArg || len(details.HeaderParameters) > 0 {
+				buf.WriteString("                headers=headers,\n")
+			}
 			buf.WriteString("                stream=False,\n")
 			buf.WriteString("            )\n\n")
 			buf.WriteString("        return await AsyncNumberPaged.build(\n")
@@ -1320,7 +1569,10 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("                params=dump_exclude_none(\n")
 			buf.WriteString("                    {\n")
 			for _, field := range paginationOrderedFields(queryFields, pageSizeField, pageNumField) {
-				valueExpr := field.ArgName
+				valueExpr := field.ValueExpr
+				if strings.TrimSpace(valueExpr) == "" {
+					valueExpr = field.ArgName
+				}
 				if field.RawName == pageNumField {
 					valueExpr = "i_page_num"
 				}
@@ -1332,7 +1584,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("                    }\n")
 			buf.WriteString("                ),\n")
 			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-			buf.WriteString("                headers=headers,\n")
+			if dataField != "" {
+				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
+			}
+			if !disableHeadersArg || len(details.HeaderParameters) > 0 {
+				buf.WriteString("                headers=headers,\n")
+			}
 			buf.WriteString("                stream=False,\n")
 			buf.WriteString("            )\n\n")
 			buf.WriteString("        return NumberPaged(\n")
@@ -1363,7 +1620,7 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 			buf.WriteString("            request_body = body.model_dump(exclude_none=True) if hasattr(body, \"model_dump\") else body\n")
 		}
 	}
-	if useKwargsHeaders && paginationMode != "token" && paginationMode != "number" && len(details.HeaderParameters) == 0 {
+	if includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
 		buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n")
 	}
 
@@ -1380,7 +1637,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	callArgs := []string{
 		fmt.Sprintf("%q", requestMethod),
 		"url",
-		"False",
+		func() string {
+			if requestStream {
+				return "True"
+			}
+			return "False"
+		}(),
 		fmt.Sprintf("cast=%s", castExpr),
 	}
 	if len(queryFields) > 0 {
@@ -1389,7 +1651,12 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 	if bodyArgExpr != "" {
 		callArgs = append(callArgs, fmt.Sprintf("body=%s", bodyArgExpr))
 	}
-	callArgs = append(callArgs, "headers=headers")
+	if dataField != "" {
+		callArgs = append(callArgs, fmt.Sprintf("data_field=%q", dataField))
+	}
+	if !disableHeadersArg || len(details.HeaderParameters) > 0 {
+		callArgs = append(callArgs, "headers=headers")
+	}
 	buf.WriteString(fmt.Sprintf("        return %s(%s)\n", requestCall, strings.Join(callArgs, ", ")))
 
 	return buf.String()
@@ -1539,6 +1806,9 @@ func schemaTypeNameWithAliases(doc *openapi.Document, schema *openapi.Schema, al
 		if alias, exists := aliases[name]; exists && strings.TrimSpace(alias) != "" {
 			return alias, true
 		}
+		if len(aliases) > 0 {
+			return "", false
+		}
 		return normalizeClassName(name), true
 	}
 	resolved := doc.ResolveSchema(schema)
@@ -1546,6 +1816,9 @@ func schemaTypeNameWithAliases(doc *openapi.Document, schema *openapi.Schema, al
 		if name, ok := doc.SchemaName(resolved); ok {
 			if alias, exists := aliases[name]; exists && strings.TrimSpace(alias) != "" {
 				return alias, true
+			}
+			if len(aliases) > 0 {
+				return "", false
 			}
 			return normalizeClassName(name), true
 		}
@@ -1613,12 +1886,20 @@ func defaultMethodName(operationID string, path string, method string) string {
 }
 
 func normalizeMethodName(value string) string {
-	name := normalizePythonIdentifier(toSnake(value))
+	raw := strings.TrimSpace(value)
+	privateMethod := strings.HasPrefix(raw, "_")
+	name := normalizePythonIdentifier(toSnake(raw))
 	if name == "" {
+		if privateMethod {
+			return "_call"
+		}
 		return "call"
 	}
 	if unicode.IsDigit([]rune(name)[0]) {
-		return "method_" + name
+		name = "method_" + name
+	}
+	if privateMethod && !strings.HasPrefix(name, "_") {
+		name = "_" + name
 	}
 	return name
 }

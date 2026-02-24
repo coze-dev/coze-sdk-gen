@@ -30,6 +30,10 @@ api:
         - /v1/api_apps
     - name: apps
       source_dir: cozepy/apps
+      extra_imports:
+        - module: cozepy.bots
+          names:
+            - PublishStatus
       model_schemas:
         - schema: properties_data_properties_items_items
           name: SimpleApp
@@ -96,11 +100,81 @@ api:
         - /v1/audio
     - name: bots
       source_dir: cozepy/bots
+      model_schemas:
+        - schema: PublishStatus
+          name: PublishStatus
+          enum_base: dynamic_str
+        - schema: BotInfo
+          name: Bot
+          field_order:
+            - bot_id
+            - name
+            - description
+            - icon_url
+            - create_time
+            - update_time
+            - version
+            - prompt_info
+            - onboarding_info
+            - knowledge
+            - bot_mode
+            - plugin_info_list
+            - model_info
+            - suggest_reply_info
+            - background_image_info
+            - variables
+            - owner_user_id
+            - voice_info_list
+            - default_user_input_type
+            - workflow_info_list
+            - folder_id
+        - schema: BotSimpleInfo
+          name: SimpleBot
+          field_order:
+            - id
+            - name
+            - description
+            - icon_url
+            - is_published
+            - updated_at
+            - owner_user_id
+            - folder_id
+            - published_at
+          required_fields:
+            - id
+            - name
+            - description
+            - icon_url
+            - is_published
+            - updated_at
+            - owner_user_id
+      empty_models:
+        - UpdateBotResp
+        - UnpublishBotResp
       path_prefixes:
         - /v1/bot
         - /v1/bots
     - name: chat
       source_dir: cozepy/chat
+      model_schemas:
+        - schema: ChatV3ChatDetail
+          name: Chat
+        - schema: ChatV3MessageDetail
+          name: Message
+        - schema: LastError
+          name: ChatError
+        - schema: RequiredAction
+          name: ChatRequiredAction
+        - schema: SubmitToolOutputs
+          name: ChatSubmitToolOutputs
+        - schema: InterruptPlugin
+          name: ChatToolCall
+        - schema: InterruptFunction
+          name: ChatToolCallFunction
+        - schema: Usage2
+          name: ChatUsage
+        - schema: ToolOutput
+          name: ToolOutput
       path_prefixes:
         - /v3/chat
     - name: connectors
@@ -115,11 +189,95 @@ api:
         - /v1/connectors
     - name: conversations
       source_dir: cozepy/conversations
+      extra_imports:
+        - module: cozepy.chat
+          names:
+            - Message
+      child_clients:
+        - attribute: messages
+          module: .message
+          sync_class: MessagesClient
+          async_class: AsyncMessagesClient
+      model_schemas:
+        - schema: ConversationData
+          name: Conversation
+          field_order:
+            - id
+            - created_at
+            - meta_data
+            - last_section_id
+            - name
+            - updated_at
+            - creator_id
+            - connector_id
+        - schema: Section
+          name: Section
+      empty_models:
+        - DeleteConversationResp
       path_prefixes:
         - /v1/conversation
         - /v1/conversations
     - name: datasets
       source_dir: cozepy/datasets
+      child_clients:
+        - attribute: documents
+          module: .documents
+          sync_class: DatasetsDocumentsClient
+          async_class: AsyncDatasetsDocumentsClient
+          nil_check: is_none
+          init_with_keywords: true
+        - attribute: images
+          module: .images
+          sync_class: DatasetsImagesClient
+          async_class: AsyncDatasetsImagesClient
+          nil_check: is_none
+          init_with_keywords: true
+      extra_imports:
+        - module: cozepy.datasets.documents
+          names:
+            - DocumentChunkStrategy
+            - DocumentFormatType
+            - DocumentStatus
+            - DocumentUpdateType
+        - module: cozepy.model
+          names:
+            - ListResponse
+      model_schemas:
+        - schema: CreateDatasetOpenApiData
+          name: CreateDatasetResp
+        - schema: DatasetStatus
+          name: DatasetStatus
+        - schema: Dataset
+          name: Dataset
+          field_order:
+            - dataset_id
+            - name
+            - description
+            - space_id
+            - status
+            - format_type
+            - can_edit
+            - icon_url
+            - doc_count
+            - file_list
+            - hit_count
+            - bot_used_count
+            - slice_count
+            - all_file_size
+            - chunk_strategy
+            - failed_file_list
+            - processing_file_list
+            - processing_file_id_list
+            - avatar_url
+            - creator_id
+            - creator_name
+            - create_time
+            - update_time
+        - schema: DocumentProgress
+          name: DocumentProgress
+      empty_models:
+        - UpdateDatasetRes
+        - DeleteDatasetRes
       path_prefixes:
         - /v1/datasets
     - name: enterprises
@@ -158,6 +316,10 @@ api:
             - workspace_id
             - creator_user_id
             - folder_type
+          extra_fields:
+            - name: children_count
+              type: int
+              required: false
       path_prefixes:
         - /v1/folders
     - name: knowledge
@@ -193,9 +355,114 @@ api:
   operation_mappings:
     - path: /v3/chat
       method: post
+      order: 1
       sdk_methods:
         - chat.create
+      query_fields:
+        - name: conversation_id
+          type: str
+          required: false
+      body_fields:
+        - bot_id
+        - user_id
+        - additional_messages
+        - custom_variables
+        - auto_save_history
+        - meta_data
+        - extra_params
+        - stream
+        - publish_status
+        - bot_version
+        - enable_card
+        - parameters
+        - shortcut_command
+      body_required_fields:
+        - bot_id
+        - user_id
+      arg_types:
+        additional_messages: List[Message]
+        shortcut_command: Dict[str, Any]
+      disable_headers_arg: true
+      response_type: Chat
+      response_cast: Chat
+    - path: /v3/chat
+      method: post
+      order: 2
+      sdk_methods:
         - chat.stream
+      query_fields:
+        - name: conversation_id
+          type: str
+          required: false
+      body_fields:
+        - bot_id
+        - user_id
+        - additional_messages
+        - custom_variables
+        - auto_save_history
+        - meta_data
+        - extra_params
+        - stream
+        - publish_status
+        - bot_version
+        - enable_card
+        - parameters
+        - shortcut_command
+      body_required_fields:
+        - bot_id
+        - user_id
+      arg_types:
+        additional_messages: List[Message]
+        shortcut_command: Dict[str, Any]
+      disable_headers_arg: true
+      request_stream: true
+      response_type: Dict[str, Any]
+      response_cast: None
+    - path: /v3/chat/retrieve
+      method: get
+      order: 3
+      sdk_methods:
+        - chat.retrieve
+      disable_headers_arg: true
+      response_type: Chat
+      response_cast: Chat
+    - path: /v3/chat/message/list
+      method: get
+      order: 4
+      sdk_methods:
+        - chat.messages
+      disable_headers_arg: true
+      response_type: ListResponse[Message]
+      response_cast: ListResponse[Message]
+    - path: /v3/chat/submit_tool_outputs
+      method: post
+      order: 5
+      sdk_methods:
+        - chat.submit_tool_outputs
+      body_fields:
+        - tool_outputs
+        - stream
+      body_required_fields:
+        - tool_outputs
+      arg_types:
+        tool_outputs: List[ToolOutput]
+      disable_headers_arg: true
+      response_type: Chat
+      response_cast: Chat
+    - path: /v3/chat/cancel
+      method: post
+      order: 6
+      sdk_methods:
+        - chat.cancel
+      body_fields:
+        - chat_id
+        - conversation_id
+      body_required_fields:
+        - chat_id
+        - conversation_id
+      disable_headers_arg: true
+      response_type: Chat
+      response_cast: Chat
     - path: /v1/api_apps
       method: post
       order: 10
@@ -271,8 +538,9 @@ api:
           type: str
           required: true
         - name: publish_status
-          type: str
+          type: PublishStatus
           required: false
+          use_value: true
         - name: connector_id
           type: str
           required: false
@@ -293,9 +561,333 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page_index
       pagination_page_size_field: page_size
+    - path: /v1/conversation/create
+      method: post
+      order: 55
+      sdk_methods:
+        - conversations.create
+      body_fields:
+        - messages
+        - bot_id
+        - name
+        - connector_id
+        - meta_data
+      arg_types:
+        messages: List[Message]
+        meta_data: Dict[str, str]
+      disable_headers_arg: true
+      response_type: Conversation
+      response_cast: Conversation
+    - path: /v1/conversation/retrieve
+      method: get
+      order: 56
+      sdk_methods:
+        - conversations.retrieve
+      disable_headers_arg: true
+      response_type: Conversation
+      response_cast: Conversation
+    - path: /v1/conversations
+      method: get
+      order: 57
+      sdk_methods:
+        - conversations.list
+      query_fields:
+        - name: bot_id
+          type: str
+          required: true
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
+        - name: page_size
+          type: int
+          required: true
+          default: "50"
+      disable_headers_arg: true
+      pagination: number_has_more
+      pagination_data_class: _PrivateListConversationResp
+      pagination_item_type: Conversation
+      pagination_items_field: conversations
+      pagination_has_more_field: has_more
+      pagination_page_num_field: page_num
+      pagination_page_size_field: page_size
+    - path: /v1/conversations/{conversation_id}/clear
+      method: post
+      order: 58
+      sdk_methods:
+        - conversations.clear
+      disable_request_body: true
+      disable_headers_arg: true
+      response_type: Section
+      response_cast: Section
+    - path: /v1/conversations/{conversation_id}
+      method: put
+      order: 59
+      sdk_methods:
+        - conversations.update
+      body_fields:
+        - name
+      body_required_fields:
+        - __none__
+      disable_headers_arg: true
+      response_type: Conversation
+      response_cast: Conversation
+    - path: /v1/conversations/{conversation_id}
+      method: delete
+      order: 60
+      sdk_methods:
+        - conversations.delete
+      allow_missing_in_swagger: true
+      disable_request_body: true
+      disable_headers_arg: true
+      response_type: DeleteConversationResp
+      response_cast: DeleteConversationResp
+    - path: /v1/datasets
+      method: post
+      order: 61
+      sdk_methods:
+        - datasets.create
+      allow_missing_in_swagger: true
+      body_fields:
+        - name
+        - space_id
+        - format_type
+        - description
+        - file_id
+      body_required_fields:
+        - name
+        - space_id
+        - format_type
+      param_aliases:
+        file_id: icon_file_id
+      arg_types:
+        format_type: DocumentFormatType
+      disable_headers_arg: true
+      response_type: CreateDatasetResp
+      response_cast: CreateDatasetResp
+    - path: /v1/datasets
+      method: get
+      order: 62
+      sdk_methods:
+        - datasets.list
+      use_kwargs_headers: true
+      query_fields:
+        - name: space_id
+          type: str
+          required: true
+        - name: name
+          type: str
+          required: false
+        - name: format_type
+          type: DocumentFormatType
+          required: false
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
+        - name: page_size
+          type: int
+          required: true
+          default: "10"
+      pagination: number
+      pagination_data_class: _PrivateListDatasetsData
+      pagination_item_type: Dataset
+      pagination_items_field: dataset_list
+      pagination_total_field: total_count
+      pagination_page_num_field: page_num
+      pagination_page_size_field: page_size
+    - path: /v1/datasets/{dataset_id}
+      method: put
+      order: 63
+      sdk_methods:
+        - datasets.update
+      body_fields:
+        - name
+        - description
+        - file_id
+      param_aliases:
+        file_id: icon_file_id
+      disable_headers_arg: true
+      response_type: UpdateDatasetRes
+      response_cast: UpdateDatasetRes
+    - path: /v1/datasets/{dataset_id}
+      method: delete
+      order: 64
+      sdk_methods:
+        - datasets.delete
+      allow_missing_in_swagger: true
+      disable_request_body: true
+      disable_headers_arg: true
+      response_type: DeleteDatasetRes
+      response_cast: DeleteDatasetRes
+    - path: /v1/datasets/{dataset_id}/process
+      method: post
+      order: 65
+      sdk_methods:
+        - datasets.process
+      body_fields:
+        - document_ids
+      disable_headers_arg: true
+      ignore_header_params: true
+      response_type: ListResponse[DocumentProgress]
+      response_cast: ListResponse[DocumentProgress]
+      data_field: data.data
+    - path: /v1/bot/create
+      method: post
+      order: 66
+      sdk_methods:
+        - bots.create
+      body_fields:
+        - space_id
+        - name
+        - description
+        - icon_file_id
+        - prompt_info
+        - onboarding_info
+        - suggest_reply_info
+        - model_info_config
+        - plugin_id_list
+        - workflow_id_list
+      arg_types:
+        prompt_info: Dict[str, Any]
+        onboarding_info: Dict[str, Any]
+        suggest_reply_info: Dict[str, Any]
+        model_info_config: Dict[str, Any]
+        plugin_id_list: Dict[str, Any]
+        workflow_id_list: Dict[str, Any]
+      use_kwargs_headers: true
+      response_type: Bot
+      response_cast: Bot
+    - path: /v1/bot/update
+      method: post
+      order: 67
+      sdk_methods:
+        - bots.update
+      body_fields:
+        - bot_id
+        - name
+        - description
+        - icon_file_id
+        - prompt_info
+        - onboarding_info
+        - knowledge
+        - suggest_reply_info
+        - model_info_config
+      arg_types:
+        prompt_info: Dict[str, Any]
+        onboarding_info: Dict[str, Any]
+        knowledge: Dict[str, Any]
+        suggest_reply_info: Dict[str, Any]
+        model_info_config: Dict[str, Any]
+      use_kwargs_headers: true
+      response_type: UpdateBotResp
+      response_cast: UpdateBotResp
+    - path: /v1/bot/publish
+      method: post
+      order: 68
+      sdk_methods:
+        - bots.publish
+      body_fields:
+        - bot_id
+        - connector_ids
+      body_required_fields:
+        - bot_id
+      use_kwargs_headers: true
+      response_type: Bot
+      response_cast: Bot
+    - path: /v1/bots/{bot_id}/unpublish
+      method: post
+      order: 69
+      sdk_methods:
+        - bots.unpublish
+      body_fields:
+        - connector_id
+        - unpublish_reason
+      use_kwargs_headers: true
+      response_type: UnpublishBotResp
+      response_cast: UnpublishBotResp
+    - path: /v1/bot/get_online_info
+      method: get
+      order: 70
+      sdk_methods:
+        - bots.retrieve
+        - bots._retrieve_v1
+      use_kwargs_headers: true
+      response_type: Bot
+      response_cast: Bot
+    - path: /v1/bots/{bot_id}
+      method: get
+      order: 71
+      sdk_methods:
+        - bots._retrieve_v2
+      use_kwargs_headers: true
+      response_type: Bot
+      response_cast: Bot
+    - path: /v1/space/published_bots_list
+      method: get
+      order: 72
+      sdk_methods:
+        - bots.list
+        - bots._list_v1
+      disable_headers_arg: true
+      query_fields:
+        - name: space_id
+          type: str
+          required: true
+        - name: page_index
+          type: int
+          required: true
+          default: "1"
+        - name: page_size
+          type: int
+          required: true
+          default: "20"
+      param_aliases:
+        page_index: page_num
+      pagination: number
+      pagination_data_class: _PrivateListBotsDataV1
+      pagination_item_type: SimpleBot
+      pagination_items_field: space_bots
+      pagination_total_field: total
+      pagination_page_num_field: page_index
+      pagination_page_size_field: page_size
+    - path: /v1/bots
+      method: get
+      order: 73
+      sdk_methods:
+        - bots._list_v2
+      use_kwargs_headers: true
+      query_fields:
+        - name: workspace_id
+          type: str
+          required: true
+        - name: publish_status
+          type: PublishStatus
+          required: false
+          use_value: true
+        - name: connector_id
+          type: str
+          required: false
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
+        - name: page_size
+          type: int
+          required: true
+          default: "20"
+      param_aliases:
+        workspace_id: space_id
+      pagination: number
+      pagination_data_class: _PrivateListBotsDataV2
+      pagination_item_type: SimpleBot
+      pagination_items_field: items
+      pagination_total_field: total
+      pagination_page_num_field: page_num
+      pagination_page_size_field: page_size
     - path: /v1/folders/{folder_id}
       method: get
-      order: 60
+      order: 74
       sdk_methods:
         - folders.retrieve
       use_kwargs_headers: true
@@ -303,7 +895,7 @@ api:
       response_cast: SimpleFolder
     - path: /v1/folders
       method: get
-      order: 70
+      order: 75
       sdk_methods:
         - folders.list
       use_kwargs_headers: true
@@ -388,6 +980,28 @@ api:
       method: get
     - path: /v1/commerce/benefit/limitations
       method: post
+    - path: /v1/conversation/message/create
+      method: post
+    - path: /v1/conversation/message/delete
+      method: post
+    - path: /v1/conversation/message/list
+      method: post
+    - path: /v1/conversation/message/modify
+      method: post
+    - path: /v1/conversation/message/retrieve
+      method: get
+    - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
+      method: delete
+    - path: /v1/datasets/{dataset_id}/images
+      method: get
+    - path: /v1/bots/{bot_id}/collaboration_mode
+      method: post
+    - path: /v1/bots/{bot_id}/collaborators
+      method: post
+    - path: /v1/bots/{bot_id}/collaborators/{user_id}
+      method: delete
+    - path: /v1/bots/{bot_id}/versions
+      method: get
   field_aliases:
     chat:
       custom_variables: custom_variables

@@ -32,6 +32,7 @@ type Package struct {
 	ClientClass           string        `yaml:"client_class"`
 	AsyncClientClass      string        `yaml:"async_client_class"`
 	ChildClients          []ChildClient `yaml:"child_clients"`
+	ExtraImports          []ImportSpec  `yaml:"extra_imports"`
 	ModelSchemas          []ModelSchema `yaml:"model_schemas"`
 	EmptyModels           []string      `yaml:"empty_models"`
 }
@@ -47,11 +48,24 @@ type ChildClient struct {
 }
 
 type ModelSchema struct {
-	Schema         string   `yaml:"schema"`
-	Name           string   `yaml:"name"`
-	FieldOrder     []string `yaml:"field_order"`
-	RequiredFields []string `yaml:"required_fields"`
-	EnumBase       string   `yaml:"enum_base"`
+	Schema         string       `yaml:"schema"`
+	Name           string       `yaml:"name"`
+	FieldOrder     []string     `yaml:"field_order"`
+	RequiredFields []string     `yaml:"required_fields"`
+	EnumBase       string       `yaml:"enum_base"`
+	ExtraFields    []ModelField `yaml:"extra_fields"`
+}
+
+type ModelField struct {
+	Name     string `yaml:"name"`
+	Type     string `yaml:"type"`
+	Required bool   `yaml:"required"`
+	Default  string `yaml:"default"`
+}
+
+type ImportSpec struct {
+	Module string   `yaml:"module"`
+	Names  []string `yaml:"names"`
 }
 
 type OperationMapping struct {
@@ -80,6 +94,10 @@ type OperationMapping struct {
 	PaginationPageNumField   string            `yaml:"pagination_page_num_field"`
 	PaginationPageSizeField  string            `yaml:"pagination_page_size_field"`
 	PaginationPageTokenField string            `yaml:"pagination_page_token_field"`
+	DisableHeadersArg        bool              `yaml:"disable_headers_arg"`
+	IgnoreHeaderParams       bool              `yaml:"ignore_header_params"`
+	DataField                string            `yaml:"data_field"`
+	RequestStream            bool              `yaml:"request_stream"`
 }
 
 type OperationField struct {
@@ -87,6 +105,7 @@ type OperationField struct {
 	Type     string `yaml:"type"`
 	Required bool   `yaml:"required"`
 	Default  string `yaml:"default"`
+	UseValue bool   `yaml:"use_value"`
 }
 
 type OperationRef struct {
@@ -173,6 +192,19 @@ func (c *Config) Validate() error {
 				}
 			}
 		}
+		for j, imp := range pkg.ExtraImports {
+			if strings.TrimSpace(imp.Module) == "" {
+				return fmt.Errorf("api.packages[%d].extra_imports[%d].module is required", i, j)
+			}
+			if len(imp.Names) == 0 {
+				return fmt.Errorf("api.packages[%d].extra_imports[%d].names should not be empty", i, j)
+			}
+			for k, name := range imp.Names {
+				if strings.TrimSpace(name) == "" {
+					return fmt.Errorf("api.packages[%d].extra_imports[%d].names[%d] is required", i, j, k)
+				}
+			}
+		}
 		for j, model := range pkg.ModelSchemas {
 			if strings.TrimSpace(model.Schema) == "" || strings.TrimSpace(model.Name) == "" {
 				return fmt.Errorf("api.packages[%d].model_schemas[%d].schema and name are required", i, j)
@@ -182,6 +214,14 @@ func (c *Config) Validate() error {
 				case "dynamic_str":
 				default:
 					return fmt.Errorf("api.packages[%d].model_schemas[%d].enum_base must be 'dynamic_str' when set", i, j)
+				}
+			}
+			for k, extra := range model.ExtraFields {
+				if strings.TrimSpace(extra.Name) == "" {
+					return fmt.Errorf("api.packages[%d].model_schemas[%d].extra_fields[%d].name is required", i, j, k)
+				}
+				if strings.TrimSpace(extra.Type) == "" {
+					return fmt.Errorf("api.packages[%d].model_schemas[%d].extra_fields[%d].type is required", i, j, k)
 				}
 			}
 		}
@@ -206,8 +246,8 @@ func (c *Config) Validate() error {
 		}
 		if strings.TrimSpace(mapping.Pagination) != "" {
 			pagination := strings.TrimSpace(mapping.Pagination)
-			if pagination != "token" && pagination != "number" {
-				return fmt.Errorf("api.operation_mappings[%d].pagination must be 'token' or 'number' when set", i)
+			if pagination != "token" && pagination != "number" && pagination != "number_has_more" {
+				return fmt.Errorf("api.operation_mappings[%d].pagination must be 'token', 'number', or 'number_has_more' when set", i)
 			}
 			if strings.TrimSpace(mapping.PaginationDataClass) == "" || strings.TrimSpace(mapping.PaginationItemType) == "" {
 				return fmt.Errorf("api.operation_mappings[%d].pagination_data_class and pagination_item_type are required for pagination", i)
