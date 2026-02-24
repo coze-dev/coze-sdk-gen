@@ -67,6 +67,13 @@ func run(args []string, stdout io.Writer) error {
 		return err
 	}
 
-	_, err = fmt.Fprintf(stdout, "language=%s copied_files=%d output=%s\n", cfg.Language, result.CopiedFiles, cfg.OutputSDK)
+	_, err = fmt.Fprintf(
+		stdout,
+		"language=%s generated_files=%d generated_ops=%d output=%s\n",
+		cfg.Language,
+		result.GeneratedFiles,
+		result.GeneratedOps,
+		cfg.OutputSDK,
+	)
 	return err
 }

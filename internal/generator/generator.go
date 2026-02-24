@@ -9,7 +9,8 @@ import (
 )
 
 type Result struct {
-	CopiedFiles int
+	GeneratedFiles int
+	GeneratedOps   int
 }
 
 func Run(cfg *config.Config, doc *openapi.Document) (Result, error) {

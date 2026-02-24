@@ -38,10 +38,12 @@ paths:
 language: python
 source_sdk: `+src+`
 output_sdk: `+outDir+`
-copy:
-  include:
-    - .
 api:
+  packages:
+    - name: chat
+      source_dir: cozepy/chat
+      path_prefixes:
+        - /v3/chat
   operation_mappings:
     - path: /v3/chat
       method: post
@@ -55,10 +57,10 @@ api:
 	if err != nil {
 		t.Fatalf("run() error = %v", err)
 	}
-	if !strings.Contains(out.String(), "copied_files=2") {
+	if !strings.Contains(out.String(), "generated_files=") {
 		t.Fatalf("unexpected output: %q", out.String())
 	}
-	assertFileContent(t, filepath.Join(outDir, "cozepy", "a.py"), "A")
+	assertFileContains(t, filepath.Join(outDir, "cozepy", "chat", "__init__.py"), "def create")
 }
 
 func TestRunInvalidArgs(t *testing.T) {
@@ -78,13 +80,13 @@ func writeFile(t *testing.T, pathName string, content string) {
 	}
 }
 
-func assertFileContent(t *testing.T, pathName string, expected string) {
+func assertFileContains(t *testing.T, pathName string, expected string) {
 	t.Helper()
 	content, err := os.ReadFile(pathName)
 	if err != nil {
 		t.Fatalf("read %s: %v", pathName, err)
 	}
-	if string(content) != expected {
-		t.Fatalf("unexpected content for %s: %q", pathName, string(content))
+	if !strings.Contains(string(content), expected) {
+		t.Fatalf("expected %q in %s, got %q", expected, pathName, string(content))
 	}
 }
