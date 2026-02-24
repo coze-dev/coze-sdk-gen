@@ -1,0 +1,47 @@
+language: python
+source_sdk: exist-repo/coze-py
+output_sdk: exist-repo/coze-py-generated
+copy:
+  include:
+    - cozepy
+    - tests
+    - examples
+    - README.md
+    - pyproject.toml
+    - poetry.lock
+    - LICENSE
+    - codecov.yml
+    - .gitignore
+    - .pre-commit-config.yaml
+    - .github
+api:
+  packages:
+    - name: chat
+      source_dir: cozepy/chat
+      path_prefixes:
+        - /v3/chat
+    - name: workflows
+      source_dir: cozepy/workflows
+      path_prefixes:
+        - /v1/workflows
+  operation_mappings:
+    - path: /v3/chat
+      method: post
+      sdk_methods:
+        - chat.create
+        - chat.stream
+    - path: /v3/chat/cancel
+      method: post
+      sdk_methods:
+        - chat.cancel
+    - path: /v1/workflows/chat
+      method: post
+      sdk_methods:
+        - workflows.chat
+  ignore_operations:
+    - path: /v1/workspaces
+      method: get
+  field_aliases:
+    chat:
+      bot_id: bot_id
+      conversation_id: conversation_id
