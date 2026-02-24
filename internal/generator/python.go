@@ -31,6 +31,7 @@ type fileWriter struct {
 }
 
 var pythonSupportOverridePaths = map[string]struct{}{
+	"cozepy/api_apps/__init__.py":   {},
 	"cozepy/files/__init__.py":      {},
 	"cozepy/knowledge/__init__.py":  {},
 	"cozepy/variables/__init__.py":  {},
