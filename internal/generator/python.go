@@ -552,6 +552,16 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 			buf.WriteString(fmt.Sprintf("from %s import %s\n", moduleName, strings.Join(names, ", ")))
 		}
 	}
+	if meta.Package != nil && len(meta.Package.RawImports) > 0 {
+		for _, rawImport := range meta.Package.RawImports {
+			line := strings.TrimSpace(rawImport)
+			if line == "" {
+				continue
+			}
+			buf.WriteString(line)
+			buf.WriteString("\n")
+		}
+	}
 
 	imports := collectTypeImports(doc, bindings)
 	if len(imports) > 0 {
@@ -581,8 +591,24 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 		buf.WriteString("\n")
 	}
 	if hasTokenPagination || hasNumberPagination {
-		buf.WriteString(renderPagedResponseClasses(bindings))
+		overridePaginationClasses := map[string]struct{}{}
+		if meta.Package != nil {
+			for _, className := range meta.Package.OverridePaginationClasses {
+				trimmed := strings.TrimSpace(className)
+				if trimmed == "" {
+					continue
+				}
+				overridePaginationClasses[trimmed] = struct{}{}
+			}
+		}
+		buf.WriteString(renderPagedResponseClasses(bindings, overridePaginationClasses))
 		buf.WriteString("\n")
+	}
+	if meta.Package != nil && len(meta.Package.TopLevelCode) > 0 {
+		for _, block := range meta.Package.TopLevelCode {
+			appendIndentedCode(&buf, block, 0)
+			buf.WriteString("\n")
+		}
 	}
 
 	syncClass := packageClientClassName(meta, false)
@@ -614,6 +640,12 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 		buf.WriteString(renderOperationMethod(doc, binding, false))
 		buf.WriteString("\n")
 	}
+	if meta.Package != nil && len(meta.Package.SyncExtraMethods) > 0 {
+		for _, block := range meta.Package.SyncExtraMethods {
+			appendIndentedCode(&buf, block, 1)
+			buf.WriteString("\n")
+		}
+	}
 
 	buf.WriteString(fmt.Sprintf("class %s(object):\n", asyncClass))
 	buf.WriteString("    def __init__(self, base_url: str, requester: Requester):\n")
@@ -640,6 +672,12 @@ func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []ope
 	for _, binding := range bindings {
 		buf.WriteString(renderOperationMethod(doc, binding, true))
 		buf.WriteString("\n")
+	}
+	if meta.Package != nil && len(meta.Package.AsyncExtraMethods) > 0 {
+		for _, block := range meta.Package.AsyncExtraMethods {
+			appendIndentedCode(&buf, block, 1)
+			buf.WriteString("\n")
+		}
 	}
 
 	content := buf.String()
@@ -823,7 +861,7 @@ func packageNeedsAnyDict(doc *openapi.Document, bindings []operationBinding, mod
 	return needAny, needDict
 }
 
-func renderPagedResponseClasses(bindings []operationBinding) string {
+func renderPagedResponseClasses(bindings []operationBinding, overriddenClasses map[string]struct{}) string {
 	seen := map[string]struct{}{}
 	ordered := make([]operationBinding, 0, len(bindings))
 	for _, binding := range bindings {
@@ -837,6 +875,9 @@ func renderPagedResponseClasses(bindings []operationBinding) string {
 		className := strings.TrimSpace(binding.Mapping.PaginationDataClass)
 		itemType := strings.TrimSpace(binding.Mapping.PaginationItemType)
 		if className == "" || itemType == "" {
+			continue
+		}
+		if _, overridden := overriddenClasses[className]; overridden {
 			continue
 		}
 		if _, ok := seen[className]; ok {
@@ -928,6 +969,7 @@ type packageModelDefinition struct {
 	Name                  string
 	Schema                *openapi.Schema
 	IsEnum                bool
+	PrependCode           []string
 	FieldOrder            []string
 	RequiredFields        []string
 	FieldTypes            map[string]string
@@ -935,6 +977,7 @@ type packageModelDefinition struct {
 	EnumBase              string
 	EnumValues            []config.ModelEnumValue
 	ExtraFields           []config.ModelField
+	ExtraCode             []string
 	AllowMissingInSwagger bool
 	ExcludeUnordered      bool
 }
@@ -986,6 +1029,7 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 				Name:                  modelName,
 				Schema:                nil,
 				IsEnum:                isEnum,
+				PrependCode:           append([]string(nil), model.PrependCode...),
 				FieldOrder:            append([]string(nil), model.FieldOrder...),
 				RequiredFields:        append([]string(nil), model.RequiredFields...),
 				FieldTypes:            fieldTypes,
@@ -993,6 +1037,7 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 				EnumBase:              strings.TrimSpace(model.EnumBase),
 				EnumValues:            enumValues,
 				ExtraFields:           append([]config.ModelField(nil), model.ExtraFields...),
+				ExtraCode:             append([]string(nil), model.ExtraCode...),
 				AllowMissingInSwagger: model.AllowMissingInSwagger,
 				ExcludeUnordered:      model.ExcludeUnorderedFields,
 			})
@@ -1009,6 +1054,7 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 				Name:                  modelName,
 				Schema:                nil,
 				IsEnum:                isEnum,
+				PrependCode:           append([]string(nil), model.PrependCode...),
 				FieldOrder:            append([]string(nil), model.FieldOrder...),
 				RequiredFields:        append([]string(nil), model.RequiredFields...),
 				FieldTypes:            fieldTypes,
@@ -1016,6 +1062,7 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 				EnumBase:              strings.TrimSpace(model.EnumBase),
 				EnumValues:            enumValues,
 				ExtraFields:           append([]config.ModelField(nil), model.ExtraFields...),
+				ExtraCode:             append([]string(nil), model.ExtraCode...),
 				AllowMissingInSwagger: model.AllowMissingInSwagger,
 				ExcludeUnordered:      model.ExcludeUnorderedFields,
 			})
@@ -1031,6 +1078,7 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 			Name:                  modelName,
 			Schema:                resolved,
 			IsEnum:                isEnum,
+			PrependCode:           append([]string(nil), model.PrependCode...),
 			FieldOrder:            append([]string(nil), model.FieldOrder...),
 			RequiredFields:        append([]string(nil), model.RequiredFields...),
 			FieldTypes:            fieldTypes,
@@ -1038,6 +1086,7 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta packageMeta) []p
 			EnumBase:              strings.TrimSpace(model.EnumBase),
 			EnumValues:            enumValues,
 			ExtraFields:           append([]config.ModelField(nil), model.ExtraFields...),
+			ExtraCode:             append([]string(nil), model.ExtraCode...),
 			AllowMissingInSwagger: model.AllowMissingInSwagger,
 			ExcludeUnordered:      model.ExcludeUnorderedFields,
 		})
@@ -1094,10 +1143,13 @@ func renderPackageModelDefinitions(
 			properties = model.Schema.Properties
 		}
 		if len(properties) == 0 {
-			if len(model.ExtraFields) == 0 {
+			if len(model.PrependCode) == 0 && len(model.ExtraFields) == 0 && len(model.ExtraCode) == 0 {
 				buf.WriteString("    pass\n\n")
 				continue
 			}
+		}
+		for _, block := range model.PrependCode {
+			appendIndentedCode(&buf, block, 1)
 		}
 
 		requiredSet := map[string]bool{}
@@ -1178,6 +1230,9 @@ func renderPackageModelDefinitions(
 			}
 			buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", fieldName, typeName, defaultValue))
 		}
+		for _, block := range model.ExtraCode {
+			appendIndentedCode(&buf, block, 1)
+		}
 		buf.WriteString("\n")
 	}
 
@@ -1226,6 +1281,44 @@ func unwrapOptionalType(typeName string) string {
 		return typeName
 	}
 	return inner
+}
+
+func appendIndentedCode(buf *bytes.Buffer, code string, indentLevel int) {
+	block := strings.Trim(code, "\n")
+	if strings.TrimSpace(block) == "" {
+		return
+	}
+	lines := strings.Split(block, "\n")
+	minIndent := -1
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		indent := 0
+		for indent < len(line) && line[indent] == ' ' {
+			indent++
+		}
+		if minIndent < 0 || indent < minIndent {
+			minIndent = indent
+		}
+	}
+	if minIndent < 0 {
+		return
+	}
+	prefix := strings.Repeat("    ", indentLevel)
+	for _, line := range lines {
+		cleanLine := strings.TrimRight(line, "\r")
+		if minIndent > 0 && len(cleanLine) >= minIndent {
+			cleanLine = cleanLine[minIndent:]
+		}
+		if strings.TrimSpace(cleanLine) == "" {
+			buf.WriteString("\n")
+			continue
+		}
+		buf.WriteString(prefix)
+		buf.WriteString(cleanLine)
+		buf.WriteString("\n")
+	}
 }
 
 func renderEnumValueLiteral(value interface{}) string {
@@ -1707,7 +1800,7 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
 				buf.WriteString("                    {\n")
 			}
-			for _, field := range paginationOrderedFields(queryFields, pageSizeField, pageTokenField) {
+			for _, field := range queryFields {
 				valueExpr := field.ValueExpr
 				if strings.TrimSpace(valueExpr) == "" {
 					valueExpr = field.ArgName
@@ -1752,7 +1845,7 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
 				buf.WriteString("                    {\n")
 			}
-			for _, field := range paginationOrderedFields(queryFields, pageSizeField, pageTokenField) {
+			for _, field := range queryFields {
 				valueExpr := field.ValueExpr
 				if strings.TrimSpace(valueExpr) == "" {
 					valueExpr = field.ArgName
@@ -1821,7 +1914,7 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
 				buf.WriteString("                    {\n")
 			}
-			for _, field := range paginationOrderedFields(queryFields, pageSizeField, pageNumField) {
+			for _, field := range queryFields {
 				valueExpr := field.ValueExpr
 				if strings.TrimSpace(valueExpr) == "" {
 					valueExpr = field.ArgName
@@ -1866,7 +1959,7 @@ func renderOperationMethod(doc *openapi.Document, binding operationBinding, asyn
 				buf.WriteString(fmt.Sprintf("                params=%s(\n", queryBuilder))
 				buf.WriteString("                    {\n")
 			}
-			for _, field := range paginationOrderedFields(queryFields, pageSizeField, pageNumField) {
+			for _, field := range queryFields {
 				valueExpr := field.ValueExpr
 				if strings.TrimSpace(valueExpr) == "" {
 					valueExpr = field.ArgName

@@ -25,17 +25,22 @@ type APIConfig struct {
 }
 
 type Package struct {
-	Name                  string        `yaml:"name"`
-	SourceDir             string        `yaml:"source_dir"`
-	PathPrefixes          []string      `yaml:"path_prefixes"`
-	AllowMissingInSwagger bool          `yaml:"allow_missing_in_swagger"`
-	HTTPRequestFromModel  bool          `yaml:"http_request_from_model"`
-	ClientClass           string        `yaml:"client_class"`
-	AsyncClientClass      string        `yaml:"async_client_class"`
-	ChildClients          []ChildClient `yaml:"child_clients"`
-	ExtraImports          []ImportSpec  `yaml:"extra_imports"`
-	ModelSchemas          []ModelSchema `yaml:"model_schemas"`
-	EmptyModels           []string      `yaml:"empty_models"`
+	Name                      string        `yaml:"name"`
+	SourceDir                 string        `yaml:"source_dir"`
+	PathPrefixes              []string      `yaml:"path_prefixes"`
+	AllowMissingInSwagger     bool          `yaml:"allow_missing_in_swagger"`
+	HTTPRequestFromModel      bool          `yaml:"http_request_from_model"`
+	ClientClass               string        `yaml:"client_class"`
+	AsyncClientClass          string        `yaml:"async_client_class"`
+	ChildClients              []ChildClient `yaml:"child_clients"`
+	ExtraImports              []ImportSpec  `yaml:"extra_imports"`
+	RawImports                []string      `yaml:"raw_imports"`
+	ModelSchemas              []ModelSchema `yaml:"model_schemas"`
+	EmptyModels               []string      `yaml:"empty_models"`
+	TopLevelCode              []string      `yaml:"top_level_code"`
+	SyncExtraMethods          []string      `yaml:"sync_extra_methods"`
+	AsyncExtraMethods         []string      `yaml:"async_extra_methods"`
+	OverridePaginationClasses []string      `yaml:"override_pagination_classes"`
 }
 
 type ChildClient struct {
@@ -51,6 +56,7 @@ type ChildClient struct {
 type ModelSchema struct {
 	Schema                 string            `yaml:"schema"`
 	Name                   string            `yaml:"name"`
+	PrependCode            []string          `yaml:"prepend_code"`
 	FieldOrder             []string          `yaml:"field_order"`
 	RequiredFields         []string          `yaml:"required_fields"`
 	FieldTypes             map[string]string `yaml:"field_types"`
@@ -59,6 +65,7 @@ type ModelSchema struct {
 	EnumBase               string            `yaml:"enum_base"`
 	EnumValues             []ModelEnumValue  `yaml:"enum_values"`
 	ExtraFields            []ModelField      `yaml:"extra_fields"`
+	ExtraCode              []string          `yaml:"extra_code"`
 	AllowMissingInSwagger  bool              `yaml:"allow_missing_in_swagger"`
 }
 
@@ -228,6 +235,31 @@ func (c *Config) Validate() error {
 				}
 			}
 		}
+		for j, rawImport := range pkg.RawImports {
+			if strings.TrimSpace(rawImport) == "" {
+				return fmt.Errorf("api.packages[%d].raw_imports[%d] should not be empty", i, j)
+			}
+		}
+		for j, block := range pkg.TopLevelCode {
+			if strings.TrimSpace(block) == "" {
+				return fmt.Errorf("api.packages[%d].top_level_code[%d] should not be empty", i, j)
+			}
+		}
+		for j, block := range pkg.SyncExtraMethods {
+			if strings.TrimSpace(block) == "" {
+				return fmt.Errorf("api.packages[%d].sync_extra_methods[%d] should not be empty", i, j)
+			}
+		}
+		for j, block := range pkg.AsyncExtraMethods {
+			if strings.TrimSpace(block) == "" {
+				return fmt.Errorf("api.packages[%d].async_extra_methods[%d] should not be empty", i, j)
+			}
+		}
+		for j, className := range pkg.OverridePaginationClasses {
+			if strings.TrimSpace(className) == "" {
+				return fmt.Errorf("api.packages[%d].override_pagination_classes[%d] should not be empty", i, j)
+			}
+		}
 		for j, model := range pkg.ModelSchemas {
 			if strings.TrimSpace(model.Name) == "" {
 				return fmt.Errorf("api.packages[%d].model_schemas[%d].name is required", i, j)
@@ -256,6 +288,16 @@ func (c *Config) Validate() error {
 				}
 				if strings.TrimSpace(extra.Type) == "" {
 					return fmt.Errorf("api.packages[%d].model_schemas[%d].extra_fields[%d].type is required", i, j, k)
+				}
+			}
+			for k, block := range model.ExtraCode {
+				if strings.TrimSpace(block) == "" {
+					return fmt.Errorf("api.packages[%d].model_schemas[%d].extra_code[%d] should not be empty", i, j, k)
+				}
+			}
+			for k, block := range model.PrependCode {
+				if strings.TrimSpace(block) == "" {
+					return fmt.Errorf("api.packages[%d].model_schemas[%d].prepend_code[%d] should not be empty", i, j, k)
 				}
 			}
 			for k, enumValue := range model.EnumValues {

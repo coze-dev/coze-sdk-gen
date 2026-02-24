@@ -201,7 +201,14 @@ func TestGeneratePythonFromRealConfig(t *testing.T) {
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "conversations", "__init__.py"), "def messages")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "datasets", "__init__.py"), "def process")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "bots", "__init__.py"), "def _list_v1")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "bots", "__init__.py"), "use_api_version: int = 2")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "bots", "__init__.py"), "class SimpleBotV1(CozeModel)")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "bots", "__init__.py"), "@field_validator(\"publish_time\", mode=\"before\")")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "def cancel")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "def create_and_poll")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "def _chat_stream_handler")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "def build_text(text: str)")
+	assertFileNotContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "chat", "__init__.py"), "def _messages_list")
 }
 
 func TestRenderOperationMethodAdvancedOptions(t *testing.T) {
@@ -341,6 +348,14 @@ func assertFileContains(t *testing.T, pathName string, expected string) {
 	content := readFile(t, pathName)
 	if !strings.Contains(content, expected) {
 		t.Fatalf("expected %q in %s, got:\n%s", expected, pathName, content)
+	}
+}
+
+func assertFileNotContains(t *testing.T, pathName string, unexpected string) {
+	t.Helper()
+	content := readFile(t, pathName)
+	if strings.Contains(content, unexpected) {
+		t.Fatalf("did not expect %q in %s, got:\n%s", unexpected, pathName, content)
 	}
 }
 

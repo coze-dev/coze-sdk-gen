@@ -100,6 +100,11 @@ api:
         - /v1/audio
     - name: bots
       source_dir: cozepy/bots
+      extra_imports:
+        - module: pydantic
+          names:
+            - Field
+            - field_validator
       model_schemas:
         - schema: PublishStatus
           name: PublishStatus
@@ -110,40 +115,73 @@ api:
             - prompt
         - schema: OnboardingInfoV2
           name: BotOnboardingInfo
+          field_types:
+            suggested_questions: Optional[List[str]]
           field_defaults:
             prologue: '""'
             suggested_questions: "[]"
         - schema: properties_knowledge
           name: BotKnowledge
+          field_order:
+            - dataset_ids
+            - auto_call
+            - search_strategy
           field_defaults:
             dataset_ids: "[]"
             auto_call: "True"
             search_strategy: "0"
         - schema: properties_model_info_config
           name: BotModelInfo
+          prepend_code:
+            - |
+              class ResponseFormat(DynamicStrEnum):
+                  JSON = "json"
+                  TEXT = "text"
+                  MARKDOWN = "markdown"
+
+              class CacheType(DynamicStrEnum):
+                  CLOSED = "closed"
+                  PREFIX = "prefix"
+          field_order:
+            - model_id
+            - model_name
+            - temperature
+            - context_round
+            - max_tokens
+            - response_format
+            - top_k
+            - top_p
+            - cache_type
+            - presence_penalty
+            - frequency_penalty
+            - parameters
+            - sp_anti_leak
+            - sp_current_time
           required_fields:
             - model_id
           field_types:
+            response_format: Optional[ResponseFormat]
+            cache_type: Optional[CacheType]
             parameters: Optional[Dict[str, str]]
           extra_fields:
             - name: model_name
               type: str
               required: false
-        - schema: properties_plugin_id_list_properties_id_list_items
-          name: PluginIDInfo
-          required_fields:
-            - plugin_id
-            - api_id
         - schema: properties_plugin_id_list
           name: PluginIDList
+          prepend_code:
+            - |
+              class PluginIDInfo(CozeModel):
+                  plugin_id: str
+                  api_id: str
           field_types:
             id_list: Optional[List[PluginIDInfo]]
-        - schema: properties_workflow_id_list_properties_ids_items
-          name: WorkflowIDInfo
-          required_fields:
-            - id
         - schema: properties_workflow_id_list
           name: WorkflowIDList
+          prepend_code:
+            - |
+              class WorkflowIDInfo(CozeModel):
+                  id: str
           field_types:
             ids: Optional[List[WorkflowIDInfo]]
         - schema: BotMode
@@ -158,12 +196,22 @@ api:
               value: 2
         - schema: ApiInfo
           name: BotPluginAPIInfo
+          field_order:
+            - api_id
+            - name
+            - description
           required_fields:
             - api_id
             - name
             - description
         - schema: PluginInfo
           name: BotPluginInfo
+          field_order:
+            - plugin_id
+            - name
+            - description
+            - icon_url
+            - api_info_list
           required_fields:
             - plugin_id
             - name
@@ -194,8 +242,18 @@ api:
           name: GradientPosition
         - schema: CanvasPosition1
           name: CanvasPosition
+          field_order:
+            - width
+            - height
+            - left
+            - top
         - schema: BackgroundImageDetail
           name: BackgroundImageInfo
+          field_order:
+            - image_url
+            - theme_color
+            - gradient_position
+            - canvas_position
           field_types:
             gradient_position: Optional[GradientPosition]
             canvas_position: Optional[CanvasPosition]
@@ -203,17 +261,44 @@ api:
             image_url: '""'
         - schema: BackgroundImageInfo1
           name: BotBackgroundImageInfo
+          field_order:
+            - web_background_image
+            - mobile_background_image
           field_types:
             web_background_image: Optional[BackgroundImageInfo]
             mobile_background_image: Optional[BackgroundImageInfo]
         - schema: VariableType
           name: VariableType
           enum_base: dynamic_str
+          enum_values:
+            - name: KVVariable
+              value: KVVariable
+            - name: ListVariable
+              value: ListVariable
         - schema: VariableChannel
           name: VariableChannel
           enum_base: dynamic_str
+          enum_values:
+            - name: VariableChannelCustom
+              value: custom
+            - name: VariableChannelSystem
+              value: system
+            - name: VariableChannelLocation
+              value: location
+            - name: VariableChannelFeishu
+              value: feishu
+            - name: VariableChannelAPP
+              value: app
         - schema: Variable
           name: BotVariable
+          field_order:
+            - keyword
+            - default_value
+            - variable_type
+            - channel
+            - description
+            - enable
+            - prompt_enable
           required_fields:
             - keyword
             - default_value
@@ -230,6 +315,9 @@ api:
               required: true
         - schema: Voice
           name: BotVoiceInfo
+          field_order:
+            - voice_id
+            - language_code
           required_fields:
             - voice_id
             - language_code
@@ -245,6 +333,11 @@ api:
               value: voice
         - schema: WorkflowInfo
           name: BotWorkflowInfo
+          field_order:
+            - id
+            - name
+            - description
+            - icon_url
           required_fields:
             - id
             - name
@@ -291,6 +384,9 @@ api:
             - workflow_info_list
             - folder_id
           extra_fields:
+            - name: suggest_reply_info
+              type: BotSuggestReplyInfo
+              required: false
             - name: folder_id
               type: str
               required: false
@@ -318,9 +414,142 @@ api:
             - name: folder_id
               type: str
               required: false
+          extra_code:
+            - |
+              bot_id: str = Field(alias="id")
+              bot_name: str = Field(alias="name")
+              publish_time: str = Field(alias="updated_at")
+
+              @field_validator("publish_time", mode="before")
+              @classmethod
+              def convert_to_string(cls, v):
+                  if isinstance(v, int):
+                      return str(v)
+                  return v
       empty_models:
         - UpdateBotResp
         - UnpublishBotResp
+      top_level_code:
+        - |
+          class _PrivateListBotsDataV1(CozeModel, NumberPagedResponse[SimpleBot]):
+              class SimpleBotV1(CozeModel):
+                  bot_id: str
+                  bot_name: str
+                  description: str
+                  icon_url: str
+                  publish_time: str
+
+                  def to_simple_bot(self) -> SimpleBot:
+                      return SimpleBot(
+                          id=self.bot_id,
+                          name=self.bot_name,
+                          description=self.description,
+                          icon_url=self.icon_url,
+                          is_published=True,
+                          updated_at=int(self.publish_time),
+                          owner_user_id="",
+                          published_at=int(self.publish_time),
+                      )
+
+              space_bots: List[SimpleBotV1]
+              total: int
+
+              def get_total(self) -> Optional[int]:
+                  return self.total
+
+              def get_has_more(self) -> Optional[bool]:
+                  return None
+
+              def get_items(self) -> List[SimpleBot]:
+                  return [bot.to_simple_bot() for bot in self.space_bots]
+      override_pagination_classes:
+        - _PrivateListBotsDataV1
+      sync_extra_methods:
+        - |
+          def retrieve(
+              self,
+              *,
+              bot_id: str,
+              is_published: Optional[bool] = None,
+              use_api_version: int = 1,
+              **kwargs,
+          ) -> Bot:
+              if use_api_version == 1:
+                  return self._retrieve_v1(bot_id=bot_id, **kwargs)
+              if use_api_version == 2:
+                  return self._retrieve_v2(bot_id=bot_id, is_published=is_published, **kwargs)
+              raise ValueError("invalid use_api_version, expected one of: 1, 2")
+        - |
+          def list(
+              self,
+              *,
+              space_id: str,
+              publish_status: Optional[PublishStatus] = None,
+              connector_id: Optional[str] = None,
+              page_num: int = 1,
+              page_size: int = 20,
+              use_api_version: int = 2,
+              **kwargs,
+          ) -> NumberPaged[SimpleBot]:
+              if use_api_version == 1:
+                  return self._list_v1(
+                      space_id=space_id,
+                      page_num=page_num,
+                      page_size=page_size,
+                  )
+              if use_api_version == 2:
+                  return self._list_v2(
+                      space_id=space_id,
+                      publish_status=publish_status,
+                      connector_id=connector_id,
+                      page_num=page_num,
+                      page_size=page_size,
+                      **kwargs,
+                  )
+              raise ValueError("invalid use_api_version, expected one of: 1, 2")
+      async_extra_methods:
+        - |
+          async def retrieve(
+              self,
+              *,
+              bot_id: str,
+              is_published: Optional[bool] = None,
+              use_api_version: int = 1,
+              **kwargs,
+          ) -> Bot:
+              if use_api_version == 1:
+                  return await self._retrieve_v1(bot_id=bot_id, **kwargs)
+              if use_api_version == 2:
+                  return await self._retrieve_v2(bot_id=bot_id, is_published=is_published, **kwargs)
+              raise ValueError("invalid use_api_version, expected one of: 1, 2")
+        - |
+          async def list(
+              self,
+              *,
+              space_id: str,
+              publish_status: Optional[PublishStatus] = None,
+              connector_id: Optional[str] = None,
+              page_num: int = 1,
+              page_size: int = 20,
+              use_api_version: int = 2,
+              **kwargs,
+          ) -> AsyncNumberPaged[SimpleBot]:
+              if use_api_version == 1:
+                  return await self._list_v1(
+                      space_id=space_id,
+                      page_num=page_num,
+                      page_size=page_size,
+                  )
+              if use_api_version == 2:
+                  return await self._list_v2(
+                      space_id=space_id,
+                      publish_status=publish_status,
+                      connector_id=connector_id,
+                      page_num=page_num,
+                      page_size=page_size,
+                      **kwargs,
+                  )
+              raise ValueError("invalid use_api_version, expected one of: 1, 2")
       path_prefixes:
         - /v1/bot
         - /v1/bots
@@ -331,6 +560,20 @@ api:
           names:
             - ListResponse
             - Stream
+      raw_imports:
+        - import base64
+        - import json
+        - import time
+        - import httpx
+        - from typing import AsyncIterator, Union, overload
+        - from cozepy.exception import CozeAPIError
+        - from cozepy.model import AsyncIteratorHTTPResponse, AsyncStream, IteratorHTTPResponse
+      child_clients:
+        - attribute: messages
+          module: .message
+          sync_class: ChatMessagesClient
+          async_class: AsyncChatMessagesClient
+          nil_check: is_none
       model_schemas:
         - name: MessageRole
           allow_missing_in_swagger: true
@@ -399,6 +642,29 @@ api:
             - name: file_url
               type: str
               required: false
+          extra_code:
+            - |
+              @staticmethod
+              def build_text(text: str):
+                  return MessageObjectString(type=MessageObjectStringType.TEXT, text=text)
+
+              @staticmethod
+              def build_image(file_id: Optional[str] = None, file_url: Optional[str] = None):
+                  if not file_id and not file_url:
+                      raise ValueError("file_id or file_url must be specified")
+                  return MessageObjectString(type=MessageObjectStringType.IMAGE, file_id=file_id, file_url=file_url)
+
+              @staticmethod
+              def build_file(file_id: Optional[str] = None, file_url: Optional[str] = None):
+                  if not file_id and not file_url:
+                      raise ValueError("file_id or file_url must be specified")
+                  return MessageObjectString(type=MessageObjectStringType.FILE, file_id=file_id, file_url=file_url)
+
+              @staticmethod
+              def build_audio(file_id: Optional[str] = None, file_url: Optional[str] = None):
+                  if not file_id and not file_url:
+                      raise ValueError("file_id or file_url must be specified")
+                  return MessageObjectString(type=MessageObjectStringType.AUDIO, file_id=file_id, file_url=file_url)
         - schema: InsertedAdditionalMessage
           name: InsertedMessage
           required_fields:
@@ -465,6 +731,44 @@ api:
             - created_at
             - updated_at
             - reasoning_content
+          extra_code:
+            - |
+              @staticmethod
+              def build_user_question_text(content: str, meta_data: Optional[Dict[str, str]] = None) -> "Message":
+                  return Message(
+                      role=MessageRole.USER,
+                      type=MessageType.QUESTION,
+                      content=content,
+                      content_type=MessageContentType.TEXT,
+                      meta_data=meta_data,
+                  )
+
+              @staticmethod
+              def build_user_question_objects(
+                  objects: List[MessageObjectString], meta_data: Optional[Dict[str, str]] = None
+              ) -> "Message":
+                  return Message(
+                      role=MessageRole.USER,
+                      type=MessageType.QUESTION,
+                      content=json.dumps([obj.model_dump() for obj in objects]),
+                      content_type=MessageContentType.OBJECT_STRING,
+                      meta_data=meta_data,
+                  )
+
+              @staticmethod
+              def build_assistant_answer(content: str, meta_data: Optional[Dict[str, str]] = None) -> "Message":
+                  return Message(
+                      role=MessageRole.ASSISTANT,
+                      type=MessageType.ANSWER,
+                      content=content,
+                      content_type=MessageContentType.TEXT,
+                      meta_data=meta_data,
+                  )
+
+              def get_audio(self) -> Optional[bytes]:
+                  if self.content_type == MessageContentType.AUDIO:
+                      return base64.b64decode(self.content)
+                  return b""
         - name: ChatStatus
           allow_missing_in_swagger: true
           enum_base: dynamic_str
@@ -591,6 +895,80 @@ api:
           required_fields:
             - tool_call_id
             - output
+      top_level_code:
+        - |
+          def _chat_stream_handler(data: Dict, raw_response: httpx.Response) -> Optional[ChatEvent]:
+              event = data["event"]
+              event_data = data["data"]
+              if event == ChatEventType.DONE:
+                  return None
+              if event == ChatEventType.ERROR:
+                  raise Exception(f"error event: {event_data}")
+              if event in [
+                  ChatEventType.CONVERSATION_MESSAGE_DELTA,
+                  ChatEventType.CONVERSATION_MESSAGE_COMPLETED,
+                  ChatEventType.CONVERSATION_AUDIO_DELTA,
+              ]:
+                  parsed = ChatEvent(event=event, message=Message.model_validate_json(event_data))
+                  parsed._raw_response = raw_response
+                  return parsed
+              if event in [
+                  ChatEventType.CONVERSATION_CHAT_CREATED,
+                  ChatEventType.CONVERSATION_CHAT_IN_PROGRESS,
+                  ChatEventType.CONVERSATION_CHAT_COMPLETED,
+                  ChatEventType.CONVERSATION_CHAT_FAILED,
+                  ChatEventType.CONVERSATION_CHAT_REQUIRES_ACTION,
+              ]:
+                  parsed = ChatEvent(event=event, chat=Chat.model_validate_json(event_data))
+                  parsed._raw_response = raw_response
+                  return parsed
+              parsed = ChatEvent(event=ChatEventType.UNKNOWN, unknown=data)
+              parsed._raw_response = raw_response
+              return parsed
+      sync_extra_methods:
+        - |
+          def create_and_poll(
+              self,
+              *,
+              bot_id: str,
+              user_id: str,
+              conversation_id: Optional[str] = None,
+              additional_messages: Optional[List[Message]] = None,
+              custom_variables: Optional[Dict[str, str]] = None,
+              auto_save_history: bool = True,
+              meta_data: Optional[Dict[str, str]] = None,
+              poll_timeout: Optional[int] = None,
+              parameters: Optional[Dict[str, Any]] = None,
+          ) -> ChatPoll:
+              chat = self.create(
+                  bot_id=bot_id,
+                  user_id=user_id,
+                  conversation_id=conversation_id,
+                  additional_messages=additional_messages,
+                  custom_variables=custom_variables,
+                  auto_save_history=auto_save_history,
+                  meta_data=meta_data,
+                  parameters=parameters,
+              )
+
+              start = int(time.time())
+              interval = 1
+              while chat.status == ChatStatus.IN_PROGRESS:
+                  if poll_timeout is not None and int(time.time()) - start > poll_timeout:
+                      try:
+                          self.cancel(conversation_id=chat.conversation_id, chat_id=chat.id)
+                          return ChatPoll(chat=chat)
+                      except CozeAPIError as e:
+                          if e.code == 4104:
+                              chat = self.retrieve(conversation_id=chat.conversation_id, chat_id=chat.id)
+                              continue
+                          raise e
+
+                  time.sleep(interval)
+                  chat = self.retrieve(conversation_id=chat.conversation_id, chat_id=chat.id)
+
+              messages = self.messages.list(conversation_id=chat.conversation_id, chat_id=chat.id)
+              return ChatPoll(chat=chat, messages=messages)
       path_prefixes:
         - /v3/chat
     - name: connectors
@@ -741,6 +1119,18 @@ api:
             - update_time
         - schema: DocumentProgress
           name: DocumentProgress
+          field_order:
+            - document_id
+            - url
+            - size
+            - type
+            - status
+            - progress
+            - update_type
+            - document_name
+            - remaining_time
+            - status_descript
+            - update_interval
           required_fields:
             - status
             - update_type
@@ -903,6 +1293,7 @@ api:
       order: 3
       sdk_methods:
         - chat.retrieve
+      http_method_override: post
       disable_headers_arg: true
       response_type: Chat
       response_cast: Chat
@@ -910,7 +1301,7 @@ api:
       method: get
       order: 4
       sdk_methods:
-        - chat.messages
+        - chat._messages_list
       disable_headers_arg: true
       response_type: ListResponse[Message]
       response_cast: ListResponse[Message]
@@ -996,14 +1387,14 @@ api:
         - name: app_type
           type: AppType
           required: false
-        - name: page_token
-          type: str
-          required: true
-          default: '""'
         - name: page_size
           type: int
           required: true
           default: "20"
+        - name: page_token
+          type: str
+          required: true
+          default: '""'
       pagination: token
       pagination_data_class: _PrivateListAPIAppsData
       pagination_item_type: APIApp
@@ -1018,6 +1409,14 @@ api:
         - name: workspace_id
           type: str
           required: true
+        - name: page_size
+          type: int
+          required: true
+          default: "20"
+        - name: page_index
+          type: int
+          required: true
+          default: "1"
         - name: publish_status
           type: PublishStatus
           required: false
@@ -1025,14 +1424,6 @@ api:
         - name: connector_id
           type: str
           required: false
-        - name: page_index
-          type: int
-          required: true
-          default: "1"
-        - name: page_size
-          type: int
-          required: true
-          default: "20"
       param_aliases:
         page_index: page_num
       pagination: number
@@ -1171,14 +1562,14 @@ api:
         - name: format_type
           type: DocumentFormatType
           required: false
-        - name: page_num
-          type: int
-          required: true
-          default: "1"
         - name: page_size
           type: int
           required: true
           default: "10"
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
       pagination: number
       pagination_data_class: _PrivateListDatasetsData
       pagination_item_type: Dataset
@@ -1304,7 +1695,6 @@ api:
       method: get
       order: 70
       sdk_methods:
-        - bots.retrieve
         - bots._retrieve_v1
       use_kwargs_headers: true
       response_type: Bot
@@ -1322,7 +1712,6 @@ api:
       method: get
       order: 72
       sdk_methods:
-        - bots.list
         - bots._list_v1
       query_builder: raw
       disable_headers_arg: true
@@ -1330,14 +1719,14 @@ api:
         - name: space_id
           type: str
           required: true
-        - name: page_index
-          type: int
-          required: true
-          default: "1"
         - name: page_size
           type: int
           required: true
           default: "20"
+        - name: page_index
+          type: int
+          required: true
+          default: "1"
       param_aliases:
         page_index: page_num
       pagination: number
@@ -1365,14 +1754,14 @@ api:
         - name: connector_id
           type: str
           required: false
-        - name: page_num
-          type: int
-          required: true
-          default: "1"
         - name: page_size
           type: int
           required: true
           default: "20"
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
       param_aliases:
         workspace_id: space_id
       pagination: number
@@ -1397,6 +1786,14 @@ api:
         - folders.list
       use_kwargs_headers: true
       query_fields:
+        - name: page_size
+          type: int
+          required: true
+          default: "20"
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
         - name: workspace_id
           type: str
           required: true
@@ -1406,14 +1803,6 @@ api:
         - name: parent_folder_id
           type: str
           required: false
-        - name: page_num
-          type: int
-          required: true
-          default: "1"
-        - name: page_size
-          type: int
-          required: true
-          default: "20"
       pagination: number
       pagination_data_class: _PrivateListFoldersData
       pagination_item_type: SimpleFolder
@@ -1486,6 +1875,8 @@ api:
     - path: /v1/conversation/message/modify
       method: post
     - path: /v1/conversation/message/retrieve
+      method: get
+    - path: /v3/chat/message/list
       method: get
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
       method: delete
