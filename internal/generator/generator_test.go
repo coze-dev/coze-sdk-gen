@@ -26,11 +26,11 @@ func TestGeneratePythonFromSwagger(t *testing.T) {
 		t.Fatalf("expected >=3 generated operations, got %d", result.GeneratedOps)
 	}
 
+	assertFileContains(t, filepath.Join(out, "cozepy", "types.py"), "class OpenApiChatReq")
 	assertFileContains(t, filepath.Join(out, "cozepy", "chat", "__init__.py"), "def create")
 	assertFileContains(t, filepath.Join(out, "cozepy", "chat", "__init__.py"), "def stream")
 	assertFileContains(t, filepath.Join(out, "cozepy", "coze.py"), "class Coze")
 	assertFileContains(t, filepath.Join(out, "cozepy", "coze.py"), "def chat")
-	assertFileContains(t, filepath.Join(out, "README.md"), "# Coze Python API SDK")
 }
 
 func TestGeneratePythonOnlyMapped(t *testing.T) {
@@ -45,6 +45,11 @@ func TestGeneratePythonOnlyMapped(t *testing.T) {
 	}
 	if result.GeneratedOps != 2 {
 		t.Fatalf("expected 2 generated ops from mapping, got %d", result.GeneratedOps)
+	}
+
+	chatModule := readFile(t, filepath.Join(out, "cozepy", "chat", "__init__.py"))
+	if strings.Contains(chatModule, "def open_api_chat_cancel") {
+		t.Fatalf("did not expect default-generated cancel method in mapped-only mode:\n%s", chatModule)
 	}
 }
 
@@ -92,14 +97,72 @@ func TestNameHelpers(t *testing.T) {
 	if got := normalizePythonIdentifier("class"); got != "class_" {
 		t.Fatalf("unexpected reserved keyword normalize result: %s", got)
 	}
+	if got := normalizeClassName("open_api_chat_req"); got != "OpenApiChatReq" {
+		t.Fatalf("unexpected class name: %s", got)
+	}
 	if got := defaultMethodName("OpenApiChatCancel", "/v3/chat/cancel", "post"); got != "chat_cancel" {
 		t.Fatalf("unexpected default method name: %s", got)
 	}
 	if got := defaultMethodName("", "/v1/workspaces/{workspace_id}", "get"); got != "workspaces" {
 		t.Fatalf("unexpected default path-derived method name: %s", got)
 	}
-	if got := toSnake("OpenApiChatReq"); got != "open_api_chat_req" {
-		t.Fatalf("unexpected snake case value: %s", got)
+	if got := normalizePackageDir("cozepy/chat/message", "chat"); got != "chat/message" {
+		t.Fatalf("unexpected package dir normalize: %s", got)
+	}
+	if got := normalizePackageDir("", "chat"); got != "chat" {
+		t.Fatalf("unexpected fallback package dir normalize: %s", got)
+	}
+}
+
+func TestRenderOperationMethodAndTypeHelpers(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:    "/v1/demo/{demo_id}",
+		Method:  "post",
+		Summary: "line1\nline2",
+		PathParameters: []openapi.ParameterSpec{
+			{Name: "demo_id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+		},
+		QueryParameters: []openapi.ParameterSpec{
+			{Name: "page_num", In: "query", Required: false, Schema: &openapi.Schema{Type: "integer"}},
+		},
+		HeaderParameters: []openapi.ParameterSpec{
+			{Name: "X-Trace-Id", In: "header", Required: false, Schema: &openapi.Schema{Type: "string"}},
+		},
+		RequestBody:       &openapi.RequestBody{Required: false},
+		RequestBodySchema: &openapi.Schema{Type: "object"},
+		ResponseSchema:    &openapi.Schema{Type: "array", Items: &openapi.Schema{Type: "string"}},
+	}
+	binding := operationBinding{
+		PackageName: "demo",
+		MethodName:  "run",
+		Details:     details,
+	}
+
+	asyncCode := renderOperationMethod(doc, binding, true)
+	if !strings.Contains(asyncCode, "await self._requester.arequest") {
+		t.Fatalf("unexpected async method code:\n%s", asyncCode)
+	}
+	if !strings.Contains(asyncCode, "\"\"\"line1 line2\"\"\"") {
+		t.Fatalf("expected escaped docstring, got:\n%s", asyncCode)
+	}
+	if !strings.Contains(asyncCode, "header_values") {
+		t.Fatalf("expected header merge code, got:\n%s", asyncCode)
+	}
+
+	syncCode := renderOperationMethod(doc, binding, false)
+	if !strings.Contains(syncCode, "self._requester.request") {
+		t.Fatalf("unexpected sync method code:\n%s", syncCode)
+	}
+
+	if got := pythonTypeForSchemaRequired(doc, &openapi.Schema{Type: "number"}); got != "float" {
+		t.Fatalf("unexpected number type mapping: %s", got)
+	}
+	if got := pythonTypeForSchema(doc, &openapi.Schema{Type: "boolean"}, false); got != "Optional[bool]" {
+		t.Fatalf("unexpected optional bool type mapping: %s", got)
+	}
+	if got := escapeDocstring("a\nb\"\"\""); got != "a b\"" {
+		t.Fatalf("unexpected escaped docstring: %q", got)
 	}
 }
 
