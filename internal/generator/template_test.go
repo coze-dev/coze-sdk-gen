@@ -46,3 +46,21 @@ func TestRenderPythonTemplateMissing(t *testing.T) {
 		t.Fatal("expected renderPythonTemplate to fail for missing template")
 	}
 }
+
+func TestPythonSupportFiles(t *testing.T) {
+	files, err := listPythonSupportFiles()
+	if err != nil {
+		t.Fatalf("listPythonSupportFiles() error = %v", err)
+	}
+	if len(files) == 0 {
+		t.Fatal("expected embedded support files")
+	}
+
+	content, err := readPythonSupportFile("README.md")
+	if err != nil {
+		t.Fatalf("readPythonSupportFile() error = %v", err)
+	}
+	if !strings.Contains(string(content), "# Coze Python API SDK") {
+		t.Fatalf("unexpected support README content: %q", string(content))
+	}
+}

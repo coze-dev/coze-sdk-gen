@@ -26,11 +26,14 @@ func TestGeneratePythonFromSwagger(t *testing.T) {
 		t.Fatalf("expected >=3 generated operations, got %d", result.GeneratedOps)
 	}
 
-	assertFileContains(t, filepath.Join(out, "cozepy", "types.py"), "class OpenApiChatReq")
 	assertFileContains(t, filepath.Join(out, "cozepy", "chat", "__init__.py"), "def create")
 	assertFileContains(t, filepath.Join(out, "cozepy", "chat", "__init__.py"), "def stream")
 	assertFileContains(t, filepath.Join(out, "cozepy", "coze.py"), "class Coze")
 	assertFileContains(t, filepath.Join(out, "cozepy", "coze.py"), "def chat")
+	assertFileContains(t, filepath.Join(out, "README.md"), "# Coze Python API SDK")
+	if _, err := os.Stat(filepath.Join(out, "cozepy", "types.py")); !os.IsNotExist(err) {
+		t.Fatalf("expected types.py to be absent, stat err=%v", err)
+	}
 }
 
 func TestGeneratePythonOnlyMapped(t *testing.T) {
