@@ -25,17 +25,56 @@ type APIConfig struct {
 }
 
 type Package struct {
-	Name                  string   `yaml:"name"`
-	SourceDir             string   `yaml:"source_dir"`
-	PathPrefixes          []string `yaml:"path_prefixes"`
-	AllowMissingInSwagger bool     `yaml:"allow_missing_in_swagger"`
+	Name                  string        `yaml:"name"`
+	SourceDir             string        `yaml:"source_dir"`
+	PathPrefixes          []string      `yaml:"path_prefixes"`
+	AllowMissingInSwagger bool          `yaml:"allow_missing_in_swagger"`
+	ClientClass           string        `yaml:"client_class"`
+	AsyncClientClass      string        `yaml:"async_client_class"`
+	ChildClients          []ChildClient `yaml:"child_clients"`
+	ModelSchemas          []ModelSchema `yaml:"model_schemas"`
+	EmptyModels           []string      `yaml:"empty_models"`
+}
+
+type ChildClient struct {
+	Attribute  string `yaml:"attribute"`
+	Module     string `yaml:"module"`
+	SyncClass  string `yaml:"sync_class"`
+	AsyncClass string `yaml:"async_class"`
+}
+
+type ModelSchema struct {
+	Schema     string   `yaml:"schema"`
+	Name       string   `yaml:"name"`
+	FieldOrder []string `yaml:"field_order"`
 }
 
 type OperationMapping struct {
-	Path                  string   `yaml:"path"`
-	Method                string   `yaml:"method"`
-	SDKMethods            []string `yaml:"sdk_methods"`
-	AllowMissingInSwagger bool     `yaml:"allow_missing_in_swagger"`
+	Path                  string            `yaml:"path"`
+	Method                string            `yaml:"method"`
+	Order                 int               `yaml:"order"`
+	SDKMethods            []string          `yaml:"sdk_methods"`
+	AllowMissingInSwagger bool              `yaml:"allow_missing_in_swagger"`
+	HTTPMethodOverride    string            `yaml:"http_method_override"`
+	DisableRequestBody    bool              `yaml:"disable_request_body"`
+	BodyFields            []string          `yaml:"body_fields"`
+	BodyRequiredFields    []string          `yaml:"body_required_fields"`
+	UseKwargsHeaders      bool              `yaml:"use_kwargs_headers"`
+	ParamAliases          map[string]string `yaml:"param_aliases"`
+	ArgTypes              map[string]string `yaml:"arg_types"`
+	ResponseType          string            `yaml:"response_type"`
+	ResponseCast          string            `yaml:"response_cast"`
+	QueryFields           []OperationField  `yaml:"query_fields"`
+	Pagination            string            `yaml:"pagination"`
+	PaginationDataClass   string            `yaml:"pagination_data_class"`
+	PaginationItemType    string            `yaml:"pagination_item_type"`
+}
+
+type OperationField struct {
+	Name     string `yaml:"name"`
+	Type     string `yaml:"type"`
+	Required bool   `yaml:"required"`
+	Default  string `yaml:"default"`
 }
 
 type OperationRef struct {
@@ -104,14 +143,48 @@ func (c *Config) Validate() error {
 				return fmt.Errorf("api.packages[%d].path_prefixes[%d] must start with '/'", i, j)
 			}
 		}
+		for j, child := range pkg.ChildClients {
+			if strings.TrimSpace(child.Attribute) == "" {
+				return fmt.Errorf("api.packages[%d].child_clients[%d].attribute is required", i, j)
+			}
+			if strings.TrimSpace(child.Module) == "" {
+				return fmt.Errorf("api.packages[%d].child_clients[%d].module is required", i, j)
+			}
+			if strings.TrimSpace(child.SyncClass) == "" || strings.TrimSpace(child.AsyncClass) == "" {
+				return fmt.Errorf("api.packages[%d].child_clients[%d].sync_class and async_class are required", i, j)
+			}
+		}
+		for j, model := range pkg.ModelSchemas {
+			if strings.TrimSpace(model.Schema) == "" || strings.TrimSpace(model.Name) == "" {
+				return fmt.Errorf("api.packages[%d].model_schemas[%d].schema and name are required", i, j)
+			}
+		}
 	}
 
 	for i, mapping := range c.API.OperationMappings {
 		if err := validateOperationRef(mapping.Path, mapping.Method, fmt.Sprintf("api.operation_mappings[%d]", i)); err != nil {
 			return err
 		}
+		if strings.TrimSpace(mapping.HTTPMethodOverride) != "" {
+			if err := validateOperationRef(mapping.Path, mapping.HTTPMethodOverride, fmt.Sprintf("api.operation_mappings[%d].http_method_override", i)); err != nil {
+				return err
+			}
+		}
 		if len(mapping.SDKMethods) == 0 {
 			return fmt.Errorf("api.operation_mappings[%d].sdk_methods should not be empty", i)
+		}
+		for j, field := range mapping.QueryFields {
+			if strings.TrimSpace(field.Name) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].query_fields[%d].name is required", i, j)
+			}
+		}
+		if strings.TrimSpace(mapping.Pagination) != "" {
+			if strings.TrimSpace(mapping.Pagination) != "token" {
+				return fmt.Errorf("api.operation_mappings[%d].pagination must be 'token' when set", i)
+			}
+			if strings.TrimSpace(mapping.PaginationDataClass) == "" || strings.TrimSpace(mapping.PaginationItemType) == "" {
+				return fmt.Errorf("api.operation_mappings[%d].pagination_data_class and pagination_item_type are required for token pagination", i)
+			}
 		}
 	}
 

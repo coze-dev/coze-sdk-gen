@@ -4,6 +4,28 @@ api:
   packages:
     - name: api_apps
       source_dir: cozepy/api_apps
+      client_class: APIAppsClient
+      async_client_class: AsyncAPIAppsClient
+      model_schemas:
+        - schema: AppTypeOpen
+          name: AppType
+        - schema: ApiAppOpenV2
+          name: APIApp
+          field_order:
+            - id
+            - app_type
+            - verify_token
+            - name
+            - connector_id
+            - callback_url
+      empty_models:
+        - UpdateAPIAppsResp
+        - DeleteAPIAppsResp
+      child_clients:
+        - attribute: events
+          module: .events
+          sync_class: APIAppsEventsClient
+          async_class: AsyncAPIAppsEventsClient
       path_prefixes:
         - /v1/api_apps
     - name: apps
@@ -84,6 +106,70 @@ api:
       sdk_methods:
         - chat.create
         - chat.stream
+    - path: /v1/api_apps
+      method: post
+      order: 10
+      sdk_methods:
+        - api_apps.create
+      body_fields:
+        - app_type
+        - name
+        - connector_id
+      body_required_fields:
+        - app_type
+      use_kwargs_headers: true
+      arg_types:
+        app_type: AppType
+      response_type: APIApp
+      response_cast: APIApp
+    - path: /v1/api_apps/{api_app_id}
+      method: put
+      order: 20
+      sdk_methods:
+        - api_apps.update
+      body_fields:
+        - name
+        - callback_url
+      use_kwargs_headers: true
+      param_aliases:
+        api_app_id: app_id
+      response_type: UpdateAPIAppsResp
+      response_cast: UpdateAPIAppsResp
+    - path: /v1/api_apps/{api_app_id}
+      method: put
+      order: 30
+      sdk_methods:
+        - api_apps.delete
+      http_method_override: delete
+      disable_request_body: true
+      use_kwargs_headers: true
+      param_aliases:
+        api_app_id: app_id
+      response_type: DeleteAPIAppsResp
+      response_cast: DeleteAPIAppsResp
+    - path: /v1/api_apps
+      method: post
+      order: 40
+      sdk_methods:
+        - api_apps.list
+      http_method_override: get
+      disable_request_body: true
+      use_kwargs_headers: true
+      query_fields:
+        - name: app_type
+          type: AppType
+          required: false
+        - name: page_token
+          type: str
+          required: true
+          default: '""'
+        - name: page_size
+          type: int
+          required: true
+          default: "20"
+      pagination: token
+      pagination_data_class: _PrivateListAPIAppsData
+      pagination_item_type: APIApp
     - path: /v1/workflows/chat
       method: post
       sdk_methods:
@@ -108,6 +194,8 @@ api:
         - users.me
       allow_missing_in_swagger: true
   ignore_operations:
+    - path: /v1/api_apps/{api_app_id}/events
+      method: post
     - path: /v1/commerce/benefit/benefits/get
       method: get
     - path: /v1/commerce/benefit/bill_tasks
