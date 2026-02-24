@@ -30,10 +30,68 @@ api:
         - /v1/api_apps
     - name: apps
       source_dir: cozepy/apps
+      model_schemas:
+        - schema: properties_data_properties_items_items
+          name: SimpleApp
+          field_order:
+            - id
+            - name
+            - description
+            - icon_url
+            - is_published
+            - owner_user_id
+            - updated_at
+            - folder_id
+            - published_at
+          required_fields:
+            - id
+            - name
+            - description
+            - icon_url
+            - is_published
+            - owner_user_id
+            - updated_at
       path_prefixes:
         - /v1/apps
     - name: audio
       source_dir: cozepy/audio
+      child_clients:
+        - attribute: rooms
+          module: .rooms
+          sync_class: RoomsClient
+          async_class: AsyncRoomsClient
+          nil_check: is_none
+          init_with_keywords: true
+        - attribute: speech
+          module: .speech
+          sync_class: SpeechClient
+          async_class: AsyncSpeechClient
+          nil_check: is_none
+          init_with_keywords: true
+        - attribute: transcriptions
+          module: .transcriptions
+          sync_class: TranscriptionsClient
+          async_class: AsyncTranscriptionsClient
+          nil_check: is_none
+          init_with_keywords: true
+        - attribute: voices
+          module: .voices
+          sync_class: VoicesClient
+          async_class: AsyncVoicesClient
+          nil_check: is_none
+          init_with_keywords: true
+        - attribute: voiceprint_groups
+          module: .voiceprint_groups
+          sync_class: VoiceprintGroupsClient
+          async_class: AsyncVoiceprintGroupsClient
+          nil_check: is_none
+          init_with_keywords: true
+        - attribute: live
+          module: .live
+          sync_class: LiveClient
+          async_class: AsyncLiveClient
+          nil_check: is_none
+          init_with_keywords: true
       path_prefixes:
         - /v1/audio
     - name: bots
@@ -47,6 +105,12 @@ api:
         - /v3/chat
     - name: connectors
       source_dir: cozepy/connectors
+      child_clients:
+        - attribute: bots
+          module: .bots
+          sync_class: ConnectorsBotsClient
+          async_class: AsyncConnectorsBotsClient
+          disable_type_hints: true
       path_prefixes:
         - /v1/connectors
     - name: conversations
@@ -60,6 +124,11 @@ api:
         - /v1/datasets
     - name: enterprises
       source_dir: cozepy/enterprises
+      child_clients:
+        - attribute: members
+          module: .members
+          sync_class: EnterprisesMembersClient
+          async_class: AsyncEnterprisesMembersClient
       path_prefixes:
         - /v1/enterprises
     - name: files
@@ -68,6 +137,27 @@ api:
         - /v1/files
     - name: folders
       source_dir: cozepy/folders
+      model_schemas:
+        - schema: FolderType
+          name: FolderType
+          enum_base: dynamic_str
+        - schema: FolderSimpleInfo
+          name: SimpleFolder
+          field_order:
+            - id
+            - name
+            - description
+            - workspace_id
+            - creator_user_id
+            - folder_type
+            - parent_folder_id
+          required_fields:
+            - id
+            - name
+            - description
+            - workspace_id
+            - creator_user_id
+            - folder_type
       path_prefixes:
         - /v1/folders
     - name: knowledge
@@ -170,6 +260,78 @@ api:
       pagination: token
       pagination_data_class: _PrivateListAPIAppsData
       pagination_item_type: APIApp
+    - path: /v1/apps
+      method: get
+      order: 50
+      sdk_methods:
+        - apps.list
+      use_kwargs_headers: true
+      query_fields:
+        - name: workspace_id
+          type: str
+          required: true
+        - name: publish_status
+          type: str
+          required: false
+        - name: connector_id
+          type: str
+          required: false
+        - name: page_index
+          type: int
+          required: true
+          default: "1"
+        - name: page_size
+          type: int
+          required: true
+          default: "20"
+      param_aliases:
+        page_index: page_num
+      pagination: number
+      pagination_data_class: _PrivateListAppsData
+      pagination_item_type: SimpleApp
+      pagination_items_field: items
+      pagination_total_field: total
+      pagination_page_num_field: page_index
+      pagination_page_size_field: page_size
+    - path: /v1/folders/{folder_id}
+      method: get
+      order: 60
+      sdk_methods:
+        - folders.retrieve
+      use_kwargs_headers: true
+      response_type: SimpleFolder
+      response_cast: SimpleFolder
+    - path: /v1/folders
+      method: get
+      order: 70
+      sdk_methods:
+        - folders.list
+      use_kwargs_headers: true
+      query_fields:
+        - name: workspace_id
+          type: str
+          required: true
+        - name: folder_type
+          type: FolderType
+          required: true
+        - name: parent_folder_id
+          type: str
+          required: false
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
+        - name: page_size
+          type: int
+          required: true
+          default: "20"
+      pagination: number
+      pagination_data_class: _PrivateListFoldersData
+      pagination_item_type: SimpleFolder
+      pagination_items_field: items
+      pagination_total_field: total_count
+      pagination_page_num_field: page_num
+      pagination_page_size_field: page_size
     - path: /v1/workflows/chat
       method: post
       sdk_methods:
@@ -194,6 +356,30 @@ api:
         - users.me
       allow_missing_in_swagger: true
   ignore_operations:
+    - path: /v1/apps/{app_id}/collaborators
+      method: post
+    - path: /v1/apps/{app_id}/collaborators/{user_id}
+      method: delete
+    - path: /v1/audio/rooms
+      method: post
+    - path: /v1/audio/speech
+      method: post
+    - path: /v1/audio/transcriptions
+      method: post
+    - path: /v1/audio/voices
+      method: get
+    - path: /v1/audio/voices/clone
+      method: post
+    - path: /v1/connectors/{connector_id}/install
+      method: post
+    - path: /v1/connectors/{connector_id}/user_configs
+      method: post
+    - path: /v1/enterprises/{enterprise_id}/members
+      method: post
+    - path: /v1/enterprises/{enterprise_id}/members/{user_id}
+      method: put
+    - path: /v1/enterprises/{enterprise_id}/organizations
+      method: post
     - path: /v1/api_apps/{api_app_id}/events
       method: post
     - path: /v1/commerce/benefit/benefits/get

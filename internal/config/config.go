@@ -37,37 +37,49 @@ type Package struct {
 }
 
 type ChildClient struct {
-	Attribute  string `yaml:"attribute"`
-	Module     string `yaml:"module"`
-	SyncClass  string `yaml:"sync_class"`
-	AsyncClass string `yaml:"async_class"`
+	Attribute        string `yaml:"attribute"`
+	Module           string `yaml:"module"`
+	SyncClass        string `yaml:"sync_class"`
+	AsyncClass       string `yaml:"async_class"`
+	NilCheck         string `yaml:"nil_check"`
+	InitWithKeywords bool   `yaml:"init_with_keywords"`
+	DisableTypeHints bool   `yaml:"disable_type_hints"`
 }
 
 type ModelSchema struct {
-	Schema     string   `yaml:"schema"`
-	Name       string   `yaml:"name"`
-	FieldOrder []string `yaml:"field_order"`
+	Schema         string   `yaml:"schema"`
+	Name           string   `yaml:"name"`
+	FieldOrder     []string `yaml:"field_order"`
+	RequiredFields []string `yaml:"required_fields"`
+	EnumBase       string   `yaml:"enum_base"`
 }
 
 type OperationMapping struct {
-	Path                  string            `yaml:"path"`
-	Method                string            `yaml:"method"`
-	Order                 int               `yaml:"order"`
-	SDKMethods            []string          `yaml:"sdk_methods"`
-	AllowMissingInSwagger bool              `yaml:"allow_missing_in_swagger"`
-	HTTPMethodOverride    string            `yaml:"http_method_override"`
-	DisableRequestBody    bool              `yaml:"disable_request_body"`
-	BodyFields            []string          `yaml:"body_fields"`
-	BodyRequiredFields    []string          `yaml:"body_required_fields"`
-	UseKwargsHeaders      bool              `yaml:"use_kwargs_headers"`
-	ParamAliases          map[string]string `yaml:"param_aliases"`
-	ArgTypes              map[string]string `yaml:"arg_types"`
-	ResponseType          string            `yaml:"response_type"`
-	ResponseCast          string            `yaml:"response_cast"`
-	QueryFields           []OperationField  `yaml:"query_fields"`
-	Pagination            string            `yaml:"pagination"`
-	PaginationDataClass   string            `yaml:"pagination_data_class"`
-	PaginationItemType    string            `yaml:"pagination_item_type"`
+	Path                     string            `yaml:"path"`
+	Method                   string            `yaml:"method"`
+	Order                    int               `yaml:"order"`
+	SDKMethods               []string          `yaml:"sdk_methods"`
+	AllowMissingInSwagger    bool              `yaml:"allow_missing_in_swagger"`
+	HTTPMethodOverride       string            `yaml:"http_method_override"`
+	DisableRequestBody       bool              `yaml:"disable_request_body"`
+	BodyFields               []string          `yaml:"body_fields"`
+	BodyRequiredFields       []string          `yaml:"body_required_fields"`
+	UseKwargsHeaders         bool              `yaml:"use_kwargs_headers"`
+	ParamAliases             map[string]string `yaml:"param_aliases"`
+	ArgTypes                 map[string]string `yaml:"arg_types"`
+	ResponseType             string            `yaml:"response_type"`
+	ResponseCast             string            `yaml:"response_cast"`
+	QueryFields              []OperationField  `yaml:"query_fields"`
+	Pagination               string            `yaml:"pagination"`
+	PaginationDataClass      string            `yaml:"pagination_data_class"`
+	PaginationItemType       string            `yaml:"pagination_item_type"`
+	PaginationItemsField     string            `yaml:"pagination_items_field"`
+	PaginationTotalField     string            `yaml:"pagination_total_field"`
+	PaginationHasMoreField   string            `yaml:"pagination_has_more_field"`
+	PaginationNextTokenField string            `yaml:"pagination_next_token_field"`
+	PaginationPageNumField   string            `yaml:"pagination_page_num_field"`
+	PaginationPageSizeField  string            `yaml:"pagination_page_size_field"`
+	PaginationPageTokenField string            `yaml:"pagination_page_token_field"`
 }
 
 type OperationField struct {
@@ -153,10 +165,24 @@ func (c *Config) Validate() error {
 			if strings.TrimSpace(child.SyncClass) == "" || strings.TrimSpace(child.AsyncClass) == "" {
 				return fmt.Errorf("api.packages[%d].child_clients[%d].sync_class and async_class are required", i, j)
 			}
+			if strings.TrimSpace(child.NilCheck) != "" {
+				switch strings.TrimSpace(child.NilCheck) {
+				case "truthy", "is_none":
+				default:
+					return fmt.Errorf("api.packages[%d].child_clients[%d].nil_check must be one of: truthy, is_none", i, j)
+				}
+			}
 		}
 		for j, model := range pkg.ModelSchemas {
 			if strings.TrimSpace(model.Schema) == "" || strings.TrimSpace(model.Name) == "" {
 				return fmt.Errorf("api.packages[%d].model_schemas[%d].schema and name are required", i, j)
+			}
+			if strings.TrimSpace(model.EnumBase) != "" {
+				switch strings.TrimSpace(model.EnumBase) {
+				case "dynamic_str":
+				default:
+					return fmt.Errorf("api.packages[%d].model_schemas[%d].enum_base must be 'dynamic_str' when set", i, j)
+				}
 			}
 		}
 	}
@@ -179,11 +205,12 @@ func (c *Config) Validate() error {
 			}
 		}
 		if strings.TrimSpace(mapping.Pagination) != "" {
-			if strings.TrimSpace(mapping.Pagination) != "token" {
-				return fmt.Errorf("api.operation_mappings[%d].pagination must be 'token' when set", i)
+			pagination := strings.TrimSpace(mapping.Pagination)
+			if pagination != "token" && pagination != "number" {
+				return fmt.Errorf("api.operation_mappings[%d].pagination must be 'token' or 'number' when set", i)
 			}
 			if strings.TrimSpace(mapping.PaginationDataClass) == "" || strings.TrimSpace(mapping.PaginationItemType) == "" {
-				return fmt.Errorf("api.operation_mappings[%d].pagination_data_class and pagination_item_type are required for token pagination", i)
+				return fmt.Errorf("api.operation_mappings[%d].pagination_data_class and pagination_item_type are required for pagination", i)
 			}
 		}
 	}
