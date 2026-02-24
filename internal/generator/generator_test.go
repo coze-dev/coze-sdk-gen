@@ -106,6 +106,12 @@ func TestNameHelpers(t *testing.T) {
 	if got := defaultMethodName("", "/v1/workspaces/{workspace_id}", "get"); got != "workspaces" {
 		t.Fatalf("unexpected default path-derived method name: %s", got)
 	}
+	if got := normalizePackageDir("cozepy/chat/message", "chat"); got != "chat/message" {
+		t.Fatalf("unexpected package dir normalize: %s", got)
+	}
+	if got := normalizePackageDir("", "chat"); got != "chat" {
+		t.Fatalf("unexpected fallback package dir normalize: %s", got)
+	}
 }
 
 func TestRenderOperationMethodAndTypeHelpers(t *testing.T) {

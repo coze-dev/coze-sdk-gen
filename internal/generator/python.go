@@ -19,6 +19,12 @@ type operationBinding struct {
 	Details     openapi.OperationDetails
 }
 
+type packageMeta struct {
+	Name       string
+	ModulePath string
+	DirPath    string
+}
+
 type fileWriter struct {
 	count int
 }
@@ -42,6 +48,7 @@ func GeneratePython(cfg *config.Config, doc *openapi.Document) (Result, error) {
 	}
 
 	packages := groupBindingsByPackage(bindings)
+	packageMetas := buildPackageMeta(cfg, packages)
 	schemaNames := collectSchemaNames(doc, bindings)
 
 	if err := os.RemoveAll(cfg.OutputSDK); err != nil {
@@ -52,7 +59,7 @@ func GeneratePython(cfg *config.Config, doc *openapi.Document) (Result, error) {
 	}
 
 	writer := &fileWriter{}
-	if err := writePythonSDK(cfg.OutputSDK, doc, packages, schemaNames, writer); err != nil {
+	if err := writePythonSDK(cfg.OutputSDK, doc, packages, packageMetas, schemaNames, writer); err != nil {
 		return Result{}, err
 	}
 
@@ -172,7 +179,38 @@ func collectSchemaNames(doc *openapi.Document, bindings []operationBinding) []st
 	return result
 }
 
-func writePythonSDK(outputDir string, doc *openapi.Document, packages map[string][]operationBinding, schemaNames []string, writer *fileWriter) error {
+func buildPackageMeta(cfg *config.Config, packages map[string][]operationBinding) map[string]packageMeta {
+	metas := map[string]packageMeta{}
+	for _, pkg := range cfg.API.Packages {
+		name := normalizePackageName(pkg.Name)
+		dir := normalizePackageDir(pkg.SourceDir, name)
+		metas[name] = packageMeta{
+			Name:       name,
+			ModulePath: strings.ReplaceAll(dir, "/", "."),
+			DirPath:    dir,
+		}
+	}
+	for name := range packages {
+		if _, ok := metas[name]; ok {
+			continue
+		}
+		metas[name] = packageMeta{
+			Name:       name,
+			ModulePath: name,
+			DirPath:    name,
+		}
+	}
+	return metas
+}
+
+func writePythonSDK(
+	outputDir string,
+	doc *openapi.Document,
+	packages map[string][]operationBinding,
+	packageMetas map[string]packageMeta,
+	schemaNames []string,
+	writer *fileWriter,
+) error {
 	rootDir := filepath.Join(outputDir, "cozepy")
 	if err := os.MkdirAll(rootDir, 0o755); err != nil {
 		return fmt.Errorf("create python package root %q: %w", rootDir, err)
@@ -202,7 +240,7 @@ func writePythonSDK(outputDir string, doc *openapi.Document, packages map[string
 	if err := writer.write(filepath.Join(rootDir, "types.py"), renderTypesPy(doc, schemaNames)); err != nil {
 		return err
 	}
-	if err := writer.write(filepath.Join(rootDir, "coze.py"), renderCozePy(pkgNames)); err != nil {
+	if err := writer.write(filepath.Join(rootDir, "coze.py"), renderCozePy(pkgNames, packageMetas)); err != nil {
 		return err
 	}
 	if err := writer.write(filepath.Join(rootDir, "py.typed"), ""); err != nil {
@@ -210,11 +248,12 @@ func writePythonSDK(outputDir string, doc *openapi.Document, packages map[string
 	}
 
 	for _, pkgName := range pkgNames {
-		pkgDir := filepath.Join(rootDir, pkgName)
+		meta := packageMetas[pkgName]
+		pkgDir := filepath.Join(rootDir, meta.DirPath)
 		if err := os.MkdirAll(pkgDir, 0o755); err != nil {
 			return fmt.Errorf("create package directory %q: %w", pkgDir, err)
 		}
-		content := renderPackageModule(doc, pkgName, packages[pkgName])
+		content := renderPackageModule(doc, meta, packages[pkgName])
 		if err := writer.write(filepath.Join(pkgDir, "__init__.py"), content); err != nil {
 			return err
 		}
@@ -363,15 +402,16 @@ class Requester(object):
 `) + "\n"
 }
 
-func renderCozePy(packageNames []string) string {
+func renderCozePy(packageNames []string, packageMetas map[string]packageMeta) string {
 	var buf bytes.Buffer
 	buf.WriteString("from typing import Optional\n\n")
 	buf.WriteString("from .config import COZE_COM_BASE_URL\n")
 	buf.WriteString("from .request import Requester\n")
 	buf.WriteString("from .util import remove_url_trailing_slash\n")
 	for _, pkgName := range packageNames {
+		meta := packageMetas[pkgName]
 		className := packageClassName(pkgName)
-		buf.WriteString(fmt.Sprintf("from .%s import Async%sClient, %sClient\n", pkgName, className, className))
+		buf.WriteString(fmt.Sprintf("from .%s import Async%sClient, %sClient\n", meta.ModulePath, className, className))
 	}
 	buf.WriteString("\n\n")
 
@@ -490,7 +530,7 @@ func renderTypesPy(doc *openapi.Document, schemaNames []string) string {
 	return buf.String()
 }
 
-func renderPackageModule(doc *openapi.Document, pkgName string, bindings []operationBinding) string {
+func renderPackageModule(doc *openapi.Document, meta packageMeta, bindings []operationBinding) string {
 	var buf bytes.Buffer
 	buf.WriteString("from typing import Any, Dict, Optional\n\n")
 	buf.WriteString("from ..request import Requester\n")
@@ -502,7 +542,7 @@ func renderPackageModule(doc *openapi.Document, pkgName string, bindings []opera
 	}
 	buf.WriteString("\n\n")
 
-	className := packageClassName(pkgName)
+	className := packageClassName(meta.Name)
 	buf.WriteString(fmt.Sprintf("class %sClient(object):\n", className))
 	buf.WriteString("    def __init__(self, base_url: str, requester: Requester):\n")
 	buf.WriteString("        self._base_url = remove_url_trailing_slash(base_url)\n")
@@ -762,6 +802,21 @@ func normalizePackageName(name string) string {
 		return "default"
 	}
 	return name
+}
+
+func normalizePackageDir(sourceDir string, fallback string) string {
+	trimmed := strings.TrimSpace(sourceDir)
+	if trimmed == "" {
+		return fallback
+	}
+	trimmed = strings.ReplaceAll(trimmed, "\\", "/")
+	trimmed = strings.TrimPrefix(trimmed, "./")
+	trimmed = strings.TrimPrefix(trimmed, "cozepy/")
+	trimmed = strings.Trim(trimmed, "/")
+	if trimmed == "" || trimmed == "." {
+		return fallback
+	}
+	return trimmed
 }
 
 func packageClassName(pkgName string) string {
