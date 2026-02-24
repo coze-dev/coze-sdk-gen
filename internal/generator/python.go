@@ -278,13 +278,25 @@ func writePythonSDK(
 	if err := writer.write(filepath.Join(rootDir, "__init__.py"), renderRootInit()); err != nil {
 		return err
 	}
-	if err := writer.write(filepath.Join(rootDir, "config.py"), renderConfigPy()); err != nil {
+	configPy, err := renderConfigPy()
+	if err != nil {
 		return err
 	}
-	if err := writer.write(filepath.Join(rootDir, "util.py"), renderUtilPy()); err != nil {
+	if err := writer.write(filepath.Join(rootDir, "config.py"), configPy); err != nil {
 		return err
 	}
-	if err := writer.write(filepath.Join(rootDir, "model.py"), renderModelPy()); err != nil {
+	utilPy, err := renderUtilPy()
+	if err != nil {
+		return err
+	}
+	if err := writer.write(filepath.Join(rootDir, "util.py"), utilPy); err != nil {
+		return err
+	}
+	modelPy, err := renderModelPy()
+	if err != nil {
+		return err
+	}
+	if err := writer.write(filepath.Join(rootDir, "model.py"), modelPy); err != nil {
 		return err
 	}
 	requestPy, err := renderRequestPy()
@@ -334,38 +346,16 @@ func renderRootInit() string {
 	return "from .coze import AsyncCoze, Coze\n"
 }
 
-func renderConfigPy() string {
-	return "COZE_COM_BASE_URL = \"https://api.coze.com\"\n"
+func renderConfigPy() (string, error) {
+	return renderPythonTemplate("config.py.tpl", map[string]any{})
 }
 
-func renderUtilPy() string {
-	return strings.TrimSpace(`
-from typing import Any, Dict
-
-
-def remove_url_trailing_slash(url: str) -> str:
-    if url.endswith("/"):
-        return url[:-1]
-    return url
-
-
-def dump_exclude_none(value: Dict[str, Any]) -> Dict[str, Any]:
-    return {k: v for k, v in value.items() if v is not None}
-`) + "\n"
+func renderUtilPy() (string, error) {
+	return renderPythonTemplate("util.py.tpl", map[string]any{})
 }
 
-func renderModelPy() string {
-	return strings.TrimSpace(`
-from pydantic import BaseModel, ConfigDict
-
-
-class CozeModel(BaseModel):
-    model_config = ConfigDict(
-        protected_namespaces=(),
-        arbitrary_types_allowed=True,
-        extra="allow",
-    )
-`) + "\n"
+func renderModelPy() (string, error) {
+	return renderPythonTemplate("model.py.tpl", map[string]any{})
 }
 
 func renderRequestPy() (string, error) {

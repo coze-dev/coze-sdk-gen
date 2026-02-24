@@ -15,6 +15,32 @@ func TestRenderRequestTemplate(t *testing.T) {
 	}
 }
 
+func TestRenderStaticPythonTemplates(t *testing.T) {
+	configContent, err := renderConfigPy()
+	if err != nil {
+		t.Fatalf("renderConfigPy() error = %v", err)
+	}
+	if !strings.Contains(configContent, "COZE_CN_BASE_URL") {
+		t.Fatalf("expected coze config constants in config template, got: %q", configContent)
+	}
+
+	modelContent, err := renderModelPy()
+	if err != nil {
+		t.Fatalf("renderModelPy() error = %v", err)
+	}
+	if !strings.Contains(modelContent, "class CozeModel(BaseModel):") {
+		t.Fatalf("expected CozeModel in model template, got: %q", modelContent)
+	}
+
+	utilContent, err := renderUtilPy()
+	if err != nil {
+		t.Fatalf("renderUtilPy() error = %v", err)
+	}
+	if !strings.Contains(utilContent, "def remove_url_trailing_slash") {
+		t.Fatalf("expected remove_url_trailing_slash in util template, got: %q", utilContent)
+	}
+}
+
 func TestRenderPythonTemplateMissing(t *testing.T) {
 	if _, err := renderPythonTemplate("missing.tpl", nil); err == nil {
 		t.Fatal("expected renderPythonTemplate to fail for missing template")
