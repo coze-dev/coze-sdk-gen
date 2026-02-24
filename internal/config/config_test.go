@@ -109,3 +109,109 @@ func TestDefaultsApplied(t *testing.T) {
 		t.Fatal("expected field aliases map to be initialized")
 	}
 }
+
+func TestValidateConfigFailures(t *testing.T) {
+	cases := []struct {
+		name    string
+		content string
+	}{
+		{
+			name: "duplicate package",
+			content: `
+language: python
+source_sdk: src
+output_sdk: out
+api:
+  packages:
+    - name: chat
+      source_dir: a
+    - name: chat
+      source_dir: b
+`,
+		},
+		{
+			name: "invalid package prefix",
+			content: `
+language: python
+source_sdk: src
+output_sdk: out
+api:
+  packages:
+    - name: chat
+      source_dir: a
+      path_prefixes:
+        - v3/chat
+`,
+		},
+		{
+			name: "missing sdk methods",
+			content: `
+language: python
+source_sdk: src
+output_sdk: out
+api:
+  operation_mappings:
+    - path: /v3/chat
+      method: post
+`,
+		},
+		{
+			name: "invalid method",
+			content: `
+language: python
+source_sdk: src
+output_sdk: out
+api:
+  ignore_operations:
+    - path: /v3/chat
+      method: bad
+`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if _, err := Parse([]byte(tc.content)); err == nil {
+				t.Fatalf("expected Parse() to fail for case %s", tc.name)
+			}
+		})
+	}
+}
+
+func TestValidateAgainstSwaggerAllowMissing(t *testing.T) {
+	cfg := &Config{
+		Language:  "python",
+		SourceSDK: "src",
+		OutputSDK: "out",
+		Copy: Copy{
+			Include: []string{"."},
+		},
+		API: APIConfig{
+			Packages: []Package{
+				{
+					Name:                  "users",
+					SourceDir:             "cozepy/users",
+					PathPrefixes:          []string{"/v1/users"},
+					AllowMissingInSwagger: true,
+				},
+			},
+			OperationMappings: []OperationMapping{
+				{
+					Path:                  "/v1/users/me",
+					Method:                "get",
+					SDKMethods:            []string{"users.me"},
+					AllowMissingInSwagger: true,
+				},
+			},
+		},
+	}
+	doc, err := openapi.Parse([]byte("paths:\n  /v3/chat:\n    post: {operationId: OpenApiChat}\n"))
+	if err != nil {
+		t.Fatalf("openapi.Parse() error = %v", err)
+	}
+
+	report := cfg.ValidateAgainstSwagger(doc)
+	if report.HasErrors() {
+		t.Fatalf("expected no errors when allow_missing_in_swagger is set, got %s", report.Error())
+	}
+}

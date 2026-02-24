@@ -1,0 +1,129 @@
+language: python
+source_sdk: exist-repo/coze-py
+output_sdk: exist-repo/coze-py-generated
+copy:
+  include:
+    - .
+  exclude:
+    - .git
+api:
+  packages:
+    - name: api_apps
+      source_dir: cozepy/api_apps
+      path_prefixes:
+        - /v1/api_apps
+    - name: apps
+      source_dir: cozepy/apps
+      path_prefixes:
+        - /v1/apps
+    - name: audio
+      source_dir: cozepy/audio
+      path_prefixes:
+        - /v1/audio
+    - name: bots
+      source_dir: cozepy/bots
+      path_prefixes:
+        - /v1/bot
+        - /v1/bots
+    - name: chat
+      source_dir: cozepy/chat
+      path_prefixes:
+        - /v3/chat
+    - name: connectors
+      source_dir: cozepy/connectors
+      path_prefixes:
+        - /v1/connectors
+    - name: conversations
+      source_dir: cozepy/conversations
+      path_prefixes:
+        - /v1/conversation
+        - /v1/conversations
+    - name: datasets
+      source_dir: cozepy/datasets
+      path_prefixes:
+        - /v1/datasets
+    - name: enterprises
+      source_dir: cozepy/enterprises
+      path_prefixes:
+        - /v1/enterprises
+    - name: files
+      source_dir: cozepy/files
+      path_prefixes:
+        - /v1/files
+    - name: folders
+      source_dir: cozepy/folders
+      path_prefixes:
+        - /v1/folders
+    - name: knowledge
+      source_dir: cozepy/knowledge
+      path_prefixes:
+        - /open_api/knowledge/document
+    - name: templates
+      source_dir: cozepy/templates
+      path_prefixes:
+        - /v1/templates
+      allow_missing_in_swagger: true
+    - name: users
+      source_dir: cozepy/users
+      path_prefixes:
+        - /v1/users
+      allow_missing_in_swagger: true
+    - name: variables
+      source_dir: cozepy/variables
+      path_prefixes:
+        - /v1/variables
+    - name: workflows
+      source_dir: cozepy/workflows
+      path_prefixes:
+        - /v1/workflow
+        - /v1/workflows
+    - name: workspaces
+      source_dir: cozepy/workspaces
+      path_prefixes:
+        - /v1/workspaces
+    - name: websockets
+      source_dir: cozepy/websockets
+      allow_missing_in_swagger: true
+  operation_mappings:
+    - path: /v3/chat
+      method: post
+      sdk_methods:
+        - chat.create
+        - chat.stream
+    - path: /v1/workflows/chat
+      method: post
+      sdk_methods:
+        - workflows.chat.create
+        - workflows.chat.stream
+    - path: /v1/workflow/run
+      method: post
+      sdk_methods:
+        - workflows.runs.create
+    - path: /v1/workflow/stream_run
+      method: post
+      sdk_methods:
+        - workflows.runs.stream
+    - path: /v1/templates/{template_id}/duplicate
+      method: post
+      sdk_methods:
+        - templates.duplicate
+      allow_missing_in_swagger: true
+    - path: /v1/users/me
+      method: get
+      sdk_methods:
+        - users.me
+      allow_missing_in_swagger: true
+  ignore_operations:
+    - path: /v1/commerce/benefit/benefits/get
+      method: get
+    - path: /v1/commerce/benefit/bill_tasks
+      method: get
+    - path: /v1/commerce/benefit/limitations
+      method: post
+  field_aliases:
+    chat:
+      custom_variables: custom_variables
+      user_id: user_id
+    workflows:
+      workflow_id: workflow_id
+      app_id: app_id

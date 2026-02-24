@@ -72,3 +72,45 @@ func TestParseInvalidYAML(t *testing.T) {
 		t.Fatal("expected Parse() to fail for invalid yaml")
 	}
 }
+
+func TestOperationSupportsAllMethodsAndNilDoc(t *testing.T) {
+	doc, err := Parse([]byte(`
+paths:
+  /all:
+    get: {operationId: getOp}
+    put: {operationId: putOp}
+    post: {operationId: postOp}
+    delete: {operationId: deleteOp}
+    patch: {operationId: patchOp}
+    options: {operationId: optionsOp}
+    head: {operationId: headOp}
+    trace: {operationId: traceOp}
+`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	methods := []string{"get", "put", "post", "delete", "patch", "options", "head", "trace"}
+	for _, method := range methods {
+		if _, ok := doc.Operation(method, "/all"); !ok {
+			t.Fatalf("expected method %s to exist", method)
+		}
+	}
+
+	var nilDoc *Document
+	if _, ok := nilDoc.Operation("get", "/all"); ok {
+		t.Fatal("did not expect operation on nil doc")
+	}
+	if len(nilDoc.ListOperations()) != 0 {
+		t.Fatal("expected nil list operations from nil doc")
+	}
+	if len(nilDoc.PathsWithPrefix("/")) != 0 {
+		t.Fatal("expected nil paths from nil doc")
+	}
+}
+
+func TestLoadMissingFile(t *testing.T) {
+	if _, err := Load(filepath.Join("testdata", "missing.yaml")); err == nil {
+		t.Fatal("expected error for missing file")
+	}
+}

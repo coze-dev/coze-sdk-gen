@@ -31,20 +31,23 @@ type APIConfig struct {
 }
 
 type Package struct {
-	Name         string   `yaml:"name"`
-	SourceDir    string   `yaml:"source_dir"`
-	PathPrefixes []string `yaml:"path_prefixes"`
+	Name                  string   `yaml:"name"`
+	SourceDir             string   `yaml:"source_dir"`
+	PathPrefixes          []string `yaml:"path_prefixes"`
+	AllowMissingInSwagger bool     `yaml:"allow_missing_in_swagger"`
 }
 
 type OperationMapping struct {
-	Path       string   `yaml:"path"`
-	Method     string   `yaml:"method"`
-	SDKMethods []string `yaml:"sdk_methods"`
+	Path                  string   `yaml:"path"`
+	Method                string   `yaml:"method"`
+	SDKMethods            []string `yaml:"sdk_methods"`
+	AllowMissingInSwagger bool     `yaml:"allow_missing_in_swagger"`
 }
 
 type OperationRef struct {
-	Path   string `yaml:"path"`
-	Method string `yaml:"method"`
+	Path                  string `yaml:"path"`
+	Method                string `yaml:"method"`
+	AllowMissingInSwagger bool   `yaml:"allow_missing_in_swagger"`
 }
 
 type ValidationReport struct {
@@ -176,6 +179,9 @@ func (c *Config) ValidateAgainstSwagger(doc *openapi.Document) ValidationReport 
 
 	for _, op := range c.API.OperationMappings {
 		method := normalizeMethod(op.Method)
+		if op.AllowMissingInSwagger {
+			continue
+		}
 		if !doc.HasOperation(method, op.Path) {
 			appendMissing(op.Path, method)
 		}
@@ -183,12 +189,18 @@ func (c *Config) ValidateAgainstSwagger(doc *openapi.Document) ValidationReport 
 
 	for _, op := range c.API.IgnoreOperations {
 		method := normalizeMethod(op.Method)
+		if op.AllowMissingInSwagger {
+			continue
+		}
 		if !doc.HasOperation(method, op.Path) {
 			appendMissing(op.Path, method)
 		}
 	}
 
 	for _, pkg := range c.API.Packages {
+		if pkg.AllowMissingInSwagger {
+			continue
+		}
 		for _, prefix := range pkg.PathPrefixes {
 			if len(doc.PathsWithPrefix(prefix)) == 0 {
 				report.UnmatchedPrefixes = append(report.UnmatchedPrefixes, prefix)
