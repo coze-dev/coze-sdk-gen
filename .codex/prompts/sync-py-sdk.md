@@ -14,10 +14,13 @@ When asked to sync generated Python SDK output into `coze-py` and complete the P
      - Python diff = 0
      - Go diff = 0
    - Commit with conventional commit style (`feat:`, `fix:`, `refactor:`, etc.).
-   - Push current branch to remote.
-   - If pushing to `main` is rejected due non-fast-forward, integrate remote first:
+   - For final delivery, explicitly update and push `main`:
+     - switch to `main` and sync it with the latest remote state
+     - integrate task changes into `main` according to repository policy
+     - push updated `main` to `origin`
+   - If `git push origin main` is rejected due non-fast-forward, integrate remote first:
      - `git -C /path/to/coze-sdk-gen pull --rebase origin main`
-     - then push again.
+     - then push `main` again.
 2. Continue with downstream SDK generation after `coze-sdk-gen` changes are committed/pushed.
 
 ## Part B: Generate SDK and complete downstream `coze-py` PR
@@ -50,6 +53,7 @@ When asked to sync generated Python SDK output into `coze-py` and complete the P
      - `POST /repos/{owner}/{repo}/issues/{number}/labels` for required labels
 10. Ensure required PR labels are present (for `coze-py`: one of `feature`, `enhancement`, `fix`, `bugfix`, `bug`, `chore`, `documentation`) so label checks pass.
 11. Poll PR checks until completion; resolve failures before merge.
+   - Ignore `CodeRabbit` status when evaluating merge readiness (codegen changes do not require CodeRabbit review).
 12. Merge PR only after required checks pass and branch protection conditions are satisfied.
 13. Report final results:
    - downstream `coze-py` PR URL/status/merge result
