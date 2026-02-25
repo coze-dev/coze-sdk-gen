@@ -1763,7 +1763,6 @@ api:
           module: .bots
           sync_class: ConnectorsBotsClient
           async_class: AsyncConnectorsBotsClient
-          disable_type_hints: true
       path_prefixes:
         - /v1/connectors
     - name: connectors_bots
@@ -1798,7 +1797,6 @@ api:
           module: .message
           sync_class: MessagesClient
           async_class: AsyncMessagesClient
-          disable_type_hints: true
       model_schemas:
         - schema: ConversationData
           name: Conversation
