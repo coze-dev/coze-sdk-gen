@@ -26,7 +26,7 @@ func run(args []string, stdout io.Writer) error {
 
 	showVersion := fs.Bool("version", false, "print version")
 	configPath := fs.String("config", "config/generator.yaml", "path to generator config file")
-	swaggerPath := fs.String("swagger", "exist-repo/coze-openapi-swagger.yaml", "path to OpenAPI swagger yaml file")
+	swaggerPath := fs.String("swagger", "coze-openapi.yaml", "path to OpenAPI swagger yaml file")
 	languageOverride := fs.String("language", "", "override language in config (python/go)")
 	outputOverride := fs.String("output-sdk", "", "override output sdk directory in config")
 

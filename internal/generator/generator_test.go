@@ -219,7 +219,7 @@ func TestRenderOperationMethodAndTypeHelpers(t *testing.T) {
 func TestGeneratePythonFromRealConfig(t *testing.T) {
 	root := filepath.Clean(filepath.Join("..", ".."))
 	cfgPath := filepath.Join(root, "config", "generator.yaml")
-	swaggerPath := filepath.Join(root, "exist-repo", "coze-openapi-swagger.yaml")
+	swaggerPath := filepath.Join(root, "coze-openapi.yaml")
 
 	cfg, err := config.Load(cfgPath)
 	if err != nil {
@@ -1302,7 +1302,7 @@ func mustLoadRealConfigAndSwagger(t *testing.T) (*config.Config, *openapi.Docume
 	t.Helper()
 	root := filepath.Clean(filepath.Join("..", ".."))
 	cfgPath := filepath.Join(root, "config", "generator.yaml")
-	swaggerPath := filepath.Join(root, "exist-repo", "coze-openapi-swagger.yaml")
+	swaggerPath := filepath.Join(root, "coze-openapi.yaml")
 
 	cfg, err := config.Load(cfgPath)
 	if err != nil {
