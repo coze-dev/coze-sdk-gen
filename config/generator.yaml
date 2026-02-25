@@ -4302,7 +4302,6 @@ api:
         - "**kwargs"
       delegate_async_yield: true
       query_builder: raw
-      use_kwargs_headers: true
       query_fields:
         - name: conversation_id
           type: str
@@ -4419,7 +4418,6 @@ api:
         - connector_id
       body_required_fields:
         - app_type
-      use_kwargs_headers: true
       cast_keyword: true
       arg_types:
         app_type: AppType
@@ -4434,7 +4432,6 @@ api:
       body_fields:
         - name
         - callback_url
-      use_kwargs_headers: true
       cast_keyword: true
       param_aliases:
         api_app_id: app_id
@@ -4447,7 +4444,6 @@ api:
         - api_apps.delete
       http_method_override: delete
       disable_request_body: true
-      use_kwargs_headers: true
       cast_keyword: true
       param_aliases:
         api_app_id: app_id
@@ -4461,7 +4457,6 @@ api:
       force_compact_signature: true
       http_method_override: get
       disable_request_body: true
-      use_kwargs_headers: true
       query_fields:
         - name: app_type
           type: AppType
@@ -4488,7 +4483,6 @@ api:
       sdk_methods:
         - apps.list
       query_builder: remove_none_values
-      use_kwargs_headers: true
       signature_query_fields:
         - workspace_id
         - publish_status
@@ -4654,7 +4648,6 @@ api:
         - datasets.list
       blank_line_after_docstring: true
       query_builder: raw
-      use_kwargs_headers: true
       signature_query_fields:
         - space_id
         - name
@@ -4752,7 +4745,6 @@ api:
         - connector_id
         - audit_status
         - reason
-      use_kwargs_headers: true
       headers_before_body: true
       blank_line_after_headers: true
       response_type: UpdateConnectorBotResp
@@ -5180,7 +5172,6 @@ api:
         model_info_config: BotModelInfo
         plugin_id_list: PluginIDList
         workflow_id_list: WorkflowIDList
-      use_kwargs_headers: true
       response_type: Bot
       response_cast: Bot
     - path: /v1/bot/update
@@ -5205,7 +5196,6 @@ api:
         knowledge: BotKnowledge
         suggest_reply_info: BotSuggestReplyInfo
         model_info_config: BotModelInfo
-      use_kwargs_headers: true
       cast_keyword: true
       response_type: UpdateBotResp
       response_cast: UpdateBotResp
@@ -5227,7 +5217,6 @@ api:
         - connector_ids
       body_required_fields:
         - bot_id
-      use_kwargs_headers: true
       headers_before_body: true
       response_type: Bot
       response_cast: Bot
@@ -5243,7 +5232,6 @@ api:
         - bot_id
         - connector_id
         - unpublish_reason
-      use_kwargs_headers: true
       headers_before_body: true
       response_type: UnpublishBotResp
       response_cast: UnpublishBotResp
@@ -5254,7 +5242,6 @@ api:
         - bots._retrieve_v1
       compact_single_item_maps: true
       query_builder: raw
-      use_kwargs_headers: true
       response_type: Bot
       response_cast: Bot
     - path: /v1/bots/{bot_id}
@@ -5265,7 +5252,6 @@ api:
       force_compact_signature: true
       compact_single_item_maps: true
       query_builder: remove_none_values
-      use_kwargs_headers: true
       response_type: Bot
       response_cast: Bot
     - path: /v1/space/published_bots_list
@@ -5309,7 +5295,6 @@ api:
       sdk_methods:
         - bots._list_v2
       query_builder: remove_none_values
-      use_kwargs_headers: true
       signature_query_fields:
         - workspace_id
         - publish_status
@@ -5352,7 +5337,6 @@ api:
       no_blank_line_after_headers: true
       force_multiline_signature: true
       http_method_override: GET
-      use_kwargs_headers: true
       cast_keyword: true
       stream_keyword: true
       response_type: SimpleFolder
@@ -5362,7 +5346,6 @@ api:
       order: 75
       sdk_methods:
         - folders.list
-      use_kwargs_headers: true
       signature_query_fields:
         - workspace_id
         - folder_type
@@ -5413,7 +5396,6 @@ api:
         - event_types
       arg_types:
         event_types: List[str]
-      use_kwargs_headers: true
       cast_keyword: true
       response_type: CreateAPIAppsEventsResp
       response_cast: CreateAPIAppsEventsResp
@@ -5430,7 +5412,6 @@ api:
         - event_types
       arg_types:
         event_types: List[str]
-      use_kwargs_headers: true
       cast_keyword: true
       force_compact_signature: true
       response_type: DeleteAPIAppsEventsResp
@@ -5464,7 +5445,6 @@ api:
       pagination_page_size_field: page_size
       pagination_cast_before_headers: true
       force_compact_signature: true
-      use_kwargs_headers: true
     - path: /v1/audio/rooms
       method: post
       order: 79
@@ -5522,7 +5502,6 @@ api:
         response_format: AudioFormat.MP3
         speed: "1"
         sample_rate: "24000"
-      use_kwargs_headers: true
       headers_before_body: true
       stream_keyword: true
       cast_keyword: true
@@ -5541,7 +5520,6 @@ api:
         file: _try_fix_file(file)
       arg_types:
         file: FileTypes
-      use_kwargs_headers: true
       headers_before_body: true
       stream_keyword: true
       cast_keyword: true
@@ -5575,7 +5553,6 @@ api:
       arg_types:
         name: str
         desc: str
-      use_kwargs_headers: true
       headers_before_body: true
       blank_line_before_return: true
       cast_keyword: true
@@ -5596,7 +5573,6 @@ api:
         group_id: str
         name: str
         desc: str
-      use_kwargs_headers: true
       headers_before_body: true
       blank_line_before_return: true
       cast_keyword: true
@@ -5610,7 +5586,6 @@ api:
         - audio_voiceprint_groups.delete
       allow_missing_in_swagger: true
       disable_request_body: true
-      use_kwargs_headers: true
       cast_keyword: true
       force_multiline_signature: true
       response_type: DeleteVoicePrintGroupResp
@@ -5687,7 +5662,6 @@ api:
         - top_k
         - sample_rate
         - channel
-      use_kwargs_headers: true
       headers_before_body: true
       files_before_body: true
       blank_line_before_return: true
@@ -5728,7 +5702,6 @@ api:
         - desc
         - sample_rate
         - channel
-      use_kwargs_headers: true
       headers_before_body: true
       files_before_body: true
       blank_line_before_return: true
@@ -5767,7 +5740,6 @@ api:
         - file
         - sample_rate
         - channel
-      use_kwargs_headers: true
       headers_before_body: true
       files_before_body: true
       blank_line_before_return: true
@@ -5782,7 +5754,6 @@ api:
         - audio_voiceprint_groups_features.delete
       allow_missing_in_swagger: true
       disable_request_body: true
-      use_kwargs_headers: true
       cast_keyword: true
       force_multiline_signature: true
       response_type: DeleteVoicePrintGroupFeatureResp
@@ -5859,7 +5830,6 @@ api:
       pagination_has_more_field: has_more
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
-      use_kwargs_headers: true
       response_type: NumberPaged[Voice]
       async_response_type: AsyncNumberPaged[Voice]
     - path: /v1/audio/voices/clone
@@ -5905,7 +5875,6 @@ api:
         text: str
         space_id: str
         description: str
-      use_kwargs_headers: true
       headers_before_body: true
       blank_line_before_return: true
       response_type: Voice
@@ -5996,7 +5965,6 @@ api:
         feedback_type: FeedbackType
         reason_types: List[str]
         comment: str
-      use_kwargs_headers: true
       headers_before_body: true
       request_call_arg_order:
         - body
@@ -6012,7 +5980,6 @@ api:
       sdk_methods:
         - conversations_message_feedback.delete
       disable_request_body: true
-      use_kwargs_headers: true
       cast_keyword: true
       response_type: DeleteConversationMessageFeedbackResp
       response_cast: DeleteConversationMessageFeedbackResp
@@ -6051,7 +6018,6 @@ api:
       pagination_page_size_field: page_size
       pagination_http_method: get
       pagination_headers_before_params: true
-      use_kwargs_headers: true
     - path: /v1/datasets/{dataset_id}/images/{document_id}
       method: put
       order: 91
@@ -6065,7 +6031,6 @@ api:
         - caption
       arg_types:
         caption: str
-      use_kwargs_headers: true
       headers_before_body: true
       request_call_arg_order:
         - cast
@@ -6087,7 +6052,6 @@ api:
       compact_single_item_maps_async: true
       arg_types:
         users: List[EnterpriseMember]
-      use_kwargs_headers: true
       headers_before_body: true
       cast_keyword: true
       stream_keyword: true
@@ -6105,7 +6069,6 @@ api:
         - role
       arg_types:
         role: EnterpriseMemberRole
-      use_kwargs_headers: true
       headers_before_body: true
       cast_keyword: true
       stream_keyword: true
@@ -6124,7 +6087,6 @@ api:
         - receiver_user_id
       arg_types:
         receiver_user_id: str
-      use_kwargs_headers: true
       headers_before_body: true
       cast_keyword: true
       stream_keyword: true
@@ -6254,7 +6216,6 @@ api:
       order: 93
       sdk_methods:
         - workflows_runs_run_histories.retrieve
-      use_kwargs_headers: true
       signature_args:
         - workflow_id
         - execute_id
@@ -6267,7 +6228,6 @@ api:
       order: 94
       sdk_methods:
         - workflows_runs_run_histories_execute_nodes.retrieve
-      use_kwargs_headers: true
       signature_args:
         - workflow_id
         - execute_id
@@ -6309,7 +6269,6 @@ api:
       pagination_page_size_field: page_size
       pagination_init_page_token_expr: page_token or ""
       pagination_params_variable: true
-      use_kwargs_headers: true
     - path: /v1/workflows/chat
       method: post
       order: 96
@@ -6345,7 +6304,6 @@ api:
         ext: Dict[str, str]
       response_type: Stream[ChatEvent]
       async_response_type: AsyncIterator[ChatEvent]
-      use_kwargs_headers: true
     - path: /v1/workflows/chat
       method: post
       order: 97
@@ -6399,7 +6357,6 @@ api:
       response_type: Stream[ChatEvent]
       async_response_type: AsyncIterator[ChatEvent]
       response_cast: None
-      use_kwargs_headers: true
     - path: /v1/workspaces
       method: get
       order: 969
@@ -6418,7 +6375,6 @@ api:
         - user_ids
       arg_types:
         user_ids: List[str]
-      use_kwargs_headers: true
       headers_before_body: true
       cast_keyword: true
       stream_keyword: true
@@ -6446,7 +6402,6 @@ api:
           ]
       arg_types:
         users: List[WorkspaceMember]
-      use_kwargs_headers: true
       headers_before_body: true
       cast_keyword: true
       stream_keyword: true
@@ -6477,13 +6432,11 @@ api:
       pagination_headers_before_params: true
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
-      use_kwargs_headers: true
     - path: /v1/templates/{template_id}/duplicate
       method: post
       sdk_methods:
         - templates.duplicate
       force_compact_signature: true
-      use_kwargs_headers: true
       headers_before_body: true
       body_builder: raw
       body_fields:
@@ -6502,7 +6455,6 @@ api:
       sdk_methods:
         - users.me
       disable_request_body: true
-      use_kwargs_headers: true
       response_type: User
       response_cast: User
       allow_missing_in_swagger: true

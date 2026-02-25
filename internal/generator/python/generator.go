@@ -848,18 +848,18 @@ func RenderPackageModule(
 			if typeModule == "" {
 				continue
 			}
-				first, second := orderedTypeImportNames(child.SyncClass, child.AsyncClass)
-				importLine := fmt.Sprintf("    from %s import %s, %s", typeModule, first, second)
-				if len(importLine) > 120 {
-					buf.WriteString(fmt.Sprintf("    from %s import (\n", typeModule))
-					buf.WriteString(fmt.Sprintf("        %s,\n", first))
-					buf.WriteString(fmt.Sprintf("        %s,\n", second))
-					buf.WriteString("    )\n")
-				} else {
-					buf.WriteString(importLine + "\n")
-				}
+			first, second := orderedTypeImportNames(child.SyncClass, child.AsyncClass)
+			importLine := fmt.Sprintf("    from %s import %s, %s", typeModule, first, second)
+			if len(importLine) > 120 {
+				buf.WriteString(fmt.Sprintf("    from %s import (\n", typeModule))
+				buf.WriteString(fmt.Sprintf("        %s,\n", first))
+				buf.WriteString(fmt.Sprintf("        %s,\n", second))
+				buf.WriteString("    )\n")
+			} else {
+				buf.WriteString(importLine + "\n")
 			}
 		}
+	}
 	if meta.Package != nil && len(meta.Package.PreModelCode) > 0 {
 		buf.WriteString("\n")
 	} else {
@@ -1172,10 +1172,6 @@ func packageNeedsAnyDict(doc *openapi.Document, bindings []OperationBinding, mod
 			if strings.Contains(responseType, "Dict") {
 				needDict = true
 			}
-		}
-
-		if mapping == nil || (!mapping.UseKwargsHeaders && !mapping.DisableHeadersArg) {
-			needDict = true
 		}
 
 		if binding.Details.RequestBodySchema != nil {
@@ -2197,7 +2193,6 @@ func RenderOperationMethodWithComments(
 	paginationMode := ""
 	returnType, returnCast := ReturnTypeInfo(doc, details.ResponseSchema)
 	requestBodyType, bodyRequired := RequestBodyTypeInfo(doc, details.RequestBodySchema, details.RequestBody)
-	useKwargsHeaders := binding.Mapping != nil && binding.Mapping.UseKwargsHeaders
 	disableHeadersArg := binding.Mapping != nil && binding.Mapping.DisableHeadersArg
 	ignoreHeaderParams := binding.Mapping != nil && binding.Mapping.IgnoreHeaderParams
 	castKeyword := binding.Mapping != nil && binding.Mapping.CastKeyword
@@ -2454,12 +2449,9 @@ func RenderOperationMethodWithComments(
 			signatureArgNames[argName] = struct{}{}
 		}
 	}
-	includeKwargsHeaders := useKwargsHeaders && !disableHeadersArg
-	includeExplicitHeadersArg := !disableHeadersArg && !includeKwargsHeaders
+	includeKwargsHeaders := !disableHeadersArg
 	if includeKwargsHeaders {
 		signatureArgs = append(signatureArgs, "**kwargs")
-	} else if includeExplicitHeadersArg {
-		signatureArgs = append(signatureArgs, "headers: Optional[Dict[str, str]] = None")
 	}
 	if asyncIncludeKwargs && !includeKwargsHeaders {
 		signatureArgs = append(signatureArgs, "**kwargs")
