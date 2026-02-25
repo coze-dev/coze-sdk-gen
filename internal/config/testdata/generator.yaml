@@ -22,7 +22,7 @@ api:
       method: post
       sdk_methods:
         - workflows.chat
-  ignore_operations:
+  ignore_apis:
     - path: /v1/workspaces/{workspace_id}
       method: get
   field_aliases:

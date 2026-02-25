@@ -52,30 +52,7 @@ var goInlineAPIModuleRenderers = []goAPIModuleRenderer{
 	{FileName: "workflows_chat.go", Render: renderGoWorkflowsChatModule},
 }
 
-var goSwaggerAPIModuleSpecs = []goSwaggerModuleSpec{
-	{FileName: "audio_rooms.go", PackageName: "audio_rooms", TypeName: "audioRooms", ConstructorName: "newAudioRooms", CoreFieldName: "core"},
-	{FileName: "audio_voiceprint_groups.go", PackageName: "audio_voiceprint_groups", TypeName: "audioVoiceprintGroups", ConstructorName: "newAudioVoiceprintGroups", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Features", TypeName: "audioVoiceprintGroupsFeatures", ConstructorName: "newAudioVoiceprintGroupsFeatures"}}},
-	{FileName: "audio_voiceprint_groups_features.go", PackageName: "audio_voiceprint_groups_features", TypeName: "audioVoiceprintGroupsFeatures", ConstructorName: "newAudioVoiceprintGroupsFeatures", CoreFieldName: "core"},
-	{FileName: "audio_voices.go", PackageName: "audio_voices", TypeName: "audioVoices", ConstructorName: "newAudioVoices", CoreFieldName: "core"},
-	{FileName: "bots.go", PackageName: "bots", TypeName: "bots", ConstructorName: "newBots", CoreFieldName: "core"},
-	{FileName: "chats.go", PackageName: "chat", TypeName: "chat", ConstructorName: "newChats", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Messages", TypeName: "chatMessages", ConstructorName: "newChatMessages"}}},
-	{FileName: "conversations.go", PackageName: "conversations", TypeName: "conversations", ConstructorName: "newConversations", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Messages", TypeName: "conversationsMessages", ConstructorName: "newConversationMessage"}}},
-	{FileName: "conversations_messages.go", PackageName: "conversations_message", TypeName: "conversationsMessages", ConstructorName: "newConversationMessage", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Feedback", TypeName: "conversationsMessagesFeedback", ConstructorName: "newConversationsMessagesFeedback"}}},
-	{FileName: "conversations_messages_feedback.go", PackageName: "conversations_message_feedback", TypeName: "conversationsMessagesFeedback", ConstructorName: "newConversationsMessagesFeedback", CoreFieldName: "core"},
-	{FileName: "datasets.go", PackageName: "datasets", TypeName: "datasets", ConstructorName: "newDatasets", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Documents", TypeName: "datasetsDocuments", ConstructorName: "newDatasetsDocuments"}, {FieldName: "Images", TypeName: "datasetsImages", ConstructorName: "newDatasetsImages"}}},
-	{FileName: "datasets_documents.go", PackageName: "datasets_documents", TypeName: "datasetsDocuments", ConstructorName: "newDatasetsDocuments", CoreFieldName: "core"},
-	{FileName: "datasets_images.go", PackageName: "datasets_images", TypeName: "datasetsImages", ConstructorName: "newDatasetsImages", CoreFieldName: "core"},
-	{FileName: "enterprises_members.go", PackageName: "enterprises_members", TypeName: "enterprisesMembers", ConstructorName: "newEnterprisesMembers", CoreFieldName: "core"},
-	{FileName: "folders.go", PackageName: "folders", TypeName: "folders", ConstructorName: "newFolders", CoreFieldName: "core"},
-	{FileName: "stores_plugins.go", PackageName: "stores_plugins", TypeName: "storesPlugins", ConstructorName: "newStoresPlugins", CoreFieldName: "core"},
-	{FileName: "variables.go", PackageName: "variables", TypeName: "variables", ConstructorName: "newVariables", CoreFieldName: "core"},
-	{FileName: "workflows.go", PackageName: "workflows", TypeName: "workflows", ConstructorName: "newWorkflows", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Runs", TypeName: "workflowRuns", ConstructorName: "newWorkflowRun"}, {FieldName: "Chat", TypeName: "workflowsChat", ConstructorName: "newWorkflowsChat"}}},
-	{FileName: "workflows_runs.go", PackageName: "workflows_runs", TypeName: "workflowRuns", ConstructorName: "newWorkflowRun", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Histories", TypeName: "workflowRunsHistories", ConstructorName: "newWorkflowRunsHistories"}}},
-	{FileName: "workflows_runs_histories.go", PackageName: "workflows_runs_run_histories", TypeName: "workflowRunsHistories", ConstructorName: "newWorkflowRunsHistories", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "ExecuteNodes", TypeName: "workflowsRunsHistoriesExecuteNodes", ConstructorName: "newWorkflowsRunsHistoriesExecuteNodes"}}},
-	{FileName: "workflows_runs_histories_execute_nodes.go", PackageName: "workflows_runs_run_histories_execute_nodes", TypeName: "workflowsRunsHistoriesExecuteNodes", ConstructorName: "newWorkflowsRunsHistoriesExecuteNodes", CoreFieldName: "core"},
-	{FileName: "workspaces.go", PackageName: "workspaces", TypeName: "workspace", ConstructorName: "newWorkspace", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Members", TypeName: "workspacesMembers", ConstructorName: "newWorkspacesMembers"}}},
-	{FileName: "workspaces_members.go", PackageName: "workspaces_members", TypeName: "workspacesMembers", ConstructorName: "newWorkspacesMembers", CoreFieldName: "core"},
-}
+var goSwaggerAPIModuleSpecs = []goSwaggerModuleSpec{}
 
 var goGeneratedAPIModuleFiles = buildGoGeneratedAPIModuleFiles()
 
@@ -113,7 +90,7 @@ func listGoAPIModuleRenderers() []goAPIModuleRenderer {
 
 func shouldSkipGoExtraAsset(rel string) bool {
 	target := strings.TrimSuffix(rel, ".tpl")
-	if target == "README.md" || strings.HasPrefix(target, ".github/") {
+	if target == "README.md" || target == "main" || strings.HasPrefix(target, ".github/") {
 		return true
 	}
 	_, ok := goGeneratedAPIModuleFiles[target]

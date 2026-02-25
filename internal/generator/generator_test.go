@@ -980,8 +980,11 @@ func TestRenderOperationMethodDelegateTo(t *testing.T) {
 	if !strings.Contains(asyncCode, "async for item in await self._create(") || !strings.Contains(asyncCode, "yield item") {
 		t.Fatalf("expected async delegate yield wrapper:\n%s", asyncCode)
 	}
-	if !strings.Contains(asyncCode, "additional_messages=additional_messages,\n            stream=True") {
-		t.Fatalf("expected async-specific delegate call arg order:\n%s", asyncCode)
+	if !strings.Contains(asyncCode, "additional_messages=additional_messages") || !strings.Contains(asyncCode, "stream=True") {
+		t.Fatalf("expected async-specific delegate call args:\n%s", asyncCode)
+	}
+	if !strings.Contains(asyncCode, "**kwargs,\n        ):") {
+		t.Fatalf("expected kwargs kept at end of async delegate args:\n%s", asyncCode)
 	}
 }
 

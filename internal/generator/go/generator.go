@@ -142,7 +142,6 @@ func writeGoRuntimeScaffolding(outputDir string, writer *fileWriter) error {
 		"request.go":                       "request.go.tpl",
 		"stores.go":                        "stores.go.tpl",
 		"stream_reader.go":                 "stream_reader.go.tpl",
-		"swagger_types_compat.go":          "swagger_types_compat.go.tpl",
 		"user_agent.go":                    "user_agent.go.tpl",
 		"utils.go":                         "utils.go.tpl",
 		"websocket.go":                     "websocket.go.tpl",
@@ -820,7 +819,7 @@ func (r *workflowsChat) Stream(ctx context.Context, req *WorkflowsChatStreamReq)
 		URL:    %q,
 		Body:   req,
 	}
-	response := new(SwaggerOperationResponse)
+	response := new(createChatsResp)
 	err := r.client.rawRequest(ctx, request, response)
 	return newStream(ctx, r.client, response.HTTPResponse, parseChatEvent), err
 }

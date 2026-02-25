@@ -62,7 +62,7 @@ type CommentOverrides struct {
 type APIConfig struct {
 	Packages           []Package                    `yaml:"packages"`
 	OperationMappings  []OperationMapping           `yaml:"operation_mappings"`
-	IgnoreOperations   []OperationRef               `yaml:"ignore_operations"`
+	IgnoreAPIs         []OperationRef               `yaml:"ignore_apis"`
 	GenerateOnlyMapped bool                         `yaml:"generate_only_mapped"`
 	FieldAliases       map[string]map[string]string `yaml:"field_aliases"`
 }
@@ -666,8 +666,8 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	for i, ref := range c.API.IgnoreOperations {
-		if err := validateOperationRef(ref.Path, ref.Method, fmt.Sprintf("api.ignore_operations[%d]", i)); err != nil {
+	for i, ref := range c.API.IgnoreAPIs {
+		if err := validateOperationRef(ref.Path, ref.Method, fmt.Sprintf("api.ignore_apis[%d]", i)); err != nil {
 			return err
 		}
 	}
@@ -722,7 +722,7 @@ func (c *Config) DiffIgnorePathsForLanguage(language string) []string {
 
 func (c *Config) IsIgnored(path string, method string) bool {
 	method = normalizeMethod(method)
-	for _, ref := range c.API.IgnoreOperations {
+	for _, ref := range c.API.IgnoreAPIs {
 		if ref.Path == path && normalizeMethod(ref.Method) == method {
 			return true
 		}
@@ -797,7 +797,7 @@ func (c *Config) ValidateAgainstSwagger(doc *openapi.Document) ValidationReport 
 		for _, op := range c.API.OperationMappings {
 			report.MissingOperations = append(report.MissingOperations, OperationRef{Path: op.Path, Method: normalizeMethod(op.Method)})
 		}
-		for _, op := range c.API.IgnoreOperations {
+		for _, op := range c.API.IgnoreAPIs {
 			report.MissingOperations = append(report.MissingOperations, OperationRef{Path: op.Path, Method: normalizeMethod(op.Method)})
 		}
 		return report
@@ -823,7 +823,7 @@ func (c *Config) ValidateAgainstSwagger(doc *openapi.Document) ValidationReport 
 		}
 	}
 
-	for _, op := range c.API.IgnoreOperations {
+	for _, op := range c.API.IgnoreAPIs {
 		method := normalizeMethod(op.Method)
 		if op.AllowMissingInSwagger {
 			continue

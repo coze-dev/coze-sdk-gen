@@ -191,23 +191,19 @@ func OperationArgDefault(mapping *config.OperationMapping, rawName string, argNa
 }
 
 func BuildDelegateCallArgs(signatureArgs []string, mapping *config.OperationMapping, async bool) []string {
+	args := deriveDelegateCallArgs(signatureArgs)
 	if mapping != nil {
-		explicitArgs := mapping.DelegateCallArgs
-		if async && len(mapping.AsyncDelegateCallArgs) > 0 {
-			explicitArgs = mapping.AsyncDelegateCallArgs
+		if len(mapping.DelegateCallArgs) > 0 {
+			args = mergeDelegateCallArgs(args, mapping.DelegateCallArgs)
 		}
-		if len(explicitArgs) > 0 {
-			args := make([]string, 0, len(explicitArgs))
-			for _, arg := range explicitArgs {
-				trimmed := strings.TrimSpace(arg)
-				if trimmed == "" {
-					continue
-				}
-				args = append(args, trimmed)
-			}
-			return args
+		if async && len(mapping.AsyncDelegateCallArgs) > 0 {
+			args = mergeDelegateCallArgs(args, mapping.AsyncDelegateCallArgs)
 		}
 	}
+	return args
+}
+
+func deriveDelegateCallArgs(signatureArgs []string) []string {
 	args := make([]string, 0, len(signatureArgs))
 	for _, argDecl := range signatureArgs {
 		trimmed := strings.TrimSpace(argDecl)
@@ -230,6 +226,98 @@ func BuildDelegateCallArgs(signatureArgs []string, mapping *config.OperationMapp
 		}
 		args = append(args, fmt.Sprintf("%s=%s", name, name))
 	}
+	return args
+}
+
+func mergeDelegateCallArgs(base []string, explicit []string) []string {
+	args := append([]string(nil), base...)
+	for _, raw := range explicit {
+		trimmed := strings.TrimSpace(raw)
+		if trimmed == "" {
+			continue
+		}
+		argName, isKwargs, ok := parseDelegateCallArg(trimmed)
+		if ok && isKwargs {
+			kwargsIdx := findKwargsArgIndex(args)
+			if kwargsIdx >= 0 {
+				args[kwargsIdx] = trimmed
+			} else {
+				args = append(args, trimmed)
+			}
+			continue
+		}
+		if ok {
+			argIdx := findNamedDelegateArgIndex(args, argName)
+			if argIdx >= 0 {
+				args[argIdx] = trimmed
+			} else {
+				args = insertDelegateArgBeforeKwargs(args, trimmed)
+			}
+			continue
+		}
+		args = insertDelegateArgBeforeKwargs(args, trimmed)
+	}
+	return args
+}
+
+func parseDelegateCallArg(arg string) (name string, isKwargs bool, ok bool) {
+	trimmed := strings.TrimSpace(arg)
+	if trimmed == "" {
+		return "", false, false
+	}
+	if strings.HasPrefix(trimmed, "**") {
+		kwargsName := strings.TrimSpace(strings.TrimPrefix(trimmed, "**"))
+		if kwargsName == "" {
+			return "", false, false
+		}
+		return kwargsName, true, true
+	}
+	left, _, hasAssign := strings.Cut(trimmed, "=")
+	if !hasAssign {
+		return "", false, false
+	}
+	argName := strings.TrimSpace(left)
+	if argName == "" {
+		return "", false, false
+	}
+	return argName, false, true
+}
+
+func findKwargsArgIndex(args []string) int {
+	for i, arg := range args {
+		trimmed := strings.TrimSpace(arg)
+		if strings.HasPrefix(trimmed, "**") {
+			return i
+		}
+	}
+	return -1
+}
+
+func findNamedDelegateArgIndex(args []string, name string) int {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return -1
+	}
+	for i, arg := range args {
+		argName, isKwargs, ok := parseDelegateCallArg(arg)
+		if !ok || isKwargs {
+			continue
+		}
+		if argName == name {
+			return i
+		}
+	}
+	return -1
+}
+
+func insertDelegateArgBeforeKwargs(args []string, arg string) []string {
+	kwargsIdx := findKwargsArgIndex(args)
+	if kwargsIdx < 0 {
+		return append(args, arg)
+	}
+	args = append(args, "")
+	copy(args[kwargsIdx+1:], args[kwargsIdx:])
+	args[kwargsIdx] = arg
 	return args
 }
 
