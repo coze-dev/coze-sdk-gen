@@ -166,14 +166,14 @@ func writePythonSDK(
 			return err
 		}
 	}
-	rootInitContent, err := renderPythonRootInit(cfg)
+	if err := writePythonSpecialAssets(rootDir, writer); err != nil {
+		return err
+	}
+	rootInitContent, err := renderPythonRootInit(rootDir)
 	if err != nil {
 		return err
 	}
 	if err := writer.write(filepath.Join(rootDir, "__init__.py"), rootInitContent); err != nil {
-		return err
-	}
-	if err := writePythonSpecialAssets(rootDir, writer); err != nil {
 		return err
 	}
 
