@@ -95,3 +95,43 @@ func TestBuildPackageMetaInferredChildDoesNotOverrideExplicit(t *testing.T) {
 		t.Fatalf("expected exactly one runs child client, got %d from %+v", runsCount, parent.Package.ChildClients)
 	}
 }
+
+func TestBuildPackageMetaInferredChildSkipsExtraMethodName(t *testing.T) {
+	cfg := &config.Config{
+		API: config.APIConfig{
+			Packages: []config.Package{
+				{
+					Name:      "conversations_message",
+					SourceDir: "cozepy/conversations/message",
+					SyncExtraMethods: []string{
+						`@property
+def feedback(self):
+    return self._feedback`,
+					},
+					AsyncExtraMethods: []string{
+						`@property
+def feedback(self):
+    return self._feedback`,
+					},
+				},
+				{
+					Name:             "conversations_message_feedback",
+					SourceDir:        "cozepy/conversations/message/feedback",
+					ClientClass:      "ConversationsMessagesFeedbackClient",
+					AsyncClientClass: "AsyncMessagesFeedbackClient",
+				},
+			},
+		},
+	}
+
+	metas := buildPackageMeta(cfg, nil)
+	parent, ok := metas["conversations_message"]
+	if !ok || parent.Package == nil {
+		t.Fatalf("missing conversations_message package meta: %+v", parent)
+	}
+	for _, child := range parent.Package.ChildClients {
+		if child.Attribute == "feedback" {
+			t.Fatalf("expected inferred feedback child to be skipped due extra method, got %+v", parent.Package.ChildClients)
+		}
+	}
+}

@@ -206,38 +206,67 @@ func buildPackageMeta(cfg *config.Config, packages map[string][]OperationBinding
 			DirPath:    name,
 		}
 	}
-	mergeAutoInferredChildClients(metas)
+	mergeAutoInferredChildClients(metas, packages)
 	return metas
 }
 
-func mergeAutoInferredChildClients(metas map[string]PackageMeta) {
+func mergeAutoInferredChildClients(metas map[string]PackageMeta, packageBindings map[string][]OperationBinding) {
 	inferred := inferChildClientsByPackageHierarchy(metas)
 	for pkgName, children := range inferred {
 		meta, ok := metas[pkgName]
 		if !ok || meta.Package == nil || len(children) == 0 {
 			continue
 		}
-		existingByAttr := map[string]struct{}{}
+		blockedNames := collectReservedMemberNames(meta.Package, packageBindings[pkgName])
 		for _, child := range meta.Package.ChildClients {
 			attr := NormalizePythonIdentifier(strings.TrimSpace(child.Attribute))
 			if attr == "" {
 				continue
 			}
-			existingByAttr[attr] = struct{}{}
+			blockedNames[attr] = struct{}{}
 		}
 		for _, child := range children {
 			attr := NormalizePythonIdentifier(strings.TrimSpace(child.Attribute))
 			if attr == "" {
 				continue
 			}
-			if _, exists := existingByAttr[attr]; exists {
+			if _, exists := blockedNames[attr]; exists {
 				continue
 			}
 			meta.Package.ChildClients = append(meta.Package.ChildClients, child)
-			existingByAttr[attr] = struct{}{}
+			blockedNames[attr] = struct{}{}
 		}
 		metas[pkgName] = meta
 	}
+}
+
+func collectReservedMemberNames(pkg *config.Package, bindings []OperationBinding) map[string]struct{} {
+	reserved := map[string]struct{}{}
+	if pkg == nil {
+		return reserved
+	}
+	for _, block := range pkg.SyncExtraMethods {
+		name := NormalizePythonIdentifier(strings.TrimSpace(DetectMethodBlockName(block)))
+		if name == "" {
+			continue
+		}
+		reserved[name] = struct{}{}
+	}
+	for _, block := range pkg.AsyncExtraMethods {
+		name := NormalizePythonIdentifier(strings.TrimSpace(DetectMethodBlockName(block)))
+		if name == "" {
+			continue
+		}
+		reserved[name] = struct{}{}
+	}
+	for _, binding := range bindings {
+		name := NormalizePythonIdentifier(strings.TrimSpace(binding.MethodName))
+		if name == "" {
+			continue
+		}
+		reserved[name] = struct{}{}
+	}
+	return reserved
 }
 
 func inferChildClientsByPackageHierarchy(metas map[string]PackageMeta) map[string][]config.ChildClient {
