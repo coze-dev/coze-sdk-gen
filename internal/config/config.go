@@ -100,7 +100,6 @@ type ChildClient struct {
 	Module           string `yaml:"module"`
 	SyncClass        string `yaml:"sync_class"`
 	AsyncClass       string `yaml:"async_class"`
-	DisableTypeHints bool   `yaml:"disable_type_hints"`
 }
 
 type ModelSchema struct {
