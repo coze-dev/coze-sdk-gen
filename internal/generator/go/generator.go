@@ -148,6 +148,7 @@ func writeGoRuntimeScaffolding(outputDir string, writer *fileWriter) error {
 		"logger.go":                        "logger.go.tpl",
 		"pagination.go":                    "pagination.go.tpl",
 		"request.go":                       "request.go.tpl",
+		"swagger_operation.go":             "swagger_operation.go.tpl",
 		"stores.go":                        "stores.go.tpl",
 		"stream_reader.go":                 "stream_reader.go.tpl",
 		"user_agent.go":                    "user_agent.go.tpl",
@@ -220,51 +221,6 @@ func writeGoAPIModules(cfg *config.Config, doc *openapi.Document, writer *fileWr
 		}
 	}
 	return nil
-}
-
-func findGoOperationPath(cfg *config.Config, doc *openapi.Document, sdkMethod string, method string, fallback string) (string, error) {
-	if cfg != nil {
-		for _, mapping := range cfg.API.OperationMappings {
-			if !strings.EqualFold(strings.TrimSpace(mapping.Method), strings.TrimSpace(method)) {
-				continue
-			}
-			for _, m := range mapping.SDKMethods {
-				if strings.TrimSpace(m) == strings.TrimSpace(sdkMethod) {
-					return strings.TrimSpace(mapping.Path), nil
-				}
-			}
-		}
-	}
-	if doc != nil && doc.HasOperation(method, fallback) {
-		return fallback, nil
-	}
-	return "", fmt.Errorf(
-		"resolve go operation path failed for sdk_method=%q method=%q fallback=%q",
-		strings.TrimSpace(sdkMethod),
-		strings.ToUpper(strings.TrimSpace(method)),
-		strings.TrimSpace(fallback),
-	)
-}
-
-func convertCurlyPathToColon(path string) string {
-	converted := path
-	for {
-		start := strings.Index(converted, "{")
-		if start < 0 {
-			break
-		}
-		endOffset := strings.Index(converted[start:], "}")
-		if endOffset <= 1 {
-			break
-		}
-		end := start + endOffset
-		param := strings.TrimSpace(converted[start+1 : end])
-		if param == "" {
-			break
-		}
-		converted = converted[:start] + ":" + param + converted[end+1:]
-	}
-	return converted
 }
 
 func normalizeGoExportedIdentifier(value string) string {
