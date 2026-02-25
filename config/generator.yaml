@@ -2496,11 +2496,6 @@ api:
         - /v1/datasets
     - name: enterprises
       source_dir: cozepy/enterprises
-      child_clients:
-        - attribute: members
-          module: .members
-          sync_class: EnterprisesMembersClient
-          async_class: AsyncEnterprisesMembersClient
       path_prefixes:
         - /v1/enterprises
     - name: enterprises_members
@@ -2910,23 +2905,6 @@ api:
     - name: workflows
       source_dir: cozepy/workflows
       separate_commented_fields: true
-      child_clients:
-        - attribute: runs
-          module: .runs
-          sync_class: WorkflowsRunsClient
-          async_class: AsyncWorkflowsRunsClient
-        - attribute: chat
-          module: .chat
-          sync_class: WorkflowsChatClient
-          async_class: AsyncWorkflowsChatClient
-        - attribute: collaborators
-          module: .collaborators
-          sync_class: WorkflowsCollaboratorsClient
-          async_class: AsyncWorkflowsCollaboratorsClient
-        - attribute: versions
-          module: .versions
-          sync_class: WorkflowsVersionsClient
-          async_class: AsyncWorkflowsVersionsClient
       model_schemas:
         - schema: OpenAPIWorkflowMode
           name: WorkflowMode
@@ -3103,11 +3081,6 @@ api:
       separate_commented_enum_members: true
       client_class: WorkflowsRunsClient
       async_client_class: AsyncWorkflowsRunsClient
-      child_clients:
-        - attribute: run_histories
-          module: .run_histories
-          sync_class: WorkflowsRunsRunHistoriesClient
-          async_class: AsyncWorkflowsRunsRunHistoriesClient
       model_schemas:
         - name: WorkflowRunResult
           allow_missing_in_swagger: true
@@ -3421,11 +3394,6 @@ api:
         - /v1/workflows
     - name: workspaces
       source_dir: cozepy/workspaces
-      child_clients:
-        - attribute: members
-          module: .members
-          sync_class: WorkspacesMembersClient
-          async_class: AsyncWorkspacesMembersClient
       model_schemas:
         - schema: WorkspaceRoleType
           name: WorkspaceRoleType
