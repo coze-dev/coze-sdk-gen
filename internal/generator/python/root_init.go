@@ -312,35 +312,20 @@ var baseRootInitGroups = []rootInitGroup{
 func renderPythonRootInit(cfg *config.Config) (string, error) {
 	collaboratorNames := collectAppsCollaboratorExports(cfg)
 	importGroups := make([]rootInitGroup, 0, len(baseRootInitGroups)+1)
-	allNames := make([]string, 0, 512)
-	seenAll := map[string]struct{}{}
-
-	addAll := func(name string) {
-		if _, ok := seenAll[name]; ok {
-			return
-		}
-		seenAll[name] = struct{}{}
-		allNames = append(allNames, name)
-	}
+	exportGroups := make([]rootInitGroup, 0, len(baseRootInitGroups)+1)
 
 	for _, group := range baseRootInitGroups {
 		importGroups = append(importGroups, group)
+		if group.Module != ".version" {
+			exportGroups = append(exportGroups, group)
+		}
 		if group.Module == ".apps" && len(collaboratorNames) > 0 {
-			importGroups = append(importGroups, rootInitGroup{
+			collaboratorGroup := rootInitGroup{
 				Module: ".apps.collaborators",
 				Names:  collaboratorNames,
-			})
-		}
-		if group.Module == ".version" {
-			continue
-		}
-		for _, name := range group.Names {
-			addAll(name)
-		}
-		if group.Module == ".apps" && len(collaboratorNames) > 0 {
-			for _, name := range collaboratorNames {
-				addAll(name)
 			}
+			importGroups = append(importGroups, collaboratorGroup)
+			exportGroups = append(exportGroups, collaboratorGroup)
 		}
 	}
 
@@ -356,8 +341,27 @@ func renderPythonRootInit(cfg *config.Config) (string, error) {
 	buf.WriteString("\n")
 	buf.WriteString("__all__ = [\n")
 	buf.WriteString("    \"VERSION\",\n")
-	for _, name := range allNames {
-		buf.WriteString(fmt.Sprintf("    %q,\n", name))
+	seenAll := map[string]struct{}{}
+	for _, group := range exportGroups {
+		groupNames := make([]string, 0, len(group.Names))
+		for _, rawName := range group.Names {
+			name := strings.TrimSpace(rawName)
+			if name == "" {
+				continue
+			}
+			if _, ok := seenAll[name]; ok {
+				continue
+			}
+			seenAll[name] = struct{}{}
+			groupNames = append(groupNames, name)
+		}
+		if len(groupNames) == 0 {
+			continue
+		}
+		buf.WriteString(fmt.Sprintf("    # %s\n", strings.TrimPrefix(group.Module, ".")))
+		for _, name := range groupNames {
+			buf.WriteString(fmt.Sprintf("    %q,\n", name))
+		}
 	}
 	buf.WriteString("]\n")
 	return buf.String(), nil
