@@ -40,21 +40,150 @@ type goSwaggerOperationBinding struct {
 	Order      int
 }
 
-var goInlineAPIModuleRenderers = []goAPIModuleRenderer{
-	{FileName: "apps.go", Render: renderGoAppsModule},
-	{FileName: "audio_live.go", Render: renderGoAudioLiveModule},
-	{FileName: "audio_speech.go", Render: renderGoAudioSpeechModule},
-	{FileName: "audio_transcription.go", Render: renderGoAudioTranscriptionsModule},
-	{FileName: "chats_messages.go", Render: renderGoChatsMessagesModule},
-	{FileName: "files.go", Render: renderGoFilesModule},
-	{FileName: "templates.go", Render: renderGoTemplatesModule},
-	{FileName: "users.go", Render: renderGoUsersModule},
-	{FileName: "workflows_chat.go", Render: renderGoWorkflowsChatModule},
+type goInlineOperationPathBinding struct {
+	Key          string
+	SDKMethod    string
+	Method       string
+	FallbackPath string
+	ConvertCurly bool
+}
+
+type goInlineAPIModuleTemplate struct {
+	FileName       string
+	TemplateAsset  string
+	OperationPaths []goInlineOperationPathBinding
+}
+
+type goInlineAPITemplateData struct {
+	Paths map[string]string
+}
+
+// These modules keep hand-written request/response types for compatibility.
+// API endpoint paths are still resolved from config + swagger during generation.
+var goInlineAPIModuleTemplates = []goInlineAPIModuleTemplate{
+	{
+		FileName:      "apps.go",
+		TemplateAsset: "apps.go.tpl",
+		OperationPaths: []goInlineOperationPathBinding{
+			{
+				Key:          "list_path",
+				SDKMethod:    "apps.list",
+				Method:       http.MethodGet,
+				FallbackPath: "/v1/apps",
+			},
+		},
+	},
+	{
+		FileName:      "audio_live.go",
+		TemplateAsset: "audio_live.go.tpl",
+		OperationPaths: []goInlineOperationPathBinding{
+			{
+				Key:          "retrieve_path",
+				SDKMethod:    "audio_live.retrieve",
+				Method:       http.MethodGet,
+				FallbackPath: "/v1/audio/live/{live_id}",
+				ConvertCurly: true,
+			},
+		},
+	},
+	{
+		FileName:      "audio_speech.go",
+		TemplateAsset: "audio_speech.go.tpl",
+		OperationPaths: []goInlineOperationPathBinding{
+			{
+				Key:          "create_path",
+				SDKMethod:    "audio_speech.create",
+				Method:       http.MethodPost,
+				FallbackPath: "/v1/audio/speech",
+			},
+		},
+	},
+	{
+		FileName:      "audio_transcription.go",
+		TemplateAsset: "audio_transcription.go.tpl",
+		OperationPaths: []goInlineOperationPathBinding{
+			{
+				Key:          "create_path",
+				SDKMethod:    "audio_transcriptions.create",
+				Method:       http.MethodPost,
+				FallbackPath: "/v1/audio/transcriptions",
+			},
+		},
+	},
+	{
+		FileName:      "chats_messages.go",
+		TemplateAsset: "chats_messages.go.tpl",
+		OperationPaths: []goInlineOperationPathBinding{
+			{
+				Key:          "list_path",
+				SDKMethod:    "chat_messages.list",
+				Method:       http.MethodGet,
+				FallbackPath: "/v3/chat/message/list",
+			},
+		},
+	},
+	{
+		FileName:      "files.go",
+		TemplateAsset: "files.go.tpl",
+		OperationPaths: []goInlineOperationPathBinding{
+			{
+				Key:          "upload_path",
+				SDKMethod:    "files.upload",
+				Method:       http.MethodPost,
+				FallbackPath: "/v1/files/upload",
+			},
+			{
+				Key:          "retrieve_path",
+				SDKMethod:    "files.retrieve",
+				Method:       http.MethodGet,
+				FallbackPath: "/v1/files/retrieve",
+			},
+		},
+	},
+	{
+		FileName:      "templates.go",
+		TemplateAsset: "templates.go.tpl",
+		OperationPaths: []goInlineOperationPathBinding{
+			{
+				Key:          "duplicate_path",
+				SDKMethod:    "templates.duplicate",
+				Method:       http.MethodPost,
+				FallbackPath: "/v1/templates/{template_id}/duplicate",
+				ConvertCurly: true,
+			},
+		},
+	},
+	{
+		FileName:      "users.go",
+		TemplateAsset: "users.go.tpl",
+		OperationPaths: []goInlineOperationPathBinding{
+			{
+				Key:          "me_path",
+				SDKMethod:    "users.me",
+				Method:       http.MethodGet,
+				FallbackPath: "/v1/users/me",
+			},
+		},
+	},
+	{
+		FileName:      "workflows_chat.go",
+		TemplateAsset: "workflows_chat.go.tpl",
+		OperationPaths: []goInlineOperationPathBinding{
+			{
+				Key:          "stream_path",
+				SDKMethod:    "workflows_chat.stream",
+				Method:       http.MethodPost,
+				FallbackPath: "/v1/workflows/chat",
+			},
+		},
+	},
 }
 
 var goSwaggerAPIModuleSpecs = []goSwaggerModuleSpec{}
 
 var goGeneratedAPIModuleFiles = buildGoGeneratedAPIModuleFiles()
+
+var goInlineAPIModuleRenderers = buildGoInlineAPIModuleRenderers()
 
 func buildGoGeneratedAPIModuleFiles() map[string]struct{} {
 	files := make(map[string]struct{}, len(goInlineAPIModuleRenderers)+len(goSwaggerAPIModuleSpecs))
@@ -65,6 +194,35 @@ func buildGoGeneratedAPIModuleFiles() map[string]struct{} {
 		files[spec.FileName] = struct{}{}
 	}
 	return files
+}
+
+func buildGoInlineAPIModuleRenderers() []goAPIModuleRenderer {
+	renderers := make([]goAPIModuleRenderer, 0, len(goInlineAPIModuleTemplates))
+	for _, module := range goInlineAPIModuleTemplates {
+		moduleCopy := module
+		renderers = append(renderers, goAPIModuleRenderer{
+			FileName: moduleCopy.FileName,
+			Render: func(cfg *config.Config, doc *openapi.Document) (string, error) {
+				return renderGoInlineTemplateModule(cfg, doc, moduleCopy)
+			},
+		})
+	}
+	return renderers
+}
+
+func renderGoInlineTemplateModule(cfg *config.Config, doc *openapi.Document, module goInlineAPIModuleTemplate) (string, error) {
+	paths := make(map[string]string, len(module.OperationPaths))
+	for _, binding := range module.OperationPaths {
+		path, err := findGoOperationPath(cfg, doc, binding.SDKMethod, binding.Method, binding.FallbackPath)
+		if err != nil {
+			return "", err
+		}
+		if binding.ConvertCurly {
+			path = convertCurlyPathToColon(path)
+		}
+		paths[binding.Key] = path
+	}
+	return renderGoAPIAsset(module.TemplateAsset, goInlineAPITemplateData{Paths: paths})
 }
 
 func listGoAPIModuleRenderers() []goAPIModuleRenderer {
