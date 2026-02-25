@@ -895,6 +895,55 @@ func TestRenderOperationMethodKwargsOnlySignature(t *testing.T) {
 	}
 }
 
+func TestRenderOperationMethodSignatureThresholdByNonKwargs(t *testing.T) {
+	doc := mustParseSwagger(t)
+	baseBinding := pygen.OperationBinding{
+		PackageName: "demo",
+		Mapping:     &config.OperationMapping{},
+	}
+
+	twoArgsCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
+		PackageName: baseBinding.PackageName,
+		MethodName:  "list_two",
+		Mapping:     baseBinding.Mapping,
+		Details: openapi.OperationDetails{
+			Path:   "/v1/demo",
+			Method: "get",
+			QueryParameters: []openapi.ParameterSpec{
+				{Name: "a", In: "query", Required: true, Schema: &openapi.Schema{Type: "string"}},
+				{Name: "b", In: "query", Required: true, Schema: &openapi.Schema{Type: "string"}},
+			},
+		},
+	}, false)
+	if !strings.Contains(twoArgsCode, "def list_two(self, *, a: str, b: str, **kwargs)") {
+		t.Fatalf("expected compact signature when non-kwargs args <= 2:\n%s", twoArgsCode)
+	}
+	if strings.Contains(twoArgsCode, "def list_two(\n") {
+		t.Fatalf("did not expect multiline signature when non-kwargs args <= 2:\n%s", twoArgsCode)
+	}
+
+	threeArgsCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
+		PackageName: baseBinding.PackageName,
+		MethodName:  "list_three",
+		Mapping:     baseBinding.Mapping,
+		Details: openapi.OperationDetails{
+			Path:   "/v1/demo",
+			Method: "get",
+			QueryParameters: []openapi.ParameterSpec{
+				{Name: "a", In: "query", Required: true, Schema: &openapi.Schema{Type: "string"}},
+				{Name: "b", In: "query", Required: true, Schema: &openapi.Schema{Type: "string"}},
+				{Name: "c", In: "query", Required: true, Schema: &openapi.Schema{Type: "string"}},
+			},
+		},
+	}, false)
+	if !strings.Contains(threeArgsCode, "def list_three(\n") {
+		t.Fatalf("expected multiline signature when non-kwargs args > 2:\n%s", threeArgsCode)
+	}
+	if !strings.Contains(threeArgsCode, "        **kwargs,\n") {
+		t.Fatalf("expected kwargs preserved in multiline signature:\n%s", threeArgsCode)
+	}
+}
+
 func TestRenderOperationMethodDelegateTo(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{

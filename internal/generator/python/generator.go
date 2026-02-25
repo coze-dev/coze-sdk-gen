@@ -2450,27 +2450,25 @@ func RenderOperationMethodWithComments(
 
 	var buf bytes.Buffer
 	returnAnnotation := fmt.Sprintf(" -> %s", returnType)
-	compactSignature := len(bodyFieldNames) == 0 && requestBodyType == "" && len(signatureArgs) <= 2
+	nonKwargsSignatureArgCount := 0
+	for _, argDecl := range signatureArgs {
+		if IsKwargsSignatureArg(argDecl) {
+			continue
+		}
+		nonKwargsSignatureArgCount++
+	}
+	compactSignature := nonKwargsSignatureArgCount <= 2
 	if binding.Mapping != nil {
 		if binding.Mapping.ForceMultilineSignature {
 			compactSignature = false
-		}
-		if binding.Mapping.ForceCompactSignature {
-			compactSignature = true
 		}
 		if async {
 			if binding.Mapping.ForceMultilineSignatureAsync {
 				compactSignature = false
 			}
-			if binding.Mapping.ForceCompactSignatureAsync {
-				compactSignature = true
-			}
 		} else {
 			if binding.Mapping.ForceMultilineSignatureSync {
 				compactSignature = false
-			}
-			if binding.Mapping.ForceCompactSignatureSync {
-				compactSignature = true
 			}
 		}
 	}

@@ -229,10 +229,7 @@ type OperationMapping struct {
 	NoBlankLineAfterHeaders        bool              `yaml:"no_blank_line_after_headers"`
 	BlankLineAfterDocstring        bool              `yaml:"blank_line_after_docstring"`
 	BlankLineBeforeReturn          bool              `yaml:"blank_line_before_return"`
-	ForceCompactSignature          bool              `yaml:"force_compact_signature"`
 	ForceMultilineSignature        bool              `yaml:"force_multiline_signature"`
-	ForceCompactSignatureSync      bool              `yaml:"force_compact_signature_sync"`
-	ForceCompactSignatureAsync     bool              `yaml:"force_compact_signature_async"`
 	ForceMultilineSignatureSync    bool              `yaml:"force_multiline_signature_sync"`
 	ForceMultilineSignatureAsync   bool              `yaml:"force_multiline_signature_async"`
 	ForceMultilineRequestCall      bool              `yaml:"force_multiline_request_call"`

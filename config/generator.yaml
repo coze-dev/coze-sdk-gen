@@ -4454,7 +4454,6 @@ api:
       order: 40
       sdk_methods:
         - api_apps.list
-      force_compact_signature: true
       http_method_override: get
       disable_request_body: true
       query_fields:
@@ -4590,7 +4589,6 @@ api:
       order: 59
       sdk_methods:
         - conversations.update
-      force_compact_signature: true
       compact_single_item_maps: true
       body_builder: raw
       body_fields:
@@ -5189,7 +5187,6 @@ api:
       sdk_methods:
         - bots.publish
       blank_line_before_return: true
-      force_compact_signature_sync: true
       force_multiline_signature_async: true
       body_builder: raw
       pre_body_code:
@@ -5208,8 +5205,6 @@ api:
       order: 69
       sdk_methods:
         - bots.unpublish
-      force_compact_signature_sync: true
-      force_compact_signature_async: true
       body_builder: raw
       body_fields:
         - bot_id
@@ -5231,7 +5226,6 @@ api:
       order: 71
       sdk_methods:
         - bots._retrieve_v2
-      force_compact_signature: true
       compact_single_item_maps: true
       query_builder: remove_none_values
       response_type: Bot
@@ -5241,8 +5235,6 @@ api:
       order: 72
       sdk_methods:
         - bots._list_v1
-      force_compact_signature_sync: true
-      force_compact_signature_async: true
       query_builder: raw
       async_include_kwargs: true
       disable_headers_arg: true
@@ -5394,7 +5386,6 @@ api:
       arg_types:
         event_types: List[str]
       cast_keyword: true
-      force_compact_signature: true
       response_type: DeleteAPIAppsEventsResp
       response_cast: DeleteAPIAppsEventsResp
     - path: /v1/api_apps/{api_app_id}/events
@@ -5425,7 +5416,6 @@ api:
       pagination_page_token_field: page_token
       pagination_page_size_field: page_size
       pagination_cast_before_headers: true
-      force_compact_signature: true
     - path: /v1/audio/rooms
       method: post
       order: 79
@@ -6186,7 +6176,6 @@ api:
       signature_args:
         - workflow_id
         - execute_id
-      force_compact_signature: true
       response_type: WorkflowRunHistory
       response_cast: ListResponse[WorkflowRunHistory]
       response_unwrap_list_first: true
@@ -6199,7 +6188,6 @@ api:
         - workflow_id
         - execute_id
         - node_execute_uuid
-      force_compact_signature: true
       response_type: WorkflowNodeExecuteHistory
       response_cast: WorkflowNodeExecuteHistory
       cast_keyword: true
@@ -6400,7 +6388,6 @@ api:
       method: post
       sdk_methods:
         - templates.duplicate
-      force_compact_signature: true
       body_builder: raw
       body_fields:
         - workspace_id
