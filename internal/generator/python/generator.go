@@ -324,10 +324,7 @@ func renderCozePy(cfg *config.Config, packageMetas map[string]PackageMeta) (stri
 	buf.WriteString("from cozepy.util import remove_url_trailing_slash\n\n")
 	buf.WriteString("if TYPE_CHECKING:\n")
 	for _, svc := range typeCheckingServices {
-		importNames := svc.AsyncClass + ", " + svc.SyncClass
-		if svc.Attribute == "api_apps" || svc.Attribute == "apps" {
-			importNames = svc.SyncClass + ", " + svc.AsyncClass
-		}
+		importNames := formatTypeImportPair(svc.SyncClass, svc.AsyncClass)
 		if svc.Attribute == "knowledge" {
 			buf.WriteString(fmt.Sprintf("    from .%s import %s  # deprecated\n", svc.ModuleDir, importNames))
 			continue
@@ -851,9 +848,18 @@ func RenderPackageModule(
 			if typeModule == "" {
 				continue
 			}
-			buf.WriteString(fmt.Sprintf("    from %s import %s, %s\n", typeModule, child.SyncClass, child.AsyncClass))
+				first, second := orderedTypeImportNames(child.SyncClass, child.AsyncClass)
+				importLine := fmt.Sprintf("    from %s import %s, %s", typeModule, first, second)
+				if len(importLine) > 120 {
+					buf.WriteString(fmt.Sprintf("    from %s import (\n", typeModule))
+					buf.WriteString(fmt.Sprintf("        %s,\n", first))
+					buf.WriteString(fmt.Sprintf("        %s,\n", second))
+					buf.WriteString("    )\n")
+				} else {
+					buf.WriteString(importLine + "\n")
+				}
+			}
 		}
-	}
 	if meta.Package != nil && len(meta.Package.PreModelCode) > 0 {
 		buf.WriteString("\n")
 	} else {
@@ -1094,6 +1100,29 @@ func normalizeMapBuilder(value string) string {
 	default:
 		return "dump_exclude_none"
 	}
+}
+
+func formatTypeImportPair(syncClass, asyncClass string) string {
+	first, second := orderedTypeImportNames(syncClass, asyncClass)
+	if second == "" {
+		return first
+	}
+	return first + ", " + second
+}
+
+func orderedTypeImportNames(syncClass, asyncClass string) (string, string) {
+	syncClass = strings.TrimSpace(syncClass)
+	asyncClass = strings.TrimSpace(asyncClass)
+	if syncClass == "" {
+		return asyncClass, ""
+	}
+	if asyncClass == "" {
+		return syncClass, ""
+	}
+	if strings.Compare(asyncClass, syncClass) < 0 {
+		return asyncClass, syncClass
+	}
+	return syncClass, asyncClass
 }
 
 func packageHasTokenPagination(bindings []OperationBinding) bool {
