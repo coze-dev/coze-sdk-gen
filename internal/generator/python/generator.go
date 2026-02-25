@@ -2450,27 +2450,18 @@ func RenderOperationMethodWithComments(
 
 	var buf bytes.Buffer
 	returnAnnotation := fmt.Sprintf(" -> %s", returnType)
-	compactSignature := len(bodyFieldNames) == 0 && requestBodyType == "" && len(signatureArgs) <= 2
+	compactSignature := false
 	if binding.Mapping != nil {
 		if binding.Mapping.ForceMultilineSignature {
 			compactSignature = false
-		}
-		if binding.Mapping.ForceCompactSignature {
-			compactSignature = true
 		}
 		if async {
 			if binding.Mapping.ForceMultilineSignatureAsync {
 				compactSignature = false
 			}
-			if binding.Mapping.ForceCompactSignatureAsync {
-				compactSignature = true
-			}
 		} else {
 			if binding.Mapping.ForceMultilineSignatureSync {
 				compactSignature = false
-			}
-			if binding.Mapping.ForceCompactSignatureSync {
-				compactSignature = true
 			}
 		}
 	}
@@ -2485,11 +2476,18 @@ func RenderOperationMethodWithComments(
 	} else {
 		buf.WriteString(fmt.Sprintf("    %s %s(\n", methodKeyword, binding.MethodName))
 		buf.WriteString("        self,\n")
-		buf.WriteString("        *,\n")
-		for _, arg := range signatureArgs {
-			buf.WriteString(fmt.Sprintf("        %s,\n", arg))
+		if len(signatureArgs) == 0 {
+			buf.WriteString(fmt.Sprintf("    )%s:\n", returnAnnotation))
+		} else if len(signatureArgs) == 1 && IsKwargsSignatureArg(signatureArgs[0]) {
+			buf.WriteString(fmt.Sprintf("        %s,\n", signatureArgs[0]))
+			buf.WriteString(fmt.Sprintf("    )%s:\n", returnAnnotation))
+		} else {
+			buf.WriteString("        *,\n")
+			for _, arg := range signatureArgs {
+				buf.WriteString(fmt.Sprintf("        %s,\n", arg))
+			}
+			buf.WriteString(fmt.Sprintf("    )%s:\n", returnAnnotation))
 		}
-		buf.WriteString(fmt.Sprintf("    )%s:\n", returnAnnotation))
 	}
 	overrideDocstring := ""
 	overrideDocstringStyle := ""

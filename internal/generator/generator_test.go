@@ -887,10 +887,10 @@ func TestRenderOperationMethodKwargsOnlySignature(t *testing.T) {
 			ResponseCast:       "User",
 		},
 	}, false)
-	if !strings.Contains(code, "def me(self, **kwargs)") {
-		t.Fatalf("expected kwargs-only method signature without bare '*':\n%s", code)
+	if !strings.Contains(code, "def me(\n        self,\n        **kwargs,\n    ) -> User:") {
+		t.Fatalf("expected kwargs-only multiline method signature without bare '*':\n%s", code)
 	}
-	if strings.Contains(code, "self, *, **kwargs") {
+	if strings.Contains(code, "        *,\n        **kwargs,\n") {
 		t.Fatalf("unexpected invalid kwargs-only signature:\n%s", code)
 	}
 }
