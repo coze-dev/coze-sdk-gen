@@ -60,16 +60,16 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []Operati
 					if !ok {
 						continue
 					}
-					order := len(bindings)
-					if mappingCopy.Order > 0 {
-						order = mappingCopy.Order + methodIndex
+					priority := len(bindings)
+					if mappingCopy.Priority > 0 {
+						priority = mappingCopy.Priority + methodIndex
 					}
 					bindings = append(bindings, OperationBinding{
 						PackageName: NormalizePackageName(pkg.Name),
 						MethodName:  NormalizeMethodName(methodName),
 						Details:     details,
 						Mapping:     &mappingCopy,
-						Order:       order,
+						Priority:    priority,
 					})
 				}
 			}
@@ -84,7 +84,7 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []Operati
 			PackageName: NormalizePackageName(pkg.Name),
 			MethodName:  DefaultMethodName(details.OperationID, details.Path, details.Method),
 			Details:     details,
-			Order:       len(bindings),
+			Priority:    len(bindings),
 		})
 	}
 
@@ -113,16 +113,16 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []Operati
 			if !ok {
 				continue
 			}
-			order := len(bindings)
-			if mappingCopy.Order > 0 {
-				order = mappingCopy.Order + methodIndex
+			priority := len(bindings)
+			if mappingCopy.Priority > 0 {
+				priority = mappingCopy.Priority + methodIndex
 			}
 			bindings = append(bindings, OperationBinding{
 				PackageName: NormalizePackageName(pkg.Name),
 				MethodName:  NormalizeMethodName(methodName),
 				Details:     details,
 				Mapping:     &mappingCopy,
-				Order:       order,
+				Priority:    priority,
 			})
 		}
 	}
@@ -200,7 +200,7 @@ func groupBindingsByPackage(bindings []OperationBinding) map[string][]OperationB
 	}
 	for pkgName := range pkgOps {
 		sort.Slice(pkgOps[pkgName], func(i, j int) bool {
-			return pkgOps[pkgName][i].Order < pkgOps[pkgName][j].Order
+			return pkgOps[pkgName][i].Priority < pkgOps[pkgName][j].Priority
 		})
 	}
 	return pkgOps

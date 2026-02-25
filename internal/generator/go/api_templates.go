@@ -37,7 +37,7 @@ type goSwaggerOperationBinding struct {
 	Path       string
 	Summary    string
 	IsFile     bool
-	Order      int
+	Priority   int
 }
 
 var goInlineAPIModuleRenderers = []goAPIModuleRenderer{
@@ -137,9 +137,9 @@ func buildGoSwaggerOperationBindings(cfg *config.Config, doc *openapi.Document, 
 				isFile = strings.Contains(contentType, "multipart/form-data")
 			}
 
-			order := len(bindings)
-			if mapping.Order > 0 {
-				order = mapping.Order + methodIndex
+			priority := len(bindings)
+			if mapping.Priority > 0 {
+				priority = mapping.Priority + methodIndex
 			}
 			bindings = append(bindings, goSwaggerOperationBinding{
 				MethodName: goMethod,
@@ -147,13 +147,13 @@ func buildGoSwaggerOperationBindings(cfg *config.Config, doc *openapi.Document, 
 				Path:       strings.TrimSpace(mapping.Path),
 				Summary:    summary,
 				IsFile:     isFile,
-				Order:      order,
+				Priority:   priority,
 			})
 		}
 	}
 
 	sort.Slice(bindings, func(i, j int) bool {
-		if bindings[i].Order == bindings[j].Order {
+		if bindings[i].Priority == bindings[j].Priority {
 			if bindings[i].MethodName == bindings[j].MethodName {
 				if bindings[i].HTTPMethod == bindings[j].HTTPMethod {
 					return bindings[i].Path < bindings[j].Path
@@ -162,7 +162,7 @@ func buildGoSwaggerOperationBindings(cfg *config.Config, doc *openapi.Document, 
 			}
 			return bindings[i].MethodName < bindings[j].MethodName
 		}
-		return bindings[i].Order < bindings[j].Order
+		return bindings[i].Priority < bindings[j].Priority
 	})
 
 	seen := map[string]int{}

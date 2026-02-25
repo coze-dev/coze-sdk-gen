@@ -1844,7 +1844,6 @@ api:
               self,
               *,
               conversation_id: str,
-              order: str = "desc",
               chat_id: Optional[str] = None,
               before_id: Optional[str] = None,
               after_id: Optional[str] = None,
@@ -1860,7 +1859,6 @@ api:
                       "POST",
                       url,
                       json={
-                          "order": order,
                           "chat_id": chat_id,
                           "before_id": i_before_id if i_before_id else None,
                           "after_id": i_after_id if i_after_id else None,
@@ -1891,7 +1889,6 @@ api:
               self,
               *,
               conversation_id: str,
-              order: str = "desc",
               chat_id: Optional[str] = None,
               before_id: Optional[str] = None,
               after_id: Optional[str] = None,
@@ -1907,7 +1904,6 @@ api:
                       "POST",
                       url,
                       json={
-                          "order": order,
                           "chat_id": chat_id,
                           "before_id": i_before_id if i_before_id else None,
                           "after_id": i_after_id if i_after_id else None,
@@ -3515,7 +3511,7 @@ api:
   operation_mappings:
     - path: /v3/chat
       method: post
-      order: 1
+      priority: 1
       sdk_methods:
         - chat.create
       delegate_to: _create
@@ -3557,7 +3553,7 @@ api:
       response_cast: Chat
     - path: /v3/chat
       method: post
-      order: 2
+      priority: 2
       sdk_methods:
         - chat.stream
       delegate_to: _create
@@ -3608,7 +3604,7 @@ api:
       response_cast: None
     - path: /v3/chat/retrieve
       method: get
-      order: 3
+      priority: 3
       sdk_methods:
         - chat.retrieve
       force_multiline_signature: true
@@ -3625,7 +3621,7 @@ api:
       response_cast: Chat
     - path: /v3/chat/message/list
       method: get
-      order: 4
+      priority: 4
       sdk_methods:
         - chat_message.list
       force_multiline_signature: true
@@ -3644,7 +3640,7 @@ api:
       response_cast: ListResponse[Message]
     - path: /v3/chat/cancel
       method: post
-      order: 7
+      priority: 7
       sdk_methods:
         - chat.cancel
       body_builder: raw
@@ -3658,7 +3654,7 @@ api:
       response_cast: Chat
     - path: /v1/api_apps
       method: post
-      order: 10
+      priority: 10
       sdk_methods:
         - api_apps.create
       body_fields:
@@ -3673,7 +3669,7 @@ api:
       response_cast: APIApp
     - path: /v1/api_apps/{api_app_id}
       method: put
-      order: 20
+      priority: 20
       sdk_methods:
         - api_apps.update
       force_multiline_request_call: true
@@ -3686,7 +3682,7 @@ api:
       response_cast: UpdateAPIAppsResp
     - path: /v1/api_apps/{api_app_id}
       method: put
-      order: 30
+      priority: 30
       sdk_methods:
         - api_apps.delete
       http_method_override: delete
@@ -3697,7 +3693,7 @@ api:
       response_cast: DeleteAPIAppsResp
     - path: /v1/api_apps
       method: post
-      order: 40
+      priority: 40
       sdk_methods:
         - api_apps.list
       http_method_override: get
@@ -3724,7 +3720,7 @@ api:
       pagination_cast_before_headers: true
     - path: /v1/apps
       method: get
-      order: 50
+      priority: 50
       sdk_methods:
         - apps.list
       query_builder: remove_none_values
@@ -3764,7 +3760,7 @@ api:
       pagination_page_size_field: page_size
     - path: /v1/apps/{app_id}/collaborators
       method: post
-      order: 51
+      priority: 51
       sdk_methods:
         - apps_collaborators.create
       body_builder: remove_none_values
@@ -3781,7 +3777,7 @@ api:
       response_cast: AddAppCollaboratorResp
     - path: /v1/apps/{app_id}/collaborators/{user_id}
       method: delete
-      order: 52
+      priority: 52
       sdk_methods:
         - apps_collaborators.delete
       disable_request_body: true
@@ -3789,7 +3785,7 @@ api:
       response_cast: RemoveAppCollaboratorResp
     - path: /v1/conversation/create
       method: post
-      order: 55
+      priority: 55
       sdk_methods:
         - conversations.create
       body_fields:
@@ -3806,7 +3802,7 @@ api:
       response_cast: Conversation
     - path: /v1/conversation/retrieve
       method: get
-      order: 57
+      priority: 57
       sdk_methods:
         - conversations.retrieve
       query_builder: raw
@@ -3814,7 +3810,7 @@ api:
       response_cast: Conversation
     - path: /v1/conversations
       method: get
-      order: 56
+      priority: 56
       sdk_methods:
         - conversations.list
       query_builder: raw
@@ -3839,7 +3835,7 @@ api:
       pagination_page_size_field: page_size
     - path: /v1/conversations/{conversation_id}/clear
       method: post
-      order: 58
+      priority: 58
       sdk_methods:
         - conversations.clear
       disable_request_body: true
@@ -3847,7 +3843,7 @@ api:
       response_cast: Section
     - path: /v1/conversations/{conversation_id}
       method: put
-      order: 59
+      priority: 59
       sdk_methods:
         - conversations.update
       compact_single_item_maps: true
@@ -3860,7 +3856,7 @@ api:
       response_cast: Conversation
     - path: /v1/conversations/{conversation_id}
       method: delete
-      order: 60
+      priority: 60
       sdk_methods:
         - conversations.delete
       allow_missing_in_swagger: true
@@ -3869,7 +3865,7 @@ api:
       response_cast: DeleteConversationResp
     - path: /v1/datasets
       method: post
-      order: 61
+      priority: 61
       sdk_methods:
         - datasets.create
       force_multiline_request_call: true
@@ -3897,7 +3893,7 @@ api:
       response_cast: CreateDatasetResp
     - path: /v1/datasets
       method: get
-      order: 62
+      priority: 62
       sdk_methods:
         - datasets.list
       blank_line_after_docstring: true
@@ -3935,7 +3931,7 @@ api:
       pagination_page_size_field: page_size
     - path: /v1/datasets/{dataset_id}
       method: put
-      order: 63
+      priority: 63
       sdk_methods:
         - datasets.update
       force_multiline_request_call: true
@@ -3950,7 +3946,7 @@ api:
       response_cast: UpdateDatasetRes
     - path: /v1/datasets/{dataset_id}
       method: delete
-      order: 64
+      priority: 64
       sdk_methods:
         - datasets.delete
       force_multiline_signature: true
@@ -3961,7 +3957,7 @@ api:
       response_cast: DeleteDatasetRes
     - path: /v1/datasets/{dataset_id}/process
       method: post
-      order: 65
+      priority: 65
       sdk_methods:
         - datasets.process
       force_multiline_request_call: true
@@ -3974,7 +3970,7 @@ api:
       data_field: data.data
     - path: /v1/connectors/{connector_id}/bots/{bot_id}
       method: put
-      order: 651
+      priority: 651
       sdk_methods:
         - connectors_bots.update
       allow_missing_in_swagger: true
@@ -3992,7 +3988,7 @@ api:
       response_cast: UpdateConnectorBotResp
     - path: /v1/connectors/{connector_id}/install
       method: post
-      order: 650
+      priority: 650
       sdk_methods:
         - connectors.install
       body_builder: raw
@@ -4007,7 +4003,7 @@ api:
       response_cast: InstallConnectorResp
     - path: /open_api/knowledge/document/create
       method: post
-      order: 652
+      priority: 652
       sdk_methods:
         - datasets_documents.create
       sync_only: true
@@ -4037,7 +4033,7 @@ api:
       data_field: document_infos
     - path: /open_api/knowledge/document/create
       method: post
-      order: 653
+      priority: 653
       sdk_methods:
         - datasets_documents.create
       async_only: true
@@ -4063,7 +4059,7 @@ api:
       data_field: document_infos
     - path: /open_api/knowledge/document/update
       method: post
-      order: 654
+      priority: 654
       sdk_methods:
         - datasets_documents.update
       allow_missing_in_swagger: true
@@ -4085,7 +4081,7 @@ api:
       response_cast: UpdateDocumentRes
     - path: /open_api/knowledge/document/delete
       method: post
-      order: 655
+      priority: 655
       sdk_methods:
         - datasets_documents.delete
       body_builder: raw
@@ -4100,7 +4096,7 @@ api:
       response_cast: DeleteDocumentRes
     - path: /open_api/knowledge/document/list
       method: post
-      order: 656
+      priority: 656
       sdk_methods:
         - datasets_documents.list
       disable_request_body: true
@@ -4138,7 +4134,7 @@ api:
       async_response_type: AsyncNumberPaged[Document]
     - path: /open_api/knowledge/document/create
       method: post
-      order: 657
+      priority: 657
       sdk_methods:
         - knowledge_documents.create
       sync_only: true
@@ -4172,7 +4168,7 @@ api:
       data_field: document_infos
     - path: /open_api/knowledge/document/create
       method: post
-      order: 658
+      priority: 658
       sdk_methods:
         - knowledge_documents.create
       async_only: true
@@ -4206,7 +4202,7 @@ api:
       data_field: document_infos
     - path: /open_api/knowledge/document/update
       method: post
-      order: 659
+      priority: 659
       sdk_methods:
         - knowledge_documents.update
       sync_only: true
@@ -4237,7 +4233,7 @@ api:
       response_cast: None
     - path: /open_api/knowledge/document/update
       method: post
-      order: 660
+      priority: 660
       sdk_methods:
         - knowledge_documents.update
       async_only: true
@@ -4268,7 +4264,7 @@ api:
       response_cast: None
     - path: /open_api/knowledge/document/delete
       method: post
-      order: 661
+      priority: 661
       sdk_methods:
         - knowledge_documents.delete
       sync_only: true
@@ -4292,7 +4288,7 @@ api:
       response_cast: None
     - path: /open_api/knowledge/document/delete
       method: post
-      order: 662
+      priority: 662
       sdk_methods:
         - knowledge_documents.delete
       async_only: true
@@ -4316,7 +4312,7 @@ api:
       response_cast: None
     - path: /open_api/knowledge/document/list
       method: post
-      order: 663
+      priority: 663
       sdk_methods:
         - knowledge_documents.list
       disable_request_body: true
@@ -4362,7 +4358,7 @@ api:
       async_response_type: AsyncNumberPaged[Document]
     - path: /v1/bot/create
       method: post
-      order: 66
+      priority: 66
       sdk_methods:
         - bots.create
       body_fields:
@@ -4387,7 +4383,7 @@ api:
       response_cast: Bot
     - path: /v1/bot/update
       method: post
-      order: 67
+      priority: 67
       sdk_methods:
         - bots.update
       force_multiline_request_call_sync: true
@@ -4411,7 +4407,7 @@ api:
       response_cast: UpdateBotResp
     - path: /v1/bot/publish
       method: post
-      order: 68
+      priority: 68
       sdk_methods:
         - bots.publish
       blank_line_before_return: true
@@ -4430,7 +4426,7 @@ api:
       response_cast: Bot
     - path: /v1/bots/{bot_id}/unpublish
       method: post
-      order: 69
+      priority: 69
       sdk_methods:
         - bots.unpublish
       body_builder: raw
@@ -4442,7 +4438,7 @@ api:
       response_cast: UnpublishBotResp
     - path: /v1/bot/get_online_info
       method: get
-      order: 70
+      priority: 70
       sdk_methods:
         - bots._retrieve_v1
       compact_single_item_maps: true
@@ -4451,7 +4447,7 @@ api:
       response_cast: Bot
     - path: /v1/bots/{bot_id}
       method: get
-      order: 71
+      priority: 71
       sdk_methods:
         - bots._retrieve_v2
       compact_single_item_maps: true
@@ -4460,7 +4456,7 @@ api:
       response_cast: Bot
     - path: /v1/space/published_bots_list
       method: get
-      order: 72
+      priority: 72
       sdk_methods:
         - bots._list_v1
       query_builder: raw
@@ -4492,7 +4488,7 @@ api:
       pagination_page_size_field: page_size
     - path: /v1/bots
       method: get
-      order: 73
+      priority: 73
       sdk_methods:
         - bots._list_v2
       query_builder: remove_none_values
@@ -4532,7 +4528,7 @@ api:
       pagination_page_size_field: page_size
     - path: /v1/folders/{folder_id}
       method: get
-      order: 74
+      priority: 74
       sdk_methods:
         - folders.retrieve
       no_blank_line_after_headers: true
@@ -4543,7 +4539,7 @@ api:
       response_cast: SimpleFolder
     - path: /v1/folders
       method: get
-      order: 75
+      priority: 75
       sdk_methods:
         - folders.list
       signature_query_fields:
@@ -4579,13 +4575,13 @@ api:
       pagination_page_size_field: page_size
     - path: /v1/stores/plugins
       method: get
-      order: 751
+      priority: 751
       sdk_methods:
         - go.stores_plugins.list
       allow_missing_in_swagger: true
     - path: /v1/api_apps/{api_app_id}/events
       method: post
-      order: 76
+      priority: 76
       sdk_methods:
         - api_apps_events.create
       body_builder: dump_exclude_none
@@ -4599,7 +4595,7 @@ api:
       response_cast: CreateAPIAppsEventsResp
     - path: /v1/api_apps/{api_app_id}/events
       method: delete
-      order: 77
+      priority: 77
       sdk_methods:
         - api_apps_events.delete
       allow_missing_in_swagger: true
@@ -4614,7 +4610,7 @@ api:
       response_cast: DeleteAPIAppsEventsResp
     - path: /v1/api_apps/{api_app_id}/events
       method: get
-      order: 78
+      priority: 78
       sdk_methods:
         - api_apps_events.list
       allow_missing_in_swagger: true
@@ -4642,7 +4638,7 @@ api:
       pagination_cast_before_headers: true
     - path: /v1/audio/rooms
       method: post
-      order: 79
+      priority: 79
       sdk_methods:
         - audio_rooms.create
       body_builder: remove_none_values
@@ -4669,7 +4665,7 @@ api:
       response_cast: CreateRoomResp
     - path: /v1/audio/speech
       method: post
-      order: 80
+      priority: 80
       sdk_methods:
         - audio_speech.create
       body_builder: raw
@@ -4700,7 +4696,7 @@ api:
       response_cast: FileHTTPResponse
     - path: /v1/audio/transcriptions
       method: post
-      order: 81
+      priority: 81
       sdk_methods:
         - audio_transcriptions.create
       force_multiline_signature: true
@@ -4716,7 +4712,7 @@ api:
       response_cast: CreateTranscriptionsResp
     - path: /v1/audio/live/{live_id}
       method: get
-      order: 830
+      priority: 830
       sdk_methods:
         - audio_live.retrieve
       allow_missing_in_swagger: true
@@ -4727,7 +4723,7 @@ api:
       response_cast: LiveInfo
     - path: /v1/audio/voiceprint_groups
       method: post
-      order: 831
+      priority: 831
       sdk_methods:
         - audio_voiceprint_groups.create
       allow_missing_in_swagger: true
@@ -4746,7 +4742,7 @@ api:
       response_cast: CreateVoicePrintGroupResp
     - path: /v1/audio/voiceprint_groups/{group_id}
       method: put
-      order: 832
+      priority: 832
       sdk_methods:
         - audio_voiceprint_groups.update
       allow_missing_in_swagger: true
@@ -4764,7 +4760,7 @@ api:
       response_cast: UpdateVoicePrintGroupResp
     - path: /v1/audio/voiceprint_groups/{group_id}
       method: delete
-      order: 833
+      priority: 833
       sdk_methods:
         - audio_voiceprint_groups.delete
       allow_missing_in_swagger: true
@@ -4774,7 +4770,7 @@ api:
       response_cast: DeleteVoicePrintGroupResp
     - path: /v1/audio/voiceprint_groups
       method: get
-      order: 834
+      priority: 834
       sdk_methods:
         - audio_voiceprint_groups.list
       allow_missing_in_swagger: true
@@ -4816,7 +4812,7 @@ api:
       async_response_type: AsyncNumberPaged[VoicePrintGroup]
     - path: /v1/audio/voiceprint_groups/{group_id}/speaker_identify
       method: post
-      order: 835
+      priority: 835
       sdk_methods:
         - audio_voiceprint_groups.speaker_identify
       allow_missing_in_swagger: true
@@ -4844,7 +4840,7 @@ api:
       response_cast: SpeakerIdentifyResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features
       method: post
-      order: 836
+      priority: 836
       sdk_methods:
         - audio_voiceprint_groups_features.create
       allow_missing_in_swagger: true
@@ -4875,7 +4871,7 @@ api:
       response_cast: CreateVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features/{feature_id}
       method: put
-      order: 837
+      priority: 837
       sdk_methods:
         - audio_voiceprint_groups_features.update
       allow_missing_in_swagger: true
@@ -4903,7 +4899,7 @@ api:
       response_cast: UpdateVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features/{feature_id}
       method: delete
-      order: 838
+      priority: 838
       sdk_methods:
         - audio_voiceprint_groups_features.delete
       allow_missing_in_swagger: true
@@ -4913,7 +4909,7 @@ api:
       response_cast: DeleteVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features
       method: get
-      order: 839
+      priority: 839
       sdk_methods:
         - audio_voiceprint_groups_features.list
       allow_missing_in_swagger: true
@@ -4943,7 +4939,7 @@ api:
       async_response_type: AsyncNumberPaged[VoicePrintGroupFeature]
     - path: /v1/audio/voices
       method: get
-      order: 82
+      priority: 82
       sdk_methods:
         - audio_voices.list
       query_builder: remove_none_values
@@ -4986,7 +4982,7 @@ api:
       async_response_type: AsyncNumberPaged[Voice]
     - path: /v1/audio/voices/clone
       method: post
-      order: 83
+      priority: 83
       sdk_methods:
         - audio_voices.clone
       body_builder: remove_none_values
@@ -5022,7 +5018,7 @@ api:
       response_cast: Voice
     - path: /v1/conversation/message/create
       method: post
-      order: 84
+      priority: 84
       sdk_methods:
         - conversations_message.create
       query_builder: raw
@@ -5046,7 +5042,7 @@ api:
       response_cast: Message
     - path: /v1/conversation/message/delete
       method: post
-      order: 85
+      priority: 85
       sdk_methods:
         - conversations_message.delete
       query_builder: raw
@@ -5057,7 +5053,7 @@ api:
       response_cast: Message
     - path: /v1/conversation/message/modify
       method: post
-      order: 86
+      priority: 86
       sdk_methods:
         - conversations_message.update
       query_builder: raw
@@ -5076,7 +5072,7 @@ api:
       data_field: message
     - path: /v1/conversation/message/retrieve
       method: get
-      order: 87
+      priority: 87
       sdk_methods:
         - conversations_message.retrieve
       query_builder: raw
@@ -5087,7 +5083,7 @@ api:
       response_cast: Message
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
       method: post
-      order: 88
+      priority: 88
       sdk_methods:
         - conversations_message_feedback.create
       allow_missing_in_swagger: true
@@ -5111,7 +5107,7 @@ api:
       response_cast: CreateConversationMessageFeedbackResp
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
       method: delete
-      order: 89
+      priority: 89
       sdk_methods:
         - conversations_message_feedback.delete
       disable_request_body: true
@@ -5119,7 +5115,7 @@ api:
       response_cast: DeleteConversationMessageFeedbackResp
     - path: /v1/datasets/{dataset_id}/images
       method: get
-      order: 90
+      priority: 90
       sdk_methods:
         - datasets_images.list
       query_builder: raw
@@ -5153,7 +5149,7 @@ api:
       pagination_http_method: get
     - path: /v1/datasets/{dataset_id}/images/{document_id}
       method: put
-      order: 91
+      priority: 91
       sdk_methods:
         - datasets_images.update
       allow_missing_in_swagger: true
@@ -5172,7 +5168,7 @@ api:
       response_cast: UpdateImageRes
     - path: /v1/enterprises/{enterprise_id}/members
       method: post
-      order: 87
+      priority: 87
       sdk_methods:
         - enterprises_members.create
       body_builder: dump_exclude_none
@@ -5188,7 +5184,7 @@ api:
       response_cast: CreateEnterpriseMemberResp
     - path: /v1/enterprises/{enterprise_id}/members/{user_id}
       method: put
-      order: 88
+      priority: 88
       sdk_methods:
         - enterprises_members.update
       body_builder: dump_exclude_none
@@ -5203,7 +5199,7 @@ api:
       response_cast: UpdateEnterpriseMemberResp
     - path: /v1/enterprises/{enterprise_id}/members/{user_id}
       method: delete
-      order: 89
+      priority: 89
       sdk_methods:
         - enterprises_members.delete
       allow_missing_in_swagger: true
@@ -5219,7 +5215,7 @@ api:
       response_cast: DeleteEnterpriseMemberResp
     - path: /v1/workflow/run
       method: post
-      order: 90
+      priority: 90
       sdk_methods:
         - workflows_runs.create
       body_builder: raw
@@ -5247,7 +5243,7 @@ api:
       response_cast: WorkflowRunResult
     - path: /v1/workflow/stream_run
       method: post
-      order: 91
+      priority: 91
       sdk_methods:
         - workflows_runs.stream
       body_builder: raw
@@ -5282,7 +5278,7 @@ api:
       response_cast: None
     - path: /v1/workflow/stream_resume
       method: post
-      order: 92
+      priority: 92
       sdk_methods:
         - workflows_runs.resume
       body_builder: raw
@@ -5317,7 +5313,7 @@ api:
       response_cast: None
     - path: /v1/workflows/{workflow_id}/run_histories/{execute_id}
       method: get
-      order: 93
+      priority: 93
       sdk_methods:
         - workflows_runs_run_histories.retrieve
       response_type: WorkflowRunHistory
@@ -5325,14 +5321,14 @@ api:
       response_unwrap_list_first: true
     - path: /v1/workflows/{workflow_id}/run_histories/{execute_id}/execute_nodes/{node_execute_uuid}
       method: get
-      order: 94
+      priority: 94
       sdk_methods:
         - workflows_runs_run_histories_execute_nodes.retrieve
       response_type: WorkflowNodeExecuteHistory
       response_cast: WorkflowNodeExecuteHistory
     - path: /v1/workflows/{workflow_id}/versions
       method: get
-      order: 95
+      priority: 95
       sdk_methods:
         - workflows_versions.list
       query_builder: dump_exclude_none
@@ -5365,7 +5361,7 @@ api:
       pagination_params_variable: true
     - path: /v1/workflows/{workflow_id}/collaborators/{user_id}
       method: delete
-      order: 951
+      priority: 951
       sdk_methods:
         - workflows_collaborators.delete
       disable_request_body: true
@@ -5373,7 +5369,7 @@ api:
       response_cast: RemoveWorkflowCollaboratorResp
     - path: /v1/workflows/chat
       method: post
-      order: 96
+      priority: 96
       sdk_methods:
         - workflows_chat.stream
       delegate_to: _create
@@ -5400,7 +5396,7 @@ api:
       async_response_type: AsyncIterator[ChatEvent]
     - path: /v1/workflows/chat
       method: post
-      order: 97
+      priority: 97
       sdk_methods:
         - workflows_chat._create
       request_stream: true
@@ -5445,13 +5441,13 @@ api:
       response_cast: None
     - path: /v1/workspaces
       method: get
-      order: 969
+      priority: 969
       sdk_methods:
         - go.workspaces.list
       allow_missing_in_swagger: true
     - path: /v1/workspaces/{workspace_id}/members
       method: delete
-      order: 97
+      priority: 97
       sdk_methods:
         - workspaces_members.delete
       body_builder: remove_none_values
@@ -5466,7 +5462,7 @@ api:
       response_cast: DeleteWorkspaceMemberResp
     - path: /v1/workspaces/{workspace_id}/members
       method: post
-      order: 98
+      priority: 98
       sdk_methods:
         - workspaces_members.create
       allow_missing_in_swagger: true
@@ -5491,7 +5487,7 @@ api:
       response_cast: CreateWorkspaceMemberResp
     - path: /v1/workspaces/{workspace_id}/members
       method: get
-      order: 99
+      priority: 99
       sdk_methods:
         - workspaces_members.list
       allow_missing_in_swagger: true

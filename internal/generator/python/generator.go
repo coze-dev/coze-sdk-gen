@@ -19,7 +19,7 @@ type OperationBinding struct {
 	MethodName  string
 	Details     openapi.OperationDetails
 	Mapping     *config.OperationMapping
-	Order       int
+	Priority    int
 }
 
 type PackageMeta struct {
@@ -469,7 +469,7 @@ func collectRootServices(cfg *config.Config, packageMetas map[string]PackageMeta
 	return services
 }
 
-func orderRootServices(services []rootService, order []string) []rootService {
+func orderRootServices(services []rootService, priority []string) []rootService {
 	if len(services) == 0 {
 		return services
 	}
@@ -479,7 +479,7 @@ func orderRootServices(services []rootService, order []string) []rootService {
 	}
 	ordered := make([]rootService, 0, len(services))
 	seen := map[string]struct{}{}
-	for _, attr := range order {
+	for _, attr := range priority {
 		attr = strings.TrimSpace(attr)
 		if attr == "" {
 			continue

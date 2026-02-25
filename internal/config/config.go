@@ -154,7 +154,7 @@ type ImportSpec struct {
 type OperationMapping struct {
 	Path                           string            `yaml:"path"`
 	Method                         string            `yaml:"method"`
-	Order                          int               `yaml:"order"`
+	Priority                       int               `yaml:"priority"`
 	SDKMethods                     []string          `yaml:"sdk_methods"`
 	DelegateTo                     string            `yaml:"delegate_to"`
 	DelegateCallArgs               []string          `yaml:"delegate_call_args"`
@@ -311,6 +311,10 @@ func (c *Config) applyDefaults() {
 	}
 	c.CommentOverrides.ensureMaps()
 	for i := range c.API.OperationMappings {
+		if c.API.OperationMappings[i].Priority <= 0 {
+			// Keep mapping priority stable even when yaml omits explicit priority.
+			c.API.OperationMappings[i].Priority = (i + 1) * 1000
+		}
 		if strings.TrimSpace(c.API.OperationMappings[i].QueryBuilder) == "" {
 			c.API.OperationMappings[i].QueryBuilder = "dump_exclude_none"
 		}

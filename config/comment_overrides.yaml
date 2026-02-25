@@ -1291,8 +1291,6 @@ method_docstrings:
 
     :param conversation_id: The ID of the conversation.
 
-    :param order: The sorting method for the message list.
-
     :param chat_id: The ID of the Chat.
 
     :param before_id: Get messages before the specified position.
@@ -1383,8 +1381,6 @@ method_docstrings:
 
 
     :param conversation_id: The ID of the conversation.
-
-    :param order: The sorting method for the message list.
 
     :param chat_id: The ID of the Chat.
 
