@@ -328,7 +328,7 @@ api:
 language: python
 output_sdk: out
 api:
-  ignore_operations:
+  ignore_apis:
     - path: /v3/chat
       method: bad
 `,
