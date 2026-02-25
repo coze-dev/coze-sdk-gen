@@ -257,10 +257,14 @@ api:
                   2: optional string To (go.tag = "json:\"to\"") // 翻译目标语言
               }
               """
-          extra_code:
-            - |
-              from_: Optional[str] = Field(alias="from")
-              to: Optional[str]
+          extra_fields:
+            - name: from_
+              type: Optional[str]
+              alias: from
+              required: true
+            - name: to
+              type: Optional[str]
+              required: true
         - name: RoomConfig
           allow_missing_in_swagger: true
           extra_fields:
@@ -1863,12 +1867,6 @@ api:
             - conversation_id
         - name: DeleteConversationResp
           allow_missing_in_swagger: true
-          extra_code:
-            - |
-              """
-              删除会话的响应结构体
-              不包含任何字段，仅用于表示操作成功
-              """
       path_prefixes:
         - /v1/conversation
         - /v1/conversations
@@ -2197,23 +2195,30 @@ api:
               type: Optional[str]
               required: false
               default: "None"
-          extra_code:
-            - |
-              @staticmethod
-              def build_auto() -> "DocumentChunkStrategy":
-                  return DocumentChunkStrategy(chunk_type=0)
-
-              @staticmethod
-              def build_custom(
-                  max_tokens: int, separator: str, remove_extra_spaces: bool = False, remove_urls_emails: bool = False
-              ) -> "DocumentChunkStrategy":
-                  return DocumentChunkStrategy(
-                      chunk_type=1,
-                      max_tokens=max_tokens,
-                      remove_extra_spaces=remove_extra_spaces,
-                      remove_urls_emails=remove_urls_emails,
-                      separator=separator,
-                  )
+          builders:
+            - name: build_auto
+              return_type: DocumentChunkStrategy
+              args:
+                - name: chunk_type
+                  expr: "0"
+            - name: build_custom
+              return_type: DocumentChunkStrategy
+              params:
+                - "max_tokens: int"
+                - "separator: str"
+                - "remove_extra_spaces: bool = False"
+                - "remove_urls_emails: bool = False"
+              args:
+                - name: chunk_type
+                  expr: "1"
+                - name: max_tokens
+                  expr: max_tokens
+                - name: remove_extra_spaces
+                  expr: remove_extra_spaces
+                - name: remove_urls_emails
+                  expr: remove_urls_emails
+                - name: separator
+                  expr: separator
         - name: DocumentFormatType
           allow_missing_in_swagger: true
           enum_base: int
@@ -2332,19 +2337,35 @@ api:
               type: Optional[DocumentSourceType]
               required: false
               default: "None"
-          extra_code:
-            - |
-              @staticmethod
-              def build_local_file(content: str, file_type: str = "txt") -> "DocumentSourceInfo":
-                  return DocumentSourceInfo(file_base64=base64_encode_string(content), file_type=file_type)
-
-              @staticmethod
-              def build_web_page(url: str) -> "DocumentSourceInfo":
-                  return DocumentSourceInfo(web_url=url, document_source=DocumentSourceType.ONLINE_WEB)
-
-              @staticmethod
-              def build_file_id(file_id: str) -> "DocumentSourceInfo":
-                  return DocumentSourceInfo(source_file_id=file_id, document_source=DocumentSourceType.UPLOAD_FILE_ID)
+          builders:
+            - name: build_local_file
+              return_type: DocumentSourceInfo
+              params:
+                - "content: str"
+                - "file_type: str = \"txt\""
+              args:
+                - name: file_base64
+                  expr: base64_encode_string(content)
+                - name: file_type
+                  expr: file_type
+            - name: build_web_page
+              return_type: DocumentSourceInfo
+              params:
+                - "url: str"
+              args:
+                - name: web_url
+                  expr: url
+                - name: document_source
+                  expr: DocumentSourceType.ONLINE_WEB
+            - name: build_file_id
+              return_type: DocumentSourceInfo
+              params:
+                - "file_id: str"
+              args:
+                - name: source_file_id
+                  expr: file_id
+                - name: document_source
+                  expr: DocumentSourceType.UPLOAD_FILE_ID
         - name: DocumentUpdateRule
           allow_missing_in_swagger: true
           extra_fields:
@@ -2354,15 +2375,23 @@ api:
             - name: update_interval
               type: int
               required: true
-          extra_code:
-            - |
-              @staticmethod
-              def build_no_auto_update() -> "DocumentUpdateRule":
-                  return DocumentUpdateRule(update_type=DocumentUpdateType.NO_AUTO_UPDATE, update_interval=24)
-
-              @staticmethod
-              def build_auto_update(interval: int) -> "DocumentUpdateRule":
-                  return DocumentUpdateRule(update_type=DocumentUpdateType.AUTO_UPDATE, update_interval=interval)
+          builders:
+            - name: build_no_auto_update
+              return_type: DocumentUpdateRule
+              args:
+                - name: update_type
+                  expr: DocumentUpdateType.NO_AUTO_UPDATE
+                - name: update_interval
+                  expr: "24"
+            - name: build_auto_update
+              return_type: DocumentUpdateRule
+              params:
+                - "interval: int"
+              args:
+                - name: update_type
+                  expr: DocumentUpdateType.AUTO_UPDATE
+                - name: update_interval
+                  expr: interval
         - schema: DocumentBase
           name: DocumentBase
           exclude_unordered_fields: true
@@ -3335,14 +3364,10 @@ api:
             error_message: '""'
             node_execute_status: "None"
             usage: "None"
-          extra_code:
-            - |
-              @field_validator("error_code", mode="before")
-              @classmethod
-              def error_code_empty_str_to_zero(cls, v):
-                  if v == "":
-                      return 0
-                  return v
+          before_validators:
+            - field: error_code
+              rule: empty_string_to_zero
+              method: error_code_empty_str_to_zero
       path_prefixes:
         - /v1/workflows
     - name: workflows_runs_run_histories_execute_nodes

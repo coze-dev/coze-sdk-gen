@@ -2221,6 +2221,8 @@ type packageModelDefinition struct {
 	IsEnum                bool
 	BeforeCode            []string
 	PrependCode           []string
+	Builders              []config.ModelBuilder
+	BeforeValidators      []config.ModelValidator
 	FieldOrder            []string
 	RequiredFields        []string
 	FieldTypes            map[string]string
@@ -2284,6 +2286,8 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 				IsEnum:                isEnum,
 				BeforeCode:            append([]string(nil), model.BeforeCode...),
 				PrependCode:           append([]string(nil), model.PrependCode...),
+				Builders:              append([]config.ModelBuilder(nil), model.Builders...),
+				BeforeValidators:      append([]config.ModelValidator(nil), model.BeforeValidators...),
 				FieldOrder:            append([]string(nil), model.FieldOrder...),
 				RequiredFields:        append([]string(nil), model.RequiredFields...),
 				FieldTypes:            fieldTypes,
@@ -2312,6 +2316,8 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 				IsEnum:                isEnum,
 				BeforeCode:            append([]string(nil), model.BeforeCode...),
 				PrependCode:           append([]string(nil), model.PrependCode...),
+				Builders:              append([]config.ModelBuilder(nil), model.Builders...),
+				BeforeValidators:      append([]config.ModelValidator(nil), model.BeforeValidators...),
 				FieldOrder:            append([]string(nil), model.FieldOrder...),
 				RequiredFields:        append([]string(nil), model.RequiredFields...),
 				FieldTypes:            fieldTypes,
@@ -2339,6 +2345,8 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 			IsEnum:                isEnum,
 			BeforeCode:            append([]string(nil), model.BeforeCode...),
 			PrependCode:           append([]string(nil), model.PrependCode...),
+			Builders:              append([]config.ModelBuilder(nil), model.Builders...),
+			BeforeValidators:      append([]config.ModelValidator(nil), model.BeforeValidators...),
 			FieldOrder:            append([]string(nil), model.FieldOrder...),
 			RequiredFields:        append([]string(nil), model.RequiredFields...),
 			FieldTypes:            fieldTypes,
@@ -2461,17 +2469,26 @@ func renderPackageModelDefinitions(
 			}
 		}
 		buf.WriteString(fmt.Sprintf("class %s(%s):\n", model.Name, baseExpr))
+		hasOverrideClassDocstring := false
 		if docstring := strings.TrimSpace(commentOverrides.ClassDocstrings[classKey]); docstring != "" && !modelHasCustomClassDocstring(model) {
 			style := strings.TrimSpace(commentOverrides.ClassDocstringStyles[classKey])
 			WriteClassDocstring(&buf, 1, docstring, style)
+			hasOverrideClassDocstring = true
 		}
 		properties := map[string]*openapi.Schema{}
 		if model.Schema != nil {
 			properties = model.Schema.Properties
 		}
 		if len(properties) == 0 {
-			if len(model.PrependCode) == 0 && len(model.ExtraFields) == 0 && len(model.ExtraCode) == 0 {
-				buf.WriteString("    pass\n\n")
+			if len(model.PrependCode) == 0 &&
+				len(model.ExtraFields) == 0 &&
+				len(model.ExtraCode) == 0 &&
+				len(model.BeforeValidators) == 0 &&
+				len(model.Builders) == 0 {
+				if !hasOverrideClassDocstring {
+					buf.WriteString("    pass\n")
+				}
+				buf.WriteString("\n")
 				continue
 			}
 		}
@@ -2616,11 +2633,24 @@ func renderPackageModelDefinitions(
 			if len(fieldComment) > 0 && inlineFieldComment == "" {
 				WriteLineComments(&buf, 1, fieldComment)
 			}
+			alias := strings.TrimSpace(extraField.Alias)
 			if extraField.Required {
+				expr := ""
+				if alias != "" {
+					expr = fmt.Sprintf("Field(alias=%q)", alias)
+				}
 				if inlineFieldComment != "" {
-					buf.WriteString(fmt.Sprintf("    %s: %s  # %s\n", normalizedFieldName, typeName, inlineFieldComment))
+					if expr != "" {
+						buf.WriteString(fmt.Sprintf("    %s: %s = %s  # %s\n", normalizedFieldName, typeName, expr, inlineFieldComment))
+					} else {
+						buf.WriteString(fmt.Sprintf("    %s: %s  # %s\n", normalizedFieldName, typeName, inlineFieldComment))
+					}
 				} else {
-					buf.WriteString(fmt.Sprintf("    %s: %s\n", normalizedFieldName, typeName))
+					if expr != "" {
+						buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, expr))
+					} else {
+						buf.WriteString(fmt.Sprintf("    %s: %s\n", normalizedFieldName, typeName))
+					}
 				}
 				hasRenderedField = true
 				continue
@@ -2632,17 +2662,22 @@ func renderPackageModelDefinitions(
 			if defaultValue == "None" && !strings.HasPrefix(typeName, "Optional[") {
 				typeName = "Optional[" + typeName + "]"
 			}
+			expr := defaultValue
+			if alias != "" {
+				expr = fmt.Sprintf("Field(default=%s, alias=%q)", defaultValue, alias)
+			}
 			if inlineFieldComment != "" {
-				buf.WriteString(fmt.Sprintf("    %s: %s = %s  # %s\n", normalizedFieldName, typeName, defaultValue, inlineFieldComment))
+				buf.WriteString(fmt.Sprintf("    %s: %s = %s  # %s\n", normalizedFieldName, typeName, expr, inlineFieldComment))
 			} else {
-				buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, defaultValue))
+				buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, expr))
 			}
 			hasRenderedField = true
 		}
-		combinedExtraCode := append(
-			autoModelExtraCodeForPagination(model, properties, extraFieldByName),
-			model.ExtraCode...,
-		)
+		combinedExtraCode := make([]string, 0, len(model.ExtraCode)+3)
+		combinedExtraCode = append(combinedExtraCode, autoModelExtraCodeForPagination(model, properties, extraFieldByName)...)
+		combinedExtraCode = append(combinedExtraCode, autoModelExtraCodeForBeforeValidators(model)...)
+		combinedExtraCode = append(combinedExtraCode, autoModelExtraCodeForBuilders(model)...)
+		combinedExtraCode = append(combinedExtraCode, model.ExtraCode...)
 		if hasRenderedField && len(combinedExtraCode) > 0 {
 			buf.WriteString("\n")
 		}
@@ -2677,6 +2712,96 @@ func modelFieldType(model packageModelDefinition, propertyName string, fallback 
 		return strings.TrimSpace(fieldType)
 	}
 	return fallback
+}
+
+func autoModelExtraCodeForBeforeValidators(model packageModelDefinition) []string {
+	if len(model.BeforeValidators) == 0 {
+		return nil
+	}
+	blocks := make([]string, 0, len(model.BeforeValidators))
+	for _, validator := range model.BeforeValidators {
+		fieldName := NormalizePythonIdentifier(strings.TrimSpace(validator.Field))
+		if fieldName == "" {
+			continue
+		}
+		methodName := NormalizePythonIdentifier(strings.TrimSpace(validator.Method))
+		if methodName == "" {
+			methodName = "normalize_" + fieldName
+		}
+
+		switch strings.TrimSpace(validator.Rule) {
+		case "int_to_string":
+			blocks = append(blocks, fmt.Sprintf(
+				"@field_validator(%q, mode=\"before\")\n@classmethod\ndef %s(cls, v):\n    if isinstance(v, int):\n        return str(v)\n    return v",
+				fieldName,
+				methodName,
+			))
+		case "empty_string_to_zero":
+			blocks = append(blocks, fmt.Sprintf(
+				"@field_validator(%q, mode=\"before\")\n@classmethod\ndef %s(cls, v):\n    if v == \"\":\n        return 0\n    return v",
+				fieldName,
+				methodName,
+			))
+		}
+	}
+	return blocks
+}
+
+func autoModelExtraCodeForBuilders(model packageModelDefinition) []string {
+	if len(model.Builders) == 0 {
+		return nil
+	}
+	blocks := make([]string, 0, len(model.Builders))
+	for _, builder := range model.Builders {
+		methodName := NormalizePythonIdentifier(strings.TrimSpace(builder.Name))
+		if methodName == "" {
+			continue
+		}
+
+		params := make([]string, 0, len(builder.Params))
+		for _, param := range builder.Params {
+			param = strings.TrimSpace(param)
+			if param == "" {
+				continue
+			}
+			params = append(params, param)
+		}
+		paramExpr := strings.Join(params, ", ")
+		signature := methodName + "()"
+		if paramExpr != "" {
+			signature = methodName + "(" + paramExpr + ")"
+		}
+
+		returnType := strings.TrimSpace(builder.ReturnType)
+		if returnType == "" {
+			returnType = model.Name
+		}
+
+		assignments := make([]string, 0, len(builder.Args))
+		for _, arg := range builder.Args {
+			argName := NormalizePythonIdentifier(strings.TrimSpace(arg.Name))
+			if argName == "" {
+				continue
+			}
+			argExpr := strings.TrimSpace(arg.Expr)
+			if argExpr == "" {
+				argExpr = argName
+			}
+			assignments = append(assignments, fmt.Sprintf("%s=%s", argName, argExpr))
+		}
+		returnCall := model.Name + "()"
+		if len(assignments) > 0 {
+			returnCall = model.Name + "(" + strings.Join(assignments, ", ") + ")"
+		}
+
+		blocks = append(blocks, fmt.Sprintf(
+			"@staticmethod\ndef %s -> %q:\n    return %s",
+			signature,
+			returnType,
+			returnCall,
+		))
+	}
+	return blocks
 }
 
 func autoModelExtraCodeForPagination(
