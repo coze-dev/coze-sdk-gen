@@ -137,6 +137,9 @@ When asked to sync generated Python SDK output into `coze-py` and complete the P
 - Use small, complete commits (one complete objective per commit).
 - Commit messages must be in English and follow conventional style (`feat:`, `fix:`, `refactor:`, etc.).
 - Use `feat:` for non-trivial API surface changes: added APIs, added fields, modified APIs, or modified fields. Pure API ordering-only changes and comment-only changes are excluded.
+- Git identity for automated commits in this repo and downstream `coze-py` must be:
+  - `user.name = chyroc`
+  - `user.email = chyroc@qq.com`
 - Before each commit, all of the following are required:
   - formatting
   - lint
