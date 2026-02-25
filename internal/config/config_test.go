@@ -27,11 +27,11 @@ func TestLoadConfigAndValidate(t *testing.T) {
 }
 
 func TestParseInvalidConfig(t *testing.T) {
-	_, err := Parse([]byte("language: go\noutput_sdk: b"))
+	_, err := Parse([]byte("language: ruby\noutput_sdk: b"))
 	if err == nil {
 		t.Fatal("expected Parse() to fail with unsupported language")
 	}
-	if !strings.Contains(err.Error(), "only python is supported") {
+	if !strings.Contains(err.Error(), "supported languages: python, go") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
@@ -117,6 +117,16 @@ func TestDefaultsApplied(t *testing.T) {
 	}
 	if cfg.CommentOverrides.InlineEnumMemberComment == nil {
 		t.Fatal("expected inline enum comments map to be initialized")
+	}
+}
+
+func TestParseGoLanguage(t *testing.T) {
+	cfg, err := Parse([]byte("language: go\noutput_sdk: out\n"))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	if cfg.Language != "go" {
+		t.Fatalf("unexpected language: %q", cfg.Language)
 	}
 }
 

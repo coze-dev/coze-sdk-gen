@@ -339,8 +339,9 @@ func (c *Config) Validate() error {
 	if c.Language == "" {
 		return fmt.Errorf("language is required")
 	}
-	if strings.ToLower(c.Language) != "python" {
-		return fmt.Errorf("unsupported language %q, only python is supported", c.Language)
+	lang := strings.ToLower(c.Language)
+	if lang != "python" && lang != "go" {
+		return fmt.Errorf("unsupported language %q, supported languages: python, go", c.Language)
 	}
 	if c.OutputSDK == "" {
 		return fmt.Errorf("output_sdk is required")

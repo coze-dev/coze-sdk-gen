@@ -73,10 +73,30 @@ func TestGeneratePythonNilDoc(t *testing.T) {
 	}
 }
 
-func TestRunUnsupportedLanguage(t *testing.T) {
-	cfg := &config.Config{Language: "go"}
-	if _, err := Run(cfg, mustParseSwagger(t)); err == nil {
-		t.Fatal("expected Run() to fail for unimplemented go language")
+func TestGenerateGoFromSwagger(t *testing.T) {
+	cfg := testConfig(t.TempDir())
+	cfg.Language = "go"
+
+	result, err := GenerateGo(cfg, mustParseSwagger(t))
+	if err != nil {
+		t.Fatalf("GenerateGo() error = %v", err)
+	}
+	if result.GeneratedFiles == 0 {
+		t.Fatal("expected generated files")
+	}
+	if result.GeneratedOps < 3 {
+		t.Fatalf("expected >=3 generated operations, got %d", result.GeneratedOps)
+	}
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "client.go"), "type CozeAPI struct")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "apps.go"), "func (r *apps) OpenApiChat(")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "go.mod"), "module github.com/coze-dev/coze-go")
+}
+
+func TestRunGoLanguage(t *testing.T) {
+	cfg := testConfig(t.TempDir())
+	cfg.Language = "go"
+	if _, err := Run(cfg, mustParseSwagger(t)); err != nil {
+		t.Fatalf("expected Run() to support go language, got error: %v", err)
 	}
 }
 

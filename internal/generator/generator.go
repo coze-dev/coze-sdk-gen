@@ -22,7 +22,7 @@ func Run(cfg *config.Config, doc *openapi.Document) (Result, error) {
 	case "python":
 		return GeneratePython(cfg, doc)
 	case "go":
-		return Result{}, fmt.Errorf("language %q is not implemented yet", cfg.Language)
+		return GenerateGo(cfg, doc)
 	default:
 		return Result{}, fmt.Errorf("unsupported language %q", cfg.Language)
 	}
