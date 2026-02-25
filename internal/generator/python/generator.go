@@ -103,71 +103,45 @@ func writePythonSDK(
 	}
 	sort.Strings(pkgNames)
 
-	configPy, err := RenderConfigPy()
-	if err != nil {
-		return err
+	runtimeFiles := []struct {
+		baseDir     string
+		name        string
+		render      func() (string, error)
+		skipIfEmpty bool
+	}{
+		{baseDir: rootDir, name: "config.py", render: RenderConfigPy},
+		{baseDir: rootDir, name: "util.py", render: RenderUtilPy},
+		{baseDir: rootDir, name: "model.py", render: RenderModelPy},
+		{baseDir: rootDir, name: "request.py", render: RenderRequestPy},
+		{baseDir: rootDir, name: "log.py", render: RenderLogPy},
+		{baseDir: rootDir, name: "exception.py", render: RenderExceptionPy},
+		{baseDir: rootDir, name: "version.py", render: RenderVersionPy},
+		{baseDir: outputDir, name: "pyproject.toml", render: RenderPyprojectToml},
+		{
+			baseDir: rootDir,
+			name:    "py.typed",
+			render: func() (string, error) {
+				return "", nil
+			},
+		},
+		{
+			baseDir: rootDir,
+			name:    "coze.py",
+			render: func() (string, error) {
+				return renderCozePy(cfg, packageMetas)
+			},
+			skipIfEmpty: true,
+		},
 	}
-	if err := writer.write(filepath.Join(rootDir, "config.py"), configPy); err != nil {
-		return err
-	}
-	utilPy, err := RenderUtilPy()
-	if err != nil {
-		return err
-	}
-	if err := writer.write(filepath.Join(rootDir, "util.py"), utilPy); err != nil {
-		return err
-	}
-	modelPy, err := RenderModelPy()
-	if err != nil {
-		return err
-	}
-	if err := writer.write(filepath.Join(rootDir, "model.py"), modelPy); err != nil {
-		return err
-	}
-	requestPy, err := RenderRequestPy()
-	if err != nil {
-		return err
-	}
-	if err := writer.write(filepath.Join(rootDir, "request.py"), requestPy); err != nil {
-		return err
-	}
-	logPy, err := RenderLogPy()
-	if err != nil {
-		return err
-	}
-	if err := writer.write(filepath.Join(rootDir, "log.py"), logPy); err != nil {
-		return err
-	}
-	exceptionPy, err := RenderExceptionPy()
-	if err != nil {
-		return err
-	}
-	if err := writer.write(filepath.Join(rootDir, "exception.py"), exceptionPy); err != nil {
-		return err
-	}
-	versionPy, err := RenderVersionPy()
-	if err != nil {
-		return err
-	}
-	if err := writer.write(filepath.Join(rootDir, "version.py"), versionPy); err != nil {
-		return err
-	}
-	pyprojectToml, err := RenderPyprojectToml()
-	if err != nil {
-		return err
-	}
-	if err := writer.write(filepath.Join(outputDir, "pyproject.toml"), pyprojectToml); err != nil {
-		return err
-	}
-	if err := writer.write(filepath.Join(rootDir, "py.typed"), ""); err != nil {
-		return err
-	}
-	cozePy, err := renderCozePy(cfg, packageMetas)
-	if err != nil {
-		return err
-	}
-	if cozePy != "" {
-		if err := writer.write(filepath.Join(rootDir, "coze.py"), cozePy); err != nil {
+	for _, file := range runtimeFiles {
+		content, err := file.render()
+		if err != nil {
+			return err
+		}
+		if file.skipIfEmpty && content == "" {
+			continue
+		}
+		if err := writer.write(filepath.Join(file.baseDir, file.name), content); err != nil {
 			return err
 		}
 	}
