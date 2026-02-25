@@ -16,24 +16,24 @@ This file follows common `AGENTS.md` / `CLAUDE.md` best practices:
 
 - Swagger input: `coze-openapi.yaml`
 - Python baseline repository: `https://github.com/coze-dev/coze-py`
-  - Local alignment directory: `exist-repo/coze-py`
+  - Local baseline mirror directory: choose a local path for `coze-py` (for example `<baseline-root>/coze-py`)
 - Go baseline repository: `https://github.com/coze-dev/coze-go`
-  - Local alignment directory: `exist-repo/coze-go`
+  - Local baseline mirror directory: choose a local path for `coze-go` (for example `<baseline-root>/coze-go`)
 
 # Repository Bootstrap
 
 If baseline repositories are missing locally, they must be cloned before generation/alignment:
 
-- `mkdir -p exist-repo`
-- `test -d exist-repo/coze-py || git clone https://github.com/coze-dev/coze-py exist-repo/coze-py`
-- `test -d exist-repo/coze-go || git clone https://github.com/coze-dev/coze-go exist-repo/coze-go`
+- `mkdir -p <baseline-root>`
+- `test -d <baseline-root>/coze-py || git clone https://github.com/coze-dev/coze-py <baseline-root>/coze-py`
+- `test -d <baseline-root>/coze-go || git clone https://github.com/coze-dev/coze-go <baseline-root>/coze-go`
 
 # Core Implementation Principles
 
 ## 1) Swagger-First (Default)
 
 - Non-special files (by default, all files) must be produced via Swagger parsing + generation logic.
-- Direct copying/overwriting from `exist-repo/coze-py` or `exist-repo/coze-go` is forbidden.
+- Direct copying/overwriting from local baseline mirrors (`coze-py` / `coze-go`) is forbidden.
 - Field/API changes should be handled through Swagger + config convergence first.
 
 ## 2) Special-File Whitelist (Exception Mechanism)
