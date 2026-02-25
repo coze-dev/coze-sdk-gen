@@ -264,6 +264,30 @@ func TestOperationHelpersSignatureAndDefaults(t *testing.T) {
 	if len(callArgs) != 2 || callArgs[0] != "a=a" || callArgs[1] != "**kwargs" {
 		t.Fatalf("BuildDelegateCallArgs(derived)=%v", callArgs)
 	}
+
+	mapping.DelegateCallArgs = []string{"stream=True"}
+	mapping.AsyncDelegateCallArgs = []string{"a=override_a", "extra=extra"}
+	callArgs = BuildDelegateCallArgs([]string{"self", "a: str", "b: int", "**kwargs"}, mapping, false)
+	expectedSync := []string{"a=a", "b=b", "stream=True", "**kwargs"}
+	if len(callArgs) != len(expectedSync) {
+		t.Fatalf("BuildDelegateCallArgs(sync merge) len=%d args=%v", len(callArgs), callArgs)
+	}
+	for i := range expectedSync {
+		if callArgs[i] != expectedSync[i] {
+			t.Fatalf("BuildDelegateCallArgs(sync merge)[%d]=%q want=%q", i, callArgs[i], expectedSync[i])
+		}
+	}
+
+	callArgs = BuildDelegateCallArgs([]string{"self", "a: str", "b: int", "**kwargs"}, mapping, true)
+	expectedAsync := []string{"a=override_a", "b=b", "stream=True", "extra=extra", "**kwargs"}
+	if len(callArgs) != len(expectedAsync) {
+		t.Fatalf("BuildDelegateCallArgs(async merge) len=%d args=%v", len(callArgs), callArgs)
+	}
+	for i := range expectedAsync {
+		if callArgs[i] != expectedAsync[i] {
+			t.Fatalf("BuildDelegateCallArgs(async merge)[%d]=%q want=%q", i, callArgs[i], expectedAsync[i])
+		}
+	}
 }
 
 func TestRenderDelegatedCall(t *testing.T) {
