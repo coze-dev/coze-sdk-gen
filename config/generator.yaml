@@ -4227,7 +4227,6 @@ api:
         - conversation_id=conversation_id
         - parameters=parameters
       query_builder: raw
-      disable_headers_arg: true
       query_fields:
         - name: conversation_id
           type: str
@@ -4369,7 +4368,6 @@ api:
         - name: chat_id
           type: str
           required: true
-      disable_headers_arg: true
       response_type: Chat
       response_cast: Chat
     - path: /v3/chat/message/list
@@ -4389,7 +4387,6 @@ api:
         - name: chat_id
           type: str
           required: true
-      disable_headers_arg: true
       response_type: ListResponse[Message]
       response_cast: ListResponse[Message]
     - path: /v3/chat/cancel
@@ -4404,7 +4401,6 @@ api:
       body_required_fields:
         - conversation_id
         - chat_id
-      disable_headers_arg: true
       response_type: Chat
       response_cast: Chat
     - path: /v1/api_apps
@@ -4537,7 +4533,6 @@ api:
       arg_types:
         messages: List[Message]
         meta_data: Dict[str, str]
-      disable_headers_arg: true
       response_type: Conversation
       response_cast: Conversation
     - path: /v1/conversation/retrieve
@@ -4546,7 +4541,6 @@ api:
       sdk_methods:
         - conversations.retrieve
       query_builder: raw
-      disable_headers_arg: true
       response_type: Conversation
       response_cast: Conversation
     - path: /v1/conversations
@@ -4567,7 +4561,6 @@ api:
           type: int
           required: true
           default: "50"
-      disable_headers_arg: true
       pagination: number_has_more
       pagination_data_class: _PrivateListConversationResp
       pagination_item_type: Conversation
@@ -4581,7 +4574,6 @@ api:
       sdk_methods:
         - conversations.clear
       disable_request_body: true
-      disable_headers_arg: true
       response_type: Section
       response_cast: Section
     - path: /v1/conversations/{conversation_id}
@@ -4595,7 +4587,6 @@ api:
         - name
       body_required_fields:
         - __none__
-      disable_headers_arg: true
       response_type: Conversation
       response_cast: Conversation
     - path: /v1/conversations/{conversation_id}
@@ -4605,7 +4596,6 @@ api:
         - conversations.delete
       allow_missing_in_swagger: true
       disable_request_body: true
-      disable_headers_arg: true
       response_type: DeleteConversationResp
       response_cast: DeleteConversationResp
     - path: /v1/datasets
@@ -4634,7 +4624,6 @@ api:
         format_type: DocumentFormatType
         description: str
         file_id: str
-      disable_headers_arg: true
       response_type: CreateDatasetResp
       response_cast: CreateDatasetResp
     - path: /v1/datasets
@@ -4688,7 +4677,6 @@ api:
         - file_id
       param_aliases:
         file_id: icon_file_id
-      disable_headers_arg: true
       cast_keyword: true
       response_type: UpdateDatasetRes
       response_cast: UpdateDatasetRes
@@ -4701,7 +4689,6 @@ api:
       force_multiline_request_call: true
       allow_missing_in_swagger: true
       disable_request_body: true
-      disable_headers_arg: true
       cast_keyword: true
       response_type: DeleteDatasetRes
       response_cast: DeleteDatasetRes
@@ -4714,7 +4701,6 @@ api:
       body_builder: raw
       body_fields:
         - document_ids
-      disable_headers_arg: true
       ignore_header_params: true
       cast_keyword: true
       response_type: ListResponse[DocumentProgress]
@@ -4751,7 +4737,6 @@ api:
       sync_only: true
       body_builder: raw
       ignore_header_params: true
-      disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - dataset_id
@@ -4787,7 +4772,6 @@ api:
       async_only: true
       body_builder: raw
       ignore_header_params: true
-      disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - dataset_id
@@ -4818,7 +4802,6 @@ api:
       allow_missing_in_swagger: true
       body_builder: raw
       ignore_header_params: true
-      disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - document_id
@@ -4841,7 +4824,6 @@ api:
         - datasets_documents.delete
       body_builder: raw
       ignore_header_params: true
-      disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - document_ids
@@ -4859,7 +4841,6 @@ api:
       disable_request_body: true
       query_builder: raw
       ignore_header_params: true
-      disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       param_aliases:
         page: page_num
@@ -4898,7 +4879,6 @@ api:
       sync_only: true
       body_builder: raw
       ignore_header_params: true
-      disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - dataset_id
@@ -4937,7 +4917,6 @@ api:
       async_only: true
       body_builder: raw
       ignore_header_params: true
-      disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - dataset_id
@@ -4977,7 +4956,6 @@ api:
       allow_missing_in_swagger: true
       body_builder: raw
       ignore_header_params: true
-      disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - document_id
@@ -5009,7 +4987,6 @@ api:
       allow_missing_in_swagger: true
       body_builder: raw
       ignore_header_params: true
-      disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - document_id
@@ -5041,7 +5018,6 @@ api:
       sync_only: true
       body_builder: raw
       ignore_header_params: true
-      disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - document_ids
@@ -5066,7 +5042,6 @@ api:
       async_only: true
       body_builder: raw
       ignore_header_params: true
-      disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - document_ids
@@ -5092,7 +5067,6 @@ api:
       disable_request_body: true
       query_builder: raw
       ignore_header_params: true
-      disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       param_aliases:
         page: page_num
@@ -5237,7 +5211,6 @@ api:
         - bots._list_v1
       query_builder: raw
       async_include_kwargs: true
-      disable_headers_arg: true
       signature_query_fields:
         - space_id
         - page_index
@@ -5440,7 +5413,6 @@ api:
         uid: str
         workflow_id: str
         config: RoomConfig
-      disable_headers_arg: true
       stream_keyword: true
       cast_keyword: true
       response_type: CreateRoomResp
@@ -5501,7 +5473,6 @@ api:
         - audio_live.retrieve
       allow_missing_in_swagger: true
       disable_request_body: true
-      disable_headers_arg: true
       stream_keyword: true
       cast_keyword: true
       force_multiline_signature: true
@@ -5595,7 +5566,6 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
-      disable_headers_arg: true
       arg_defaults_async:
         page_size: "100"
       response_type: NumberPaged[VoicePrintGroup]
@@ -5748,7 +5718,6 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
-      disable_headers_arg: true
       arg_defaults_async:
         page_size: "100"
       response_type: NumberPaged[VoicePrintGroupFeature]
@@ -5863,7 +5832,6 @@ api:
         content: str
         content_type: MessageContentType
         meta_data: Dict[str, str]
-      disable_headers_arg: true
       blank_line_before_return: true
       response_type: Message
       response_cast: Message
@@ -5874,7 +5842,6 @@ api:
         - conversations_message.delete
       query_builder: raw
       disable_request_body: true
-      disable_headers_arg: true
       force_multiline_signature: true
       blank_line_before_return: true
       response_type: Message
@@ -5894,7 +5861,6 @@ api:
         content: str
         content_type: MessageContentType
         meta_data: Dict[str, str]
-      disable_headers_arg: true
       blank_line_before_return: true
       response_type: Message
       response_cast: Message
@@ -5906,7 +5872,6 @@ api:
         - conversations_message.retrieve
       query_builder: raw
       disable_request_body: true
-      disable_headers_arg: true
       force_multiline_signature: true
       blank_line_before_return: true
       response_type: Message
@@ -6082,7 +6047,6 @@ api:
       arg_defaults:
         is_async: "False"
       body_call_expr: remove_none_values(body)
-      disable_headers_arg: true
       response_type: WorkflowRunResult
       response_cast: WorkflowRunResult
     - path: /v1/workflow/stream_run
@@ -6112,7 +6076,6 @@ api:
         app_id: str
         ext: Dict[str, Any]
       body_call_expr: remove_none_values(body)
-      disable_headers_arg: true
       request_stream: true
       stream_wrap: true
       stream_wrap_handler: _workflow_stream_handler
@@ -6153,7 +6116,6 @@ api:
         event_id: str
         resume_data: str
         interrupt_type: int
-      disable_headers_arg: true
       request_stream: true
       stream_wrap: true
       stream_wrap_handler: _workflow_stream_handler

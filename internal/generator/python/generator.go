@@ -1064,7 +1064,7 @@ func RenderPackageModule(
 	if !strings.Contains(content, "(IntEnum):") {
 		content = strings.Replace(content, "from enum import IntEnum\n", "", 1)
 	}
-	return content
+	return normalizeTypingOptionalImport(content)
 }
 
 func collectTypeImports(doc *openapi.Document, bindings []OperationBinding) []string {
@@ -1358,6 +1358,126 @@ func renderPagedResponseClasses(bindings []OperationBinding, overriddenClasses m
 		buf.WriteString(fmt.Sprintf("        return self.%s\n\n", itemsField))
 	}
 	return strings.TrimRight(buf.String(), "\n")
+}
+
+func normalizeTypingOptionalImport(content string) string {
+	lines := strings.Split(content, "\n")
+	usesOptional := false
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "from typing import ") {
+			continue
+		}
+		if strings.Contains(line, "Optional[") {
+			usesOptional = true
+			break
+		}
+	}
+	typingImportIndexes := make([]int, 0)
+	optionalImported := false
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if !strings.HasPrefix(trimmed, "from typing import ") {
+			continue
+		}
+		typingImportIndexes = append(typingImportIndexes, i)
+		namesPart := strings.TrimSpace(strings.TrimPrefix(trimmed, "from typing import "))
+		if namesPart == "" {
+			continue
+		}
+		for _, name := range strings.Split(namesPart, ",") {
+			if strings.TrimSpace(name) == "Optional" {
+				optionalImported = true
+				break
+			}
+		}
+		if optionalImported {
+			break
+		}
+	}
+
+	normalizeTypingLine := func(line string, includeOptional bool) (string, bool) {
+		trimmed := strings.TrimSpace(line)
+		if !strings.HasPrefix(trimmed, "from typing import ") {
+			return line, true
+		}
+		namesPart := strings.TrimSpace(strings.TrimPrefix(trimmed, "from typing import "))
+		names := strings.Split(namesPart, ",")
+		seen := map[string]struct{}{}
+		kept := make([]string, 0, len(names)+1)
+		for _, name := range names {
+			typedName := strings.TrimSpace(name)
+			if typedName == "" {
+				continue
+			}
+			if typedName == "Optional" && !includeOptional {
+				continue
+			}
+			if _, exists := seen[typedName]; exists {
+				continue
+			}
+			seen[typedName] = struct{}{}
+			kept = append(kept, typedName)
+		}
+		if includeOptional {
+			if _, exists := seen["Optional"]; !exists {
+				kept = append(kept, "Optional")
+			}
+		}
+		if len(kept) == 0 {
+			return "", false
+		}
+		return "from typing import " + strings.Join(kept, ", "), true
+	}
+
+	switch {
+	case usesOptional && optionalImported:
+		return content
+	case usesOptional && !optionalImported:
+		if len(typingImportIndexes) > 0 {
+			idx := typingImportIndexes[0]
+			updated, keep := normalizeTypingLine(lines[idx], true)
+			if keep {
+				lines[idx] = updated
+				return strings.Join(lines, "\n")
+			}
+		}
+		insertIdx := 0
+		for insertIdx < len(lines) {
+			trimmed := strings.TrimSpace(lines[insertIdx])
+			if trimmed == "" {
+				insertIdx++
+				continue
+			}
+			if strings.HasPrefix(trimmed, "import ") || strings.HasPrefix(trimmed, "from ") {
+				insertIdx++
+				continue
+			}
+			break
+		}
+		prefix := append([]string{}, lines[:insertIdx]...)
+		suffix := append([]string{}, lines[insertIdx:]...)
+		prefix = append(prefix, "from typing import Optional")
+		if insertIdx < len(lines) && strings.TrimSpace(lines[insertIdx]) != "" {
+			prefix = append(prefix, "")
+		}
+		return strings.Join(append(prefix, suffix...), "\n")
+	default:
+		pruned := make([]string, 0, len(lines))
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if !strings.HasPrefix(trimmed, "from typing import ") {
+				pruned = append(pruned, line)
+				continue
+			}
+			updated, keep := normalizeTypingLine(line, false)
+			if !keep {
+				continue
+			}
+			pruned = append(pruned, updated)
+		}
+		return strings.Join(pruned, "\n")
+	}
 }
 
 type packageModelDefinition struct {
@@ -2174,7 +2294,6 @@ func RenderOperationMethodWithComments(
 	paginationMode := ""
 	returnType, returnCast := ReturnTypeInfo(doc, details.ResponseSchema)
 	requestBodyType, bodyRequired := RequestBodyTypeInfo(doc, details.RequestBodySchema, details.RequestBody)
-	disableHeadersArg := binding.Mapping != nil && binding.Mapping.DisableHeadersArg
 	ignoreHeaderParams := binding.Mapping != nil && binding.Mapping.IgnoreHeaderParams
 	castKeyword := binding.Mapping != nil && binding.Mapping.CastKeyword
 	streamKeyword := binding.Mapping != nil && binding.Mapping.StreamKeyword
@@ -2428,7 +2547,7 @@ func RenderOperationMethodWithComments(
 			signatureArgNames[argName] = struct{}{}
 		}
 	}
-	includeKwargsHeaders := !disableHeadersArg
+	includeKwargsHeaders := true
 	if includeKwargsHeaders {
 		signatureArgs = append(signatureArgs, "**kwargs")
 	}
@@ -2598,11 +2717,7 @@ func RenderOperationMethodWithComments(
 	}
 
 	if len(details.HeaderParameters) > 0 {
-		if disableHeadersArg {
-			buf.WriteString("        header_values = dict()\n")
-		} else {
-			buf.WriteString("        header_values = dict(headers or {})\n")
-		}
+		buf.WriteString("        header_values = dict(headers or {})\n")
 		for _, param := range details.HeaderParameters {
 			name := OperationArgName(param.Name, paramAliases)
 			if param.Required {
@@ -2629,7 +2744,7 @@ func RenderOperationMethodWithComments(
 			buf.WriteString("\n")
 		}
 	}
-	includePaginationHeaders := headersExpr != "" || !disableHeadersArg || len(details.HeaderParameters) > 0
+	includePaginationHeaders := true
 	paginationRequestMethod := strings.ToUpper(requestMethod)
 	if binding.Mapping != nil {
 		if override := strings.TrimSpace(binding.Mapping.PaginationHTTPMethod); override != "" {
@@ -3236,7 +3351,7 @@ func RenderOperationMethodWithComments(
 	if len(queryFields) > 0 {
 		optionalArgs = append(optionalArgs, requestCallArg{Key: "params", Expr: "params=params"})
 	}
-	hasHeadersArg := headersExpr != "" || !disableHeadersArg || len(details.HeaderParameters) > 0
+	hasHeadersArg := true
 	if hasHeadersArg {
 		optionalArgs = append(optionalArgs, requestCallArg{Key: "headers", Expr: "headers=headers"})
 	}

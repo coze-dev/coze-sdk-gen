@@ -443,7 +443,6 @@ func TestRenderOperationMethodAdvancedOptions(t *testing.T) {
 			},
 			BodyFields:         []string{"name"},
 			BodyRequiredFields: []string{"name"},
-			DisableHeadersArg:  true,
 			IgnoreHeaderParams: true,
 			RequestStream:      true,
 			DataField:          "data.items",
@@ -452,7 +451,7 @@ func TestRenderOperationMethodAdvancedOptions(t *testing.T) {
 
 	code := pygen.RenderOperationMethod(doc, binding, false)
 	if strings.Contains(code, "headers: Optional[Dict[str, str]]") {
-		t.Fatalf("did not expect headers arg when DisableHeadersArg=true:\n%s", code)
+		t.Fatalf("did not expect explicit headers signature arg:\n%s", code)
 	}
 	if strings.Contains(code, "X-Trace-Id") {
 		t.Fatalf("did not expect header parameter merge when IgnoreHeaderParams=true:\n%s", code)
@@ -525,7 +524,6 @@ func TestRenderOperationMethodStreamWrapYieldAndSyncVarOverride(t *testing.T) {
 			StreamWrapFields:              []string{"event", "data"},
 			StreamWrapAsyncYield:          true,
 			StreamWrapSyncResponseVar:     "resp",
-			DisableHeadersArg:             true,
 			ForceMultilineRequestCall:     false,
 			ForceMultilineRequestCallSync: false,
 		},
@@ -568,7 +566,6 @@ func TestRenderOperationMethodStreamWrapCompactAsyncReturn(t *testing.T) {
 			StreamWrapFields:             []string{"event", "data"},
 			StreamWrapCompactSyncReturn:  true,
 			StreamWrapCompactAsyncReturn: true,
-			DisableHeadersArg:            true,
 		},
 	}
 	syncCode := pygen.RenderOperationMethod(doc, binding, false)
@@ -600,12 +597,11 @@ func TestRenderOperationMethodStreamWrapBlankLineBeforeAsyncReturn(t *testing.T)
 			StreamWrap:                     true,
 			StreamWrapCompactAsyncReturn:   true,
 			StreamWrapBlankLineBeforeAsync: true,
-			DisableHeadersArg:              true,
 		},
 	}
 
 	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
-	if !strings.Contains(asyncCode, "resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(\"post\", url, True, None)\n\n        return AsyncStream(") {
+	if !strings.Contains(asyncCode, "resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(\"post\", url, True, None, headers=headers)\n\n        return AsyncStream(") {
 		t.Fatalf("expected a blank line before async stream return:\n%s", asyncCode)
 	}
 }
@@ -629,7 +625,6 @@ func TestRenderOperationMethodHeadersExpr(t *testing.T) {
 		Mapping: &config.OperationMapping{
 			BodyBuilder:        "raw",
 			BodyFields:         []string{"name"},
-			DisableHeadersArg:  true,
 			IgnoreHeaderParams: true,
 			HeadersExpr:        "{\"Agw-Js-Conv\": \"str\"}",
 		},
@@ -643,7 +638,7 @@ func TestRenderOperationMethodHeadersExpr(t *testing.T) {
 		t.Fatalf("expected request call to include headers arg:\n%s", code)
 	}
 	if strings.Contains(code, "headers: Optional[Dict[str, str]]") {
-		t.Fatalf("did not expect explicit headers signature arg with disable_headers_arg=true:\n%s", code)
+		t.Fatalf("did not expect explicit headers signature arg:\n%s", code)
 	}
 }
 
@@ -666,7 +661,6 @@ func TestRenderOperationMethodPaginationRequestArg(t *testing.T) {
 			PaginationPageNumField:  "page",
 			PaginationPageSizeField: "size",
 			PaginationRequestArg:    "json",
-			DisableHeadersArg:       true,
 			ParamAliases: map[string]string{
 				"page": "page_num",
 				"size": "page_size",
@@ -713,7 +707,6 @@ func TestRenderOperationMethodPaginationPreBodyCode(t *testing.T) {
 			PaginationTotalField:    "total",
 			PaginationPageNumField:  "page",
 			PaginationPageSizeField: "size",
-			DisableHeadersArg:       true,
 			QueryFields: []config.OperationField{
 				{Name: "page", Type: "int", Required: true, Default: "1"},
 				{Name: "size", Type: "int", Required: true, Default: "10"},
@@ -862,7 +855,6 @@ func TestRenderOperationMethodReturnAndAsyncKwargsOptions(t *testing.T) {
 		MethodName:  "async_call",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			DisableHeadersArg:  true,
 			AsyncIncludeKwargs: true,
 		},
 	}, true)
@@ -1242,7 +1234,6 @@ func TestRenderOperationMethodArgDefaultsAsyncOverride(t *testing.T) {
 			ArgDefaultsAsync: map[string]string{
 				"page_size": "100",
 			},
-			DisableHeadersArg: true,
 		},
 	}
 
@@ -1313,7 +1304,6 @@ func TestRenderOperationMethodPreDocstringCode(t *testing.T) {
 		MethodName:  "create",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			DisableHeadersArg: true,
 			PreDocstringCode: []string{
 				`warnings.warn("deprecated", DeprecationWarning, stacklevel=2)`,
 			},
