@@ -3382,11 +3382,7 @@ func renderChildClientProperty(
 	}
 	module := strings.TrimSpace(child.Module)
 	nilCheckIsNone := strings.TrimSpace(child.NilCheck) == "is_none"
-	useKeywords := child.InitWithKeywords
-	constructExpr := fmt.Sprintf("%s(self._base_url, self._requester)", typeName)
-	if useKeywords {
-		constructExpr = fmt.Sprintf("%s(base_url=self._base_url, requester=self._requester)", typeName)
-	}
+	constructExpr := fmt.Sprintf("%s(base_url=self._base_url, requester=self._requester)", typeName)
 
 	var buf bytes.Buffer
 	buf.WriteString("    @property\n")

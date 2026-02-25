@@ -102,7 +102,6 @@ type ChildClient struct {
 	SyncClass          string `yaml:"sync_class"`
 	AsyncClass         string `yaml:"async_class"`
 	NilCheck           string `yaml:"nil_check"`
-	InitWithKeywords   bool   `yaml:"init_with_keywords"`
 	DisableTypeHints   bool   `yaml:"disable_type_hints"`
 	MultilineSignature bool   `yaml:"multiline_signature"`
 }

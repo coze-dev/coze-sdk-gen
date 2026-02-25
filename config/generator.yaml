@@ -150,37 +150,31 @@ api:
           sync_class: RoomsClient
           async_class: AsyncRoomsClient
           nil_check: is_none
-          init_with_keywords: true
         - attribute: speech
           module: .speech
           sync_class: SpeechClient
           async_class: AsyncSpeechClient
           nil_check: is_none
-          init_with_keywords: true
         - attribute: transcriptions
           module: .transcriptions
           sync_class: TranscriptionsClient
           async_class: AsyncTranscriptionsClient
           nil_check: is_none
-          init_with_keywords: true
         - attribute: voices
           module: .voices
           sync_class: VoicesClient
           async_class: AsyncVoicesClient
           nil_check: is_none
-          init_with_keywords: true
         - attribute: voiceprint_groups
           module: .voiceprint_groups
           sync_class: VoiceprintGroupsClient
           async_class: AsyncVoiceprintGroupsClient
           nil_check: is_none
-          init_with_keywords: true
         - attribute: live
           module: .live
           sync_class: LiveClient
           async_class: AsyncLiveClient
           nil_check: is_none
-          init_with_keywords: true
       path_prefixes:
         - /v1/audio
     - name: audio_rooms
@@ -375,7 +369,6 @@ api:
           sync_class: VoiceprintGroupsFeaturesClient
           async_class: AsyncVoiceprintGroupsFeaturesClient
           nil_check: is_none
-          init_with_keywords: true
       model_schemas:
         - name: CreateVoicePrintGroupResp
           allow_missing_in_swagger: true
@@ -2002,13 +1995,11 @@ api:
           sync_class: DatasetsDocumentsClient
           async_class: AsyncDatasetsDocumentsClient
           nil_check: is_none
-          init_with_keywords: true
         - attribute: images
           module: .images
           sync_class: DatasetsImagesClient
           async_class: AsyncDatasetsImagesClient
           nil_check: is_none
-          init_with_keywords: true
       extra_imports:
         - module: cozepy.datasets.documents
           names:
@@ -3224,7 +3215,6 @@ api:
           sync_class: WorkflowsRunsRunHistoriesExecuteNodesClient
           async_class: AsyncWorkflowsRunsRunHistoriesExecuteNodesClient
           nil_check: is_none
-          init_with_keywords: true
       model_schemas:
         - name: WorkflowExecuteStatus
           allow_missing_in_swagger: true
