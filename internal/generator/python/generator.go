@@ -169,6 +169,13 @@ func writePythonSDK(
 	if err := writePythonSpecialAssets(rootDir, writer); err != nil {
 		return err
 	}
+	rootInitContent, err := renderPythonRootInit(rootDir)
+	if err != nil {
+		return err
+	}
+	if err := writer.write(filepath.Join(rootDir, "__init__.py"), rootInitContent); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -180,7 +187,6 @@ func writePythonSpecialAssets(rootDir string, writer *fileWriter) error {
 		relPath string
 		asset   string
 	}{
-		{relPath: "__init__.py", asset: "special/cozepy/__init__.py.tpl"},
 		{relPath: "auth/__init__.py", asset: "special/cozepy/auth/__init__.py.tpl"},
 		{relPath: "websockets/__init__.py", asset: "special/cozepy/websockets/__init__.py.tpl"},
 		{relPath: "websockets/audio/__init__.py", asset: "special/cozepy/websockets/audio/__init__.py.tpl"},
@@ -3283,13 +3289,18 @@ func normalizeSwaggerDescription(description string) string {
 	if text == "" {
 		return ""
 	}
-	if strings.HasPrefix(text, "{") && strings.Contains(text, "\"insert\"") && strings.Contains(text, "\"ops\"") {
+	if swaggerDescriptionLooksLikeRichText(text) {
 		if extracted := extractSwaggerRichText(text); extracted != "" {
 			return extracted
 		}
 		return ""
 	}
 	return text
+}
+
+func swaggerDescriptionLooksLikeRichText(raw string) bool {
+	text := strings.TrimSpace(raw)
+	return strings.HasPrefix(text, "{") && strings.Contains(text, "\"insert\"") && strings.Contains(text, "\"ops\"")
 }
 
 func extractSwaggerRichText(raw string) string {
@@ -3313,7 +3324,13 @@ func extractSwaggerRichText(raw string) string {
 func collectRichTextInserts(node interface{}, fragments *[]string) {
 	switch typed := node.(type) {
 	case map[string]interface{}:
-		for key, value := range typed {
+		keys := make([]string, 0, len(typed))
+		for key := range typed {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			value := typed[key]
 			if key == "insert" {
 				if text, ok := value.(string); ok {
 					*fragments = append(*fragments, text)
@@ -4047,13 +4064,32 @@ func renderOperationMethodWithContext(
 	}
 	methodDocstring := buildSwaggerMethodDocstring(doc, binding, details, pathParamNameMap, queryFields, bodyFieldNames, requestBodyType, returnType, paramAliases)
 	docstringStyle := "block"
-	if methodDocstring == "" && modulePath != "" && className != "" {
-		key := strings.TrimSpace(modulePath) + "." + strings.TrimSpace(className) + "." + binding.MethodName
-		if raw, ok := commentOverrides.MethodDocstrings[key]; ok {
+	docstringFromOverride := false
+	methodKey := ""
+	if modulePath != "" && className != "" {
+		methodKey = strings.TrimSpace(modulePath) + "." + strings.TrimSpace(className) + "." + binding.MethodName
+	}
+	if methodDocstring == "" && methodKey != "" {
+		if raw, ok := commentOverrides.RichTextMethodDocstrings[methodKey]; ok {
 			methodDocstring = strings.TrimSpace(raw)
-			if style := strings.TrimSpace(commentOverrides.MethodDocstringStyles[key]); style != "" {
-				docstringStyle = style
-			}
+			docstringFromOverride = true
+		}
+	}
+	if methodDocstring == "" && methodKey != "" {
+		if raw, ok := commentOverrides.MethodDocstrings[methodKey]; ok {
+			methodDocstring = strings.TrimSpace(raw)
+			docstringFromOverride = true
+		}
+	}
+	if methodDocstring != "" && methodKey != "" && swaggerDescriptionLooksLikeRichText(details.Description) {
+		if raw, ok := commentOverrides.RichTextMethodDocstrings[methodKey]; ok {
+			methodDocstring = strings.TrimSpace(raw)
+			docstringFromOverride = true
+		}
+	}
+	if methodKey != "" && docstringFromOverride {
+		if style := strings.TrimSpace(commentOverrides.MethodDocstringStyles[methodKey]); style != "" {
+			docstringStyle = style
 		}
 	}
 	if methodDocstring != "" {

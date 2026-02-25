@@ -49,14 +49,15 @@ var defaultDiffIgnorePathsByLanguage = map[string][]string{
 }
 
 type CommentOverrides struct {
-	ClassDocstrings         map[string]string   `yaml:"class_docstrings"`
-	ClassDocstringStyles    map[string]string   `yaml:"class_docstring_styles"`
-	MethodDocstrings        map[string]string   `yaml:"method_docstrings"`
-	MethodDocstringStyles   map[string]string   `yaml:"method_docstring_styles"`
-	FieldComments           map[string][]string `yaml:"field_comments"`
-	InlineFieldComments     map[string]string   `yaml:"inline_field_comments"`
-	EnumMemberComments      map[string][]string `yaml:"enum_member_comments"`
-	InlineEnumMemberComment map[string]string   `yaml:"inline_enum_member_comments"`
+	ClassDocstrings          map[string]string   `yaml:"class_docstrings"`
+	ClassDocstringStyles     map[string]string   `yaml:"class_docstring_styles"`
+	MethodDocstrings         map[string]string   `yaml:"method_docstrings"`
+	RichTextMethodDocstrings map[string]string   `yaml:"richtext_method_docstrings"`
+	MethodDocstringStyles    map[string]string   `yaml:"method_docstring_styles"`
+	FieldComments            map[string][]string `yaml:"field_comments"`
+	InlineFieldComments      map[string]string   `yaml:"inline_field_comments"`
+	EnumMemberComments       map[string][]string `yaml:"enum_member_comments"`
+	InlineEnumMemberComment  map[string]string   `yaml:"inline_enum_member_comments"`
 }
 
 type APIConfig struct {
@@ -350,6 +351,9 @@ func (c *CommentOverrides) ensureMaps() {
 	}
 	if c.MethodDocstrings == nil {
 		c.MethodDocstrings = map[string]string{}
+	}
+	if c.RichTextMethodDocstrings == nil {
+		c.RichTextMethodDocstrings = map[string]string{}
 	}
 	if c.MethodDocstringStyles == nil {
 		c.MethodDocstringStyles = map[string]string{}

@@ -7,6 +7,46 @@ RUN_TESTS="${RUN_TESTS:-1}"
 AUTO_INSTALL_POETRY="${AUTO_INSTALL_POETRY:-1}"
 declare -a passthrough_args=()
 
+select_poetry_python_with_sqlite3() {
+  local -a candidates=(
+    "${POETRY_PYTHON:-}"
+    python3
+    python3.12
+    python3.11
+    python3.10
+    /usr/bin/python3
+    /usr/bin/python3.12
+    /usr/bin/python3.11
+    /usr/bin/python3.10
+    /usr/local/bin/python3
+    /usr/local/bin/python3.12
+    /usr/local/bin/python3.11
+    /usr/local/bin/python3.10
+  )
+  local candidate=""
+  local candidate_path=""
+
+  for candidate in "${candidates[@]}"; do
+    if [ -z "$candidate" ] || ! command -v "$candidate" >/dev/null 2>&1; then
+      continue
+    fi
+    candidate_path="$(command -v "$candidate")"
+    if ! "$candidate_path" -c "import sqlite3" >/dev/null 2>&1; then
+      echo "[coze-py-ci] skip python without sqlite3: $candidate_path"
+      continue
+    fi
+    echo "[coze-py-ci] poetry env use $candidate_path"
+    if poetry env use "$candidate_path" >/dev/null 2>&1; then
+      echo "[coze-py-ci] selected python: $candidate_path"
+      return 0
+    fi
+    echo "[coze-py-ci] skip incompatible python: $candidate_path"
+  done
+
+  echo "[coze-py-ci] no usable python interpreter with sqlite3 support was found."
+  return 1
+}
+
 usage() {
   cat <<'EOF'
 Usage: ./scripts/genpy.sh [options] [extra-generator-args...]
@@ -131,6 +171,10 @@ if [ "$RUN_CI_CHECK" = "1" ]; then
   fi
 
   pushd "$OUTPUT_SDK" >/dev/null
+  if ! select_poetry_python_with_sqlite3; then
+    echo "Install a python interpreter with sqlite3 support and retry."
+    exit 1
+  fi
   echo "[coze-py-ci] poetry install"
   poetry install --no-interaction
   echo "[coze-py-ci] poetry build"

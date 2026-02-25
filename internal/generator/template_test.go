@@ -88,12 +88,4 @@ func TestRenderPythonRawAsset(t *testing.T) {
 	if !strings.Contains(content, "class WebsocketsEventType(DynamicStrEnum):") {
 		t.Fatalf("expected websocket event type class in raw asset, got: %q", content[:80])
 	}
-
-	initContent, err := pygen.RenderPythonRawAsset("special/cozepy/__init__.py.tpl")
-	if err != nil {
-		t.Fatalf("pygen.RenderPythonRawAsset() error = %v", err)
-	}
-	if !strings.Contains(initContent, "from .version import VERSION") {
-		t.Fatalf("expected VERSION import in raw package init, got: %q", initContent)
-	}
 }

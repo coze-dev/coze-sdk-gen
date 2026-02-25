@@ -389,6 +389,16 @@ func TestGeneratePythonFromRealConfig(t *testing.T) {
 	}
 
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "apps", "__init__.py"), "PublishStatus")
+	assertFileContains(
+		t,
+		filepath.Join(cfg.OutputSDK, "cozepy", "__init__.py"),
+		"from .apps.collaborators import (",
+	)
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "__init__.py"), "from .workflows.runs import (")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "__init__.py"), "from .workflows.versions import (")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "__init__.py"), "\"AppCollaborator\"")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "__init__.py"), "\"AddAppCollaboratorResp\"")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "__init__.py"), "\"RemoveAppCollaboratorResp\"")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "coze.py"), "class Coze(object):")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "coze.py"), "class AsyncCoze(object):")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "coze.py"), "def bots(self) -> \"BotsClient\":")
@@ -1551,6 +1561,46 @@ func TestRenderPackageModuleMethodDocstringPreferSwaggerFallbackOverrides(t *tes
 	}
 	if strings.Contains(code, "Retrieve from overrides.") {
 		t.Fatalf("did not expect override docstring to replace swagger docstring:\n%s", code)
+	}
+}
+
+func TestRenderPackageModuleMethodDocstringUsesRichTextOverrides(t *testing.T) {
+	doc := mustParseSwagger(t)
+	meta := pygen.PackageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ClientClass: "DemoClient",
+		},
+	}
+	bindings := []pygen.OperationBinding{
+		{
+			PackageName: "demo",
+			MethodName:  "create",
+			Details: openapi.OperationDetails{
+				Path:        "/v1/demo",
+				Method:      "post",
+				Description: `{"0":{"ops":[{"insert":"first line"},{"insert":"second line"}],"zoneType":"Z"}}`,
+			},
+		},
+	}
+	commentOverrides := config.CommentOverrides{
+		RichTextMethodDocstrings: map[string]string{
+			"cozepy.demo.DemoClient.create":      "Use rich text override.",
+			"cozepy.demo.AsyncDemoClient.create": "Use rich text override.",
+		},
+		MethodDocstringStyles: map[string]string{
+			"cozepy.demo.DemoClient.create":      "block",
+			"cozepy.demo.AsyncDemoClient.create": "block",
+		},
+	}
+
+	code := pygen.RenderPackageModuleWithComments(doc, meta, bindings, commentOverrides)
+	if !strings.Contains(code, "Use rich text override.") {
+		t.Fatalf("expected rich text override docstring:\n%s", code)
+	}
+	if strings.Contains(code, "first line second line") {
+		t.Fatalf("did not expect raw swagger rich text docstring when override exists:\n%s", code)
 	}
 }
 
