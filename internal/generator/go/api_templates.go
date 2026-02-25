@@ -41,7 +41,7 @@ var goInlineAPIModuleRenderers = []goAPIModuleRenderer{
 
 var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 	"audio_rooms.go": {
-		Asset: "audio_rooms.go.raw",
+		Asset: "audio_rooms.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/audio/rooms",
@@ -52,7 +52,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"audio_voiceprint_groups.go": {
-		Asset: "audio_voiceprint_groups.go.raw",
+		Asset: "audio_voiceprint_groups.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/audio/voiceprint_groups",
@@ -70,7 +70,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"audio_voiceprint_groups_features.go": {
-		Asset: "audio_voiceprint_groups_features.go.raw",
+		Asset: "audio_voiceprint_groups_features.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:      "/v1/audio/voiceprint_groups/:group_id/features",
@@ -89,7 +89,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"audio_voices.go": {
-		Asset: "audio_voices.go.raw",
+		Asset: "audio_voices.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/audio/voices/clone",
@@ -106,7 +106,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"bots.go": {
-		Asset: "bots.go.raw",
+		Asset: "bots.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/bot/create",
@@ -148,7 +148,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"chats.go": {
-		Asset: "chats.go.raw",
+		Asset: "chats.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v3/chat",
@@ -177,7 +177,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"conversations.go": {
-		Asset: "conversations.go.raw",
+		Asset: "conversations.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/conversations",
@@ -207,7 +207,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"conversations_messages.go": {
-		Asset: "conversations_messages.go.raw",
+		Asset: "conversations_messages.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/conversation/message/list",
@@ -242,7 +242,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"conversations_messages_feedback.go": {
-		Asset: "conversations_messages_feedback.go.raw",
+		Asset: "conversations_messages_feedback.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:      "/v1/conversations/:conversation_id/messages/:message_id/feedback",
@@ -254,7 +254,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"datasets.go": {
-		Asset: "datasets.go.raw",
+		Asset: "datasets.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/datasets",
@@ -279,7 +279,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"datasets_documents.go": {
-		Asset: "datasets_documents.go.raw",
+		Asset: "datasets_documents.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/open_api/knowledge/document/create",
@@ -308,7 +308,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"datasets_images.go": {
-		Asset: "datasets_images.go.raw",
+		Asset: "datasets_images.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:      "/v1/datasets/:dataset_id/images/:document_id",
@@ -327,7 +327,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"enterprises_members.go": {
-		Asset: "enterprises_members.go.raw",
+		Asset: "enterprises_members.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:      "/v1/enterprises/:enterprise_id/members",
@@ -346,7 +346,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"folders.go": {
-		Asset: "folders.go.raw",
+		Asset: "folders.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/folders",
@@ -364,7 +364,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"stores_plugins.go": {
-		Asset: "stores_plugins.go.raw",
+		Asset: "stores_plugins.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/stores/plugins",
@@ -375,7 +375,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"variables.go": {
-		Asset: "variables.go.raw",
+		Asset: "variables.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/variables",
@@ -386,7 +386,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"workflows.go": {
-		Asset: "workflows.go.raw",
+		Asset: "workflows.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/workflows",
@@ -397,7 +397,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"workflows_runs.go": {
-		Asset: "workflows_runs.go.raw",
+		Asset: "workflows_runs.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/workflow/run",
@@ -420,7 +420,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"workflows_runs_histories.go": {
-		Asset: "workflows_runs_histories.go.raw",
+		Asset: "workflows_runs_histories.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:      "/v1/workflows/:workflow_id/run_histories/:execute_id",
@@ -432,7 +432,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"workflows_runs_histories_execute_nodes.go": {
-		Asset: "workflows_runs_histories_execute_nodes.go.raw",
+		Asset: "workflows_runs_histories_execute_nodes.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:      "/v1/workflows/:workflow_id/run_histories/:execute_id/execute_nodes/:node_execute_uuid",
@@ -444,7 +444,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"workspaces.go": {
-		Asset: "workspaces.go.raw",
+		Asset: "workspaces.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/workspaces",
@@ -455,7 +455,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		},
 	},
 	"workspaces_members.go": {
-		Asset: "workspaces_members.go.raw",
+		Asset: "workspaces_members.go.tpl",
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:      "/v1/workspaces/:workspace_id/members",
@@ -504,7 +504,7 @@ func listGoAPIModuleRenderers() []goAPIModuleRenderer {
 }
 
 func shouldSkipGoExtraAsset(rel string) bool {
-	target := strings.TrimSuffix(rel, ".raw")
+	target := strings.TrimSuffix(rel, ".tpl")
 	_, ok := goGeneratedAPIModuleFiles[target]
 	return ok
 }

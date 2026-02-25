@@ -83,3 +83,34 @@ func TestCleanOutputDirPreserveEntries(t *testing.T) {
 		t.Fatalf("expected generated content to be cleaned, stat error=%v", err)
 	}
 }
+
+func TestCleanOutputDirPreserveEntriesWithGlob(t *testing.T) {
+	out := t.TempDir()
+
+	for _, rel := range []string{
+		"client_test.go",
+		"request_test.go",
+		"client.go",
+		"README.md",
+	} {
+		path := filepath.Join(out, rel)
+		if err := os.WriteFile(path, []byte("x"), 0o644); err != nil {
+			t.Fatalf("write %s: %v", path, err)
+		}
+	}
+
+	if err := CleanOutputDirPreserveEntries(out, []string{"*_test.go"}); err != nil {
+		t.Fatalf("CleanOutputDirPreserveEntries() error = %v", err)
+	}
+
+	for _, rel := range []string{"client_test.go", "request_test.go"} {
+		if _, err := os.Stat(filepath.Join(out, rel)); err != nil {
+			t.Fatalf("expected glob-preserved path %s, stat error=%v", rel, err)
+		}
+	}
+	for _, rel := range []string{"client.go", "README.md"} {
+		if _, err := os.Stat(filepath.Join(out, rel)); !os.IsNotExist(err) {
+			t.Fatalf("expected non-matching file %s to be removed, stat error=%v", rel, err)
+		}
+	}
+}

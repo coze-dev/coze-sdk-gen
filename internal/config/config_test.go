@@ -124,6 +124,9 @@ func TestDefaultsApplied(t *testing.T) {
 	if got := cfg.DiffIgnorePathsForLanguage("go"); len(got) == 0 || got[0] != ".git" {
 		t.Fatalf("expected go diff ignore paths with .git, got %#v", got)
 	}
+	if got := cfg.DiffIgnorePathsForLanguage("go"); !containsPath(got, "*_test.go") {
+		t.Fatalf("expected go diff ignore paths to include *_test.go, got %#v", got)
+	}
 }
 
 func TestParseIgnoresRuntimeOptionsInYAML(t *testing.T) {

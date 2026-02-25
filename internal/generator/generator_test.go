@@ -169,6 +169,10 @@ func TestGenerateGoPreservesGitDirectory(t *testing.T) {
 	if err := os.WriteFile(staleFile, []byte("stale"), 0o644); err != nil {
 		t.Fatalf("write stale file: %v", err)
 	}
+	customTestFile := filepath.Join(out, "custom_test.go")
+	if err := os.WriteFile(customTestFile, []byte("package coze\n"), 0o644); err != nil {
+		t.Fatalf("write custom test file: %v", err)
+	}
 
 	cfg, doc := mustLoadRealConfigAndSwagger(t)
 	cfg.Language = "go"
@@ -179,6 +183,9 @@ func TestGenerateGoPreservesGitDirectory(t *testing.T) {
 
 	if _, err := os.Stat(gitHead); err != nil {
 		t.Fatalf("expected .git to be preserved, stat err=%v", err)
+	}
+	if _, err := os.Stat(customTestFile); err != nil {
+		t.Fatalf("expected custom test file to be preserved, stat err=%v", err)
 	}
 	if _, err := os.Stat(staleFile); !os.IsNotExist(err) {
 		t.Fatalf("expected stale file to be removed, stat err=%v", err)

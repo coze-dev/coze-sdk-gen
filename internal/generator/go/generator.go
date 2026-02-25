@@ -107,12 +107,12 @@ func buildGoOperationBindings(cfg *config.Config, doc *openapi.Document) []goOpe
 
 func writeGoRuntimeScaffolding(outputDir string, writer *fileWriter) error {
 	textAssets := map[string]string{
-		".gitignore":      "gitignore.raw",
-		"codecov.yml":     "codecov.yml.raw",
-		"go.mod":          "go.mod.raw",
-		"go.sum":          "go.sum.raw",
-		"LICENSE":         "LICENSE.raw",
-		"CONTRIBUTING.md": "CONTRIBUTING.md.raw",
+		".gitignore":      "gitignore.tpl",
+		"codecov.yml":     "codecov.yml.tpl",
+		"go.mod":          "go.mod.tpl",
+		"go.sum":          "go.sum.tpl",
+		"LICENSE":         "LICENSE.tpl",
+		"CONTRIBUTING.md": "CONTRIBUTING.md.tpl",
 	}
 	for target, asset := range textAssets {
 		content, err := renderGoRuntimeAsset(asset)
@@ -128,34 +128,34 @@ func writeGoRuntimeScaffolding(outputDir string, writer *fileWriter) error {
 	}
 
 	goAssets := map[string]string{
-		"audio.go":                         "audio.go.raw",
-		"auth.go":                          "auth.go.raw",
-		"auth_token.go":                    "auth_token.go.raw",
-		"base_model.go":                    "base_model.go.raw",
-		"client.go":                        "client.go.raw",
-		"common.go":                        "common.go.raw",
-		"const.go":                         "const.go.raw",
-		"error.go":                         "error.go.raw",
-		"enterprises.go":                   "enterprises.go.raw",
-		"logger.go":                        "logger.go.raw",
-		"pagination.go":                    "pagination.go.raw",
-		"request.go":                       "request.go.raw",
-		"stores.go":                        "stores.go.raw",
-		"stream_reader.go":                 "stream_reader.go.raw",
-		"user_agent.go":                    "user_agent.go.raw",
-		"utils.go":                         "utils.go.raw",
-		"websocket.go":                     "websocket.go.raw",
-		"websocket_audio.go":               "websocket_audio.go.raw",
-		"websocket_audio_speech_client.go": "websocket_audio_speech_client.go.raw",
-		"websocket_audio_speech.go":        "websocket_audio_speech.go.raw",
-		"websocket_audio_transcription_client.go": "websocket_audio_transcription_client.go.raw",
-		"websocket_audio_transcription.go":        "websocket_audio_transcription.go.raw",
-		"websocket_chat_client.go":                "websocket_chat_client.go.raw",
-		"websocket_chat.go":                       "websocket_chat.go.raw",
-		"websocket_client.go":                     "websocket_client.go.raw",
-		"websocket_event.go":                      "websocket_event.go.raw",
-		"websocket_event_type.go":                 "websocket_event_type.go.raw",
-		"websocket_wait.go":                       "websocket_wait.go.raw",
+		"audio.go":                         "audio.go.tpl",
+		"auth.go":                          "auth.go.tpl",
+		"auth_token.go":                    "auth_token.go.tpl",
+		"base_model.go":                    "base_model.go.tpl",
+		"client.go":                        "client.go.tpl",
+		"common.go":                        "common.go.tpl",
+		"const.go":                         "const.go.tpl",
+		"error.go":                         "error.go.tpl",
+		"enterprises.go":                   "enterprises.go.tpl",
+		"logger.go":                        "logger.go.tpl",
+		"pagination.go":                    "pagination.go.tpl",
+		"request.go":                       "request.go.tpl",
+		"stores.go":                        "stores.go.tpl",
+		"stream_reader.go":                 "stream_reader.go.tpl",
+		"user_agent.go":                    "user_agent.go.tpl",
+		"utils.go":                         "utils.go.tpl",
+		"websocket.go":                     "websocket.go.tpl",
+		"websocket_audio.go":               "websocket_audio.go.tpl",
+		"websocket_audio_speech_client.go": "websocket_audio_speech_client.go.tpl",
+		"websocket_audio_speech.go":        "websocket_audio_speech.go.tpl",
+		"websocket_audio_transcription_client.go": "websocket_audio_transcription_client.go.tpl",
+		"websocket_audio_transcription.go":        "websocket_audio_transcription.go.tpl",
+		"websocket_chat_client.go":                "websocket_chat_client.go.tpl",
+		"websocket_chat.go":                       "websocket_chat.go.tpl",
+		"websocket_client.go":                     "websocket_client.go.tpl",
+		"websocket_event.go":                      "websocket_event.go.tpl",
+		"websocket_event_type.go":                 "websocket_event_type.go.tpl",
+		"websocket_wait.go":                       "websocket_wait.go.tpl",
 	}
 	for target, asset := range goAssets {
 		content, err := renderGoRuntimeAsset(asset)
@@ -187,8 +187,8 @@ func writeGoExtraAssets(outputDir string, writer *fileWriter) error {
 			return err
 		}
 		target := rel
-		if strings.HasSuffix(target, ".raw") {
-			target = strings.TrimSuffix(target, ".raw")
+		if strings.HasSuffix(target, ".tpl") {
+			target = strings.TrimSuffix(target, ".tpl")
 		}
 		if err := writer.writeBytes(filepath.Join(outputDir, target), content); err != nil {
 			return err
@@ -236,7 +236,7 @@ func (r *apps) List(ctx context.Context, req *ListAppReq) (NumberPaged[SimpleApp
 	return NewNumberPaged(
 		func(request *pageRequest) (*pageResponse[SimpleApp], error) {
 			resp := new(listAppResp)
-			err := r.core.rawRequest(ctx, &RawRequestReq{
+			err := r.core.tplRequest(ctx, &RawRequestReq{
 				Method: http.MethodGet,
 				URL:    %q,
 				Body:   req.toReq(request),
@@ -325,7 +325,7 @@ func (r *audioLive) Retrieve(ctx context.Context, req *RetrieveAudioLiveReq) (*L
 		Body:   req,
 	}
 	response := new(retrieveAudioLiveResp)
-	err := r.core.rawRequest(ctx, request, response)
+	err := r.core.tplRequest(ctx, request, response)
 	return response.Data, err
 }
 
@@ -401,7 +401,7 @@ func (r *audioSpeech) Create(ctx context.Context, req *CreateAudioSpeechReq) (*C
 		Body:   req,
 	}
 	response := new(createAudioSpeechResp)
-	err := r.core.rawRequest(ctx, request, response)
+	err := r.core.tplRequest(ctx, request, response)
 	return response.Data, err
 }
 
@@ -478,7 +478,7 @@ func (r *audioTranscriptions) Create(ctx context.Context, req *AudioSpeechTransc
 		IsFile: true,
 	}
 	response := new(createAudioTranscriptionsResp)
-	err := r.core.rawRequest(ctx, request, response)
+	err := r.core.tplRequest(ctx, request, response)
 	return response.CreateAudioTranscriptionsResp, err
 }
 
@@ -530,7 +530,7 @@ func (r *chatMessages) List(ctx context.Context, req *ListChatsMessagesReq) (*Li
 		Body:   req,
 	}
 	response := new(listChatsMessagesResp)
-	err := r.core.rawRequest(ctx, request, response)
+	err := r.core.tplRequest(ctx, request, response)
 	return response.ListChatsMessagesResp, err
 }
 
@@ -590,7 +590,7 @@ func (r *files) Upload(ctx context.Context, req *UploadFilesReq) (*UploadFilesRe
 		IsFile: true,
 	}
 	response := new(uploadFilesResp)
-	err := r.core.rawRequest(ctx, request, response)
+	err := r.core.tplRequest(ctx, request, response)
 	return response.Data, err
 }
 
@@ -601,7 +601,7 @@ func (r *files) Retrieve(ctx context.Context, req *RetrieveFilesReq) (*RetrieveF
 		Body:   req,
 	}
 	response := new(retrieveFilesResp)
-	err := r.core.rawRequest(ctx, request, response)
+	err := r.core.tplRequest(ctx, request, response)
 	return response.Data, err
 }
 
@@ -707,7 +707,7 @@ func (r *templates) Duplicate(ctx context.Context, templateID string, req *Dupli
 		Body:   req,
 	}
 	response := new(templateDuplicateResp)
-	err := r.core.rawRequest(ctx, request, response)
+	err := r.core.tplRequest(ctx, request, response)
 	return response.Data, err
 }
 
@@ -769,7 +769,7 @@ func (r *users) Me(ctx context.Context) (*User, error) {
 		Body:   new(GetUserMeReq),
 	}
 	response := new(meResp)
-	err := r.client.rawRequest(ctx, request, response)
+	err := r.client.tplRequest(ctx, request, response)
 	return response.User, err
 }
 
@@ -820,7 +820,7 @@ func (r *workflowsChat) Stream(ctx context.Context, req *WorkflowsChatStreamReq)
 		Body:   req,
 	}
 	response := new(createChatsResp)
-	err := r.client.rawRequest(ctx, request, response)
+	err := r.client.tplRequest(ctx, request, response)
 	return newStream(ctx, r.client, response.HTTPResponse, parseChatEvent), err
 }
 

@@ -14,7 +14,9 @@ func CleanOutputDirPreserveGit(outputDir string) error {
 }
 
 // CleanOutputDirPreserveEntries removes all top-level entries in outputDir
-// except the given preserve entries.
+// except the given preserve entries. Preserve entries can be exact names or
+// glob patterns (for example, "*_test.go"), both matched against top-level
+// entry names.
 func CleanOutputDirPreserveEntries(outputDir string, preserveEntries []string) error {
 	outputDir = strings.TrimSpace(outputDir)
 	if outputDir == "" {
@@ -40,9 +42,14 @@ func CleanOutputDirPreserveEntries(outputDir string, preserveEntries []string) e
 		return fmt.Errorf("read output directory %q: %w", outputDir, err)
 	}
 	preserve := map[string]struct{}{}
+	preservePatterns := make([]string, 0)
 	for _, entry := range preserveEntries {
 		name := topLevelEntryName(entry)
 		if name == "" {
+			continue
+		}
+		if isGlobPattern(name) {
+			preservePatterns = append(preservePatterns, name)
 			continue
 		}
 		preserve[name] = struct{}{}
@@ -50,6 +57,9 @@ func CleanOutputDirPreserveEntries(outputDir string, preserveEntries []string) e
 	for _, entry := range entries {
 		name := entry.Name()
 		if _, ok := preserve[name]; ok {
+			continue
+		}
+		if matchesGlobPatterns(name, preservePatterns) {
 			continue
 		}
 		target := filepath.Join(outputDir, name)
@@ -84,4 +94,21 @@ func topLevelEntryName(value string) string {
 		return ""
 	}
 	return strings.TrimSpace(parts[0])
+}
+
+func isGlobPattern(value string) bool {
+	return strings.ContainsAny(value, "*?[")
+}
+
+func matchesGlobPatterns(name string, patterns []string) bool {
+	for _, pattern := range patterns {
+		matched, err := filepath.Match(pattern, name)
+		if err != nil {
+			continue
+		}
+		if matched {
+			return true
+		}
+	}
+	return false
 }
