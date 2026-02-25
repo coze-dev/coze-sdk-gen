@@ -2295,7 +2295,6 @@ func RenderOperationMethodWithComments(
 	returnType, returnCast := ReturnTypeInfo(doc, details.ResponseSchema)
 	requestBodyType, bodyRequired := RequestBodyTypeInfo(doc, details.RequestBodySchema, details.RequestBody)
 	ignoreHeaderParams := binding.Mapping != nil && binding.Mapping.IgnoreHeaderParams
-	castKeyword := binding.Mapping != nil && binding.Mapping.CastKeyword
 	streamKeyword := binding.Mapping != nil && binding.Mapping.StreamKeyword
 	streamWrap := binding.Mapping != nil && binding.Mapping.StreamWrap
 	asyncIncludeKwargs := async && binding.Mapping != nil && binding.Mapping.AsyncIncludeKwargs
@@ -3343,11 +3342,8 @@ func RenderOperationMethodWithComments(
 		streamExpr = fmt.Sprintf("stream=%s", streamLiteral)
 	}
 	optionalArgs = append(optionalArgs, requestCallArg{Key: "stream", Expr: streamExpr, Pos: !streamKeyword})
-	castExprValue := castExpr
-	if castKeyword {
-		castExprValue = fmt.Sprintf("cast=%s", castExpr)
-	}
-	optionalArgs = append(optionalArgs, requestCallArg{Key: "cast", Expr: castExprValue, Pos: !castKeyword})
+	castExprValue := fmt.Sprintf("cast=%s", castExpr)
+	optionalArgs = append(optionalArgs, requestCallArg{Key: "cast", Expr: castExprValue, Pos: false})
 	if len(queryFields) > 0 {
 		optionalArgs = append(optionalArgs, requestCallArg{Key: "params", Expr: "params=params"})
 	}

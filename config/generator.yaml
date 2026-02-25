@@ -4414,7 +4414,6 @@ api:
         - connector_id
       body_required_fields:
         - app_type
-      cast_keyword: true
       arg_types:
         app_type: AppType
       response_type: APIApp
@@ -4428,7 +4427,6 @@ api:
       body_fields:
         - name
         - callback_url
-      cast_keyword: true
       param_aliases:
         api_app_id: app_id
       response_type: UpdateAPIAppsResp
@@ -4440,7 +4438,6 @@ api:
         - api_apps.delete
       http_method_override: delete
       disable_request_body: true
-      cast_keyword: true
       param_aliases:
         api_app_id: app_id
       response_type: DeleteAPIAppsResp
@@ -4677,7 +4674,6 @@ api:
         - file_id
       param_aliases:
         file_id: icon_file_id
-      cast_keyword: true
       response_type: UpdateDatasetRes
       response_cast: UpdateDatasetRes
     - path: /v1/datasets/{dataset_id}
@@ -4689,7 +4685,6 @@ api:
       force_multiline_request_call: true
       allow_missing_in_swagger: true
       disable_request_body: true
-      cast_keyword: true
       response_type: DeleteDatasetRes
       response_cast: DeleteDatasetRes
     - path: /v1/datasets/{dataset_id}/process
@@ -4702,7 +4697,6 @@ api:
       body_fields:
         - document_ids
       ignore_header_params: true
-      cast_keyword: true
       response_type: ListResponse[DocumentProgress]
       response_cast: ListResponse[DocumentProgress]
       data_field: data.data
@@ -4814,7 +4808,6 @@ api:
         document_name: str
         update_rule: Optional[DocumentUpdateRule]
       force_multiline_request_call: true
-      cast_keyword: true
       response_type: UpdateDocumentRes
       response_cast: UpdateDocumentRes
     - path: /open_api/knowledge/document/delete
@@ -4830,7 +4823,6 @@ api:
       arg_types:
         document_ids: List[str]
       force_multiline_request_call: true
-      cast_keyword: true
       response_type: DeleteDocumentRes
       response_cast: DeleteDocumentRes
     - path: /open_api/knowledge/document/list
@@ -5007,7 +4999,6 @@ api:
               stacklevel=2,
           )
       force_multiline_request_call: true
-      cast_keyword: true
       response_type: None
       response_cast: None
     - path: /open_api/knowledge/document/delete
@@ -5056,7 +5047,6 @@ api:
               stacklevel=2,
           )
       force_multiline_request_call: true
-      cast_keyword: true
       response_type: None
       response_cast: None
     - path: /open_api/knowledge/document/list
@@ -5152,7 +5142,6 @@ api:
         knowledge: BotKnowledge
         suggest_reply_info: BotSuggestReplyInfo
         model_info_config: BotModelInfo
-      cast_keyword: true
       response_type: UpdateBotResp
       response_cast: UpdateBotResp
     - path: /v1/bot/publish
@@ -5284,7 +5273,6 @@ api:
       no_blank_line_after_headers: true
       force_multiline_signature: true
       http_method_override: GET
-      cast_keyword: true
       stream_keyword: true
       response_type: SimpleFolder
       response_cast: SimpleFolder
@@ -5342,7 +5330,6 @@ api:
         - event_types
       arg_types:
         event_types: List[str]
-      cast_keyword: true
       response_type: CreateAPIAppsEventsResp
       response_cast: CreateAPIAppsEventsResp
     - path: /v1/api_apps/{api_app_id}/events
@@ -5358,7 +5345,6 @@ api:
         - event_types
       arg_types:
         event_types: List[str]
-      cast_keyword: true
       response_type: DeleteAPIAppsEventsResp
       response_cast: DeleteAPIAppsEventsResp
     - path: /v1/api_apps/{api_app_id}/events
@@ -5414,7 +5400,6 @@ api:
         workflow_id: str
         config: RoomConfig
       stream_keyword: true
-      cast_keyword: true
       response_type: CreateRoomResp
       response_cast: CreateRoomResp
     - path: /v1/audio/speech
@@ -5446,7 +5431,6 @@ api:
         speed: "1"
         sample_rate: "24000"
       stream_keyword: true
-      cast_keyword: true
       response_type: FileHTTPResponse
       response_cast: FileHTTPResponse
     - path: /v1/audio/transcriptions
@@ -5463,7 +5447,6 @@ api:
       arg_types:
         file: FileTypes
       stream_keyword: true
-      cast_keyword: true
       response_type: CreateTranscriptionsResp
       response_cast: CreateTranscriptionsResp
     - path: /v1/audio/live/{live_id}
@@ -5474,7 +5457,6 @@ api:
       allow_missing_in_swagger: true
       disable_request_body: true
       stream_keyword: true
-      cast_keyword: true
       force_multiline_signature: true
       response_type: LiveInfo
       response_cast: LiveInfo
@@ -5494,7 +5476,6 @@ api:
         name: str
         desc: str
       blank_line_before_return: true
-      cast_keyword: true
       force_multiline_signature: true
       response_type: CreateVoicePrintGroupResp
       response_cast: CreateVoicePrintGroupResp
@@ -5513,7 +5494,6 @@ api:
         name: str
         desc: str
       blank_line_before_return: true
-      cast_keyword: true
       force_multiline_signature: true
       response_type: UpdateVoicePrintGroupResp
       response_cast: UpdateVoicePrintGroupResp
@@ -5524,7 +5504,6 @@ api:
         - audio_voiceprint_groups.delete
       allow_missing_in_swagger: true
       disable_request_body: true
-      cast_keyword: true
       force_multiline_signature: true
       response_type: DeleteVoicePrintGroupResp
       response_cast: DeleteVoicePrintGroupResp
@@ -5601,7 +5580,6 @@ api:
         - channel
       files_before_body: true
       blank_line_before_return: true
-      cast_keyword: true
       force_multiline_signature: true
       response_type: SpeakerIdentifyResp
       response_cast: SpeakerIdentifyResp
@@ -5640,7 +5618,6 @@ api:
         - channel
       files_before_body: true
       blank_line_before_return: true
-      cast_keyword: true
       force_multiline_signature: true
       response_type: CreateVoicePrintGroupFeatureResp
       response_cast: CreateVoicePrintGroupFeatureResp
@@ -5677,7 +5654,6 @@ api:
         - channel
       files_before_body: true
       blank_line_before_return: true
-      cast_keyword: true
       force_multiline_signature: true
       response_type: UpdateVoicePrintGroupFeatureResp
       response_cast: UpdateVoicePrintGroupFeatureResp
@@ -5688,7 +5664,6 @@ api:
         - audio_voiceprint_groups_features.delete
       allow_missing_in_swagger: true
       disable_request_body: true
-      cast_keyword: true
       force_multiline_signature: true
       response_type: DeleteVoicePrintGroupFeatureResp
       response_cast: DeleteVoicePrintGroupFeatureResp
@@ -5897,7 +5872,6 @@ api:
         - body
         - cast
         - headers
-      cast_keyword: true
       blank_line_before_return: true
       response_type: CreateConversationMessageFeedbackResp
       response_cast: CreateConversationMessageFeedbackResp
@@ -5907,7 +5881,6 @@ api:
       sdk_methods:
         - conversations_message_feedback.delete
       disable_request_body: true
-      cast_keyword: true
       response_type: DeleteConversationMessageFeedbackResp
       response_cast: DeleteConversationMessageFeedbackResp
     - path: /v1/datasets/{dataset_id}/images
@@ -5961,7 +5934,6 @@ api:
         - cast
         - headers
         - body
-      cast_keyword: true
       response_type: UpdateImageRes
       response_cast: UpdateImageRes
     - path: /v1/enterprises/{enterprise_id}/members
@@ -5977,7 +5949,6 @@ api:
       compact_single_item_maps_async: true
       arg_types:
         users: List[EnterpriseMember]
-      cast_keyword: true
       stream_keyword: true
       response_type: CreateEnterpriseMemberResp
       response_cast: CreateEnterpriseMemberResp
@@ -5993,7 +5964,6 @@ api:
         - role
       arg_types:
         role: EnterpriseMemberRole
-      cast_keyword: true
       stream_keyword: true
       response_type: UpdateEnterpriseMemberResp
       response_cast: UpdateEnterpriseMemberResp
@@ -6010,7 +5980,6 @@ api:
         - receiver_user_id
       arg_types:
         receiver_user_id: str
-      cast_keyword: true
       stream_keyword: true
       response_type: DeleteEnterpriseMemberResp
       response_cast: DeleteEnterpriseMemberResp
@@ -6152,7 +6121,6 @@ api:
         - node_execute_uuid
       response_type: WorkflowNodeExecuteHistory
       response_cast: WorkflowNodeExecuteHistory
-      cast_keyword: true
     - path: /v1/workflows/{workflow_id}/versions
       method: get
       order: 95
@@ -6292,7 +6260,6 @@ api:
         - user_ids
       arg_types:
         user_ids: List[str]
-      cast_keyword: true
       stream_keyword: true
       response_type: DeleteWorkspaceMemberResp
       response_cast: DeleteWorkspaceMemberResp
@@ -6318,7 +6285,6 @@ api:
           ]
       arg_types:
         users: List[WorkspaceMember]
-      cast_keyword: true
       stream_keyword: true
       response_type: CreateWorkspaceMemberResp
       response_cast: CreateWorkspaceMemberResp

@@ -482,7 +482,6 @@ func TestRenderOperationMethodStreamWrapAndKeywords(t *testing.T) {
 			StreamWrap:        true,
 			StreamWrapHandler: "handle_demo",
 			StreamWrapFields:  []string{"event", "data"},
-			CastKeyword:       true,
 			StreamKeyword:     true,
 		},
 	}
@@ -601,7 +600,7 @@ func TestRenderOperationMethodStreamWrapBlankLineBeforeAsyncReturn(t *testing.T)
 	}
 
 	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
-	if !strings.Contains(asyncCode, "resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(\"post\", url, True, None, headers=headers)\n\n        return AsyncStream(") {
+	if !strings.Contains(asyncCode, "resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(\"post\", url, True, cast=None, headers=headers)\n\n        return AsyncStream(") {
 		t.Fatalf("expected a blank line before async stream return:\n%s", asyncCode)
 	}
 }
