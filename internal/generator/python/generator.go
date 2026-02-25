@@ -903,13 +903,7 @@ func RenderPackageModule(
 			if child.DisableTypeHints {
 				continue
 			}
-			typeModule := strings.TrimSpace(child.TypeImportModule)
-			if typeModule == "" {
-				typeModule = strings.TrimSpace(child.Module)
-			}
-			if !strings.HasPrefix(typeModule, ".") {
-				typeModule = childTypeImportModule(meta, typeModule)
-			}
+			typeModule := childImportModule(meta, child.Module)
 			if typeModule == "" {
 				continue
 			}
@@ -3246,7 +3240,7 @@ func packageClientClassName(meta PackageMeta, async bool) string {
 	return base + "Client"
 }
 
-func childTypeImportModule(meta PackageMeta, module string) string {
+func childImportModule(meta PackageMeta, module string) string {
 	module = strings.TrimSpace(module)
 	if module == "" {
 		return ""
@@ -3406,7 +3400,7 @@ func renderChildClientProperty(
 		buf.WriteString(fmt.Sprintf("            from %s import %s\n\n", module, typeName))
 		buf.WriteString(fmt.Sprintf("            self._%s = %s\n", attribute, constructExpr))
 	} else {
-		absModule := childTypeImportModule(meta, module)
+		absModule := childImportModule(meta, module)
 		buf.WriteString(fmt.Sprintf("            from %s import %s\n\n", absModule, typeName))
 		buf.WriteString(fmt.Sprintf("            self._%s = %s\n", attribute, constructExpr))
 	}

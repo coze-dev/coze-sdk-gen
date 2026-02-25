@@ -48,7 +48,6 @@ api:
       child_clients:
         - attribute: events
           module: .events
-          type_import_module: cozepy.api_apps.events
           sync_class: APIAppsEventsClient
           async_class: AsyncAPIAppsEventsClient
       path_prefixes:
