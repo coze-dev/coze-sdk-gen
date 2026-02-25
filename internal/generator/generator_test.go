@@ -1233,12 +1233,11 @@ func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
 		MethodName:  "create",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			BodyBuilder:       "remove_none_values",
-			BodyFields:        []string{"name"},
-			FilesFields:       []string{"file"},
-			FilesFieldValues:  map[string]string{"file": "_try_fix_file(file)"},
-			FilesBeforeBody:   true,
-			HeadersBeforeBody: true,
+			BodyBuilder:      "remove_none_values",
+			BodyFields:       []string{"name"},
+			FilesFields:      []string{"file"},
+			FilesFieldValues: map[string]string{"file": "_try_fix_file(file)"},
+			FilesBeforeBody:  true,
 			ArgTypes: map[string]string{
 				"group_id": "str",
 				"name":     "str",
@@ -1312,7 +1311,6 @@ func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
 		Mapping: &config.OperationMapping{
 			BodyBuilder:           "raw",
 			BodyFields:            []string{"name"},
-			HeadersBeforeBody:     true,
 			BlankLineAfterHeaders: true,
 			ArgTypes: map[string]string{
 				"id":   "str",

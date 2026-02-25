@@ -4744,7 +4744,6 @@ api:
         - connector_id
         - audit_status
         - reason
-      headers_before_body: true
       blank_line_after_headers: true
       response_type: UpdateConnectorBotResp
       response_cast: UpdateConnectorBotResp
@@ -4758,7 +4757,6 @@ api:
       ignore_header_params: true
       disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
-      headers_before_body: true
       body_fields:
         - dataset_id
         - document_bases
@@ -4795,7 +4793,6 @@ api:
       ignore_header_params: true
       disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
-      headers_before_body: true
       body_fields:
         - dataset_id
         - document_bases
@@ -4827,7 +4824,6 @@ api:
       ignore_header_params: true
       disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
-      headers_before_body: true
       body_fields:
         - document_id
         - document_name
@@ -4851,7 +4847,6 @@ api:
       ignore_header_params: true
       disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
-      headers_before_body: true
       body_fields:
         - document_ids
       arg_types:
@@ -4910,7 +4905,6 @@ api:
       ignore_header_params: true
       disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
-      headers_before_body: true
       body_fields:
         - dataset_id
         - document_bases
@@ -4950,7 +4944,6 @@ api:
       ignore_header_params: true
       disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
-      headers_before_body: true
       body_fields:
         - dataset_id
         - document_bases
@@ -4991,7 +4984,6 @@ api:
       ignore_header_params: true
       disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
-      headers_before_body: true
       body_fields:
         - document_id
         - document_name
@@ -5024,7 +5016,6 @@ api:
       ignore_header_params: true
       disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
-      headers_before_body: true
       body_fields:
         - document_id
         - document_name
@@ -5057,7 +5048,6 @@ api:
       ignore_header_params: true
       disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
-      headers_before_body: true
       body_fields:
         - document_ids
       arg_types:
@@ -5083,7 +5073,6 @@ api:
       ignore_header_params: true
       disable_headers_arg: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
-      headers_before_body: true
       body_fields:
         - document_ids
       arg_types:
@@ -5216,7 +5205,6 @@ api:
         - connector_ids
       body_required_fields:
         - bot_id
-      headers_before_body: true
       response_type: Bot
       response_cast: Bot
     - path: /v1/bots/{bot_id}/unpublish
@@ -5231,7 +5219,6 @@ api:
         - bot_id
         - connector_id
         - unpublish_reason
-      headers_before_body: true
       response_type: UnpublishBotResp
       response_cast: UnpublishBotResp
     - path: /v1/bot/get_online_info
@@ -5501,7 +5488,6 @@ api:
         response_format: AudioFormat.MP3
         speed: "1"
         sample_rate: "24000"
-      headers_before_body: true
       stream_keyword: true
       cast_keyword: true
       response_type: FileHTTPResponse
@@ -5519,7 +5505,6 @@ api:
         file: _try_fix_file(file)
       arg_types:
         file: FileTypes
-      headers_before_body: true
       stream_keyword: true
       cast_keyword: true
       response_type: CreateTranscriptionsResp
@@ -5552,7 +5537,6 @@ api:
       arg_types:
         name: str
         desc: str
-      headers_before_body: true
       blank_line_before_return: true
       cast_keyword: true
       force_multiline_signature: true
@@ -5572,7 +5556,6 @@ api:
         group_id: str
         name: str
         desc: str
-      headers_before_body: true
       blank_line_before_return: true
       cast_keyword: true
       force_multiline_signature: true
@@ -5661,7 +5644,6 @@ api:
         - top_k
         - sample_rate
         - channel
-      headers_before_body: true
       files_before_body: true
       blank_line_before_return: true
       cast_keyword: true
@@ -5701,7 +5683,6 @@ api:
         - desc
         - sample_rate
         - channel
-      headers_before_body: true
       files_before_body: true
       blank_line_before_return: true
       cast_keyword: true
@@ -5739,7 +5720,6 @@ api:
         - file
         - sample_rate
         - channel
-      headers_before_body: true
       files_before_body: true
       blank_line_before_return: true
       cast_keyword: true
@@ -5874,7 +5854,6 @@ api:
         text: str
         space_id: str
         description: str
-      headers_before_body: true
       blank_line_before_return: true
       response_type: Voice
       response_cast: Voice
@@ -5964,7 +5943,6 @@ api:
         feedback_type: FeedbackType
         reason_types: List[str]
         comment: str
-      headers_before_body: true
       request_call_arg_order:
         - body
         - cast
@@ -6030,7 +6008,6 @@ api:
         - caption
       arg_types:
         caption: str
-      headers_before_body: true
       request_call_arg_order:
         - cast
         - headers
@@ -6051,7 +6028,6 @@ api:
       compact_single_item_maps_async: true
       arg_types:
         users: List[EnterpriseMember]
-      headers_before_body: true
       cast_keyword: true
       stream_keyword: true
       response_type: CreateEnterpriseMemberResp
@@ -6068,7 +6044,6 @@ api:
         - role
       arg_types:
         role: EnterpriseMemberRole
-      headers_before_body: true
       cast_keyword: true
       stream_keyword: true
       response_type: UpdateEnterpriseMemberResp
@@ -6086,7 +6061,6 @@ api:
         - receiver_user_id
       arg_types:
         receiver_user_id: str
-      headers_before_body: true
       cast_keyword: true
       stream_keyword: true
       response_type: DeleteEnterpriseMemberResp
@@ -6374,7 +6348,6 @@ api:
         - user_ids
       arg_types:
         user_ids: List[str]
-      headers_before_body: true
       cast_keyword: true
       stream_keyword: true
       response_type: DeleteWorkspaceMemberResp
@@ -6401,7 +6374,6 @@ api:
           ]
       arg_types:
         users: List[WorkspaceMember]
-      headers_before_body: true
       cast_keyword: true
       stream_keyword: true
       response_type: CreateWorkspaceMemberResp
@@ -6436,7 +6408,6 @@ api:
       sdk_methods:
         - templates.duplicate
       force_compact_signature: true
-      headers_before_body: true
       body_builder: raw
       body_fields:
         - workspace_id

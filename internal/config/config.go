@@ -218,7 +218,6 @@ type OperationMapping struct {
 	StreamWrapCompactAsyncReturn   bool              `yaml:"stream_wrap_compact_async_return"`
 	StreamWrapCompactSyncReturn    bool              `yaml:"stream_wrap_compact_sync_return"`
 	StreamWrapBlankLineBeforeAsync bool              `yaml:"stream_wrap_blank_line_before_return_async"`
-	HeadersBeforeBody              bool              `yaml:"headers_before_body"`
 	QueryBuilder                   string            `yaml:"query_builder"`
 	QueryBuilderSync               string            `yaml:"query_builder_sync"`
 	QueryBuilderAsync              string            `yaml:"query_builder_async"`

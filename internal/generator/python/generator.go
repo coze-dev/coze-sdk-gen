@@ -2179,7 +2179,6 @@ func RenderOperationMethodWithComments(
 	castKeyword := binding.Mapping != nil && binding.Mapping.CastKeyword
 	streamKeyword := binding.Mapping != nil && binding.Mapping.StreamKeyword
 	streamWrap := binding.Mapping != nil && binding.Mapping.StreamWrap
-	headersBeforeBody := binding.Mapping != nil && binding.Mapping.HeadersBeforeBody
 	omitReturnType := binding.Mapping != nil && binding.Mapping.OmitReturnType
 	asyncIncludeKwargs := async && binding.Mapping != nil && binding.Mapping.AsyncIncludeKwargs
 	paginationHeadersBeforeParams := binding.Mapping != nil && binding.Mapping.PaginationHeadersBeforeParams
@@ -3011,7 +3010,7 @@ func RenderOperationMethodWithComments(
 		return buf.String()
 	}
 
-	if headersExpr == "" && headersBeforeBody && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
+	if headersExpr == "" && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
 		if binding.Mapping != nil && binding.Mapping.BlankLineAfterHeaders {
 			buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n\n")
 		} else {
@@ -3244,7 +3243,7 @@ func RenderOperationMethodWithComments(
 		optionalArgs = append(optionalArgs, requestCallArg{Key: "params", Expr: "params=params"})
 	}
 	hasHeadersArg := headersExpr != "" || !disableHeadersArg || len(details.HeaderParameters) > 0
-	if headersBeforeBody && hasHeadersArg {
+	if hasHeadersArg {
 		optionalArgs = append(optionalArgs, requestCallArg{Key: "headers", Expr: "headers=headers"})
 	}
 	if bodyArgExpr != "" {
@@ -3263,9 +3262,6 @@ func RenderOperationMethodWithComments(
 	}
 	if dataField != "" {
 		optionalArgs = append(optionalArgs, requestCallArg{Key: "data_field", Expr: fmt.Sprintf("data_field=%q", dataField)})
-	}
-	if !headersBeforeBody && hasHeadersArg {
-		optionalArgs = append(optionalArgs, requestCallArg{Key: "headers", Expr: "headers=headers"})
 	}
 	if binding.Mapping != nil && len(binding.Mapping.RequestCallArgOrder) > 0 {
 		argByKey := map[string]requestCallArg{}
