@@ -580,10 +580,6 @@ api:
               value: big
             - name: SMALL
               value: small
-        - schema: Interval
-          name: Interval
-        - schema: EmotionInfo
-          name: EmotionInfo
         - schema: OpenAPIVoiceData
           name: Voice
           required_fields:

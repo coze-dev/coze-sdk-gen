@@ -600,8 +600,19 @@ func RenderPackageModule(
 			}
 		}
 	}
-	schemaAliases := packageSchemaAliases(meta)
 	modelDefs := resolvePackageModelDefinitions(doc, meta)
+	schemaAliases := packageSchemaAliases(meta)
+	for _, model := range modelDefs {
+		schemaName := strings.TrimSpace(model.SchemaName)
+		modelName := strings.TrimSpace(model.Name)
+		if schemaName == "" || modelName == "" {
+			continue
+		}
+		if _, exists := schemaAliases[schemaName]; exists {
+			continue
+		}
+		schemaAliases[schemaName] = modelName
+	}
 	hasModelClasses := len(modelDefs) > 0 || (meta.Package != nil && len(meta.Package.EmptyModels) > 0)
 	overridePaginationClasses := map[string]struct{}{}
 	if meta.Package != nil {
@@ -2257,110 +2268,267 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 		return nil
 	}
 	result := make([]packageModelDefinition, 0, len(meta.Package.ModelSchemas))
+	includedSchemaNames := map[string]struct{}{}
 	for _, model := range meta.Package.ModelSchemas {
-		schemaName := strings.TrimSpace(model.Schema)
-		modelName := strings.TrimSpace(model.Name)
-		if modelName == "" {
+		definition, ok := resolveConfiguredModelDefinition(doc, model)
+		if !ok {
 			continue
 		}
-		fieldTypes := map[string]string{}
-		for k, v := range model.FieldTypes {
-			fieldTypes[k] = v
+		result = append(result, definition)
+		schemaName := strings.TrimSpace(definition.SchemaName)
+		if schemaName != "" {
+			includedSchemaNames[schemaName] = struct{}{}
 		}
-		fieldDefaults := map[string]string{}
-		for k, v := range model.FieldDefaults {
-			fieldDefaults[k] = v
-		}
-		enumValues := append([]config.ModelEnumValue(nil), model.EnumValues...)
-
-		if schemaName == "" {
-			if !model.AllowMissingInSwagger {
-				continue
-			}
-			isEnum := len(enumValues) > 0
-			result = append(result, packageModelDefinition{
-				SchemaName:            schemaName,
-				Name:                  modelName,
-				BaseClasses:           append([]string(nil), model.BaseClasses...),
-				Schema:                nil,
-				IsEnum:                isEnum,
-				BeforeCode:            append([]string(nil), model.BeforeCode...),
-				PrependCode:           append([]string(nil), model.PrependCode...),
-				Builders:              append([]config.ModelBuilder(nil), model.Builders...),
-				BeforeValidators:      append([]config.ModelValidator(nil), model.BeforeValidators...),
-				FieldOrder:            append([]string(nil), model.FieldOrder...),
-				RequiredFields:        append([]string(nil), model.RequiredFields...),
-				FieldTypes:            fieldTypes,
-				FieldDefaults:         fieldDefaults,
-				EnumBase:              strings.TrimSpace(model.EnumBase),
-				EnumValues:            enumValues,
-				ExtraFields:           append([]config.ModelField(nil), model.ExtraFields...),
-				ExtraCode:             append([]string(nil), model.ExtraCode...),
-				AllowMissingInSwagger: model.AllowMissingInSwagger,
-				ExcludeUnordered:      model.ExcludeUnorderedFields,
-				SeparateCommentedEnum: model.SeparateCommentedEnum,
-			})
-			continue
-		}
-		schema, ok := doc.Components.Schemas[schemaName]
-		if !ok || schema == nil {
-			if !model.AllowMissingInSwagger {
-				continue
-			}
-			isEnum := len(enumValues) > 0
-			result = append(result, packageModelDefinition{
-				SchemaName:            schemaName,
-				Name:                  modelName,
-				BaseClasses:           append([]string(nil), model.BaseClasses...),
-				Schema:                nil,
-				IsEnum:                isEnum,
-				BeforeCode:            append([]string(nil), model.BeforeCode...),
-				PrependCode:           append([]string(nil), model.PrependCode...),
-				Builders:              append([]config.ModelBuilder(nil), model.Builders...),
-				BeforeValidators:      append([]config.ModelValidator(nil), model.BeforeValidators...),
-				FieldOrder:            append([]string(nil), model.FieldOrder...),
-				RequiredFields:        append([]string(nil), model.RequiredFields...),
-				FieldTypes:            fieldTypes,
-				FieldDefaults:         fieldDefaults,
-				EnumBase:              strings.TrimSpace(model.EnumBase),
-				EnumValues:            enumValues,
-				ExtraFields:           append([]config.ModelField(nil), model.ExtraFields...),
-				ExtraCode:             append([]string(nil), model.ExtraCode...),
-				AllowMissingInSwagger: model.AllowMissingInSwagger,
-				ExcludeUnordered:      model.ExcludeUnorderedFields,
-				SeparateCommentedEnum: model.SeparateCommentedEnum,
-			})
-			continue
-		}
-		resolved := doc.ResolveSchema(schema)
-		if resolved == nil {
-			continue
-		}
-		isEnum := len(enumValues) > 0 || (len(resolved.Enum) > 0 && (resolved.Type == "string" || resolved.Type == "integer" || resolved.Type == ""))
-		result = append(result, packageModelDefinition{
-			SchemaName:            schemaName,
-			Name:                  modelName,
-			BaseClasses:           append([]string(nil), model.BaseClasses...),
-			Schema:                resolved,
-			IsEnum:                isEnum,
-			BeforeCode:            append([]string(nil), model.BeforeCode...),
-			PrependCode:           append([]string(nil), model.PrependCode...),
-			Builders:              append([]config.ModelBuilder(nil), model.Builders...),
-			BeforeValidators:      append([]config.ModelValidator(nil), model.BeforeValidators...),
-			FieldOrder:            append([]string(nil), model.FieldOrder...),
-			RequiredFields:        append([]string(nil), model.RequiredFields...),
-			FieldTypes:            fieldTypes,
-			FieldDefaults:         fieldDefaults,
-			EnumBase:              strings.TrimSpace(model.EnumBase),
-			EnumValues:            enumValues,
-			ExtraFields:           append([]config.ModelField(nil), model.ExtraFields...),
-			ExtraCode:             append([]string(nil), model.ExtraCode...),
-			AllowMissingInSwagger: model.AllowMissingInSwagger,
-			ExcludeUnordered:      model.ExcludeUnorderedFields,
-			SeparateCommentedEnum: model.SeparateCommentedEnum,
-		})
 	}
-	return result
+	for i := 0; i < len(result); i++ {
+		model := result[i]
+		if model.Schema == nil {
+			continue
+		}
+		referencedSchemaNames := collectModelSchemaRefs(doc, model.Schema, model.FieldTypes)
+		for _, schemaName := range referencedSchemaNames {
+			schemaName = strings.TrimSpace(schemaName)
+			if schemaName == "" || schemaName == strings.TrimSpace(model.SchemaName) {
+				continue
+			}
+			if _, exists := includedSchemaNames[schemaName]; exists {
+				continue
+			}
+			schema, exists := doc.Components.Schemas[schemaName]
+			if !exists || schema == nil {
+				continue
+			}
+			resolved := doc.ResolveSchema(schema)
+			if resolved == nil {
+				continue
+			}
+			includedSchemaNames[schemaName] = struct{}{}
+			result = append(result, packageModelDefinition{
+				SchemaName:    schemaName,
+				Name:          NormalizeClassName(schemaName),
+				Schema:        resolved,
+				IsEnum:        isSchemaEnum(resolved, nil),
+				FieldTypes:    map[string]string{},
+				FieldDefaults: map[string]string{},
+			})
+		}
+	}
+	return orderModelDefinitionsByDependencies(doc, result)
+}
+
+func resolveConfiguredModelDefinition(doc *openapi.Document, model config.ModelSchema) (packageModelDefinition, bool) {
+	schemaName := strings.TrimSpace(model.Schema)
+	modelName := strings.TrimSpace(model.Name)
+	if modelName == "" {
+		return packageModelDefinition{}, false
+	}
+	fieldTypes := map[string]string{}
+	for k, v := range model.FieldTypes {
+		fieldTypes[k] = v
+	}
+	fieldDefaults := map[string]string{}
+	for k, v := range model.FieldDefaults {
+		fieldDefaults[k] = v
+	}
+	enumValues := append([]config.ModelEnumValue(nil), model.EnumValues...)
+	definition := packageModelDefinition{
+		SchemaName:            schemaName,
+		Name:                  modelName,
+		BaseClasses:           append([]string(nil), model.BaseClasses...),
+		Schema:                nil,
+		IsEnum:                false,
+		BeforeCode:            append([]string(nil), model.BeforeCode...),
+		PrependCode:           append([]string(nil), model.PrependCode...),
+		Builders:              append([]config.ModelBuilder(nil), model.Builders...),
+		BeforeValidators:      append([]config.ModelValidator(nil), model.BeforeValidators...),
+		FieldOrder:            append([]string(nil), model.FieldOrder...),
+		RequiredFields:        append([]string(nil), model.RequiredFields...),
+		FieldTypes:            fieldTypes,
+		FieldDefaults:         fieldDefaults,
+		EnumBase:              strings.TrimSpace(model.EnumBase),
+		EnumValues:            enumValues,
+		ExtraFields:           append([]config.ModelField(nil), model.ExtraFields...),
+		ExtraCode:             append([]string(nil), model.ExtraCode...),
+		AllowMissingInSwagger: model.AllowMissingInSwagger,
+		ExcludeUnordered:      model.ExcludeUnorderedFields,
+		SeparateCommentedEnum: model.SeparateCommentedEnum,
+	}
+
+	if schemaName == "" {
+		if !model.AllowMissingInSwagger {
+			return packageModelDefinition{}, false
+		}
+		definition.IsEnum = isSchemaEnum(nil, enumValues)
+		return definition, true
+	}
+	schema, ok := doc.Components.Schemas[schemaName]
+	if !ok || schema == nil {
+		if !model.AllowMissingInSwagger {
+			return packageModelDefinition{}, false
+		}
+		definition.IsEnum = isSchemaEnum(nil, enumValues)
+		return definition, true
+	}
+	resolved := doc.ResolveSchema(schema)
+	if resolved == nil {
+		if !model.AllowMissingInSwagger {
+			return packageModelDefinition{}, false
+		}
+		definition.IsEnum = isSchemaEnum(nil, enumValues)
+		return definition, true
+	}
+	definition.Schema = resolved
+	definition.IsEnum = isSchemaEnum(resolved, enumValues)
+	return definition, true
+}
+
+func isSchemaEnum(schema *openapi.Schema, explicitEnumValues []config.ModelEnumValue) bool {
+	if len(explicitEnumValues) > 0 {
+		return true
+	}
+	if schema == nil {
+		return false
+	}
+	return len(schema.Enum) > 0 && (schema.Type == "string" || schema.Type == "integer" || schema.Type == "")
+}
+
+func collectModelSchemaRefs(doc *openapi.Document, schema *openapi.Schema, fieldTypeOverrides map[string]string) []string {
+	if doc == nil || schema == nil {
+		return nil
+	}
+	resolvedRoot := doc.ResolveSchema(schema)
+	if resolvedRoot == nil {
+		return nil
+	}
+	rootName, _ := doc.SchemaName(resolvedRoot)
+
+	refs := map[string]struct{}{}
+	visited := map[*openapi.Schema]struct{}{}
+	var walk func(*openapi.Schema)
+	walk = func(current *openapi.Schema) {
+		resolved := doc.ResolveSchema(current)
+		if resolved == nil {
+			return
+		}
+		if _, ok := visited[resolved]; ok {
+			return
+		}
+		visited[resolved] = struct{}{}
+		if name, ok := doc.SchemaName(current); ok {
+			refs[name] = struct{}{}
+		} else if name, ok := doc.SchemaName(resolved); ok {
+			refs[name] = struct{}{}
+		}
+		for _, property := range resolved.Properties {
+			walk(property)
+		}
+		walk(resolved.Items)
+		for _, item := range resolved.AllOf {
+			walk(item)
+		}
+		for _, item := range resolved.AnyOf {
+			walk(item)
+		}
+		for _, item := range resolved.OneOf {
+			walk(item)
+		}
+		if additional, ok := resolved.AdditionalProperties.(*openapi.Schema); ok {
+			walk(additional)
+		}
+	}
+
+	for propertyName, property := range resolvedRoot.Properties {
+		override := strings.TrimSpace(fieldTypeOverrides[propertyName])
+		if override != "" {
+			continue
+		}
+		walk(property)
+	}
+	walk(resolvedRoot.Items)
+	for _, item := range resolvedRoot.AllOf {
+		walk(item)
+	}
+	for _, item := range resolvedRoot.AnyOf {
+		walk(item)
+	}
+	for _, item := range resolvedRoot.OneOf {
+		walk(item)
+	}
+	if additional, ok := resolvedRoot.AdditionalProperties.(*openapi.Schema); ok {
+		walk(additional)
+	}
+
+	names := make([]string, 0, len(refs))
+	for name := range refs {
+		name = strings.TrimSpace(name)
+		if name == "" || name == rootName {
+			continue
+		}
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+func orderModelDefinitionsByDependencies(doc *openapi.Document, models []packageModelDefinition) []packageModelDefinition {
+	if len(models) < 2 {
+		return models
+	}
+	indexBySchema := map[string]int{}
+	for i, model := range models {
+		schemaName := strings.TrimSpace(model.SchemaName)
+		if schemaName == "" {
+			continue
+		}
+		indexBySchema[schemaName] = i
+	}
+	dependencies := make([][]int, len(models))
+	for i, model := range models {
+		if model.Schema == nil {
+			continue
+		}
+		depNames := collectModelSchemaRefs(doc, model.Schema, model.FieldTypes)
+		depIndexes := make([]int, 0, len(depNames))
+		seen := map[int]struct{}{}
+		for _, depName := range depNames {
+			depIdx, ok := indexBySchema[depName]
+			if !ok {
+				continue
+			}
+			if depIdx == i {
+				continue
+			}
+			if _, exists := seen[depIdx]; exists {
+				continue
+			}
+			seen[depIdx] = struct{}{}
+			depIndexes = append(depIndexes, depIdx)
+		}
+		sort.Ints(depIndexes)
+		dependencies[i] = depIndexes
+	}
+
+	state := make([]int, len(models))
+	ordered := make([]packageModelDefinition, 0, len(models))
+	var visit func(index int)
+	visit = func(index int) {
+		if state[index] == 2 {
+			return
+		}
+		if state[index] == 1 {
+			return
+		}
+		state[index] = 1
+		for _, depIndex := range dependencies[index] {
+			visit(depIndex)
+		}
+		state[index] = 2
+		ordered = append(ordered, models[index])
+	}
+	for i := range models {
+		visit(i)
+	}
+	return ordered
 }
 
 func renderPackageModelDefinitions(
