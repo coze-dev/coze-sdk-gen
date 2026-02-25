@@ -3381,7 +3381,6 @@ func renderChildClientProperty(
 		typeName = child.AsyncClass
 	}
 	module := strings.TrimSpace(child.Module)
-	nilCheckIsNone := strings.TrimSpace(child.NilCheck) == "is_none"
 	constructExpr := fmt.Sprintf("%s(base_url=self._base_url, requester=self._requester)", typeName)
 
 	var buf bytes.Buffer
@@ -3411,11 +3410,7 @@ func renderChildClientProperty(
 			WriteMethodDocstring(&buf, 2, docstring, style)
 		}
 	}
-	if nilCheckIsNone {
-		buf.WriteString(fmt.Sprintf("        if self._%s is None:\n", attribute))
-	} else {
-		buf.WriteString(fmt.Sprintf("        if not self._%s:\n", attribute))
-	}
+	buf.WriteString(fmt.Sprintf("        if not self._%s:\n", attribute))
 
 	if module == "" {
 		buf.WriteString(fmt.Sprintf("            self._%s = %s\n", attribute, constructExpr))
