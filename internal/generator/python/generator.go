@@ -2179,7 +2179,6 @@ func RenderOperationMethodWithComments(
 	castKeyword := binding.Mapping != nil && binding.Mapping.CastKeyword
 	streamKeyword := binding.Mapping != nil && binding.Mapping.StreamKeyword
 	streamWrap := binding.Mapping != nil && binding.Mapping.StreamWrap
-	omitReturnType := binding.Mapping != nil && binding.Mapping.OmitReturnType
 	asyncIncludeKwargs := async && binding.Mapping != nil && binding.Mapping.AsyncIncludeKwargs
 	paginationHeadersBeforeParams := binding.Mapping != nil && binding.Mapping.PaginationHeadersBeforeParams
 	paginationCastBeforeHeaders := binding.Mapping != nil && binding.Mapping.PaginationCastBeforeHeaders
@@ -2450,10 +2449,7 @@ func RenderOperationMethodWithComments(
 	headersAssigned := false
 
 	var buf bytes.Buffer
-	returnAnnotation := ""
-	if !omitReturnType {
-		returnAnnotation = fmt.Sprintf(" -> %s", returnType)
-	}
+	returnAnnotation := fmt.Sprintf(" -> %s", returnType)
 	compactSignature := len(bodyFieldNames) == 0 && requestBodyType == "" && len(signatureArgs) <= 2
 	if binding.Mapping != nil {
 		if binding.Mapping.ForceMultilineSignature {

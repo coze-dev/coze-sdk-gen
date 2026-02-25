@@ -181,7 +181,6 @@ type OperationMapping struct {
 	ArgTypes                       map[string]string `yaml:"arg_types"`
 	ResponseType                   string            `yaml:"response_type"`
 	AsyncResponseType              string            `yaml:"async_response_type"`
-	OmitReturnType                 bool              `yaml:"omit_return_type"`
 	ResponseCast                   string            `yaml:"response_cast"`
 	CastKeyword                    bool              `yaml:"cast_keyword"`
 	StreamKeyword                  bool              `yaml:"stream_keyword"`
