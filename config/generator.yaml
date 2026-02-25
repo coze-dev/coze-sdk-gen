@@ -3620,25 +3620,7 @@ api:
         - chat.create
       delegate_to: _create
       delegate_call_args:
-        - bot_id=bot_id
-        - user_id=user_id
         - stream=False
-        - additional_messages=additional_messages
-        - custom_variables=custom_variables
-        - auto_save_history=auto_save_history
-        - meta_data=meta_data
-        - conversation_id=conversation_id
-        - parameters=parameters
-      async_delegate_call_args:
-        - bot_id=bot_id
-        - user_id=user_id
-        - additional_messages=additional_messages
-        - stream=False
-        - custom_variables=custom_variables
-        - auto_save_history=auto_save_history
-        - meta_data=meta_data
-        - conversation_id=conversation_id
-        - parameters=parameters
       query_builder: raw
       query_fields:
         - name: conversation_id
@@ -3680,29 +3662,7 @@ api:
         - chat.stream
       delegate_to: _create
       delegate_call_args:
-        - bot_id=bot_id
-        - user_id=user_id
         - stream=True
-        - additional_messages=additional_messages
-        - custom_variables=custom_variables
-        - auto_save_history=auto_save_history
-        - meta_data=meta_data
-        - conversation_id=conversation_id
-        - parameters=parameters
-        - enable_card=enable_card
-        - "**kwargs"
-      async_delegate_call_args:
-        - bot_id=bot_id
-        - user_id=user_id
-        - additional_messages=additional_messages
-        - stream=True
-        - custom_variables=custom_variables
-        - auto_save_history=auto_save_history
-        - meta_data=meta_data
-        - conversation_id=conversation_id
-        - parameters=parameters
-        - enable_card=enable_card
-        - "**kwargs"
       delegate_async_yield: true
       query_builder: raw
       query_fields:
