@@ -26,6 +26,18 @@ The legacy SDK shape and the OpenAPI document are not fully 1:1.
 ./scripts/genpy.sh
 ```
 
+Generate directly into a real `coze-py` repository:
+
+```bash
+./scripts/genpy.sh --output-sdk /path/to/coze-py
+```
+
+Run with CI-parity checks (build, lint/type-check, tests):
+
+```bash
+./scripts/genpy.sh --output-sdk /path/to/coze-py --ci-check
+```
+
 Run Go generator:
 
 ```bash
@@ -69,3 +81,23 @@ Run full checks:
 ```bash
 make check
 ```
+
+## coze-py CI Parity Check
+
+Use a single entrypoint:
+
+```bash
+./scripts/genpy.sh --output-sdk /path/to/coze-py --ci-check
+```
+
+or:
+
+```bash
+COZE_PY_DIR=/path/to/coze-py make check-coze-py
+```
+
+`scripts/genpy.sh` runs:
+1. generation
+2. `ruff check --fix`
+3. `ruff format`
+4. optional `coze-py` CI-parity checks (`build`, `ruff check`, `ruff format --check`, `mypy`, `pytest`)
