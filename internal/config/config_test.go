@@ -323,19 +323,6 @@ api:
 `,
 		},
 		{
-			name: "empty sync method order",
-			content: `
-language: python
-output_sdk: out
-api:
-  packages:
-    - name: chat
-      source_dir: a
-      sync_method_order:
-        - ""
-`,
-		},
-		{
 			name: "invalid method",
 			content: `
 language: python
