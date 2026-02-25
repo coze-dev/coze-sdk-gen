@@ -74,7 +74,6 @@ type Package struct {
 	AllowMissingInSwagger     bool          `yaml:"allow_missing_in_swagger"`
 	DisableAutoImports        bool          `yaml:"disable_auto_imports"`
 	SeparateCommentedEnum     bool          `yaml:"separate_commented_enum_members"`
-	SeparateRequiredOptional  bool          `yaml:"separate_required_optional_fields"`
 	SeparateCommentedFields   bool          `yaml:"separate_commented_fields"`
 	BlankLineBeforeChildInits bool          `yaml:"blank_line_before_child_inits"`
 	HTTPRequestFromModel      bool          `yaml:"http_request_from_model"`
@@ -117,25 +116,24 @@ type ChildClient struct {
 }
 
 type ModelSchema struct {
-	Schema                   string            `yaml:"schema"`
-	Name                     string            `yaml:"name"`
-	BaseClasses              []string          `yaml:"base_classes"`
-	BeforeCode               []string          `yaml:"before_code"`
-	PrependCode              []string          `yaml:"prepend_code"`
-	SeparateCommentedEnum    *bool             `yaml:"separate_commented_enum_members"`
-	SeparateRequiredOptional *bool             `yaml:"separate_required_optional_fields"`
-	SeparateCommentedFields  *bool             `yaml:"separate_commented_fields"`
-	BlankLineBeforeFields    []string          `yaml:"blank_line_before_fields"`
-	FieldOrder               []string          `yaml:"field_order"`
-	RequiredFields           []string          `yaml:"required_fields"`
-	FieldTypes               map[string]string `yaml:"field_types"`
-	FieldDefaults            map[string]string `yaml:"field_defaults"`
-	ExcludeUnorderedFields   bool              `yaml:"exclude_unordered_fields"`
-	EnumBase                 string            `yaml:"enum_base"`
-	EnumValues               []ModelEnumValue  `yaml:"enum_values"`
-	ExtraFields              []ModelField      `yaml:"extra_fields"`
-	ExtraCode                []string          `yaml:"extra_code"`
-	AllowMissingInSwagger    bool              `yaml:"allow_missing_in_swagger"`
+	Schema                  string            `yaml:"schema"`
+	Name                    string            `yaml:"name"`
+	BaseClasses             []string          `yaml:"base_classes"`
+	BeforeCode              []string          `yaml:"before_code"`
+	PrependCode             []string          `yaml:"prepend_code"`
+	SeparateCommentedEnum   *bool             `yaml:"separate_commented_enum_members"`
+	SeparateCommentedFields *bool             `yaml:"separate_commented_fields"`
+	BlankLineBeforeFields   []string          `yaml:"blank_line_before_fields"`
+	FieldOrder              []string          `yaml:"field_order"`
+	RequiredFields          []string          `yaml:"required_fields"`
+	FieldTypes              map[string]string `yaml:"field_types"`
+	FieldDefaults           map[string]string `yaml:"field_defaults"`
+	ExcludeUnorderedFields  bool              `yaml:"exclude_unordered_fields"`
+	EnumBase                string            `yaml:"enum_base"`
+	EnumValues              []ModelEnumValue  `yaml:"enum_values"`
+	ExtraFields             []ModelField      `yaml:"extra_fields"`
+	ExtraCode               []string          `yaml:"extra_code"`
+	AllowMissingInSwagger   bool              `yaml:"allow_missing_in_swagger"`
 }
 
 type ModelField struct {

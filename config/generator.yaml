@@ -98,7 +98,6 @@ api:
         - /v1/api_apps
     - name: apps
       source_dir: cozepy/apps
-      separate_required_optional_fields: true
       extra_imports:
         - module: cozepy.bots
           names:
@@ -1061,7 +1060,6 @@ api:
               required: false
         - schema: BotSimpleInfo
           name: SimpleBot
-          separate_required_optional_fields: true
           field_order:
             - id
             - name
@@ -1241,7 +1239,6 @@ api:
       source_dir: cozepy/chat
       disable_auto_imports: true
       separate_commented_enum_members: true
-      separate_required_optional_fields: false
       raw_imports:
         - |
           import base64
@@ -2952,7 +2949,6 @@ api:
     - name: folders
       source_dir: cozepy/folders
       http_request_from_model: true
-      separate_required_optional_fields: true
       model_schemas:
         - schema: FolderType
           name: FolderType
@@ -3341,7 +3337,6 @@ api:
     - name: workflows
       source_dir: cozepy/workflows
       disable_auto_imports: true
-      separate_required_optional_fields: true
       separate_commented_fields: true
       raw_imports:
         - |
@@ -4143,7 +4138,6 @@ api:
       http_request_from_model: true
       override_pagination_classes:
         - WorkspaceMember
-      separate_required_optional_fields: true
       raw_imports:
         - |
           from typing import List, Optional

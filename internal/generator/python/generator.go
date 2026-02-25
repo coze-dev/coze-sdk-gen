@@ -1380,7 +1380,6 @@ type packageModelDefinition struct {
 	AllowMissingInSwagger bool
 	ExcludeUnordered      bool
 	SeparateCommentedEnum *bool
-	SeparateRequired      *bool
 	SeparateCommented     *bool
 	BlankLineBeforeFields []string
 }
@@ -1446,7 +1445,6 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 				AllowMissingInSwagger: model.AllowMissingInSwagger,
 				ExcludeUnordered:      model.ExcludeUnorderedFields,
 				SeparateCommentedEnum: model.SeparateCommentedEnum,
-				SeparateRequired:      model.SeparateRequiredOptional,
 				SeparateCommented:     model.SeparateCommentedFields,
 				BlankLineBeforeFields: append([]string(nil), model.BlankLineBeforeFields...),
 			})
@@ -1477,7 +1475,6 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 				AllowMissingInSwagger: model.AllowMissingInSwagger,
 				ExcludeUnordered:      model.ExcludeUnorderedFields,
 				SeparateCommentedEnum: model.SeparateCommentedEnum,
-				SeparateRequired:      model.SeparateRequiredOptional,
 				SeparateCommented:     model.SeparateCommentedFields,
 				BlankLineBeforeFields: append([]string(nil), model.BlankLineBeforeFields...),
 			})
@@ -1507,7 +1504,6 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 			AllowMissingInSwagger: model.AllowMissingInSwagger,
 			ExcludeUnordered:      model.ExcludeUnorderedFields,
 			SeparateCommentedEnum: model.SeparateCommentedEnum,
-			SeparateRequired:      model.SeparateRequiredOptional,
 			SeparateCommented:     model.SeparateCommentedFields,
 			BlankLineBeforeFields: append([]string(nil), model.BlankLineBeforeFields...),
 		})
@@ -1525,7 +1521,6 @@ func renderPackageModelDefinitions(
 	var buf bytes.Buffer
 	modulePrefix := "cozepy." + meta.ModulePath
 	separateCommentedEnum := meta.Package != nil && meta.Package.SeparateCommentedEnum
-	separateRequiredOptional := meta.Package != nil && meta.Package.SeparateRequiredOptional
 	separateCommentedFields := meta.Package != nil && meta.Package.SeparateCommentedFields
 
 	for _, model := range models {
@@ -1539,10 +1534,6 @@ func renderPackageModelDefinitions(
 		modelSeparateCommentedEnum := separateCommentedEnum
 		if model.SeparateCommentedEnum != nil {
 			modelSeparateCommentedEnum = *model.SeparateCommentedEnum
-		}
-		modelSeparateRequiredOptional := separateRequiredOptional
-		if model.SeparateRequired != nil {
-			modelSeparateRequiredOptional = *model.SeparateRequired
 		}
 		modelSeparateCommentedFields := separateCommentedFields
 		if model.SeparateCommented != nil {
@@ -1734,14 +1725,9 @@ func renderPackageModelDefinitions(
 		}
 
 		prevHasField := false
-		prevRequired := false
 		for _, fieldName := range fieldNames {
 			if propertySchema, ok := properties[fieldName]; ok {
-				currentRequired := requiredSet[fieldName]
 				if _, ok := blankLineBeforeFieldSet[fieldName]; ok && prevHasField {
-					buf.WriteString("\n")
-				}
-				if modelSeparateRequiredOptional && prevHasField && prevRequired && !currentRequired {
 					buf.WriteString("\n")
 				}
 				typeName := modelFieldType(model, fieldName, PythonTypeForSchemaWithAliases(doc, propertySchema, requiredSet[fieldName], schemaAliases))
@@ -1780,7 +1766,6 @@ func renderPackageModelDefinitions(
 					}
 				}
 				prevHasField = true
-				prevRequired = currentRequired
 				continue
 			}
 
@@ -1791,11 +1776,7 @@ func renderPackageModelDefinitions(
 			if _, exists := properties[fieldName]; exists {
 				continue
 			}
-			currentRequired := extraField.Required
 			if _, ok := blankLineBeforeFieldSet[fieldName]; ok && prevHasField {
-				buf.WriteString("\n")
-			}
-			if modelSeparateRequiredOptional && prevHasField && prevRequired && !currentRequired {
 				buf.WriteString("\n")
 			}
 			normalizedFieldName := NormalizePythonIdentifier(fieldName)
@@ -1822,7 +1803,6 @@ func renderPackageModelDefinitions(
 					buf.WriteString(fmt.Sprintf("    %s: %s\n", normalizedFieldName, typeName))
 				}
 				prevHasField = true
-				prevRequired = currentRequired
 				continue
 			}
 			defaultValue := strings.TrimSpace(extraField.Default)
@@ -1838,7 +1818,6 @@ func renderPackageModelDefinitions(
 				buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, defaultValue))
 			}
 			prevHasField = true
-			prevRequired = currentRequired
 		}
 		if prevHasField && len(model.ExtraCode) > 0 {
 			buf.WriteString("\n")
