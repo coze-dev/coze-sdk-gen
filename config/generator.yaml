@@ -45,12 +45,6 @@ api:
       empty_models:
         - UpdateAPIAppsResp
         - DeleteAPIAppsResp
-      child_clients:
-        - attribute: events
-          module: .events
-          type_import_module: cozepy.api_apps.events
-          sync_class: APIAppsEventsClient
-          async_class: AsyncAPIAppsEventsClient
       path_prefixes:
         - /v1/api_apps
     - name: api_apps_events
@@ -161,31 +155,6 @@ api:
         - /v1/apps/{app_id}/collaborators
     - name: audio
       source_dir: cozepy/audio
-      child_clients:
-        - attribute: rooms
-          module: .rooms
-          sync_class: RoomsClient
-          async_class: AsyncRoomsClient
-        - attribute: speech
-          module: .speech
-          sync_class: SpeechClient
-          async_class: AsyncSpeechClient
-        - attribute: transcriptions
-          module: .transcriptions
-          sync_class: TranscriptionsClient
-          async_class: AsyncTranscriptionsClient
-        - attribute: voices
-          module: .voices
-          sync_class: VoicesClient
-          async_class: AsyncVoicesClient
-        - attribute: voiceprint_groups
-          module: .voiceprint_groups
-          sync_class: VoiceprintGroupsClient
-          async_class: AsyncVoiceprintGroupsClient
-        - attribute: live
-          module: .live
-          sync_class: LiveClient
-          async_class: AsyncLiveClient
       path_prefixes:
         - /v1/audio
     - name: audio_rooms
@@ -374,11 +343,6 @@ api:
       http_request_from_model: true
       override_pagination_classes:
         - _PrivateListVoicePrintGroupData
-      child_clients:
-        - attribute: features
-          module: .features
-          sync_class: VoiceprintGroupsFeaturesClient
-          async_class: AsyncVoiceprintGroupsFeaturesClient
       model_schemas:
         - name: CreateVoicePrintGroupResp
           allow_missing_in_swagger: true
@@ -1069,11 +1033,6 @@ api:
     - name: chat
       source_dir: cozepy/chat
       separate_commented_enum_members: true
-      child_clients:
-        - attribute: messages
-          module: .message
-          sync_class: ChatMessagesClient
-          async_class: AsyncChatMessagesClient
       model_schemas:
         - name: MessageRole
           allow_missing_in_swagger: true
@@ -1775,11 +1734,6 @@ api:
         - /v3/chat/message
     - name: connectors
       source_dir: cozepy/connectors
-      child_clients:
-        - attribute: bots
-          module: .bots
-          sync_class: ConnectorsBotsClient
-          async_class: AsyncConnectorsBotsClient
       path_prefixes:
         - /v1/connectors
     - name: connectors_bots
@@ -1809,11 +1763,6 @@ api:
         - module: cozepy.chat
           names:
             - Message
-      child_clients:
-        - attribute: messages
-          module: .message
-          sync_class: MessagesClient
-          async_class: AsyncMessagesClient
       model_schemas:
         - schema: ConversationData
           name: Conversation
@@ -1995,15 +1944,6 @@ api:
     - name: datasets
       source_dir: cozepy/datasets
       http_request_from_model: true
-      child_clients:
-        - attribute: documents
-          module: .documents
-          sync_class: DatasetsDocumentsClient
-          async_class: AsyncDatasetsDocumentsClient
-        - attribute: images
-          module: .images
-          sync_class: DatasetsImagesClient
-          async_class: AsyncDatasetsImagesClient
       extra_imports:
         - module: cozepy.datasets.documents
           names:
@@ -3213,11 +3153,6 @@ api:
       source_dir: cozepy/workflows/runs/run_histories
       client_class: WorkflowsRunsRunHistoriesClient
       async_client_class: AsyncWorkflowsRunsRunHistoriesClient
-      child_clients:
-        - attribute: execute_nodes
-          module: .execute_nodes
-          sync_class: WorkflowsRunsRunHistoriesExecuteNodesClient
-          async_class: AsyncWorkflowsRunsRunHistoriesExecuteNodesClient
       model_schemas:
         - name: WorkflowExecuteStatus
           allow_missing_in_swagger: true

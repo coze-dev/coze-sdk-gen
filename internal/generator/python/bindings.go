@@ -241,13 +241,6 @@ func mergeAutoInferredChildClients(metas map[string]PackageMeta, packageBindings
 			continue
 		}
 		blockedNames := collectReservedMemberNames(meta.Package, packageBindings[pkgName])
-		for _, child := range meta.Package.ChildClients {
-			attr := NormalizePythonIdentifier(strings.TrimSpace(child.Attribute))
-			if attr == "" {
-				continue
-			}
-			blockedNames[attr] = struct{}{}
-		}
 		for _, child := range children {
 			attr := NormalizePythonIdentifier(strings.TrimSpace(child.Attribute))
 			if attr == "" {
@@ -256,7 +249,7 @@ func mergeAutoInferredChildClients(metas map[string]PackageMeta, packageBindings
 			if _, exists := blockedNames[attr]; exists {
 				continue
 			}
-			meta.Package.ChildClients = append(meta.Package.ChildClients, child)
+			meta.ChildClients = append(meta.ChildClients, child)
 			blockedNames[attr] = struct{}{}
 		}
 		metas[pkgName] = meta
@@ -292,7 +285,7 @@ func collectReservedMemberNames(pkg *config.Package, bindings []OperationBinding
 	return reserved
 }
 
-func inferChildClientsByPackageHierarchy(metas map[string]PackageMeta) map[string][]config.ChildClient {
+func inferChildClientsByPackageHierarchy(metas map[string]PackageMeta) map[string][]childClient {
 	packageNameByDir := map[string]string{}
 	for pkgName, meta := range metas {
 		dir := strings.Trim(strings.TrimSpace(meta.DirPath), "/")
@@ -302,7 +295,7 @@ func inferChildClientsByPackageHierarchy(metas map[string]PackageMeta) map[strin
 		packageNameByDir[dir] = pkgName
 	}
 
-	result := map[string][]config.ChildClient{}
+	result := map[string][]childClient{}
 	for _, childMeta := range metas {
 		childDir := strings.Trim(strings.TrimSpace(childMeta.DirPath), "/")
 		if childDir == "" {
@@ -322,7 +315,7 @@ func inferChildClientsByPackageHierarchy(metas map[string]PackageMeta) map[strin
 		if !ok {
 			continue
 		}
-		result[parentName] = append(result[parentName], config.ChildClient{
+		result[parentName] = append(result[parentName], childClient{
 			Attribute: attribute,
 			Module:    "." + childLeaf,
 			SyncClass: packageClientClassName(childMeta, false),
