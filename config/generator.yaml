@@ -118,6 +118,8 @@ api:
             - is_published
             - owner_user_id
             - updated_at
+      empty_models:
+        - RemoveAppCollaboratorResp
       top_level_code:
         - |
           class _PrivateListAppsData(CozeModel, NumberPagedResponse[SimpleApp]):
@@ -5478,11 +5480,17 @@ api:
       response_type: User
       response_cast: User
       allow_missing_in_swagger: true
+    - path: /v1/apps/{app_id}/collaborators/{user_id}
+      method: delete
+      order: 51
+      sdk_methods:
+        - apps.delete_collaborator
+      disable_request_body: true
+      response_type: RemoveAppCollaboratorResp
+      response_cast: RemoveAppCollaboratorResp
   ignore_apis:
     - path: /v1/apps/{app_id}/collaborators
       method: post
-    - path: /v1/apps/{app_id}/collaborators/{user_id}
-      method: delete
     - path: /v1/connectors/{connector_id}/install
       method: post
     - path: /v1/connectors/{connector_id}/user_configs
