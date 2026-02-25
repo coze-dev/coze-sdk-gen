@@ -1938,10 +1938,14 @@ func renderPackageModelDefinitions(
 			}
 			prevHasField = true
 		}
-		if prevHasField && len(model.ExtraCode) > 0 {
+		combinedExtraCode := append(
+			autoModelExtraCodeForPagination(model, properties, extraFieldByName),
+			model.ExtraCode...,
+		)
+		if prevHasField && len(combinedExtraCode) > 0 {
 			buf.WriteString("\n")
 		}
-		for _, block := range model.ExtraCode {
+		for _, block := range combinedExtraCode {
 			AppendIndentedCode(&buf, block, 1)
 		}
 		buf.WriteString("\n\n")
@@ -1972,6 +1976,59 @@ func modelFieldType(model packageModelDefinition, propertyName string, fallback 
 		return strings.TrimSpace(fieldType)
 	}
 	return fallback
+}
+
+func autoModelExtraCodeForPagination(
+	model packageModelDefinition,
+	properties map[string]*openapi.Schema,
+	extraFieldByName map[string]config.ModelField,
+) []string {
+	if len(model.ExtraCode) > 0 {
+		return nil
+	}
+
+	itemType, ok := numberPagedResponseItemType(model.BaseClasses)
+	if !ok {
+		return nil
+	}
+	if !modelHasField("items", properties, extraFieldByName) || !modelHasField("has_more", properties, extraFieldByName) {
+		return nil
+	}
+	if modelHasField("total", properties, extraFieldByName) {
+		return nil
+	}
+
+	return []string{
+		fmt.Sprintf(
+			"def get_total(self) -> Optional[int]:\n    return None\n\ndef get_has_more(self) -> Optional[bool]:\n    return self.has_more\n\ndef get_items(self) -> List[%s]:\n    return self.items",
+			itemType,
+		),
+	}
+}
+
+func numberPagedResponseItemType(baseClasses []string) (string, bool) {
+	const prefix = "NumberPagedResponse["
+	for _, rawBaseClass := range baseClasses {
+		baseClass := strings.TrimSpace(rawBaseClass)
+		if !strings.HasPrefix(baseClass, prefix) || !strings.HasSuffix(baseClass, "]") {
+			continue
+		}
+		itemType := strings.TrimSuffix(strings.TrimPrefix(baseClass, prefix), "]")
+		itemType = strings.TrimSpace(itemType)
+		if itemType == "" {
+			continue
+		}
+		return itemType, true
+	}
+	return "", false
+}
+
+func modelHasField(name string, properties map[string]*openapi.Schema, extraFieldByName map[string]config.ModelField) bool {
+	if _, ok := properties[name]; ok {
+		return true
+	}
+	_, ok := extraFieldByName[name]
+	return ok
 }
 
 func hasModelFieldTypeOverride(model packageModelDefinition, propertyName string) bool {

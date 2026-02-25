@@ -3417,16 +3417,6 @@ api:
             - name: has_more
               type: bool
               required: true
-          extra_code:
-            - |
-              def get_total(self) -> Optional[int]:
-                  return None
-
-              def get_has_more(self) -> Optional[bool]:
-                  return self.has_more
-
-              def get_items(self) -> List[WorkflowBasic]:
-                  return self.items
       sync_extra_methods:
         - |
           def retrieve(

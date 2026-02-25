@@ -1391,6 +1391,41 @@ func TestRenderPackageModuleIntEnumMixinBase(t *testing.T) {
 	}
 }
 
+func TestRenderPackageModuleAutoNumberPagedResponseMethods(t *testing.T) {
+	doc := mustParseSwagger(t)
+	meta := pygen.PackageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Name:                  "_PrivateListWorkflowData",
+					AllowMissingInSwagger: true,
+					BaseClasses:           []string{"CozeModel", "NumberPagedResponse[WorkflowBasic]"},
+					ExtraFields: []config.ModelField{
+						{Name: "items", Type: "List[WorkflowBasic]", Required: true},
+						{Name: "has_more", Type: "bool", Required: true},
+					},
+				},
+			},
+		},
+	}
+
+	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	if !strings.Contains(code, "class _PrivateListWorkflowData(CozeModel, NumberPagedResponse[WorkflowBasic]):") {
+		t.Fatalf("expected paged model class definition:\n%s", code)
+	}
+	if !strings.Contains(code, "def get_total(self) -> Optional[int]:\n        return None") {
+		t.Fatalf("expected auto generated get_total for number_has_more paged model:\n%s", code)
+	}
+	if !strings.Contains(code, "def get_has_more(self) -> Optional[bool]:\n        return self.has_more") {
+		t.Fatalf("expected auto generated get_has_more for number_has_more paged model:\n%s", code)
+	}
+	if !strings.Contains(code, "def get_items(self) -> List[WorkflowBasic]:\n        return self.items") {
+		t.Fatalf("expected auto generated get_items for number_has_more paged model:\n%s", code)
+	}
+}
+
 func mustParseSwagger(t *testing.T) *openapi.Document {
 	t.Helper()
 	doc, err := openapi.Parse([]byte(`
