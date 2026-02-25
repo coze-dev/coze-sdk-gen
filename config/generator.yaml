@@ -2939,10 +2939,6 @@ api:
       source_dir: cozepy/workflows
       separate_commented_fields: true
       child_clients:
-        - attribute: runs
-          module: .runs
-          sync_class: WorkflowsRunsClient
-          async_class: AsyncWorkflowsRunsClient
         - attribute: chat
           module: .chat
           sync_class: WorkflowsChatClient

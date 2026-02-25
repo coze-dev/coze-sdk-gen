@@ -206,5 +206,81 @@ func buildPackageMeta(cfg *config.Config, packages map[string][]OperationBinding
 			DirPath:    name,
 		}
 	}
+	mergeAutoInferredChildClients(metas)
 	return metas
+}
+
+func mergeAutoInferredChildClients(metas map[string]PackageMeta) {
+	inferred := inferChildClientsByPackageHierarchy(metas)
+	for pkgName, children := range inferred {
+		meta, ok := metas[pkgName]
+		if !ok || meta.Package == nil || len(children) == 0 {
+			continue
+		}
+		existingByAttr := map[string]struct{}{}
+		for _, child := range meta.Package.ChildClients {
+			attr := NormalizePythonIdentifier(strings.TrimSpace(child.Attribute))
+			if attr == "" {
+				continue
+			}
+			existingByAttr[attr] = struct{}{}
+		}
+		for _, child := range children {
+			attr := NormalizePythonIdentifier(strings.TrimSpace(child.Attribute))
+			if attr == "" {
+				continue
+			}
+			if _, exists := existingByAttr[attr]; exists {
+				continue
+			}
+			meta.Package.ChildClients = append(meta.Package.ChildClients, child)
+			existingByAttr[attr] = struct{}{}
+		}
+		metas[pkgName] = meta
+	}
+}
+
+func inferChildClientsByPackageHierarchy(metas map[string]PackageMeta) map[string][]config.ChildClient {
+	packageNameByDir := map[string]string{}
+	for pkgName, meta := range metas {
+		dir := strings.Trim(strings.TrimSpace(meta.DirPath), "/")
+		if dir == "" {
+			continue
+		}
+		packageNameByDir[dir] = pkgName
+	}
+
+	result := map[string][]config.ChildClient{}
+	for _, childMeta := range metas {
+		childDir := strings.Trim(strings.TrimSpace(childMeta.DirPath), "/")
+		if childDir == "" {
+			continue
+		}
+		slash := strings.LastIndex(childDir, "/")
+		if slash <= 0 || slash >= len(childDir)-1 {
+			continue
+		}
+		parentDir := childDir[:slash]
+		childLeaf := childDir[slash+1:]
+		parentName, ok := packageNameByDir[parentDir]
+		if !ok {
+			continue
+		}
+		result[parentName] = append(result[parentName], config.ChildClient{
+			Attribute: childLeaf,
+			Module:    "." + childLeaf,
+			SyncClass: packageClientClassName(childMeta, false),
+			AsyncClass: packageClientClassName(
+				childMeta,
+				true,
+			),
+		})
+	}
+
+	for pkgName := range result {
+		sort.Slice(result[pkgName], func(i, j int) bool {
+			return result[pkgName][i].Attribute < result[pkgName][j].Attribute
+		})
+	}
+	return result
 }
