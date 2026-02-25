@@ -96,10 +96,11 @@ type OperationRef struct {
 }
 
 type ParameterSpec struct {
-	Name     string
-	In       string
-	Required bool
-	Schema   *Schema
+	Name        string
+	In          string
+	Description string
+	Required    bool
+	Schema      *Schema
 }
 
 type OperationDetails struct {
@@ -108,6 +109,7 @@ type OperationDetails struct {
 	Operation              *Operation
 	OperationID            string
 	Summary                string
+	Description            string
 	Tags                   []string
 	Parameters             []ParameterSpec
 	PathParameters         []ParameterSpec
@@ -290,6 +292,7 @@ func (d *Document) OperationDetails(path string, method string) (*OperationDetai
 		Operation:   operation,
 		OperationID: operation.OperationID,
 		Summary:     operation.Summary,
+		Description: operation.Description,
 		Tags:        append([]string(nil), operation.Tags...),
 	}
 
@@ -301,10 +304,11 @@ func (d *Document) OperationDetails(path string, method string) (*OperationDetai
 		}
 		key := resolved.In + ":" + resolved.Name
 		paramMap[key] = ParameterSpec{
-			Name:     resolved.Name,
-			In:       resolved.In,
-			Required: resolved.Required,
-			Schema:   d.ResolveSchema(resolved.Schema),
+			Name:        resolved.Name,
+			In:          resolved.In,
+			Description: resolved.Description,
+			Required:    resolved.Required,
+			Schema:      d.ResolveSchema(resolved.Schema),
 		}
 	}
 	for _, parameter := range operation.Parameters {
@@ -314,10 +318,11 @@ func (d *Document) OperationDetails(path string, method string) (*OperationDetai
 		}
 		key := resolved.In + ":" + resolved.Name
 		paramMap[key] = ParameterSpec{
-			Name:     resolved.Name,
-			In:       resolved.In,
-			Required: resolved.Required,
-			Schema:   d.ResolveSchema(resolved.Schema),
+			Name:        resolved.Name,
+			In:          resolved.In,
+			Description: resolved.Description,
+			Required:    resolved.Required,
+			Schema:      d.ResolveSchema(resolved.Schema),
 		}
 	}
 

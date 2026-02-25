@@ -99,10 +99,18 @@ func buildGoOperationBindings(cfg *config.Config, doc *openapi.Document) []goOpe
 			MethodName: name,
 			Path:       details.Path,
 			Method:     strings.ToUpper(details.Method),
-			Summary:    oneLineText(details.Summary),
+			Summary:    goOperationSummary(details),
 		})
 	}
 	return bindings
+}
+
+func goOperationSummary(details openapi.OperationDetails) string {
+	summary := strings.TrimSpace(details.Summary)
+	if summary == "" {
+		summary = strings.TrimSpace(details.Description)
+	}
+	return oneLineText(summary)
 }
 
 func writeGoRuntimeScaffolding(outputDir string, writer *fileWriter) error {
