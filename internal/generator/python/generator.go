@@ -1062,6 +1062,7 @@ func RenderPackageModule(
 	if !strings.Contains(content, "(IntEnum):") {
 		content = strings.Replace(content, "from enum import IntEnum\n", "", 1)
 	}
+	content = normalizeAutoInferredImports(content)
 	return normalizeTypingOptionalImport(content)
 }
 
@@ -1358,6 +1359,154 @@ func renderPagedResponseClasses(bindings []OperationBinding, overriddenClasses m
 	return strings.TrimRight(buf.String(), "\n")
 }
 
+func normalizeAutoInferredImports(content string) string {
+	usesFieldValidator := strings.Contains(content, "@field_validator(") || strings.Contains(content, " field_validator(")
+	declaresChatUsage := strings.Contains(content, "class ChatUsage(")
+	usesChatUsage := !declaresChatUsage && containsIdentifierOutsideImportSection(content, "ChatUsage")
+
+	if usesFieldValidator {
+		content = ensureNamedImport(content, "pydantic", "field_validator")
+	}
+	if usesChatUsage {
+		content = ensureNamedImport(content, "cozepy.chat", "ChatUsage")
+	}
+	return content
+}
+
+func containsIdentifierOutsideImportSection(content string, ident string) bool {
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "from ") || strings.HasPrefix(trimmed, "import ") {
+			continue
+		}
+		if lineHasIdentifier(line, ident) {
+			return true
+		}
+	}
+	return false
+}
+
+func lineHasIdentifier(line string, ident string) bool {
+	if ident == "" {
+		return false
+	}
+	for start := 0; start < len(line); {
+		idx := strings.Index(line[start:], ident)
+		if idx < 0 {
+			return false
+		}
+		idx += start
+		beforeOK := idx == 0 || !isIdentifierRune(line[idx-1])
+		afterIdx := idx + len(ident)
+		afterOK := afterIdx >= len(line) || !isIdentifierRune(line[afterIdx])
+		if beforeOK && afterOK {
+			return true
+		}
+		start = idx + len(ident)
+	}
+	return false
+}
+
+func isIdentifierRune(ch byte) bool {
+	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_'
+}
+
+func ensureNamedImport(content string, module string, symbol string) string {
+	if module == "" || symbol == "" {
+		return content
+	}
+	lines := strings.Split(content, "\n")
+	importPrefix := "from " + module + " import "
+	moduleImportIndex := -1
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if !strings.HasPrefix(trimmed, importPrefix) {
+			continue
+		}
+		moduleImportIndex = i
+		namesPart := strings.TrimSpace(strings.TrimPrefix(trimmed, importPrefix))
+		for _, name := range strings.Split(namesPart, ",") {
+			if strings.TrimSpace(name) == symbol {
+				return content
+			}
+		}
+	}
+
+	if moduleImportIndex >= 0 {
+		trimmed := strings.TrimSpace(lines[moduleImportIndex])
+		namesPart := strings.TrimSpace(strings.TrimPrefix(trimmed, importPrefix))
+		names := strings.Split(namesPart, ",")
+		seen := map[string]struct{}{}
+		updated := make([]string, 0, len(names)+1)
+		for _, name := range names {
+			name = strings.TrimSpace(name)
+			if name == "" {
+				continue
+			}
+			if _, exists := seen[name]; exists {
+				continue
+			}
+			seen[name] = struct{}{}
+			updated = append(updated, name)
+		}
+		if _, exists := seen[symbol]; !exists {
+			updated = append(updated, symbol)
+		}
+		lines[moduleImportIndex] = importPrefix + strings.Join(updated, ", ")
+		return strings.Join(lines, "\n")
+	}
+
+	insertIdx := topImportInsertIndex(lines)
+	line := importPrefix + symbol
+	prefix := append([]string{}, lines[:insertIdx]...)
+	suffix := append([]string{}, lines[insertIdx:]...)
+	prefix = append(prefix, line)
+	return strings.Join(append(prefix, suffix...), "\n")
+}
+
+func topImportInsertIndex(lines []string) int {
+	insertIdx := 0
+	seenImport := false
+	parenDepth := 0
+	for insertIdx < len(lines) {
+		trimmed := strings.TrimSpace(lines[insertIdx])
+		if !seenImport {
+			if trimmed == "" {
+				insertIdx++
+				continue
+			}
+			if strings.HasPrefix(trimmed, "from ") || strings.HasPrefix(trimmed, "import ") {
+				seenImport = true
+				parenDepth += strings.Count(trimmed, "(")
+				parenDepth -= strings.Count(trimmed, ")")
+				insertIdx++
+				continue
+			}
+			return insertIdx
+		}
+
+		if parenDepth > 0 {
+			parenDepth += strings.Count(trimmed, "(")
+			parenDepth -= strings.Count(trimmed, ")")
+			insertIdx++
+			continue
+		}
+		if trimmed == "" {
+			insertIdx++
+			continue
+		}
+		if strings.HasPrefix(trimmed, "from ") || strings.HasPrefix(trimmed, "import ") {
+			parenDepth += strings.Count(trimmed, "(")
+			parenDepth -= strings.Count(trimmed, ")")
+			insertIdx++
+			continue
+		}
+		return insertIdx
+	}
+	return insertIdx
+}
+
 func normalizeTypingOptionalImport(content string) string {
 	lines := strings.Split(content, "\n")
 	usesOptional := false
@@ -1371,6 +1520,49 @@ func normalizeTypingOptionalImport(content string) string {
 			break
 		}
 	}
+
+	isTypingNameUsed := func(name string) bool {
+		switch name {
+		case "Optional":
+			for _, line := range lines {
+				trimmed := strings.TrimSpace(line)
+				if strings.HasPrefix(trimmed, "from typing import ") {
+					continue
+				}
+				if strings.Contains(line, "Optional[") {
+					return true
+				}
+			}
+			return false
+		case "List":
+			for _, line := range lines {
+				trimmed := strings.TrimSpace(line)
+				if strings.HasPrefix(trimmed, "from typing import ") {
+					continue
+				}
+				if strings.Contains(line, "List[") {
+					return true
+				}
+			}
+			return false
+		case "Dict":
+			for _, line := range lines {
+				trimmed := strings.TrimSpace(line)
+				if strings.HasPrefix(trimmed, "from typing import ") {
+					continue
+				}
+				if strings.Contains(line, "Dict[") {
+					return true
+				}
+			}
+			return false
+		case "TYPE_CHECKING":
+			return containsIdentifierOutsideImportSection(content, "TYPE_CHECKING")
+		default:
+			return containsIdentifierOutsideImportSection(content, name)
+		}
+	}
+
 	typingImportIndexes := make([]int, 0)
 	optionalImported := false
 	for i, line := range lines {
@@ -1411,6 +1603,9 @@ func normalizeTypingOptionalImport(content string) string {
 			if typedName == "Optional" && !includeOptional {
 				continue
 			}
+			if typedName != "Optional" && !isTypingNameUsed(typedName) {
+				continue
+			}
 			if _, exists := seen[typedName]; exists {
 				continue
 			}
@@ -1428,21 +1623,35 @@ func normalizeTypingOptionalImport(content string) string {
 		return "from typing import " + strings.Join(kept, ", "), true
 	}
 
-	switch {
-	case usesOptional && optionalImported:
-		return content
-	case usesOptional && !optionalImported:
+	includeOptional := usesOptional
+	pruned := make([]string, 0, len(lines))
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if !strings.HasPrefix(trimmed, "from typing import ") {
+			pruned = append(pruned, line)
+			continue
+		}
+		updated, keep := normalizeTypingLine(line, includeOptional)
+		if !keep {
+			continue
+		}
+		pruned = append(pruned, updated)
+	}
+	if includeOptional && !optionalImported {
 		if len(typingImportIndexes) > 0 {
 			idx := typingImportIndexes[0]
-			updated, keep := normalizeTypingLine(lines[idx], true)
-			if keep {
-				lines[idx] = updated
-				return strings.Join(lines, "\n")
+			lines = pruned
+			if idx < len(lines) {
+				updated, keep := normalizeTypingLine(lines[idx], true)
+				if keep {
+					lines[idx] = updated
+					return strings.Join(lines, "\n")
+				}
 			}
 		}
 		insertIdx := 0
-		for insertIdx < len(lines) {
-			trimmed := strings.TrimSpace(lines[insertIdx])
+		for insertIdx < len(pruned) {
+			trimmed := strings.TrimSpace(pruned[insertIdx])
 			if trimmed == "" {
 				insertIdx++
 				continue
@@ -1453,29 +1662,15 @@ func normalizeTypingOptionalImport(content string) string {
 			}
 			break
 		}
-		prefix := append([]string{}, lines[:insertIdx]...)
-		suffix := append([]string{}, lines[insertIdx:]...)
+		prefix := append([]string{}, pruned[:insertIdx]...)
+		suffix := append([]string{}, pruned[insertIdx:]...)
 		prefix = append(prefix, "from typing import Optional")
-		if insertIdx < len(lines) && strings.TrimSpace(lines[insertIdx]) != "" {
+		if insertIdx < len(pruned) && strings.TrimSpace(pruned[insertIdx]) != "" {
 			prefix = append(prefix, "")
 		}
 		return strings.Join(append(prefix, suffix...), "\n")
-	default:
-		pruned := make([]string, 0, len(lines))
-		for _, line := range lines {
-			trimmed := strings.TrimSpace(line)
-			if !strings.HasPrefix(trimmed, "from typing import ") {
-				pruned = append(pruned, line)
-				continue
-			}
-			updated, keep := normalizeTypingLine(line, false)
-			if !keep {
-				continue
-			}
-			pruned = append(pruned, updated)
-		}
-		return strings.Join(pruned, "\n")
 	}
+	return strings.Join(pruned, "\n")
 }
 
 type packageModelDefinition struct {

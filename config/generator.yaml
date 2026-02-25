@@ -3435,20 +3435,8 @@ api:
         - /v1/workflow
     - name: workflows_runs_run_histories
       source_dir: cozepy/workflows/runs/run_histories
-      disable_auto_imports: true
       client_class: WorkflowsRunsRunHistoriesClient
       async_client_class: AsyncWorkflowsRunsRunHistoriesClient
-      raw_imports:
-        - |
-          from enum import Enum, IntEnum
-          from typing import TYPE_CHECKING, Dict, Optional
-
-          from pydantic import field_validator
-
-          from cozepy.chat import ChatUsage
-          from cozepy.model import CozeModel, ListResponse
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
       child_clients:
         - attribute: execute_nodes
           module: .execute_nodes
