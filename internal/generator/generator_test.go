@@ -736,12 +736,21 @@ def _create(self) -> None:
 		{Name: "messages", Content: "messages"},
 		{Name: "create", Content: "create"},
 		{Name: "list", Content: "list"},
+		{Name: "clone", Content: "clone"},
 		{Name: "stream", Content: "stream"},
 		{Name: "retrieve", Content: "retrieve"},
 	}
 	ordered := pygen.OrderClassMethodBlocks(blocks)
-	got := []string{ordered[0].Name, ordered[1].Name, ordered[2].Name, ordered[3].Name, ordered[4].Name, ordered[5].Name}
-	expected := []string{"run_histories", "stream", "create", "retrieve", "messages", "list"}
+	got := []string{
+		ordered[0].Name,
+		ordered[1].Name,
+		ordered[2].Name,
+		ordered[3].Name,
+		ordered[4].Name,
+		ordered[5].Name,
+		ordered[6].Name,
+	}
+	expected := []string{"stream", "create", "clone", "retrieve", "list", "messages", "run_histories"}
 	for i := range expected {
 		if got[i] != expected[i] {
 			t.Fatalf("unexpected ordered[%d]: got=%q want=%q", i, got[i], expected[i])

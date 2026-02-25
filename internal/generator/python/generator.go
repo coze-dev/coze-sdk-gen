@@ -2114,7 +2114,7 @@ func OrderClassMethodBlocks(blocks []ClassMethodBlock) []ClassMethodBlock {
 		return blocks
 	}
 
-	prioritizedMethodNames := []string{"stream", "create", "retrieve", "update", "delete"}
+	prioritizedMethodNames := []string{"stream", "create", "clone", "retrieve", "update", "delete", "list"}
 	prioritizedBuckets := make(map[string][]ClassMethodBlock, len(prioritizedMethodNames))
 	prioritizedSet := make(map[string]struct{}, len(prioritizedMethodNames))
 	for _, name := range prioritizedMethodNames {
@@ -2137,11 +2137,11 @@ func OrderClassMethodBlocks(blocks []ClassMethodBlock) []ClassMethodBlock {
 	}
 
 	ordered := make([]ClassMethodBlock, 0, len(blocks))
-	ordered = append(ordered, childMethods...)
 	for _, name := range prioritizedMethodNames {
 		ordered = append(ordered, prioritizedBuckets[name]...)
 	}
 	ordered = append(ordered, otherMethods...)
+	ordered = append(ordered, childMethods...)
 	return ordered
 }
 
