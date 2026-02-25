@@ -104,6 +104,20 @@ Constraint: alignment in the current phase is limited to APIs/fields already imp
 
 When asked to sync generated Python SDK output to `coze-py` and complete the PR lifecycle, follow the rules first (Rule 1 and Rule 2), then execute by stages.
 
+### Pre-Execution Sync (Mandatory)
+
+Before starting implementation or generation, pull remote `origin/main` into local `main` in both repositories and ensure local is not behind:
+
+1. Pull `origin/main` into local `coze-sdk-gen/main`:
+   - `git fetch origin`
+   - `git checkout main`
+   - `git pull --ff-only origin main`
+2. Pull `origin/main` into local `coze-py/main` (in downstream local clone/worktree):
+   - `git fetch origin`
+   - `git checkout main`
+   - `git pull --ff-only origin main`
+3. If either repository cannot fast-forward local `main` to `origin/main`, resolve sync first; do not start task execution until both are up to date.
+
 ### Rule 1: GitHub PR Rules
 
 1. PRs must be traceable: when creating/updating a PR, title, description, related change scope, and validation info must be complete and auditable.
@@ -143,9 +157,10 @@ When asked to sync generated Python SDK output to `coze-py` and complete the PR 
 
 1. Run this Python SDK workflow in temporary directories to avoid polluting long-lived working directories.
 2. Clone each required repository into a random directory under `/tmp` (no historical directory reuse), for example: `mktemp -d /tmp/coze-py-XXXXXX`.
-3. Read Python SDK and Swagger.
-4. Implement or adjust the generator (implemented in Go).
-5. Generate Python SDK and iterate toward the target state.
+3. Immediately after clone, pull `origin/main` into both local `main` branches using fast-forward only (same requirement as Pre-Execution Sync).
+4. Read Python SDK and Swagger.
+5. Implement or adjust the generator (implemented in Go).
+6. Generate Python SDK and iterate toward the target state.
 
 ### Stage 2: Prepare `coze-sdk-gen` Changes
 
