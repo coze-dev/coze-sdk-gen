@@ -891,9 +891,6 @@ func RenderPackageModule(
 	if hasChildClients {
 		buf.WriteString("\nif TYPE_CHECKING:\n")
 		for _, child := range childClientsForType {
-			if child.DisableTypeHints {
-				continue
-			}
 			typeModule := childImportModule(meta, child.Module)
 			if typeModule == "" {
 				continue
