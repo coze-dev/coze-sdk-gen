@@ -603,6 +603,55 @@ func RenderPackageModule(
 	schemaAliases := packageSchemaAliases(meta)
 	modelDefs := resolvePackageModelDefinitions(doc, meta)
 	hasModelClasses := len(modelDefs) > 0 || (meta.Package != nil && len(meta.Package.EmptyModels) > 0)
+	overridePaginationClasses := map[string]struct{}{}
+	if meta.Package != nil {
+		for _, className := range meta.Package.OverridePaginationClasses {
+			trimmed := strings.TrimSpace(className)
+			if trimmed == "" {
+				continue
+			}
+			overridePaginationClasses[trimmed] = struct{}{}
+		}
+	}
+	hasGeneratedTokenPagedResponse := false
+	hasGeneratedNumberPagedResponse := false
+	for _, binding := range bindings {
+		if binding.Mapping == nil {
+			continue
+		}
+		paginationMode := strings.TrimSpace(binding.Mapping.Pagination)
+		if !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) {
+			continue
+		}
+		className := strings.TrimSpace(binding.Mapping.PaginationDataClass)
+		if className == "" {
+			continue
+		}
+		if _, overridden := overridePaginationClasses[className]; overridden {
+			continue
+		}
+		if isTokenPagination(paginationMode) {
+			hasGeneratedTokenPagedResponse = true
+		}
+		if isNumberPagination(paginationMode) {
+			hasGeneratedNumberPagedResponse = true
+		}
+	}
+	needsCozeModelImport := false
+	if meta.Package != nil && len(meta.Package.EmptyModels) > 0 {
+		needsCozeModelImport = true
+	}
+	if !needsCozeModelImport {
+		for _, model := range modelDefs {
+			if !model.IsEnum {
+				needsCozeModelImport = true
+				break
+			}
+		}
+	}
+	if !needsCozeModelImport {
+		needsCozeModelImport = hasGeneratedTokenPagedResponse || hasGeneratedNumberPagedResponse
+	}
 	hasTokenPagination := packageHasTokenPagination(bindings)
 	hasNumberPagination := packageHasNumberPagination(bindings)
 	needsTokenPagedResponseImport := false
@@ -612,6 +661,12 @@ func RenderPackageModule(
 			continue
 		}
 		mode := strings.TrimSpace(binding.Mapping.Pagination)
+		className := strings.TrimSpace(binding.Mapping.PaginationDataClass)
+		if className != "" {
+			if _, overridden := overridePaginationClasses[className]; overridden {
+				continue
+			}
+		}
 		if isTokenPagination(mode) {
 			needsTokenPagedResponseImport = true
 		}
@@ -707,7 +762,7 @@ func RenderPackageModule(
 		if hasDynamicEnumClasses {
 			modelImports = append(modelImports, "DynamicStrEnum")
 		}
-		if hasModelClasses {
+		if needsCozeModelImport {
 			modelImports = append(modelImports, "CozeModel")
 		}
 		if hasTokenPagination {
@@ -752,6 +807,9 @@ func RenderPackageModule(
 		needDumpExcludeNone := false
 		needRemoveNoneValues := false
 		for _, binding := range bindings {
+			if binding.Mapping != nil && strings.TrimSpace(binding.Mapping.DelegateTo) != "" {
+				continue
+			}
 			queryBuilder := "dump_exclude_none"
 			bodyBuilder := "dump_exclude_none"
 			queryBuilderSync := ""
@@ -772,12 +830,20 @@ func RenderPackageModule(
 			}
 			hasBodyMap := binding.Mapping != nil && (len(binding.Mapping.BodyFields) > 0 || len(binding.Mapping.BodyFixedValues) > 0)
 			if hasQueryFields {
-				builders := []string{queryBuilder}
-				if queryBuilderSync != "" {
-					builders = append(builders, queryBuilderSync)
+				builders := make([]string, 0, 2)
+				if mappingGeneratesSync(binding.Mapping) {
+					if queryBuilderSync != "" {
+						builders = append(builders, queryBuilderSync)
+					} else {
+						builders = append(builders, queryBuilder)
+					}
 				}
-				if queryBuilderAsync != "" {
-					builders = append(builders, queryBuilderAsync)
+				if mappingGeneratesAsync(binding.Mapping) {
+					if queryBuilderAsync != "" {
+						builders = append(builders, queryBuilderAsync)
+					} else {
+						builders = append(builders, queryBuilder)
+					}
 				}
 				for _, builder := range builders {
 					if builder == "dump_exclude_none" {
@@ -788,7 +854,7 @@ func RenderPackageModule(
 					}
 				}
 			}
-			if hasBodyMap {
+			if hasBodyMap && (mappingGeneratesSync(binding.Mapping) || mappingGeneratesAsync(binding.Mapping)) {
 				if bodyBuilder == "dump_exclude_none" {
 					needDumpExcludeNone = true
 				}
@@ -881,16 +947,6 @@ func RenderPackageModule(
 		buf.WriteString("\n\n\n")
 	}
 	if hasTokenPagination || hasNumberPagination {
-		overridePaginationClasses := map[string]struct{}{}
-		if meta.Package != nil {
-			for _, className := range meta.Package.OverridePaginationClasses {
-				trimmed := strings.TrimSpace(className)
-				if trimmed == "" {
-					continue
-				}
-				overridePaginationClasses[trimmed] = struct{}{}
-			}
-		}
 		pagedResponseClasses := renderPagedResponseClasses(bindings, overridePaginationClasses)
 		if strings.TrimSpace(pagedResponseClasses) != "" {
 			buf.WriteString(pagedResponseClasses)
@@ -1360,15 +1416,76 @@ func renderPagedResponseClasses(bindings []OperationBinding, overriddenClasses m
 }
 
 func normalizeAutoInferredImports(content string) string {
-	usesFieldValidator := strings.Contains(content, "@field_validator(") || strings.Contains(content, " field_validator(")
-	declaresChatUsage := strings.Contains(content, "class ChatUsage(")
-	usesChatUsage := !declaresChatUsage && containsIdentifierOutsideImportSection(content, "ChatUsage")
-
-	if usesFieldValidator {
-		content = ensureNamedImport(content, "pydantic", "field_validator")
+	sanitized := stripPythonStringsAndComments(content)
+	ensureNamed := func(module string, symbol string, includeQuotedAnnotation bool) {
+		if symbol == "" || module == "" {
+			return
+		}
+		used := containsIdentifierOutsideImportSection(sanitized, symbol)
+		if !used && includeQuotedAnnotation {
+			used = containsQuotedAnnotationOutsideImportSection(content, symbol)
+		}
+		if !used {
+			return
+		}
+		if declaresIdentifier(sanitized, symbol) {
+			return
+		}
+		content = ensureNamedImport(content, module, symbol)
 	}
-	if usesChatUsage {
-		content = ensureNamedImport(content, "cozepy.chat", "ChatUsage")
+	ensureModule := func(module string) {
+		if module == "" {
+			return
+		}
+		if !containsModuleReferenceOutsideImportSection(sanitized, module) {
+			return
+		}
+		if declaresIdentifier(sanitized, module) {
+			return
+		}
+		content = ensureModuleImport(content, module)
+	}
+
+	for _, module := range []string{"base64", "httpx", "json", "os", "time", "warnings"} {
+		ensureModule(module)
+	}
+
+	knownFromImports := []struct {
+		Module                  string
+		Symbols                 []string
+		IncludeQuotedAnnotation bool
+	}{
+		{Module: "typing", Symbols: []string{"Any", "AsyncIterator", "Dict", "IO", "List", "Optional", "TYPE_CHECKING", "Tuple", "Union", "overload"}},
+		{Module: "typing_extensions", Symbols: []string{"Literal"}},
+		{Module: "pathlib", Symbols: []string{"Path"}},
+		{Module: "pydantic", Symbols: []string{"Field", "field_validator"}},
+		{Module: "cozepy", Symbols: []string{"AudioFormat"}},
+		{Module: "cozepy.audio.voiceprint_groups.features", Symbols: []string{"UserInfo"}},
+		{Module: "cozepy.bots", Symbols: []string{"PublishStatus"}},
+		{Module: "cozepy.chat", Symbols: []string{"ChatEvent", "ChatUsage", "Message", "MessageContentType", "MessageRole", "_chat_stream_handler"}},
+		{Module: "cozepy.datasets.documents", Symbols: []string{"Document", "DocumentBase", "DocumentChunkStrategy", "DocumentUpdateRule"}},
+		{Module: "cozepy.exception", Symbols: []string{"CozeAPIError"}},
+		{Module: "cozepy.files", Symbols: []string{"FileTypes", "_try_fix_file"}},
+		{Module: "cozepy.model", Symbols: []string{"AsyncIteratorHTTPResponse", "AsyncLastIDPaged", "AsyncNumberPaged", "AsyncStream", "AsyncTokenPaged", "CozeModel", "DynamicStrEnum", "FileHTTPResponse", "IteratorHTTPResponse", "LastIDPaged", "LastIDPagedResponse", "ListResponse", "NumberPaged", "NumberPagedResponse", "Stream", "TokenPaged", "TokenPagedResponse"}},
+		{Module: "cozepy.request", Symbols: []string{"Requester"}},
+		{Module: "cozepy.util", Symbols: []string{"base64_encode_string", "dump_exclude_none", "remove_none_values", "remove_url_trailing_slash"}},
+		{Module: "cozepy.workspaces", Symbols: []string{"WorkspaceRoleType"}},
+		{
+			Module:                  ".feedback",
+			Symbols:                 []string{"AsyncMessagesFeedbackClient", "ConversationsMessagesFeedbackClient"},
+			IncludeQuotedAnnotation: true,
+		},
+		{Module: ".versions", Symbols: []string{"WorkflowUserInfo"}},
+	}
+	for _, entry := range knownFromImports {
+		for _, symbol := range entry.Symbols {
+			ensureNamed(entry.Module, symbol, entry.IncludeQuotedAnnotation)
+		}
+	}
+	if containsIdentifierOutsideImportSection(sanitized, "HTTPRequest") &&
+		!declaresIdentifier(sanitized, "HTTPRequest") &&
+		!isSymbolImportedFromModule(content, "cozepy.model", "HTTPRequest") {
+		content = ensureNamedImport(content, "cozepy.request", "HTTPRequest")
 	}
 	return content
 }
@@ -1382,6 +1499,215 @@ func containsIdentifierOutsideImportSection(content string, ident string) bool {
 		}
 		if lineHasIdentifier(line, ident) {
 			return true
+		}
+	}
+	return false
+}
+
+func containsQuotedAnnotationOutsideImportSection(content string, ident string) bool {
+	if ident == "" {
+		return false
+	}
+	singleQuoted := "'" + ident + "'"
+	doubleQuoted := `"` + ident + `"`
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "from ") || strings.HasPrefix(trimmed, "import ") {
+			continue
+		}
+		if !strings.Contains(line, ":") && !strings.Contains(line, "->") {
+			continue
+		}
+		if strings.Contains(line, singleQuoted) || strings.Contains(line, doubleQuoted) {
+			return true
+		}
+	}
+	return false
+}
+
+func containsModuleReferenceOutsideImportSection(content string, module string) bool {
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "from ") || strings.HasPrefix(trimmed, "import ") {
+			continue
+		}
+		if lineHasModuleReference(line, module) {
+			return true
+		}
+	}
+	return false
+}
+
+func lineHasModuleReference(line string, module string) bool {
+	if module == "" {
+		return false
+	}
+	for start := 0; start < len(line); {
+		idx := strings.Index(line[start:], module)
+		if idx < 0 {
+			return false
+		}
+		idx += start
+		beforeOK := idx == 0 || !isIdentifierRune(line[idx-1])
+		afterIdx := idx + len(module)
+		if beforeOK && afterIdx < len(line) && line[afterIdx] == '.' {
+			return true
+		}
+		start = idx + len(module)
+	}
+	return false
+}
+
+func stripPythonStringsAndComments(content string) string {
+	const (
+		scanCode = iota
+		scanSingleQuote
+		scanDoubleQuote
+		scanTripleSingleQuote
+		scanTripleDoubleQuote
+		scanComment
+	)
+
+	state := scanCode
+	escaped := false
+	var b strings.Builder
+	b.Grow(len(content))
+
+	for i := 0; i < len(content); i++ {
+		ch := content[i]
+
+		switch state {
+		case scanComment:
+			if ch == '\n' {
+				state = scanCode
+				b.WriteByte('\n')
+			} else {
+				b.WriteByte(' ')
+			}
+		case scanSingleQuote:
+			if ch == '\n' {
+				state = scanCode
+				escaped = false
+				b.WriteByte('\n')
+				continue
+			}
+			if escaped {
+				escaped = false
+				b.WriteByte(' ')
+				continue
+			}
+			if ch == '\\' {
+				escaped = true
+				b.WriteByte(' ')
+				continue
+			}
+			if ch == '\'' {
+				state = scanCode
+			}
+			b.WriteByte(' ')
+		case scanDoubleQuote:
+			if ch == '\n' {
+				state = scanCode
+				escaped = false
+				b.WriteByte('\n')
+				continue
+			}
+			if escaped {
+				escaped = false
+				b.WriteByte(' ')
+				continue
+			}
+			if ch == '\\' {
+				escaped = true
+				b.WriteByte(' ')
+				continue
+			}
+			if ch == '"' {
+				state = scanCode
+			}
+			b.WriteByte(' ')
+		case scanTripleSingleQuote:
+			if ch == '\n' {
+				b.WriteByte('\n')
+				continue
+			}
+			if ch == '\'' && i+2 < len(content) && content[i+1] == '\'' && content[i+2] == '\'' {
+				b.WriteString("   ")
+				i += 2
+				state = scanCode
+				continue
+			}
+			b.WriteByte(' ')
+		case scanTripleDoubleQuote:
+			if ch == '\n' {
+				b.WriteByte('\n')
+				continue
+			}
+			if ch == '"' && i+2 < len(content) && content[i+1] == '"' && content[i+2] == '"' {
+				b.WriteString("   ")
+				i += 2
+				state = scanCode
+				continue
+			}
+			b.WriteByte(' ')
+		default:
+			if ch == '#' {
+				state = scanComment
+				b.WriteByte(' ')
+				continue
+			}
+			if ch == '\'' {
+				if i+2 < len(content) && content[i+1] == '\'' && content[i+2] == '\'' {
+					state = scanTripleSingleQuote
+					b.WriteString("   ")
+					i += 2
+					continue
+				}
+				state = scanSingleQuote
+				b.WriteByte(' ')
+				continue
+			}
+			if ch == '"' {
+				if i+2 < len(content) && content[i+1] == '"' && content[i+2] == '"' {
+					state = scanTripleDoubleQuote
+					b.WriteString("   ")
+					i += 2
+					continue
+				}
+				state = scanDoubleQuote
+				b.WriteByte(' ')
+				continue
+			}
+			b.WriteByte(ch)
+		}
+	}
+
+	return b.String()
+}
+
+func isSymbolImportedFromModule(content string, module string, symbol string) bool {
+	if module == "" || symbol == "" {
+		return false
+	}
+	lines := strings.Split(content, "\n")
+	importPrefix := "from " + module + " import "
+	insertIdx := topImportInsertIndex(lines)
+	for i := 0; i < insertIdx; i++ {
+		line := lines[i]
+		trimmed := strings.TrimSpace(line)
+		if line != trimmed {
+			continue
+		}
+		if !strings.HasPrefix(trimmed, importPrefix) {
+			continue
+		}
+		namesPart := strings.TrimSpace(strings.TrimPrefix(trimmed, importPrefix))
+		for _, name := range strings.Split(namesPart, ",") {
+			if strings.TrimSpace(name) == symbol {
+				return true
+			}
 		}
 	}
 	return false
@@ -1412,15 +1738,43 @@ func isIdentifierRune(ch byte) bool {
 	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_'
 }
 
+func declaresIdentifier(content string, ident string) bool {
+	if ident == "" {
+		return false
+	}
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "class "+ident+"(") {
+			return true
+		}
+		if strings.HasPrefix(trimmed, "def "+ident+"(") {
+			return true
+		}
+		if strings.HasPrefix(trimmed, "async def "+ident+"(") {
+			return true
+		}
+		if strings.HasPrefix(trimmed, ident+" =") || strings.HasPrefix(trimmed, ident+":") {
+			return true
+		}
+	}
+	return false
+}
+
 func ensureNamedImport(content string, module string, symbol string) string {
 	if module == "" || symbol == "" {
 		return content
 	}
 	lines := strings.Split(content, "\n")
+	insertIdx := topImportInsertIndex(lines)
 	importPrefix := "from " + module + " import "
 	moduleImportIndex := -1
-	for i, line := range lines {
+	for i := 0; i < insertIdx; i++ {
+		line := lines[i]
 		trimmed := strings.TrimSpace(line)
+		if line != trimmed {
+			continue
+		}
 		if !strings.HasPrefix(trimmed, importPrefix) {
 			continue
 		}
@@ -1457,11 +1811,39 @@ func ensureNamedImport(content string, module string, symbol string) string {
 		return strings.Join(lines, "\n")
 	}
 
-	insertIdx := topImportInsertIndex(lines)
 	line := importPrefix + symbol
 	prefix := append([]string{}, lines[:insertIdx]...)
 	suffix := append([]string{}, lines[insertIdx:]...)
 	prefix = append(prefix, line)
+	return strings.Join(append(prefix, suffix...), "\n")
+}
+
+func ensureModuleImport(content string, module string) string {
+	if module == "" {
+		return content
+	}
+	lines := strings.Split(content, "\n")
+	insertIdx := topImportInsertIndex(lines)
+	for i := 0; i < insertIdx; i++ {
+		line := lines[i]
+		trimmed := strings.TrimSpace(line)
+		if line != trimmed {
+			continue
+		}
+		if !strings.HasPrefix(trimmed, "import ") {
+			continue
+		}
+		items := strings.Split(strings.TrimSpace(strings.TrimPrefix(trimmed, "import ")), ",")
+		for _, item := range items {
+			item = strings.TrimSpace(item)
+			if item == module || strings.HasPrefix(item, module+" as ") {
+				return content
+			}
+		}
+	}
+	prefix := append([]string{}, lines[:insertIdx]...)
+	suffix := append([]string{}, lines[insertIdx:]...)
+	prefix = append(prefix, "import "+module)
 	return strings.Join(append(prefix, suffix...), "\n")
 }
 
