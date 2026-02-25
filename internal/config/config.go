@@ -77,7 +77,6 @@ type Package struct {
 	HTTPRequestFromModel      bool          `yaml:"http_request_from_model"`
 	ClientClass               string        `yaml:"client_class"`
 	AsyncClientClass          string        `yaml:"async_client_class"`
-	ChildClients              []ChildClient `yaml:"child_clients"`
 	ExtraImports              []ImportSpec  `yaml:"extra_imports"`
 	RawImports                []string      `yaml:"raw_imports"`
 	ModelSchemas              []ModelSchema `yaml:"model_schemas"`
@@ -93,13 +92,6 @@ type Package struct {
 	SyncExtraMethods          []string      `yaml:"sync_extra_methods"`
 	AsyncExtraMethods         []string      `yaml:"async_extra_methods"`
 	OverridePaginationClasses []string      `yaml:"override_pagination_classes"`
-}
-
-type ChildClient struct {
-	Attribute        string `yaml:"attribute"`
-	Module           string `yaml:"module"`
-	SyncClass        string `yaml:"sync_class"`
-	AsyncClass       string `yaml:"async_class"`
 }
 
 type ModelSchema struct {
@@ -417,17 +409,6 @@ func (c *Config) Validate() error {
 		for j, prefix := range pkg.PathPrefixes {
 			if prefix == "" || !strings.HasPrefix(prefix, "/") {
 				return fmt.Errorf("api.packages[%d].path_prefixes[%d] must start with '/'", i, j)
-			}
-		}
-		for j, child := range pkg.ChildClients {
-			if strings.TrimSpace(child.Attribute) == "" {
-				return fmt.Errorf("api.packages[%d].child_clients[%d].attribute is required", i, j)
-			}
-			if strings.TrimSpace(child.Module) == "" {
-				return fmt.Errorf("api.packages[%d].child_clients[%d].module is required", i, j)
-			}
-			if strings.TrimSpace(child.SyncClass) == "" || strings.TrimSpace(child.AsyncClass) == "" {
-				return fmt.Errorf("api.packages[%d].child_clients[%d].sync_class and async_class are required", i, j)
 			}
 		}
 		for j, imp := range pkg.ExtraImports {

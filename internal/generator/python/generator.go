@@ -22,10 +22,18 @@ type OperationBinding struct {
 }
 
 type PackageMeta struct {
-	Name       string
-	ModulePath string
-	DirPath    string
-	Package    *config.Package
+	Name         string
+	ModulePath   string
+	DirPath      string
+	Package      *config.Package
+	ChildClients []childClient
+}
+
+type childClient struct {
+	Attribute  string
+	Module     string
+	SyncClass  string
+	AsyncClass string
 }
 
 type fileWriter struct {
@@ -97,7 +105,7 @@ func writePythonSDK(
 		if _, ok := packages[pkgName]; ok {
 			continue
 		}
-		if packageHasConfiguredContent(meta.Package) {
+		if packageHasConfiguredContent(meta.Package) || len(meta.ChildClients) > 0 {
 			pkgNames = append(pkgNames, pkgName)
 		}
 	}
@@ -503,8 +511,7 @@ func packageHasConfiguredContent(pkg *config.Package) bool {
 	if pkg == nil {
 		return false
 	}
-	return len(pkg.ChildClients) > 0 ||
-		len(pkg.ModelSchemas) > 0 ||
+	return len(pkg.ModelSchemas) > 0 ||
 		len(pkg.EmptyModels) > 0 ||
 		len(pkg.PreModelCode) > 0 ||
 		len(pkg.TopLevelCode) > 0 ||
@@ -568,16 +575,16 @@ func RenderPackageModule(
 	commentOverrides config.CommentOverrides,
 ) string {
 	var buf bytes.Buffer
-	hasChildClients := meta.Package != nil && len(meta.Package.ChildClients) > 0
-	childClientsForType := []config.ChildClient{}
-	childClientsForInit := []config.ChildClient{}
-	childClientsForSync := []config.ChildClient{}
-	childClientsForAsync := []config.ChildClient{}
+	hasChildClients := len(meta.ChildClients) > 0
+	childClientsForType := []childClient{}
+	childClientsForInit := []childClient{}
+	childClientsForSync := []childClient{}
+	childClientsForAsync := []childClient{}
 	if hasChildClients {
-		childClientsForType = append([]config.ChildClient(nil), meta.Package.ChildClients...)
-		childClientsForInit = append([]config.ChildClient(nil), meta.Package.ChildClients...)
-		childClientsForSync = append([]config.ChildClient(nil), meta.Package.ChildClients...)
-		childClientsForAsync = append([]config.ChildClient(nil), meta.Package.ChildClients...)
+		childClientsForType = append([]childClient(nil), meta.ChildClients...)
+		childClientsForInit = append([]childClient(nil), meta.ChildClients...)
+		childClientsForSync = append([]childClient(nil), meta.ChildClients...)
+		childClientsForAsync = append([]childClient(nil), meta.ChildClients...)
 	}
 	modelDefs := resolvePackageModelDefinitions(doc, meta)
 	schemaAliases := packageSchemaAliases(meta)
@@ -3344,7 +3351,7 @@ func OrderClassMethodBlocks(blocks []ClassMethodBlock) []ClassMethodBlock {
 
 func renderChildClientProperty(
 	meta PackageMeta,
-	child config.ChildClient,
+	child childClient,
 	async bool,
 	classKey string,
 	commentOverrides config.CommentOverrides,
