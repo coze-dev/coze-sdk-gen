@@ -166,6 +166,13 @@ func writePythonSDK(
 			return err
 		}
 	}
+	rootInitContent, err := renderPythonRootInit(cfg)
+	if err != nil {
+		return err
+	}
+	if err := writer.write(filepath.Join(rootDir, "__init__.py"), rootInitContent); err != nil {
+		return err
+	}
 	if err := writePythonSpecialAssets(rootDir, writer); err != nil {
 		return err
 	}
@@ -180,7 +187,6 @@ func writePythonSpecialAssets(rootDir string, writer *fileWriter) error {
 		relPath string
 		asset   string
 	}{
-		{relPath: "__init__.py", asset: "special/cozepy/__init__.py.tpl"},
 		{relPath: "auth/__init__.py", asset: "special/cozepy/auth/__init__.py.tpl"},
 		{relPath: "websockets/__init__.py", asset: "special/cozepy/websockets/__init__.py.tpl"},
 		{relPath: "websockets/audio/__init__.py", asset: "special/cozepy/websockets/audio/__init__.py.tpl"},
