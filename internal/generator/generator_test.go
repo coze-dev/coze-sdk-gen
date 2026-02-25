@@ -389,6 +389,14 @@ func TestGeneratePythonFromRealConfig(t *testing.T) {
 	}
 
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "apps", "__init__.py"), "PublishStatus")
+	assertFileContains(
+		t,
+		filepath.Join(cfg.OutputSDK, "cozepy", "__init__.py"),
+		"from .apps.collaborators import AddAppCollaboratorResp, AppCollaborator, RemoveAppCollaboratorResp",
+	)
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "__init__.py"), "\"AppCollaborator\"")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "__init__.py"), "\"AddAppCollaboratorResp\"")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "__init__.py"), "\"RemoveAppCollaboratorResp\"")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "coze.py"), "class Coze(object):")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "coze.py"), "class AsyncCoze(object):")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "cozepy", "coze.py"), "def bots(self) -> \"BotsClient\":")
