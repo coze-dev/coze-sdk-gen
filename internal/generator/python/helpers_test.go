@@ -205,9 +205,11 @@ func TestOperationHelpersOrdering(t *testing.T) {
 	orderedFields := OrderSignatureQueryFields(
 		[]RenderQueryField{
 			{RawName: "required_a", Required: true},
+			{RawName: "page_size", Required: true, DefaultValue: "20"},
 			{RawName: "opt_with_default_inline", Required: false, DefaultValue: "10"},
 			{RawName: "opt_without_default", Required: false},
 			{RawName: "opt_with_default_override", ArgName: "opt_with_default_override", Required: false},
+			{RawName: "cursor", ArgName: "page_num", Required: false},
 			{RawName: "required_b", Required: true},
 		},
 		&config.OperationMapping{
@@ -215,12 +217,14 @@ func TestOperationHelpersOrdering(t *testing.T) {
 		},
 		false,
 	)
-	if len(orderedFields) != 5 ||
+	if len(orderedFields) != 7 ||
 		orderedFields[0].RawName != "required_a" ||
 		orderedFields[1].RawName != "required_b" ||
 		orderedFields[2].RawName != "opt_without_default" ||
 		orderedFields[3].RawName != "opt_with_default_inline" ||
-		orderedFields[4].RawName != "opt_with_default_override" {
+		orderedFields[4].RawName != "opt_with_default_override" ||
+		orderedFields[5].RawName != "page_size" ||
+		orderedFields[6].RawName != "cursor" {
 		t.Fatalf("OrderSignatureQueryFields=%v", orderedFields)
 	}
 }

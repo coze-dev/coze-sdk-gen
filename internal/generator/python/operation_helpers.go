@@ -56,10 +56,15 @@ func OrderSignatureQueryFields(fields []RenderQueryField, mapping *config.Operat
 	if len(fields) <= 1 {
 		return fields
 	}
+	tailFields := make([]RenderQueryField, 0, len(fields))
 	requiredFields := make([]RenderQueryField, 0, len(fields))
 	optionalWithoutDefault := make([]RenderQueryField, 0, len(fields))
 	optionalWithDefault := make([]RenderQueryField, 0, len(fields))
 	for _, field := range fields {
+		if isSignatureTailField(field) {
+			tailFields = append(tailFields, field)
+			continue
+		}
 		defaultValue := strings.TrimSpace(field.DefaultValue)
 		if override, ok := OperationArgDefault(mapping, field.RawName, field.ArgName, async); ok {
 			defaultValue = override
@@ -78,7 +83,19 @@ func OrderSignatureQueryFields(fields []RenderQueryField, mapping *config.Operat
 	ordered = append(ordered, requiredFields...)
 	ordered = append(ordered, optionalWithoutDefault...)
 	ordered = append(ordered, optionalWithDefault...)
+	ordered = append(ordered, tailFields...)
 	return ordered
+}
+
+func isSignatureTailField(field RenderQueryField) bool {
+	names := []string{field.RawName, field.ArgName}
+	for _, name := range names {
+		switch strings.ToLower(strings.TrimSpace(name)) {
+		case "page_size", "page_number", "page_num":
+			return true
+		}
+	}
+	return false
 }
 
 func SignatureArgName(argDecl string) string {
