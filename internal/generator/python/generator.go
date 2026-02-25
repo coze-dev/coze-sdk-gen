@@ -954,6 +954,7 @@ func RenderPackageModule(
 			syncMethodBlocks = append(syncMethodBlocks, ClassMethodBlock{
 				Name:    attribute,
 				Content: renderChildClientProperty(meta, child, false, syncClassKey, commentOverrides),
+				IsChild: true,
 			})
 		}
 	}
@@ -976,9 +977,7 @@ func RenderPackageModule(
 			})
 		}
 	}
-	if meta.Package != nil && len(meta.Package.SyncMethodOrder) > 0 {
-		syncMethodBlocks = OrderClassMethodBlocks(syncMethodBlocks, meta.Package.SyncMethodOrder)
-	}
+	syncMethodBlocks = OrderClassMethodBlocks(syncMethodBlocks)
 	for _, block := range syncMethodBlocks {
 		buf.WriteString(strings.TrimRight(block.Content, "\n"))
 		buf.WriteString("\n\n")
@@ -1027,6 +1026,7 @@ func RenderPackageModule(
 			asyncMethodBlocks = append(asyncMethodBlocks, ClassMethodBlock{
 				Name:    attribute,
 				Content: renderChildClientProperty(meta, child, true, asyncClassKey, commentOverrides),
+				IsChild: true,
 			})
 		}
 	}
@@ -1049,9 +1049,7 @@ func RenderPackageModule(
 			})
 		}
 	}
-	if meta.Package != nil && len(meta.Package.AsyncMethodOrder) > 0 {
-		asyncMethodBlocks = OrderClassMethodBlocks(asyncMethodBlocks, meta.Package.AsyncMethodOrder)
-	}
+	asyncMethodBlocks = OrderClassMethodBlocks(asyncMethodBlocks)
 	for _, block := range asyncMethodBlocks {
 		buf.WriteString(strings.TrimRight(block.Content, "\n"))
 		buf.WriteString("\n\n")
@@ -2028,6 +2026,7 @@ func childTypeImportModule(meta PackageMeta, module string) string {
 type ClassMethodBlock struct {
 	Name    string
 	Content string
+	IsChild bool
 }
 
 func mappingGeneratesSync(mapping *config.OperationMapping) bool {
@@ -2092,35 +2091,39 @@ func applyMethodDocstringOverrides(block string, classKey string, commentOverrid
 	return strings.Join(out, "\n")
 }
 
-func OrderClassMethodBlocks(blocks []ClassMethodBlock, orderedNames []string) []ClassMethodBlock {
-	if len(blocks) == 0 || len(orderedNames) == 0 {
+func OrderClassMethodBlocks(blocks []ClassMethodBlock) []ClassMethodBlock {
+	if len(blocks) == 0 {
 		return blocks
 	}
-	used := make([]bool, len(blocks))
+
+	prioritizedMethodNames := []string{"stream", "create", "clone", "retrieve", "update", "delete", "list"}
+	prioritizedBuckets := make(map[string][]ClassMethodBlock, len(prioritizedMethodNames))
+	prioritizedSet := make(map[string]struct{}, len(prioritizedMethodNames))
+	for _, name := range prioritizedMethodNames {
+		prioritizedSet[name] = struct{}{}
+	}
+
+	childMethods := make([]ClassMethodBlock, 0)
+	otherMethods := make([]ClassMethodBlock, 0)
+	for _, block := range blocks {
+		if block.IsChild {
+			childMethods = append(childMethods, block)
+			continue
+		}
+		name := strings.TrimSpace(block.Name)
+		if _, ok := prioritizedSet[name]; ok {
+			prioritizedBuckets[name] = append(prioritizedBuckets[name], block)
+			continue
+		}
+		otherMethods = append(otherMethods, block)
+	}
+
 	ordered := make([]ClassMethodBlock, 0, len(blocks))
-	for _, rawName := range orderedNames {
-		name := strings.TrimSpace(rawName)
-		if name == "" {
-			continue
-		}
-		for i, block := range blocks {
-			if used[i] {
-				continue
-			}
-			if block.Name != name {
-				continue
-			}
-			ordered = append(ordered, block)
-			used[i] = true
-			break
-		}
+	ordered = append(ordered, childMethods...)
+	for _, name := range prioritizedMethodNames {
+		ordered = append(ordered, prioritizedBuckets[name]...)
 	}
-	for i, block := range blocks {
-		if used[i] {
-			continue
-		}
-		ordered = append(ordered, block)
-	}
+	ordered = append(ordered, otherMethods...)
 	return ordered
 }
 

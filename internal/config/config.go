@@ -93,8 +93,6 @@ type Package struct {
 	AsyncInitCode             []string      `yaml:"async_init_code"`
 	SyncExtraMethods          []string      `yaml:"sync_extra_methods"`
 	AsyncExtraMethods         []string      `yaml:"async_extra_methods"`
-	SyncMethodOrder           []string      `yaml:"sync_method_order"`
-	AsyncMethodOrder          []string      `yaml:"async_method_order"`
 	TypeCheckingChildOrder    []string      `yaml:"type_checking_child_order"`
 	InitChildOrder            []string      `yaml:"init_child_order"`
 	SyncChildOrder            []string      `yaml:"sync_child_order"`
@@ -457,19 +455,9 @@ func (c *Config) Validate() error {
 				return fmt.Errorf("api.packages[%d].sync_extra_methods[%d] should not be empty", i, j)
 			}
 		}
-		for j, name := range pkg.SyncMethodOrder {
-			if strings.TrimSpace(name) == "" {
-				return fmt.Errorf("api.packages[%d].sync_method_order[%d] should not be empty", i, j)
-			}
-		}
 		for j, block := range pkg.AsyncExtraMethods {
 			if strings.TrimSpace(block) == "" {
 				return fmt.Errorf("api.packages[%d].async_extra_methods[%d] should not be empty", i, j)
-			}
-		}
-		for j, name := range pkg.AsyncMethodOrder {
-			if strings.TrimSpace(name) == "" {
-				return fmt.Errorf("api.packages[%d].async_method_order[%d] should not be empty", i, j)
 			}
 		}
 		for j, name := range pkg.TypeCheckingChildOrder {
