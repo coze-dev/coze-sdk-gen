@@ -578,18 +578,6 @@ func RenderPackageModule(
 		childClientsForInit = append([]config.ChildClient(nil), meta.Package.ChildClients...)
 		childClientsForSync = append([]config.ChildClient(nil), meta.Package.ChildClients...)
 		childClientsForAsync = append([]config.ChildClient(nil), meta.Package.ChildClients...)
-		if len(meta.Package.TypeCheckingChildOrder) > 0 {
-			childClientsForType = OrderChildClients(childClientsForType, meta.Package.TypeCheckingChildOrder)
-		}
-		if len(meta.Package.InitChildOrder) > 0 {
-			childClientsForInit = OrderChildClients(childClientsForInit, meta.Package.InitChildOrder)
-		}
-		if len(meta.Package.SyncChildOrder) > 0 {
-			childClientsForSync = OrderChildClients(childClientsForSync, meta.Package.SyncChildOrder)
-		}
-		if len(meta.Package.AsyncChildOrder) > 0 {
-			childClientsForAsync = OrderChildClients(childClientsForAsync, meta.Package.AsyncChildOrder)
-		}
 	}
 	hasTypedChildClients := false
 	if hasChildClients {

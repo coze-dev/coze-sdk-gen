@@ -188,16 +188,6 @@ func TestCommentAndDocstringHelpers(t *testing.T) {
 }
 
 func TestOperationHelpersOrdering(t *testing.T) {
-	children := []config.ChildClient{
-		{Attribute: "c"},
-		{Attribute: "a"},
-		{Attribute: "b"},
-	}
-	ordered := OrderChildClients(children, []string{"a", "b"})
-	if len(ordered) != 3 || ordered[0].Attribute != "a" || ordered[1].Attribute != "b" || ordered[2].Attribute != "c" {
-		t.Fatalf("OrderChildClients=%v", ordered)
-	}
-
 	if got := IndentCodeBlock("x = 1\n", 2); got != "        x = 1\n" {
 		t.Fatalf("IndentCodeBlock=%q", got)
 	}

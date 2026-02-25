@@ -761,18 +761,6 @@ def _create(self) -> None:
 	if !strings.HasPrefix(indented, "    def run") {
 		t.Fatalf("unexpected indented block:\n%s", indented)
 	}
-
-	orderedChildren := pygen.OrderChildClients(
-		[]config.ChildClient{
-			{Attribute: "rooms"},
-			{Attribute: "speech"},
-			{Attribute: "voices"},
-		},
-		[]string{"voices", "rooms"},
-	)
-	if len(orderedChildren) != 3 || orderedChildren[0].Attribute != "voices" || orderedChildren[1].Attribute != "rooms" {
-		t.Fatalf("unexpected child order: %+v", orderedChildren)
-	}
 }
 
 func TestDeduplicateBindingsKeepsSyncAsyncPairName(t *testing.T) {

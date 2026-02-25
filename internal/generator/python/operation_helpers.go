@@ -14,38 +14,6 @@ func IndentCodeBlock(block string, level int) string {
 	return buf.String()
 }
 
-func OrderChildClients(children []config.ChildClient, orderedAttrs []string) []config.ChildClient {
-	if len(children) == 0 || len(orderedAttrs) == 0 {
-		return children
-	}
-	ordered := make([]config.ChildClient, 0, len(children))
-	used := make([]bool, len(children))
-	for _, rawAttr := range orderedAttrs {
-		attr := strings.TrimSpace(rawAttr)
-		if attr == "" {
-			continue
-		}
-		for i, child := range children {
-			if used[i] {
-				continue
-			}
-			if strings.TrimSpace(child.Attribute) != attr {
-				continue
-			}
-			ordered = append(ordered, child)
-			used[i] = true
-			break
-		}
-	}
-	for i, child := range children {
-		if used[i] {
-			continue
-		}
-		ordered = append(ordered, child)
-	}
-	return ordered
-}
-
 type RenderQueryField struct {
 	RawName      string
 	ArgName      string
