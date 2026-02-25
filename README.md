@@ -2,65 +2,64 @@
 
 A Go-based SDK generator for Coze OpenAPI.
 
-Current status:
-- Language support: `python` (implemented), `go` (planned)
-- Source of truth: OpenAPI Swagger + generator config
-- Compatibility target: `exist-repo/coze-py`
-- Generator behavior: generate Python sources only through Swagger parsing + templates
+## Status
 
-## Why config is required
+- Supported language: `python`
+- In progress: `go`
+- Generation model: Swagger/OpenAPI as source of truth + config-based metadata
 
-The existing Python SDK and Swagger are not perfectly aligned. The generator uses `config/generator.yaml` to fill missing metadata, including:
-- API package grouping rules
-- SDK method aliases for the same HTTP endpoint
-- Field alias hints
-- Legacy operations/packages that are missing in Swagger
+## Why Config Is Needed
 
-## Quick start
+The legacy SDK shape and the OpenAPI document are not fully 1:1.  
+`config/generator.yaml` is used to provide generation metadata, for example:
 
-1. Generate Python SDK:
+- API package grouping
+- SDK method aliases for the same endpoint
+- field alias/type overrides
+- legacy-compatible behavior not directly expressible in Swagger
+
+## Quick Start
+
+1. Run generator:
 
 ```bash
 ./scripts/generate.sh
 ```
 
-This writes output to `exist-repo/coze-py-generated`.
-
-2. Compare generated SDK with legacy SDK:
+2. Compare generated SDK with baseline SDK:
 
 ```bash
 ./scripts/diff.sh
 ```
 
-The script prints file-level differences. The current implementation is Swagger-driven and still iterating toward full legacy parity.
-
-## Development scripts
-
-- Format: `./scripts/fmt.sh`
-- Lint: `./scripts/lint.sh`
-- Test (with coverage > 80% gate): `./scripts/test.sh`
-- Build: `./scripts/build.sh`
-
-Or run all checks:
-
-```bash
-make check
-```
-
-## CLI usage
+## CLI
 
 ```bash
 go run ./cmd/coze-sdk-gen \
   --config config/generator.yaml \
-  --swagger exist-repo/coze-openapi-swagger.yaml
+  --swagger ./coze-openapi.yaml
 ```
 
 Output example:
 
 ```text
-language=python generated_files=23 generated_ops=69 output=exist-repo/coze-py-generated
+language=python generated_files=57 generated_ops=86 output=<configured-output-dir>
 ```
 
 Optional overrides:
+
 - `--language`
 - `--output-sdk`
+
+## Development Scripts
+
+- format: `./scripts/fmt.sh`
+- lint: `./scripts/lint.sh`
+- test (coverage gate): `./scripts/test.sh`
+- build: `./scripts/build.sh`
+
+Run full checks:
+
+```bash
+make check
+```
