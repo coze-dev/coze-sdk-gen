@@ -92,10 +92,6 @@ type Package struct {
 	AsyncInitCode             []string      `yaml:"async_init_code"`
 	SyncExtraMethods          []string      `yaml:"sync_extra_methods"`
 	AsyncExtraMethods         []string      `yaml:"async_extra_methods"`
-	TypeCheckingChildOrder    []string      `yaml:"type_checking_child_order"`
-	InitChildOrder            []string      `yaml:"init_child_order"`
-	SyncChildOrder            []string      `yaml:"sync_child_order"`
-	AsyncChildOrder           []string      `yaml:"async_child_order"`
 	OverridePaginationClasses []string      `yaml:"override_pagination_classes"`
 }
 
@@ -477,26 +473,6 @@ func (c *Config) Validate() error {
 		for j, block := range pkg.AsyncExtraMethods {
 			if strings.TrimSpace(block) == "" {
 				return fmt.Errorf("api.packages[%d].async_extra_methods[%d] should not be empty", i, j)
-			}
-		}
-		for j, name := range pkg.TypeCheckingChildOrder {
-			if strings.TrimSpace(name) == "" {
-				return fmt.Errorf("api.packages[%d].type_checking_child_order[%d] should not be empty", i, j)
-			}
-		}
-		for j, name := range pkg.InitChildOrder {
-			if strings.TrimSpace(name) == "" {
-				return fmt.Errorf("api.packages[%d].init_child_order[%d] should not be empty", i, j)
-			}
-		}
-		for j, name := range pkg.SyncChildOrder {
-			if strings.TrimSpace(name) == "" {
-				return fmt.Errorf("api.packages[%d].sync_child_order[%d] should not be empty", i, j)
-			}
-		}
-		for j, name := range pkg.AsyncChildOrder {
-			if strings.TrimSpace(name) == "" {
-				return fmt.Errorf("api.packages[%d].async_child_order[%d] should not be empty", i, j)
 			}
 		}
 		for j, className := range pkg.OverridePaginationClasses {

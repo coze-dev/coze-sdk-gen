@@ -144,34 +144,6 @@ api:
         - /v1/apps
     - name: audio
       source_dir: cozepy/audio
-      type_checking_child_order:
-        - live
-        - rooms
-        - speech
-        - transcriptions
-        - voiceprint_groups
-        - voices
-      init_child_order:
-        - rooms
-        - voices
-        - speech
-        - transcriptions
-        - voiceprint_groups
-        - live
-      sync_child_order:
-        - rooms
-        - speech
-        - transcriptions
-        - voices
-        - voiceprint_groups
-        - live
-      async_child_order:
-        - rooms
-        - speech
-        - voices
-        - transcriptions
-        - voiceprint_groups
-        - live
       child_clients:
         - attribute: rooms
           module: .rooms
@@ -2951,18 +2923,6 @@ api:
           module: .versions
           sync_class: WorkflowsVersionsClient
           async_class: AsyncWorkflowsVersionsClient
-      type_checking_child_order:
-        - chat
-        - runs
-        - versions
-      sync_child_order:
-        - runs
-        - chat
-        - versions
-      async_child_order:
-        - runs
-        - chat
-        - versions
       model_schemas:
         - schema: OpenAPIWorkflowMode
           name: WorkflowMode
