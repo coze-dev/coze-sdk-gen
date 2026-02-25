@@ -107,10 +107,13 @@ When asked to sync generated Python SDK output to `coze-py` and complete the PR 
 ### Rule 1: GitHub PR Rules
 
 1. PRs must be traceable: when creating/updating a PR, title, description, related change scope, and validation info must be complete and auditable.
-2. The agent must not auto-merge PRs; merge actions are allowed only at explicitly permitted stages.
+2. The agent must not auto-merge PRs.
+   - Merge actions are allowed only after explicit user merge instructions.
+   - When a user explicitly instructs to merge a PR, merge it directly; do not require pre-approval and do not block on fetching approval first.
 3. Human review has priority: continuously read and handle human review comments.
 4. Bot handling rule: ignore bot comments/statuses (for example `CodeRabbit`) as review-decision input.
-5. After feedback is addressed, you must push and keep updating the same PR; approval status is only based on downstream `coze-py` PR (`LGTM approve` by human or GitHub PR status `approved`).
+5. After feedback is addressed, you must push and keep updating the same PR.
+   - Human approval status can be tracked for visibility, but it is not a prerequisite for merge once explicit user merge instruction is given.
 6. Continuously poll PR checks; except explicitly ignored items, all required checks must pass before entering next stages.
 7. PR descriptions must not contain literal `\\n`; use real line breaks.
 8. PR traceability must be bidirectional:
@@ -152,7 +155,7 @@ When asked to sync generated Python SDK output to `coze-py` and complete the PR 
    - Create or update the `coze-sdk-gen` PR, and keep that PR updated in later changes.
    - `coze-sdk-gen` PR handling must satisfy Rule 1.
    - In this workflow, `coze-sdk-gen` PR is mandatory (paired with downstream `coze-py` PR).
-2. Do not merge `coze-sdk-gen` branch into `main` at this stage; only do so after downstream `coze-py` PR gets human `LGTM approve` or status `approved`.
+2. Do not merge `coze-sdk-gen` branch into `main` at this stage; only do so after explicit user merge instruction.
 
 ### Stage 3: Generate and Update Downstream PR
 
@@ -171,9 +174,9 @@ When asked to sync generated Python SDK output to `coze-py` and complete the PR 
    - Preferred semantic set: `feature`, `enhancement`, `fix`, `bugfix`, `bug`, `chore`, `documentation`.
    - If `fix`/`bugfix` does not exist, choose the closest existing equivalent (for example `bug`); do not assume a label exists.
 
-### Stage 4: Post-LGTM Release Sync and Merge
+### Stage 4: Post-Merge-Instruction Release Sync and Merge
 
-1. Trigger condition: enter this stage only after downstream `coze-py` PR gets human `LGTM approve` or GitHub PR status `approved`.
+1. Trigger condition: enter this stage only after explicit user merge instruction.
 2. Sync `coze-sdk-gen` mainline:
    - Merge the `coze-sdk-gen` PR.
    - Update local `coze-sdk-gen/main` to the latest remote code.
@@ -181,9 +184,10 @@ When asked to sync generated Python SDK output to `coze-py` and complete the PR 
 3. Regenerate and backfill downstream PR based on latest `coze-sdk-gen/main`:
    - Rerun Python SDK generation and checks.
    - Update the same `coze-py` PR with regenerated output and push.
-4. Poll downstream PR checks again:
-   - Merge downstream `coze-py` PR after all required checks pass.
-   - If new commits trigger new checks or comments, return to Stage 3.
+4. Handle downstream merge by user instruction:
+   - When user explicitly instructs to merge downstream `coze-py` PR, merge it directly.
+   - Do not require prior approve state and do not block waiting for approve status before merge.
+   - If new commits trigger new checks or comments and user asks for follow-up, return to Stage 3.
 5. Final report:
    - `coze-sdk-gen` PR URL / status / merge result
    - Downstream `coze-py` PR URL / status / merge result
