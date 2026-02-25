@@ -122,7 +122,6 @@ type ModelSchema struct {
 	PrependCode             []string          `yaml:"prepend_code"`
 	SeparateCommentedEnum   *bool             `yaml:"separate_commented_enum_members"`
 	SeparateCommentedFields *bool             `yaml:"separate_commented_fields"`
-	BlankLineBeforeFields   []string          `yaml:"blank_line_before_fields"`
 	FieldOrder              []string          `yaml:"field_order"`
 	RequiredFields          []string          `yaml:"required_fields"`
 	FieldTypes              map[string]string `yaml:"field_types"`

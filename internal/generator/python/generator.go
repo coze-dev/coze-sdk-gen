@@ -1500,7 +1500,6 @@ type packageModelDefinition struct {
 	ExcludeUnordered      bool
 	SeparateCommentedEnum *bool
 	SeparateCommented     *bool
-	BlankLineBeforeFields []string
 }
 
 func packageSchemaAliases(meta PackageMeta) map[string]string {
@@ -1565,7 +1564,6 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 				ExcludeUnordered:      model.ExcludeUnorderedFields,
 				SeparateCommentedEnum: model.SeparateCommentedEnum,
 				SeparateCommented:     model.SeparateCommentedFields,
-				BlankLineBeforeFields: append([]string(nil), model.BlankLineBeforeFields...),
 			})
 			continue
 		}
@@ -1595,7 +1593,6 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 				ExcludeUnordered:      model.ExcludeUnorderedFields,
 				SeparateCommentedEnum: model.SeparateCommentedEnum,
 				SeparateCommented:     model.SeparateCommentedFields,
-				BlankLineBeforeFields: append([]string(nil), model.BlankLineBeforeFields...),
 			})
 			continue
 		}
@@ -1624,7 +1621,6 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 			ExcludeUnordered:      model.ExcludeUnorderedFields,
 			SeparateCommentedEnum: model.SeparateCommentedEnum,
 			SeparateCommented:     model.SeparateCommentedFields,
-			BlankLineBeforeFields: append([]string(nil), model.BlankLineBeforeFields...),
 		})
 	}
 	return result
@@ -1657,14 +1653,6 @@ func renderPackageModelDefinitions(
 		modelSeparateCommentedFields := separateCommentedFields
 		if model.SeparateCommented != nil {
 			modelSeparateCommentedFields = *model.SeparateCommented
-		}
-		blankLineBeforeFieldSet := map[string]struct{}{}
-		for _, rawFieldName := range model.BlankLineBeforeFields {
-			fieldName := strings.TrimSpace(rawFieldName)
-			if fieldName == "" {
-				continue
-			}
-			blankLineBeforeFieldSet[fieldName] = struct{}{}
 		}
 		if model.IsEnum {
 			if model.EnumBase == "dynamic_str" {
@@ -1846,9 +1834,6 @@ func renderPackageModelDefinitions(
 		prevHasField := false
 		for _, fieldName := range fieldNames {
 			if propertySchema, ok := properties[fieldName]; ok {
-				if _, ok := blankLineBeforeFieldSet[fieldName]; ok && prevHasField {
-					buf.WriteString("\n")
-				}
 				typeName := modelFieldType(model, fieldName, PythonTypeForSchemaWithAliases(doc, propertySchema, requiredSet[fieldName], schemaAliases))
 				normalizedFieldName := NormalizePythonIdentifier(fieldName)
 				inlineFieldComment := strings.TrimSpace(commentOverrides.InlineFieldComments[classKey+"."+normalizedFieldName])
@@ -1894,9 +1879,6 @@ func renderPackageModelDefinitions(
 			}
 			if _, exists := properties[fieldName]; exists {
 				continue
-			}
-			if _, ok := blankLineBeforeFieldSet[fieldName]; ok && prevHasField {
-				buf.WriteString("\n")
 			}
 			normalizedFieldName := NormalizePythonIdentifier(fieldName)
 			typeName := strings.TrimSpace(extraField.Type)
