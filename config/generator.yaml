@@ -1734,7 +1734,27 @@ api:
         - /v3/chat/message
     - name: connectors
       source_dir: cozepy/connectors
+      model_schemas:
+        - name: UserConfigEnum
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: label
+              type: str
+              required: true
+            - name: value
+              type: str
+              required: true
+        - name: UserConfig
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: enums
+              type: List[UserConfigEnum]
+              required: true
+            - name: key
+              type: str
+              required: true
       empty_models:
+        - BindConnectorUserConfigResp
         - InstallConnectorResp
       path_prefixes:
         - /v1/connectors
@@ -4005,6 +4025,26 @@ api:
         workspace_id: str
       response_type: InstallConnectorResp
       response_cast: InstallConnectorResp
+    - path: /v1/connectors/{connector_id}/user_configs
+      method: post
+      order: 649
+      sdk_methods:
+        - connectors.bind
+      allow_missing_in_swagger: true
+      body_builder: remove_none_values
+      body_fields:
+        - configs
+        - user_id
+      body_required_fields:
+        - configs
+      body_field_values:
+        configs: "[i.model_dump() for i in configs] if configs else []"
+      arg_types:
+        connector_id: str
+        configs: List[UserConfig]
+        user_id: Optional[str]
+      response_type: BindConnectorUserConfigResp
+      response_cast: BindConnectorUserConfigResp
     - path: /open_api/knowledge/document/create
       method: post
       order: 652
@@ -5538,8 +5578,6 @@ api:
       response_cast: User
       allow_missing_in_swagger: true
   ignore_apis:
-    - path: /v1/connectors/{connector_id}/user_configs
-      method: post
     - path: /v1/enterprises/{enterprise_id}/organizations
       method: post
     - path: /v1/commerce/benefit/benefits/get
