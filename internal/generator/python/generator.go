@@ -848,18 +848,18 @@ func RenderPackageModule(
 			if typeModule == "" {
 				continue
 			}
-				first, second := orderedTypeImportNames(child.SyncClass, child.AsyncClass)
-				importLine := fmt.Sprintf("    from %s import %s, %s", typeModule, first, second)
-				if len(importLine) > 120 {
-					buf.WriteString(fmt.Sprintf("    from %s import (\n", typeModule))
-					buf.WriteString(fmt.Sprintf("        %s,\n", first))
-					buf.WriteString(fmt.Sprintf("        %s,\n", second))
-					buf.WriteString("    )\n")
-				} else {
-					buf.WriteString(importLine + "\n")
-				}
+			first, second := orderedTypeImportNames(child.SyncClass, child.AsyncClass)
+			importLine := fmt.Sprintf("    from %s import %s, %s", typeModule, first, second)
+			if len(importLine) > 120 {
+				buf.WriteString(fmt.Sprintf("    from %s import (\n", typeModule))
+				buf.WriteString(fmt.Sprintf("        %s,\n", first))
+				buf.WriteString(fmt.Sprintf("        %s,\n", second))
+				buf.WriteString("    )\n")
+			} else {
+				buf.WriteString(importLine + "\n")
 			}
 		}
+	}
 	if meta.Package != nil && len(meta.Package.PreModelCode) > 0 {
 		buf.WriteString("\n")
 	} else {
