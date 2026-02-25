@@ -877,11 +877,7 @@ func RenderPackageModule(
 			if typeModule == "" {
 				continue
 			}
-			if child.TypeImportSyncFirst {
-				buf.WriteString(fmt.Sprintf("    from %s import %s, %s\n", typeModule, child.SyncClass, child.AsyncClass))
-			} else {
-				buf.WriteString(fmt.Sprintf("    from %s import %s, %s\n", typeModule, child.AsyncClass, child.SyncClass))
-			}
+			buf.WriteString(fmt.Sprintf("    from %s import %s, %s\n", typeModule, child.SyncClass, child.AsyncClass))
 		}
 	}
 	if meta.Package != nil && len(meta.Package.PreModelCode) > 0 {

@@ -46,7 +46,6 @@ api:
         - attribute: events
           module: .events
           type_import_module: cozepy.api_apps.events
-          type_import_sync_first: true
           sync_class: APIAppsEventsClient
           async_class: AsyncAPIAppsEventsClient
       path_prefixes:

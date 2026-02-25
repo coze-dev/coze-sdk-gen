@@ -103,16 +103,15 @@ type Package struct {
 }
 
 type ChildClient struct {
-	Attribute           string `yaml:"attribute"`
-	Module              string `yaml:"module"`
-	TypeImportModule    string `yaml:"type_import_module"`
-	TypeImportSyncFirst bool   `yaml:"type_import_sync_first"`
-	SyncClass           string `yaml:"sync_class"`
-	AsyncClass          string `yaml:"async_class"`
-	NilCheck            string `yaml:"nil_check"`
-	InitWithKeywords    bool   `yaml:"init_with_keywords"`
-	DisableTypeHints    bool   `yaml:"disable_type_hints"`
-	MultilineSignature  bool   `yaml:"multiline_signature"`
+	Attribute          string `yaml:"attribute"`
+	Module             string `yaml:"module"`
+	TypeImportModule   string `yaml:"type_import_module"`
+	SyncClass          string `yaml:"sync_class"`
+	AsyncClass         string `yaml:"async_class"`
+	NilCheck           string `yaml:"nil_check"`
+	InitWithKeywords   bool   `yaml:"init_with_keywords"`
+	DisableTypeHints   bool   `yaml:"disable_type_hints"`
+	MultilineSignature bool   `yaml:"multiline_signature"`
 }
 
 type ModelSchema struct {
