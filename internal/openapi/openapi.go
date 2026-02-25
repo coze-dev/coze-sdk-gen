@@ -417,8 +417,14 @@ func (d *Document) SchemaName(schema *Schema) (string, bool) {
 		return refName(schema.Ref, "#/components/schemas/")
 	}
 	if d != nil {
-		for name, candidate := range d.Components.Schemas {
-			if candidate == schema {
+		// Use sorted keys so aliased schema pointers resolve deterministically.
+		names := make([]string, 0, len(d.Components.Schemas))
+		for name := range d.Components.Schemas {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			if d.Components.Schemas[name] == schema {
 				return name, true
 			}
 		}

@@ -356,3 +356,26 @@ components:
 		t.Fatal("did not expect refName success for invalid ref")
 	}
 }
+
+func TestSchemaNameDeterministicForAliasedPointers(t *testing.T) {
+	shared := &Schema{Type: "object"}
+	doc := &Document{
+		Components: Components{
+			Schemas: map[string]*Schema{
+				"z_alias": shared,
+				"a_alias": shared,
+				"m_alias": shared,
+			},
+		},
+	}
+
+	for i := 0; i < 128; i++ {
+		name, ok := doc.SchemaName(shared)
+		if !ok {
+			t.Fatal("expected schema name for aliased pointer")
+		}
+		if name != "a_alias" {
+			t.Fatalf("expected deterministic lexical alias, got %q", name)
+		}
+	}
+}
