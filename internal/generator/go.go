@@ -166,6 +166,9 @@ func writeGoExtraAssets(outputDir string, writer *fileWriter) error {
 		return err
 	}
 	for _, rel := range assets {
+		if shouldSkipGoExtraAsset(rel) {
+			continue
+		}
 		content, err := renderGoExtraAsset(rel)
 		if err != nil {
 			return err
@@ -182,27 +185,16 @@ func writeGoExtraAssets(outputDir string, writer *fileWriter) error {
 }
 
 func writeGoAPIModules(cfg *config.Config, doc *openapi.Document, writer *fileWriter) error {
-	files := map[string]func(*config.Config, *openapi.Document) (string, error){
-		"apps.go":                renderGoAppsModule,
-		"audio_live.go":          renderGoAudioLiveModule,
-		"audio_speech.go":        renderGoAudioSpeechModule,
-		"audio_transcription.go": renderGoAudioTranscriptionsModule,
-		"chats_messages.go":      renderGoChatsMessagesModule,
-		"files.go":               renderGoFilesModule,
-		"templates.go":           renderGoTemplatesModule,
-		"users.go":               renderGoUsersModule,
-		"workflows_chat.go":      renderGoWorkflowsChatModule,
-	}
-	for pathName, renderer := range files {
-		content, err := renderer(cfg, doc)
+	for _, renderer := range listGoAPIModuleRenderers() {
+		content, err := renderer.Render(cfg, doc)
 		if err != nil {
 			return err
 		}
 		formatted, err := format.Source([]byte(content))
 		if err != nil {
-			return fmt.Errorf("format generated go api module %q: %w", pathName, err)
+			return fmt.Errorf("format generated go api module %q: %w", renderer.FileName, err)
 		}
-		if err := writer.write(filepath.Join(cfg.OutputSDK, pathName), string(formatted)); err != nil {
+		if err := writer.write(filepath.Join(cfg.OutputSDK, renderer.FileName), string(formatted)); err != nil {
 			return err
 		}
 	}
