@@ -179,14 +179,14 @@ func writePythonSpecialAssets(rootDir string, writer *fileWriter) error {
 		relPath string
 		asset   string
 	}{
-		{relPath: "__init__.py", asset: "special/cozepy/__init__.py.tpl"},
-		{relPath: "auth/__init__.py", asset: "special/cozepy/auth/__init__.py.tpl"},
-		{relPath: "websockets/__init__.py", asset: "special/cozepy/websockets/__init__.py.tpl"},
-		{relPath: "websockets/audio/__init__.py", asset: "special/cozepy/websockets/audio/__init__.py.tpl"},
-		{relPath: "websockets/audio/speech/__init__.py", asset: "special/cozepy/websockets/audio/speech/__init__.py.tpl"},
-		{relPath: "websockets/audio/transcriptions/__init__.py", asset: "special/cozepy/websockets/audio/transcriptions/__init__.py.tpl"},
-		{relPath: "websockets/chat/__init__.py", asset: "special/cozepy/websockets/chat/__init__.py.tpl"},
-		{relPath: "websockets/ws.py", asset: "special/cozepy/websockets/ws.py.tpl"},
+		{relPath: "__init__.py", asset: "cozepy/__init__.py.tpl"},
+		{relPath: "auth/__init__.py", asset: "cozepy/auth/__init__.py.tpl"},
+		{relPath: "websockets/__init__.py", asset: "cozepy/websockets/__init__.py.tpl"},
+		{relPath: "websockets/audio/__init__.py", asset: "cozepy/websockets/audio/__init__.py.tpl"},
+		{relPath: "websockets/audio/speech/__init__.py", asset: "cozepy/websockets/audio/speech/__init__.py.tpl"},
+		{relPath: "websockets/audio/transcriptions/__init__.py", asset: "cozepy/websockets/audio/transcriptions/__init__.py.tpl"},
+		{relPath: "websockets/chat/__init__.py", asset: "cozepy/websockets/chat/__init__.py.tpl"},
+		{relPath: "websockets/ws.py", asset: "cozepy/websockets/ws.py.tpl"},
 	}
 	for _, item := range specialAssets {
 		content, err := RenderPythonRawAsset(item.asset)

@@ -8,7 +8,7 @@ import (
 	"text/template"
 )
 
-//go:embed templates/*.tpl all:templates/special
+//go:embed all:templates
 var pythonTemplateFS embed.FS
 
 func RenderPythonTemplate(templateName string, data any) (string, error) {
