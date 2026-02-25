@@ -1,4 +1,4 @@
-package generator
+package gogen
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 	"unicode"
 
 	"github.com/coze-dev/coze-sdk-gen/internal/config"
+	pygen "github.com/coze-dev/coze-sdk-gen/internal/generator/python"
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
 )
 
@@ -17,6 +18,16 @@ type goOperationBinding struct {
 	Path       string
 	Method     string
 	Summary    string
+}
+
+type Result struct {
+	GeneratedFiles int
+	GeneratedOps   int
+}
+
+type fileWriter struct {
+	count   int
+	written map[string]struct{}
 }
 
 func GenerateGo(cfg *config.Config, doc *openapi.Document) (Result, error) {
@@ -73,7 +84,7 @@ func buildGoOperationBindings(cfg *config.Config, doc *openapi.Document) []goOpe
 		}
 		base := strings.TrimSpace(details.OperationID)
 		if base == "" {
-			base = defaultMethodName(details.OperationID, details.Path, details.Method)
+			base = pygen.DefaultMethodName(details.OperationID, details.Path, details.Method)
 		}
 		name := normalizeGoExportedIdentifier(base)
 		if name == "" {
@@ -934,4 +945,20 @@ func oneLineText(value string) string {
 		return ""
 	}
 	return strings.Join(strings.Fields(value), " ")
+}
+
+func (w *fileWriter) write(path string, content string) error {
+	return w.writeBytes(path, []byte(content))
+}
+
+func (w *fileWriter) writeBytes(path string, content []byte) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fmt.Errorf("create parent directory for %q: %w", path, err)
+	}
+	if err := os.WriteFile(path, content, 0o644); err != nil {
+		return fmt.Errorf("write file %q: %w", path, err)
+	}
+	w.count++
+	w.written[path] = struct{}{}
+	return nil
 }

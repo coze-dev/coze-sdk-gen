@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/coze-dev/coze-sdk-gen/internal/config"
+	gogen "github.com/coze-dev/coze-sdk-gen/internal/generator/go"
+	pygen "github.com/coze-dev/coze-sdk-gen/internal/generator/python"
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
 )
 
@@ -114,7 +116,7 @@ func TestFindGoOperationPathError(t *testing.T) {
 	cfg := testConfig(t.TempDir())
 	doc := mustParseSwagger(t)
 
-	if _, err := findGoOperationPath(cfg, doc, "chat.not_exist", "post", "/v1/not-exist"); err == nil {
+	if _, err := gogen.FindGoOperationPath(cfg, doc, "chat.not_exist", "post", "/v1/not-exist"); err == nil {
 		t.Fatal("expected path resolution error for missing mapping and missing swagger operation")
 	}
 }
@@ -142,22 +144,22 @@ func TestRunUnknownLanguage(t *testing.T) {
 }
 
 func TestNameHelpers(t *testing.T) {
-	if got := normalizePythonIdentifier("class"); got != "class_" {
+	if got := pygen.NormalizePythonIdentifier("class"); got != "class_" {
 		t.Fatalf("unexpected reserved keyword normalize result: %s", got)
 	}
-	if got := normalizeClassName("open_api_chat_req"); got != "OpenApiChatReq" {
+	if got := pygen.NormalizeClassName("open_api_chat_req"); got != "OpenApiChatReq" {
 		t.Fatalf("unexpected class name: %s", got)
 	}
-	if got := defaultMethodName("OpenApiChatCancel", "/v3/chat/cancel", "post"); got != "chat_cancel" {
+	if got := pygen.DefaultMethodName("OpenApiChatCancel", "/v3/chat/cancel", "post"); got != "chat_cancel" {
 		t.Fatalf("unexpected default method name: %s", got)
 	}
-	if got := defaultMethodName("", "/v1/workspaces/{workspace_id}", "get"); got != "workspaces" {
+	if got := pygen.DefaultMethodName("", "/v1/workspaces/{workspace_id}", "get"); got != "workspaces" {
 		t.Fatalf("unexpected default path-derived method name: %s", got)
 	}
-	if got := normalizePackageDir("cozepy/chat/message", "chat"); got != "chat/message" {
+	if got := pygen.NormalizePackageDir("cozepy/chat/message", "chat"); got != "chat/message" {
 		t.Fatalf("unexpected package dir normalize: %s", got)
 	}
-	if got := normalizePackageDir("", "chat"); got != "chat" {
+	if got := pygen.NormalizePackageDir("", "chat"); got != "chat" {
 		t.Fatalf("unexpected fallback package dir normalize: %s", got)
 	}
 }
@@ -181,13 +183,13 @@ func TestRenderOperationMethodAndTypeHelpers(t *testing.T) {
 		RequestBodySchema: &openapi.Schema{Type: "object"},
 		ResponseSchema:    &openapi.Schema{Type: "array", Items: &openapi.Schema{Type: "string"}},
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "run",
 		Details:     details,
 	}
 
-	asyncCode := renderOperationMethod(doc, binding, true)
+	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
 	if !strings.Contains(asyncCode, "await self._requester.arequest") {
 		t.Fatalf("unexpected async method code:\n%s", asyncCode)
 	}
@@ -198,18 +200,18 @@ func TestRenderOperationMethodAndTypeHelpers(t *testing.T) {
 		t.Fatalf("expected header merge code, got:\n%s", asyncCode)
 	}
 
-	syncCode := renderOperationMethod(doc, binding, false)
+	syncCode := pygen.RenderOperationMethod(doc, binding, false)
 	if !strings.Contains(syncCode, "self._requester.request") {
 		t.Fatalf("unexpected sync method code:\n%s", syncCode)
 	}
 
-	if got := pythonTypeForSchemaRequired(doc, &openapi.Schema{Type: "number"}); got != "float" {
+	if got := pygen.PythonTypeForSchemaRequired(doc, &openapi.Schema{Type: "number"}); got != "float" {
 		t.Fatalf("unexpected number type mapping: %s", got)
 	}
-	if got := pythonTypeForSchema(doc, &openapi.Schema{Type: "boolean"}, false); got != "Optional[bool]" {
+	if got := pygen.PythonTypeForSchema(doc, &openapi.Schema{Type: "boolean"}, false); got != "Optional[bool]" {
 		t.Fatalf("unexpected optional bool type mapping: %s", got)
 	}
-	if got := escapeDocstring("a\nb\"\"\""); got != "a b\"" {
+	if got := pygen.EscapeDocstring("a\nb\"\"\""); got != "a b\"" {
 		t.Fatalf("unexpected escaped docstring: %q", got)
 	}
 }
@@ -286,7 +288,7 @@ func TestRenderOperationMethodAdvancedOptions(t *testing.T) {
 			Required: []string{"name"},
 		},
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "stream_call",
 		Details:     details,
@@ -303,7 +305,7 @@ func TestRenderOperationMethodAdvancedOptions(t *testing.T) {
 		},
 	}
 
-	code := renderOperationMethod(doc, binding, false)
+	code := pygen.RenderOperationMethod(doc, binding, false)
 	if strings.Contains(code, "headers: Optional[Dict[str, str]]") {
 		t.Fatalf("did not expect headers arg when DisableHeadersArg=true:\n%s", code)
 	}
@@ -324,7 +326,7 @@ func TestRenderOperationMethodStreamWrapAndKeywords(t *testing.T) {
 		Path:   "/v1/demo/stream",
 		Method: "post",
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "stream_call",
 		Details:     details,
@@ -341,7 +343,7 @@ func TestRenderOperationMethodStreamWrapAndKeywords(t *testing.T) {
 		},
 	}
 
-	syncCode := renderOperationMethod(doc, binding, false)
+	syncCode := pygen.RenderOperationMethod(doc, binding, false)
 	if !strings.Contains(syncCode, "response: IteratorHTTPResponse[str] = self._requester.request(\"post\", url, stream=True, cast=None, headers=headers)") {
 		t.Fatalf("expected keyword stream/cast request call:\n%s", syncCode)
 	}
@@ -349,7 +351,7 @@ func TestRenderOperationMethodStreamWrapAndKeywords(t *testing.T) {
 		t.Fatalf("expected wrapped sync stream return:\n%s", syncCode)
 	}
 
-	asyncCode := renderOperationMethod(doc, binding, true)
+	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
 	if !strings.Contains(asyncCode, "resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(\"post\", url, stream=True, cast=None, headers=headers)") {
 		t.Fatalf("expected keyword async request call:\n%s", asyncCode)
 	}
@@ -364,7 +366,7 @@ func TestRenderOperationMethodStreamWrapYieldAndSyncVarOverride(t *testing.T) {
 		Path:   "/v1/demo/stream",
 		Method: "post",
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "stream_call",
 		Details:     details,
@@ -384,7 +386,7 @@ func TestRenderOperationMethodStreamWrapYieldAndSyncVarOverride(t *testing.T) {
 		},
 	}
 
-	syncCode := renderOperationMethod(doc, binding, false)
+	syncCode := pygen.RenderOperationMethod(doc, binding, false)
 	if !strings.Contains(syncCode, "resp: IteratorHTTPResponse[str] = self._requester.request(") {
 		t.Fatalf("expected sync stream response var override:\n%s", syncCode)
 	}
@@ -392,7 +394,7 @@ func TestRenderOperationMethodStreamWrapYieldAndSyncVarOverride(t *testing.T) {
 		t.Fatalf("expected sync stream var to be reused in return:\n%s", syncCode)
 	}
 
-	asyncCode := renderOperationMethod(doc, binding, true)
+	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
 	if !strings.Contains(asyncCode, "async for item in AsyncStream(") || !strings.Contains(asyncCode, "yield item") {
 		t.Fatalf("expected async stream-wrap yield mode:\n%s", asyncCode)
 	}
@@ -407,7 +409,7 @@ func TestRenderOperationMethodStreamWrapCompactAsyncReturn(t *testing.T) {
 		Path:   "/v1/demo/stream",
 		Method: "post",
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "stream_call",
 		Details:     details,
@@ -424,12 +426,12 @@ func TestRenderOperationMethodStreamWrapCompactAsyncReturn(t *testing.T) {
 			DisableHeadersArg:            true,
 		},
 	}
-	syncCode := renderOperationMethod(doc, binding, false)
+	syncCode := pygen.RenderOperationMethod(doc, binding, false)
 	if !strings.Contains(syncCode, "return Stream(response._raw_response, response.data, fields=[\"event\", \"data\"], handler=handle_demo)") {
 		t.Fatalf("expected compact sync stream return line:\n%s", syncCode)
 	}
 
-	asyncCode := renderOperationMethod(doc, binding, true)
+	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
 	if !strings.Contains(asyncCode, "return AsyncStream(resp.data, fields=[\"event\", \"data\"], handler=handle_demo, raw_response=resp._raw_response)") {
 		t.Fatalf("expected compact async stream return line:\n%s", asyncCode)
 	}
@@ -441,7 +443,7 @@ func TestRenderOperationMethodStreamWrapBlankLineBeforeAsyncReturn(t *testing.T)
 		Path:   "/v1/demo/stream",
 		Method: "post",
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "stream_call",
 		Details:     details,
@@ -457,7 +459,7 @@ func TestRenderOperationMethodStreamWrapBlankLineBeforeAsyncReturn(t *testing.T)
 		},
 	}
 
-	asyncCode := renderOperationMethod(doc, binding, true)
+	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
 	if !strings.Contains(asyncCode, "resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(\"post\", url, True, None)\n\n        return AsyncStream(") {
 		t.Fatalf("expected a blank line before async stream return:\n%s", asyncCode)
 	}
@@ -475,7 +477,7 @@ func TestRenderOperationMethodHeadersExpr(t *testing.T) {
 			},
 		},
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "create",
 		Details:     details,
@@ -488,7 +490,7 @@ func TestRenderOperationMethodHeadersExpr(t *testing.T) {
 		},
 	}
 
-	code := renderOperationMethod(doc, binding, false)
+	code := pygen.RenderOperationMethod(doc, binding, false)
 	if !strings.Contains(code, "headers = {\"Agw-Js-Conv\": \"str\"}") {
 		t.Fatalf("expected fixed headers assignment via headers_expr:\n%s", code)
 	}
@@ -506,7 +508,7 @@ func TestRenderOperationMethodPaginationRequestArg(t *testing.T) {
 		Path:   "/v1/demo/list",
 		Method: "post",
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "list_items",
 		Details:     details,
@@ -531,7 +533,7 @@ func TestRenderOperationMethodPaginationRequestArg(t *testing.T) {
 		},
 	}
 
-	syncCode := renderOperationMethod(doc, binding, false)
+	syncCode := pygen.RenderOperationMethod(doc, binding, false)
 	if !strings.Contains(syncCode, "json=") {
 		t.Fatalf("expected sync pagination request to use json arg:\n%s", syncCode)
 	}
@@ -539,7 +541,7 @@ func TestRenderOperationMethodPaginationRequestArg(t *testing.T) {
 		t.Fatalf("did not expect sync pagination request to use params arg:\n%s", syncCode)
 	}
 
-	asyncCode := renderOperationMethod(doc, binding, true)
+	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
 	if !strings.Contains(asyncCode, "json=") {
 		t.Fatalf("expected async pagination request to use json arg:\n%s", asyncCode)
 	}
@@ -554,7 +556,7 @@ func TestRenderOperationMethodPaginationPreBodyCode(t *testing.T) {
 		Path:   "/v1/demo/list",
 		Method: "post",
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "list_items",
 		Details:     details,
@@ -577,14 +579,14 @@ func TestRenderOperationMethodPaginationPreBodyCode(t *testing.T) {
 		},
 	}
 
-	code := renderOperationMethod(doc, binding, false)
+	code := pygen.RenderOperationMethod(doc, binding, false)
 	if !strings.Contains(code, "warnings.warn(\"deprecated\")") {
 		t.Fatalf("expected pagination method to include pre_body_code:\n%s", code)
 	}
 }
 
 func TestMethodBlockOrderingHelpers(t *testing.T) {
-	if got := detectMethodBlockName(`
+	if got := pygen.DetectMethodBlockName(`
 @overload
 def _create(self) -> None:
     ...
@@ -592,13 +594,13 @@ def _create(self) -> None:
 		t.Fatalf("unexpected detected method name: %q", got)
 	}
 
-	blocks := []classMethodBlock{
+	blocks := []pygen.ClassMethodBlock{
 		{Name: "messages", Content: "messages"},
 		{Name: "create", Content: "create"},
 		{Name: "list", Content: "list"},
 		{Name: "retrieve", Content: "retrieve"},
 	}
-	ordered := orderClassMethodBlocks(blocks, []string{"create", "retrieve", "messages"})
+	ordered := pygen.OrderClassMethodBlocks(blocks, []string{"create", "retrieve", "messages"})
 	got := []string{ordered[0].Name, ordered[1].Name, ordered[2].Name, ordered[3].Name}
 	expected := []string{"create", "retrieve", "messages", "list"}
 	for i := range expected {
@@ -607,12 +609,12 @@ def _create(self) -> None:
 		}
 	}
 
-	indented := indentCodeBlock("def run(self):\n    return 1\n", 1)
+	indented := pygen.IndentCodeBlock("def run(self):\n    return 1\n", 1)
 	if !strings.HasPrefix(indented, "    def run") {
 		t.Fatalf("unexpected indented block:\n%s", indented)
 	}
 
-	orderedChildren := orderChildClients(
+	orderedChildren := pygen.OrderChildClients(
 		[]config.ChildClient{
 			{Attribute: "rooms"},
 			{Attribute: "speech"},
@@ -626,7 +628,7 @@ def _create(self) -> None:
 }
 
 func TestDeduplicateBindingsKeepsSyncAsyncPairName(t *testing.T) {
-	bindings := []operationBinding{
+	bindings := []pygen.OperationBinding{
 		{
 			PackageName: "demo",
 			MethodName:  "create",
@@ -638,14 +640,14 @@ func TestDeduplicateBindingsKeepsSyncAsyncPairName(t *testing.T) {
 			Mapping:     &config.OperationMapping{AsyncOnly: true},
 		},
 	}
-	got := deduplicateBindings(bindings)
+	got := pygen.DeduplicateBindings(bindings)
 	if got[0].MethodName != "create" || got[1].MethodName != "create" {
 		t.Fatalf("expected sync/async-only pair to keep same method name, got %q and %q", got[0].MethodName, got[1].MethodName)
 	}
 }
 
 func TestDeduplicateBindingsRenamesSyncConflicts(t *testing.T) {
-	bindings := []operationBinding{
+	bindings := []pygen.OperationBinding{
 		{
 			PackageName: "demo",
 			MethodName:  "create",
@@ -657,7 +659,7 @@ func TestDeduplicateBindingsRenamesSyncConflicts(t *testing.T) {
 			Mapping:     &config.OperationMapping{SyncOnly: true},
 		},
 	}
-	got := deduplicateBindings(bindings)
+	got := pygen.DeduplicateBindings(bindings)
 	if got[0].MethodName != "create" {
 		t.Fatalf("unexpected first method name: %q", got[0].MethodName)
 	}
@@ -700,7 +702,7 @@ func TestRenderOperationMethodReturnAndAsyncKwargsOptions(t *testing.T) {
 		Method: "get",
 	}
 
-	noReturn := renderOperationMethod(doc, operationBinding{
+	noReturn := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "list_items",
 		Details:     details,
@@ -712,7 +714,7 @@ func TestRenderOperationMethodReturnAndAsyncKwargsOptions(t *testing.T) {
 		t.Fatalf("did not expect return annotation when omit_return_type=true:\n%s", noReturn)
 	}
 
-	asyncCode := renderOperationMethod(doc, operationBinding{
+	asyncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "async_call",
 		Details:     details,
@@ -732,7 +734,7 @@ func TestRenderOperationMethodKwargsOnlySignature(t *testing.T) {
 		Path:   "/v1/users/me",
 		Method: "get",
 	}
-	code := renderOperationMethod(doc, operationBinding{
+	code := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "users",
 		MethodName:  "me",
 		Details:     details,
@@ -758,7 +760,7 @@ func TestRenderOperationMethodDelegateTo(t *testing.T) {
 		Method: "post",
 	}
 
-	syncCode := renderOperationMethod(doc, operationBinding{
+	syncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "chat",
 		MethodName:  "create",
 		Details:     details,
@@ -778,7 +780,7 @@ func TestRenderOperationMethodDelegateTo(t *testing.T) {
 		t.Fatalf("did not expect direct requester call for delegated method:\n%s", syncCode)
 	}
 
-	asyncCode := renderOperationMethod(doc, operationBinding{
+	asyncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "chat",
 		MethodName:  "stream",
 		Details:     details,
@@ -815,7 +817,7 @@ func TestRenderOperationMethodPaginationOrderOptions(t *testing.T) {
 		},
 	}
 
-	codeHeadersFirst := renderOperationMethod(doc, operationBinding{
+	codeHeadersFirst := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "apps",
 		MethodName:  "list",
 		Details:     details,
@@ -833,7 +835,7 @@ func TestRenderOperationMethodPaginationOrderOptions(t *testing.T) {
 		t.Fatalf("expected headers before params in pagination request:\n%s", codeHeadersFirst)
 	}
 
-	codeCastBeforeHeaders := renderOperationMethod(doc, operationBinding{
+	codeCastBeforeHeaders := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "apps",
 		MethodName:  "list",
 		Details:     details,
@@ -858,7 +860,7 @@ func TestRenderOperationMethodPreBodyCode(t *testing.T) {
 		Path:   "/v1/bot/publish",
 		Method: "post",
 	}
-	code := renderOperationMethod(doc, operationBinding{
+	code := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "bots",
 		MethodName:  "publish",
 		Details:     details,
@@ -891,7 +893,7 @@ func TestRenderOperationMethodBodyCallExprOverride(t *testing.T) {
 		Path:   "/v1/workflow/run",
 		Method: "post",
 	}
-	code := renderOperationMethod(doc, operationBinding{
+	code := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "workflows_runs",
 		MethodName:  "create",
 		Details:     details,
@@ -941,7 +943,7 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenOverrides(t *testing
 		PaginationHTTPMethod:        "get",
 	}
 
-	syncCode := renderOperationMethod(doc, operationBinding{
+	syncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "workflows_versions",
 		MethodName:  "list",
 		Details:     details,
@@ -957,7 +959,7 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenOverrides(t *testing
 		t.Fatalf("expected custom pagination token init expr in sync code:\n%s", syncCode)
 	}
 
-	asyncCode := renderOperationMethod(doc, operationBinding{
+	asyncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "workflows_versions",
 		MethodName:  "list",
 		Details:     details,
@@ -985,7 +987,7 @@ func TestRenderOperationMethodResponseUnwrapListFirst(t *testing.T) {
 		},
 	}
 
-	syncCode := renderOperationMethod(doc, operationBinding{
+	syncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "workflows_runs_run_histories",
 		MethodName:  "retrieve",
 		Details:     details,
@@ -1002,7 +1004,7 @@ func TestRenderOperationMethodResponseUnwrapListFirst(t *testing.T) {
 		t.Fatalf("expected unwrap-first-list response handling in sync code:\n%s", syncCode)
 	}
 
-	asyncCode := renderOperationMethod(doc, operationBinding{
+	asyncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "workflows_runs_run_histories",
 		MethodName:  "retrieve",
 		Details:     details,
@@ -1021,7 +1023,7 @@ func TestRenderOperationMethodResponseUnwrapListFirst(t *testing.T) {
 }
 
 func TestLinesFromCommentOverrideKeepsLeadingSpaces(t *testing.T) {
-	lines := linesFromCommentOverride([]string{
+	lines := pygen.LinesFromCommentOverride([]string{
 		"  success: Execution succeeded.",
 		"  running: Execution in progress.",
 	})
@@ -1042,7 +1044,7 @@ func TestRenderOperationMethodArgDefaultsAsyncOverride(t *testing.T) {
 		Path:   "/v1/demo",
 		Method: "get",
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "list_items",
 		Details:     details,
@@ -1057,12 +1059,12 @@ func TestRenderOperationMethodArgDefaultsAsyncOverride(t *testing.T) {
 		},
 	}
 
-	syncCode := renderOperationMethod(doc, binding, false)
+	syncCode := pygen.RenderOperationMethod(doc, binding, false)
 	if !strings.Contains(syncCode, "page_size: int = 10") {
 		t.Fatalf("expected sync default page_size=10:\n%s", syncCode)
 	}
 
-	asyncCode := renderOperationMethod(doc, binding, true)
+	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
 	if !strings.Contains(asyncCode, "page_size: int = 100") {
 		t.Fatalf("expected async override page_size=100:\n%s", asyncCode)
 	}
@@ -1085,7 +1087,7 @@ func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
 			Required: []string{"name", "file"},
 		},
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "create",
 		Details:     details,
@@ -1106,7 +1108,7 @@ func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
 		},
 	}
 
-	code := renderOperationMethod(doc, binding, false)
+	code := pygen.RenderOperationMethod(doc, binding, false)
 	headersIdx := strings.Index(code, "headers: Optional[dict] = kwargs.get(\"headers\")")
 	filesIdx := strings.Index(code, "files = {\"file\": _try_fix_file(file)}")
 	bodyIdx := strings.Index(code, "body = remove_none_values(")
@@ -1121,7 +1123,7 @@ func TestRenderOperationMethodPreDocstringCode(t *testing.T) {
 		Path:   "/v1/demo",
 		Method: "post",
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "create",
 		Details:     details,
@@ -1138,7 +1140,7 @@ func TestRenderOperationMethodPreDocstringCode(t *testing.T) {
 		},
 	}
 
-	code := renderOperationMethodWithComments(doc, binding, false, "cozepy.demo", "DemoClient", commentOverrides)
+	code := pygen.RenderOperationMethodWithComments(doc, binding, false, "cozepy.demo", "DemoClient", commentOverrides)
 	warnIdx := strings.Index(code, `warnings.warn("deprecated", DeprecationWarning, stacklevel=2)`)
 	docIdx := strings.Index(code, `"""Upload demo item."""`)
 	urlIdx := strings.Index(code, `url = f"{self._base_url}/v1/demo"`)
@@ -1163,7 +1165,7 @@ func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
 			Required: []string{"name"},
 		},
 	}
-	binding := operationBinding{
+	binding := pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "update",
 		Details:     details,
@@ -1181,7 +1183,7 @@ func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
 		},
 	}
 
-	code := renderOperationMethod(doc, binding, false)
+	code := pygen.RenderOperationMethod(doc, binding, false)
 	if !strings.Contains(code, "headers: Optional[dict] = kwargs.get(\"headers\")\n\n        body = {") {
 		t.Fatalf("expected blank line between headers assignment and body when blank_line_after_headers=true:\n%s", code)
 	}
@@ -1189,7 +1191,7 @@ func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
 
 func TestRenderPackageModuleIntEnumMixinBase(t *testing.T) {
 	doc := mustParseSwagger(t)
-	meta := packageMeta{
+	meta := pygen.PackageMeta{
 		Name:       "demo",
 		ModulePath: "demo",
 		Package: &config.Package{
@@ -1207,7 +1209,7 @@ func TestRenderPackageModuleIntEnumMixinBase(t *testing.T) {
 		},
 	}
 
-	code := renderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
 	if !strings.Contains(code, "from enum import Enum") {
 		t.Fatalf("expected Enum import for int_enum base:\n%s", code)
 	}

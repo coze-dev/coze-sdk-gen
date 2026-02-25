@@ -1,4 +1,4 @@
-package generator
+package python
 
 import (
 	"bytes"
@@ -8,11 +8,11 @@ import (
 	"text/template"
 )
 
-//go:embed templates/python/*.tpl all:templates/python/special
+//go:embed templates/*.tpl all:templates/special
 var pythonTemplateFS embed.FS
 
 func renderPythonTemplate(templateName string, data any) (string, error) {
-	templatePath := path.Join("templates", "python", templateName)
+	templatePath := path.Join("templates", templateName)
 	tplContent, err := loadPythonAsset(templatePath)
 	if err != nil {
 		return "", err
@@ -32,7 +32,7 @@ func renderPythonTemplate(templateName string, data any) (string, error) {
 }
 
 func renderPythonRawAsset(assetName string) (string, error) {
-	assetPath := path.Join("templates", "python", assetName)
+	assetPath := path.Join("templates", assetName)
 	content, err := loadPythonAsset(assetPath)
 	if err != nil {
 		return "", err

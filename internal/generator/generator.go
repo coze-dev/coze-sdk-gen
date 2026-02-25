@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/coze-dev/coze-sdk-gen/internal/config"
+	gogen "github.com/coze-dev/coze-sdk-gen/internal/generator/go"
+	pygen "github.com/coze-dev/coze-sdk-gen/internal/generator/python"
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
 )
 
@@ -26,4 +28,26 @@ func Run(cfg *config.Config, doc *openapi.Document) (Result, error) {
 	default:
 		return Result{}, fmt.Errorf("unsupported language %q", cfg.Language)
 	}
+}
+
+func GeneratePython(cfg *config.Config, doc *openapi.Document) (Result, error) {
+	result, err := pygen.GeneratePython(cfg, doc)
+	if err != nil {
+		return Result{}, err
+	}
+	return Result{
+		GeneratedFiles: result.GeneratedFiles,
+		GeneratedOps:   result.GeneratedOps,
+	}, nil
+}
+
+func GenerateGo(cfg *config.Config, doc *openapi.Document) (Result, error) {
+	result, err := gogen.GenerateGo(cfg, doc)
+	if err != nil {
+		return Result{}, err
+	}
+	return Result{
+		GeneratedFiles: result.GeneratedFiles,
+		GeneratedOps:   result.GeneratedOps,
+	}, nil
 }
