@@ -66,9 +66,8 @@ if [ "$RUN_CI_CHECK" = "1" ]; then
   fi
 
   pushd "$OUTPUT_SDK" >/dev/null
-  # Only compile the module root package; examples may intentionally lag API naming.
-  echo "[coze-go-ci] go test (module root)"
-  go test
+  echo "[coze-go-ci] go test ./..."
+  go test ./...
   if [ -d .git ]; then
     if [ -n "$(git status --porcelain)" ]; then
       echo "[coze-go-ci] generated output has diff:"
