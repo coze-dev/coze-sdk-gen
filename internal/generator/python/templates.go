@@ -11,7 +11,7 @@ import (
 //go:embed templates/*.tpl all:templates/special
 var pythonTemplateFS embed.FS
 
-func renderPythonTemplate(templateName string, data any) (string, error) {
+func RenderPythonTemplate(templateName string, data any) (string, error) {
 	templatePath := path.Join("templates", templateName)
 	tplContent, err := loadPythonAsset(templatePath)
 	if err != nil {
@@ -31,7 +31,7 @@ func renderPythonTemplate(templateName string, data any) (string, error) {
 	return buf.String(), nil
 }
 
-func renderPythonRawAsset(assetName string) (string, error) {
+func RenderPythonRawAsset(assetName string) (string, error) {
 	assetPath := path.Join("templates", assetName)
 	content, err := loadPythonAsset(assetPath)
 	if err != nil {

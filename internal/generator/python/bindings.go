@@ -9,9 +9,9 @@ import (
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
 )
 
-func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []operationBinding {
+func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []OperationBinding {
 	allOps := doc.ListOperationDetails()
-	bindings := make([]operationBinding, 0)
+	bindings := make([]OperationBinding, 0)
 	existingOps := map[string]struct{}{}
 
 	for _, details := range allOps {
@@ -41,9 +41,9 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []operati
 					if mappingCopy.Order > 0 {
 						order = mappingCopy.Order + methodIndex
 					}
-					bindings = append(bindings, operationBinding{
-						PackageName: normalizePackageName(pkg.Name),
-						MethodName:  normalizeMethodName(methodName),
+					bindings = append(bindings, OperationBinding{
+						PackageName: NormalizePackageName(pkg.Name),
+						MethodName:  NormalizeMethodName(methodName),
 						Details:     details,
 						Mapping:     &mappingCopy,
 						Order:       order,
@@ -57,9 +57,9 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []operati
 		if !ok {
 			continue
 		}
-		bindings = append(bindings, operationBinding{
-			PackageName: normalizePackageName(pkg.Name),
-			MethodName:  defaultMethodName(details.OperationID, details.Path, details.Method),
+		bindings = append(bindings, OperationBinding{
+			PackageName: NormalizePackageName(pkg.Name),
+			MethodName:  DefaultMethodName(details.OperationID, details.Path, details.Method),
 			Details:     details,
 			Order:       len(bindings),
 		})
@@ -94,9 +94,9 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []operati
 			if mappingCopy.Order > 0 {
 				order = mappingCopy.Order + methodIndex
 			}
-			bindings = append(bindings, operationBinding{
-				PackageName: normalizePackageName(pkg.Name),
-				MethodName:  normalizeMethodName(methodName),
+			bindings = append(bindings, OperationBinding{
+				PackageName: NormalizePackageName(pkg.Name),
+				MethodName:  NormalizeMethodName(methodName),
 				Details:     details,
 				Mapping:     &mappingCopy,
 				Order:       order,
@@ -104,7 +104,7 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []operati
 		}
 	}
 
-	return deduplicateBindings(bindings)
+	return DeduplicateBindings(bindings)
 }
 
 func syntheticOperationDetails(mapping config.OperationMapping) openapi.OperationDetails {
@@ -139,7 +139,7 @@ func syntheticOperationDetails(mapping config.OperationMapping) openapi.Operatio
 	return details
 }
 
-func deduplicateBindings(bindings []operationBinding) []operationBinding {
+func DeduplicateBindings(bindings []OperationBinding) []OperationBinding {
 	syncSeen := map[string]int{}
 	asyncSeen := map[string]int{}
 	nextSuffix := map[string]int{}
@@ -170,8 +170,8 @@ func deduplicateBindings(bindings []operationBinding) []operationBinding {
 	return bindings
 }
 
-func groupBindingsByPackage(bindings []operationBinding) map[string][]operationBinding {
-	pkgOps := map[string][]operationBinding{}
+func groupBindingsByPackage(bindings []OperationBinding) map[string][]OperationBinding {
+	pkgOps := map[string][]OperationBinding{}
 	for _, binding := range bindings {
 		pkgOps[binding.PackageName] = append(pkgOps[binding.PackageName], binding)
 	}
@@ -183,13 +183,13 @@ func groupBindingsByPackage(bindings []operationBinding) map[string][]operationB
 	return pkgOps
 }
 
-func buildPackageMeta(cfg *config.Config, packages map[string][]operationBinding) map[string]packageMeta {
-	metas := map[string]packageMeta{}
+func buildPackageMeta(cfg *config.Config, packages map[string][]OperationBinding) map[string]PackageMeta {
+	metas := map[string]PackageMeta{}
 	for _, pkg := range cfg.API.Packages {
 		pkgCopy := pkg
-		name := normalizePackageName(pkg.Name)
-		dir := normalizePackageDir(pkg.SourceDir, name)
-		metas[name] = packageMeta{
+		name := NormalizePackageName(pkg.Name)
+		dir := NormalizePackageDir(pkg.SourceDir, name)
+		metas[name] = PackageMeta{
 			Name:       name,
 			ModulePath: strings.ReplaceAll(dir, "/", "."),
 			DirPath:    dir,
@@ -200,7 +200,7 @@ func buildPackageMeta(cfg *config.Config, packages map[string][]operationBinding
 		if _, ok := metas[name]; ok {
 			continue
 		}
-		metas[name] = packageMeta{
+		metas[name] = PackageMeta{
 			Name:       name,
 			ModulePath: name,
 			DirPath:    name,
