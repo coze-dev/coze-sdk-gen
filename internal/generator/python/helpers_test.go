@@ -231,12 +231,6 @@ func TestOperationHelpersSignatureAndDefaults(t *testing.T) {
 	if !IsKwargsSignatureArg(" **kwargs") {
 		t.Fatal("IsKwargsSignatureArg expected true")
 	}
-
-	signatureArgs := []string{"self", "b: int", "**kwargs", "a: str"}
-	ordered := OrderSignatureArgs(signatureArgs, []string{"a", "b"})
-	if len(ordered) != 4 || ordered[0] != "a: str" || ordered[1] != "b: int" {
-		t.Fatalf("OrderSignatureArgs=%v", ordered)
-	}
 	normalized := NormalizeSignatureArgs([]string{"a: str", "**kwargs", "b: int"})
 	if len(normalized) != 3 || normalized[2] != "**kwargs" {
 		t.Fatalf("NormalizeSignatureArgs=%v", normalized)

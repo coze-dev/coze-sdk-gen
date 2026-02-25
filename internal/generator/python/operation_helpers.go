@@ -135,46 +135,6 @@ func IsKwargsSignatureArg(argDecl string) bool {
 	return strings.HasPrefix(strings.TrimSpace(argDecl), "**")
 }
 
-func OrderSignatureArgs(signatureArgs []string, orderedNames []string) []string {
-	if len(signatureArgs) == 0 || len(orderedNames) == 0 {
-		return signatureArgs
-	}
-	argByName := make(map[string]string, len(signatureArgs))
-	argOrder := make([]string, 0, len(signatureArgs))
-	for _, argDecl := range signatureArgs {
-		name := SignatureArgName(argDecl)
-		if name == "" {
-			continue
-		}
-		if _, exists := argByName[name]; exists {
-			continue
-		}
-		argByName[name] = argDecl
-		argOrder = append(argOrder, name)
-	}
-	result := make([]string, 0, len(signatureArgs))
-	seen := map[string]struct{}{}
-	for _, rawName := range orderedNames {
-		name := strings.TrimSpace(rawName)
-		if name == "" {
-			continue
-		}
-		argDecl, ok := argByName[name]
-		if !ok {
-			continue
-		}
-		result = append(result, argDecl)
-		seen[name] = struct{}{}
-	}
-	for _, name := range argOrder {
-		if _, ok := seen[name]; ok {
-			continue
-		}
-		result = append(result, argByName[name])
-	}
-	return result
-}
-
 func NormalizeSignatureArgs(signatureArgs []string) []string {
 	if len(signatureArgs) <= 1 {
 		return signatureArgs

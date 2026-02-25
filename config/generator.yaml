@@ -4231,15 +4231,6 @@ api:
         - name: conversation_id
           type: str
           required: false
-      signature_args:
-        - bot_id
-        - user_id
-        - conversation_id
-        - additional_messages
-        - custom_variables
-        - auto_save_history
-        - meta_data
-        - parameters
       query_field_values:
         conversation_id: conversation_id if conversation_id else None
       body_fields:
@@ -4305,17 +4296,6 @@ api:
         - name: conversation_id
           type: str
           required: false
-      signature_args:
-        - bot_id
-        - user_id
-        - additional_messages
-        - custom_variables
-        - auto_save_history
-        - meta_data
-        - conversation_id
-        - parameters
-        - enable_card
-        - kwargs
       query_field_values:
         conversation_id: conversation_id if conversation_id else None
       body_fields:
@@ -4520,12 +4500,6 @@ api:
         - bot_id
         - name
         - connector_id
-      signature_args:
-        - messages
-        - bot_id
-        - name
-        - connector_id
-        - meta_data
       body_annotation: Dict[str, Any]
       arg_types:
         messages: List[Message]
@@ -4715,11 +4689,6 @@ api:
         connector_id: str
         audit_status: Optional[AuditStatus]
         reason: Optional[str]
-      signature_args:
-        - bot_id
-        - connector_id
-        - audit_status
-        - reason
       blank_line_after_headers: true
       response_type: UpdateConnectorBotResp
       response_cast: UpdateConnectorBotResp
@@ -4748,11 +4717,6 @@ api:
         document_bases: List[DocumentBase]
         chunk_strategy: Optional[DocumentChunkStrategy]
         format_type: Optional[DocumentFormatType]
-      signature_args:
-        - dataset_id
-        - document_bases
-        - chunk_strategy
-        - format_type
       arg_defaults_sync:
         format_type: "DocumentFormatType.DOCUMENT"
       response_type: ListResponse[Document]
@@ -4781,10 +4745,6 @@ api:
         dataset_id: str
         document_bases: List[DocumentBase]
         chunk_strategy: Optional[DocumentChunkStrategy]
-      signature_args:
-        - dataset_id
-        - document_bases
-        - chunk_strategy
       response_type: ListResponse[Document]
       response_cast: ListResponse[Document]
       data_field: document_infos
@@ -4886,10 +4846,6 @@ api:
         dataset_id: str
         document_bases: List[DocumentBase]
         chunk_strategy: Optional[DocumentChunkStrategy]
-      signature_args:
-        - dataset_id
-        - document_bases
-        - chunk_strategy
       pre_docstring_code:
         - |
           warnings.warn(
@@ -4924,10 +4880,6 @@ api:
         dataset_id: str
         document_bases: List[DocumentBase]
         chunk_strategy: Optional[DocumentChunkStrategy]
-      signature_args:
-        - dataset_id
-        - document_bases
-        - chunk_strategy
       pre_docstring_code:
         - |
           warnings.warn(
@@ -5572,12 +5524,6 @@ api:
         top_k: int
         sample_rate: int
         channel: int
-      signature_args:
-        - group_id
-        - file
-        - top_k
-        - sample_rate
-        - channel
       files_before_body: true
       blank_line_before_return: true
       force_multiline_signature: true
@@ -5609,13 +5555,6 @@ api:
         desc: str
         sample_rate: int
         channel: int
-      signature_args:
-        - group_id
-        - name
-        - file
-        - desc
-        - sample_rate
-        - channel
       files_before_body: true
       blank_line_before_return: true
       force_multiline_signature: true
@@ -5644,14 +5583,6 @@ api:
         file: Optional[FileTypes]
         sample_rate: int
         channel: int
-      signature_args:
-        - group_id
-        - feature_id
-        - name
-        - desc
-        - file
-        - sample_rate
-        - channel
       files_before_body: true
       blank_line_before_return: true
       force_multiline_signature: true
@@ -5759,16 +5690,6 @@ api:
         - voice_name
         - audio_format
         - file
-      signature_args:
-        - voice_name
-        - file
-        - audio_format
-        - language
-        - voice_id
-        - preview_text
-        - text
-        - space_id
-        - description
       files_fields:
         - file
       files_field_values:
@@ -5999,13 +5920,6 @@ api:
       body_required_fields:
         - workflow_id
         - is_async
-      signature_args:
-        - workflow_id
-        - parameters
-        - bot_id
-        - app_id
-        - is_async
-        - ext
       arg_types:
         workflow_id: str
         parameters: Dict[str, Any]
@@ -6032,12 +5946,6 @@ api:
         - ext
       body_required_fields:
         - workflow_id
-      signature_args:
-        - workflow_id
-        - parameters
-        - bot_id
-        - app_id
-        - ext
       arg_types:
         workflow_id: str
         parameters: Dict[str, Any]
@@ -6075,11 +5983,6 @@ api:
         - event_id
         - resume_data
         - interrupt_type
-      signature_args:
-        - workflow_id
-        - event_id
-        - resume_data
-        - interrupt_type
       arg_types:
         workflow_id: str
         event_id: str
@@ -6104,9 +6007,6 @@ api:
       order: 93
       sdk_methods:
         - workflows_runs_run_histories.retrieve
-      signature_args:
-        - workflow_id
-        - execute_id
       response_type: WorkflowRunHistory
       response_cast: ListResponse[WorkflowRunHistory]
       response_unwrap_list_first: true
@@ -6115,10 +6015,6 @@ api:
       order: 94
       sdk_methods:
         - workflows_runs_run_histories_execute_nodes.retrieve
-      signature_args:
-        - workflow_id
-        - execute_id
-        - node_execute_uuid
       response_type: WorkflowNodeExecuteHistory
       response_cast: WorkflowNodeExecuteHistory
     - path: /v1/workflows/{workflow_id}/versions
@@ -6171,14 +6067,6 @@ api:
         - ext
       body_required_fields:
         - workflow_id
-      signature_args:
-        - workflow_id
-        - additional_messages
-        - parameters
-        - app_id
-        - bot_id
-        - conversation_id
-        - ext
       arg_types:
         workflow_id: str
         additional_messages: List[Message]
@@ -6209,14 +6097,6 @@ api:
       body_field_values:
         additional_messages: |-
           [i.model_dump() for i in additional_messages] if additional_messages else []
-      signature_args:
-        - workflow_id
-        - additional_messages
-        - parameters
-        - app_id
-        - bot_id
-        - conversation_id
-        - ext
       arg_types:
         workflow_id: str
         additional_messages: List[Message]

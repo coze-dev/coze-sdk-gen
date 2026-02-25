@@ -2553,9 +2553,6 @@ func RenderOperationMethodWithComments(
 	if asyncIncludeKwargs && !includeKwargsHeaders {
 		signatureArgs = append(signatureArgs, "**kwargs")
 	}
-	if binding.Mapping != nil && len(binding.Mapping.SignatureArgs) > 0 {
-		signatureArgs = OrderSignatureArgs(signatureArgs, binding.Mapping.SignatureArgs)
-	}
 	signatureArgs = NormalizeSignatureArgs(signatureArgs)
 
 	methodKeyword := "def"

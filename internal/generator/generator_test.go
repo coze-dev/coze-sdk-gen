@@ -1279,7 +1279,6 @@ func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
 				"name":     "str",
 				"file":     "FileTypes",
 			},
-			SignatureArgs: []string{"group_id", "name", "file"},
 		},
 	}
 
@@ -1351,7 +1350,6 @@ func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
 				"id":   "str",
 				"name": "str",
 			},
-			SignatureArgs: []string{"id", "name"},
 		},
 	}
 

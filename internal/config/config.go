@@ -186,7 +186,6 @@ type OperationMapping struct {
 	QueryFields                    []OperationField  `yaml:"query_fields"`
 	QueryFieldValues               map[string]string `yaml:"query_field_values"`
 	SignatureQueryFields           []string          `yaml:"signature_query_fields"`
-	SignatureArgs                  []string          `yaml:"signature_args"`
 	ArgDefaults                    map[string]string `yaml:"arg_defaults"`
 	ArgDefaultsSync                map[string]string `yaml:"arg_defaults_sync"`
 	ArgDefaultsAsync               map[string]string `yaml:"arg_defaults_async"`
@@ -605,11 +604,6 @@ func (c *Config) Validate() error {
 		for j, fieldName := range mapping.SignatureQueryFields {
 			if strings.TrimSpace(fieldName) == "" {
 				return fmt.Errorf("api.operation_mappings[%d].signature_query_fields[%d] should not be empty", i, j)
-			}
-		}
-		for j, fieldName := range mapping.SignatureArgs {
-			if strings.TrimSpace(fieldName) == "" {
-				return fmt.Errorf("api.operation_mappings[%d].signature_args[%d] should not be empty", i, j)
 			}
 		}
 		for fieldName, fieldValue := range mapping.ArgDefaults {
