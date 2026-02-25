@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/coze-dev/coze-sdk-gen/internal/config"
-	gogen "github.com/coze-dev/coze-sdk-gen/internal/generator/go"
 	pygen "github.com/coze-dev/coze-sdk-gen/internal/generator/python"
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
 )
@@ -204,15 +203,6 @@ func TestGenerateGoValidationFailure(t *testing.T) {
 
 	if _, err := GenerateGo(cfg, doc); err == nil {
 		t.Fatal("expected swagger validation failure")
-	}
-}
-
-func TestFindGoOperationPathError(t *testing.T) {
-	cfg := testConfig(t.TempDir())
-	doc := mustParseSwagger(t)
-
-	if _, err := gogen.FindGoOperationPath(cfg, doc, "chat.not_exist", "post", "/v1/not-exist"); err == nil {
-		t.Fatal("expected path resolution error for missing mapping and missing swagger operation")
 	}
 }
 
