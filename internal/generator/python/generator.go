@@ -2,6 +2,7 @@ package python
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -152,7 +153,7 @@ func writePythonSDK(
 		if err := os.MkdirAll(pkgDir, 0o755); err != nil {
 			return fmt.Errorf("create package directory %q: %w", pkgDir, err)
 		}
-		content := RenderPackageModule(doc, meta, packages[pkgName], cfg.CommentOverrides)
+		content := RenderPackageModule(doc, meta, packages[pkgName])
 		if err := writer.write(filepath.Join(pkgDir, "__init__.py"), content); err != nil {
 			return err
 		}
@@ -565,7 +566,6 @@ func RenderPackageModule(
 	doc *openapi.Document,
 	meta PackageMeta,
 	bindings []OperationBinding,
-	commentOverrides config.CommentOverrides,
 ) string {
 	var buf bytes.Buffer
 	hasChildClients := meta.Package != nil && len(meta.Package.ChildClients) > 0
@@ -930,7 +930,7 @@ func RenderPackageModule(
 	}
 
 	if hasModelClasses {
-		buf.WriteString(renderPackageModelDefinitions(doc, meta, modelDefs, schemaAliases, commentOverrides))
+		buf.WriteString(renderPackageModelDefinitions(doc, meta, modelDefs, schemaAliases))
 		buf.WriteString("\n\n\n")
 	}
 	if hasTokenPagination || hasNumberPagination {
@@ -949,17 +949,11 @@ func RenderPackageModule(
 
 	syncClass := packageClientClassName(meta, false)
 	asyncClass := packageClientClassName(meta, true)
-	syncClassKey := "cozepy." + meta.ModulePath + "." + syncClass
-	asyncClassKey := "cozepy." + meta.ModulePath + "." + asyncClass
 	blankLineBeforeSyncInitCode := meta.Package != nil && meta.Package.BlankLineBeforeSyncInit
 	blankLineBeforeAsyncInitCode := meta.Package != nil && meta.Package.BlankLineBeforeAsyncInit
 
 	EnsureTrailingNewlines(&buf, 3)
 	buf.WriteString(fmt.Sprintf("class %s(object):\n", syncClass))
-	if classDoc := strings.TrimSpace(commentOverrides.ClassDocstrings[syncClassKey]); classDoc != "" {
-		style := strings.TrimSpace(commentOverrides.ClassDocstringStyles[syncClassKey])
-		WriteClassDocstring(&buf, 1, classDoc, style)
-	}
 	buf.WriteString("    def __init__(self, base_url: str, requester: Requester):\n")
 	if meta.Package != nil && len(meta.Package.SyncInitPreCode) > 0 {
 		for _, block := range meta.Package.SyncInitPreCode {
@@ -992,7 +986,7 @@ func RenderPackageModule(
 			attribute := NormalizePythonIdentifier(child.Attribute)
 			syncMethodBlocks = append(syncMethodBlocks, ClassMethodBlock{
 				Name:    attribute,
-				Content: renderChildClientProperty(meta, child, false, syncClassKey, commentOverrides),
+				Content: renderChildClientProperty(meta, child, false),
 				IsChild: true,
 			})
 		}
@@ -1003,16 +997,14 @@ func RenderPackageModule(
 		}
 		syncMethodBlocks = append(syncMethodBlocks, ClassMethodBlock{
 			Name:    binding.MethodName,
-			Content: RenderOperationMethodWithComments(doc, binding, false, "cozepy."+meta.ModulePath, syncClass, commentOverrides),
+			Content: RenderOperationMethodWithComments(doc, binding, false),
 		})
 	}
 	if meta.Package != nil && len(meta.Package.SyncExtraMethods) > 0 {
 		for _, block := range meta.Package.SyncExtraMethods {
-			content := IndentCodeBlock(block, 1)
-			content = applyMethodDocstringOverrides(content, syncClassKey, commentOverrides)
 			syncMethodBlocks = append(syncMethodBlocks, ClassMethodBlock{
 				Name:    DetectMethodBlockName(block),
-				Content: content,
+				Content: IndentCodeBlock(block, 1),
 			})
 		}
 	}
@@ -1024,10 +1016,6 @@ func RenderPackageModule(
 	buf.WriteString("\n")
 
 	buf.WriteString(fmt.Sprintf("class %s(object):\n", asyncClass))
-	if classDoc := strings.TrimSpace(commentOverrides.ClassDocstrings[asyncClassKey]); classDoc != "" {
-		style := strings.TrimSpace(commentOverrides.ClassDocstringStyles[asyncClassKey])
-		WriteClassDocstring(&buf, 1, classDoc, style)
-	}
 	buf.WriteString("    def __init__(self, base_url: str, requester: Requester):\n")
 	if meta.Package != nil && len(meta.Package.AsyncInitPreCode) > 0 {
 		for _, block := range meta.Package.AsyncInitPreCode {
@@ -1060,7 +1048,7 @@ func RenderPackageModule(
 			attribute := NormalizePythonIdentifier(child.Attribute)
 			asyncMethodBlocks = append(asyncMethodBlocks, ClassMethodBlock{
 				Name:    attribute,
-				Content: renderChildClientProperty(meta, child, true, asyncClassKey, commentOverrides),
+				Content: renderChildClientProperty(meta, child, true),
 				IsChild: true,
 			})
 		}
@@ -1071,16 +1059,14 @@ func RenderPackageModule(
 		}
 		asyncMethodBlocks = append(asyncMethodBlocks, ClassMethodBlock{
 			Name:    binding.MethodName,
-			Content: RenderOperationMethodWithComments(doc, binding, true, "cozepy."+meta.ModulePath, asyncClass, commentOverrides),
+			Content: RenderOperationMethodWithComments(doc, binding, true),
 		})
 	}
 	if meta.Package != nil && len(meta.Package.AsyncExtraMethods) > 0 {
 		for _, block := range meta.Package.AsyncExtraMethods {
-			content := IndentCodeBlock(block, 1)
-			content = applyMethodDocstringOverrides(content, asyncClassKey, commentOverrides)
 			asyncMethodBlocks = append(asyncMethodBlocks, ClassMethodBlock{
 				Name:    DetectMethodBlockName(block),
-				Content: content,
+				Content: IndentCodeBlock(block, 1),
 			})
 		}
 	}
@@ -2530,14 +2516,11 @@ func renderPackageModelDefinitions(
 	meta PackageMeta,
 	models []packageModelDefinition,
 	schemaAliases map[string]string,
-	commentOverrides config.CommentOverrides,
 ) string {
 	var buf bytes.Buffer
-	modulePrefix := "cozepy." + meta.ModulePath
 	separateCommentedEnum := meta.Package != nil && meta.Package.SeparateCommentedEnum
 
 	for _, model := range models {
-		classKey := modulePrefix + "." + model.Name
 		if len(model.BeforeCode) > 0 {
 			for _, block := range model.BeforeCode {
 				AppendIndentedCode(&buf, block, 0)
@@ -2558,9 +2541,8 @@ func renderPackageModelDefinitions(
 			} else {
 				buf.WriteString(fmt.Sprintf("class %s(str, Enum):\n", model.Name))
 			}
-			if docstring := strings.TrimSpace(commentOverrides.ClassDocstrings[classKey]); docstring != "" && !modelHasCustomClassDocstring(model) {
-				style := strings.TrimSpace(commentOverrides.ClassDocstringStyles[classKey])
-				WriteClassDocstring(&buf, 1, docstring, style)
+			if docstring := strings.TrimSpace(schemaDescription(model.Schema)); docstring != "" && !modelHasCustomClassDocstring(model) {
+				WriteClassDocstring(&buf, 1, docstring, "block")
 			}
 			enumItems := make([]config.ModelEnumValue, 0)
 			if len(model.EnumValues) > 0 {
@@ -2582,34 +2564,9 @@ func renderPackageModelDefinitions(
 				if memberName == "" {
 					memberName = EnumMemberName(fmt.Sprintf("%v", enumValue.Value))
 				}
-				inlineEnumComment := strings.TrimSpace(commentOverrides.InlineEnumMemberComment[classKey+"."+memberName])
-				if inlineEnumComment != "" {
-					inlineEnumComment = strings.TrimPrefix(inlineEnumComment, "#")
-					inlineEnumComment = strings.TrimSpace(inlineEnumComment)
-				}
-				enumComment := LinesFromCommentOverride(commentOverrides.EnumMemberComments[classKey+"."+memberName])
-				if len(enumComment) > 0 && inlineEnumComment == "" {
-					WriteLineComments(&buf, 1, enumComment)
-				}
-				if inlineEnumComment != "" {
-					buf.WriteString(fmt.Sprintf("    %s = %s  # %s\n", memberName, RenderEnumValueLiteral(enumValue.Value), inlineEnumComment))
-				} else {
-					buf.WriteString(fmt.Sprintf("    %s = %s\n", memberName, RenderEnumValueLiteral(enumValue.Value)))
-				}
+				buf.WriteString(fmt.Sprintf("    %s = %s\n", memberName, RenderEnumValueLiteral(enumValue.Value)))
 				if modelSeparateCommentedEnum && i < len(enumItems)-1 {
-					nextHasComment := false
-					nextName := strings.TrimSpace(enumItems[i+1].Name)
-					if nextName == "" {
-						nextName = EnumMemberName(fmt.Sprintf("%v", enumItems[i+1].Value))
-					}
-					nextInlineComment := strings.TrimSpace(commentOverrides.InlineEnumMemberComment[classKey+"."+nextName])
-					nextComment := LinesFromCommentOverride(commentOverrides.EnumMemberComments[classKey+"."+nextName])
-					if nextInlineComment != "" || len(nextComment) > 0 {
-						nextHasComment = true
-					}
-					if len(enumComment) > 0 || inlineEnumComment != "" || nextHasComment {
-						buf.WriteString("\n")
-					}
+					buf.WriteString("\n")
 				}
 			}
 			buf.WriteString("\n\n")
@@ -2631,11 +2588,10 @@ func renderPackageModelDefinitions(
 			}
 		}
 		buf.WriteString(fmt.Sprintf("class %s(%s):\n", model.Name, baseExpr))
-		hasOverrideClassDocstring := false
-		if docstring := strings.TrimSpace(commentOverrides.ClassDocstrings[classKey]); docstring != "" && !modelHasCustomClassDocstring(model) {
-			style := strings.TrimSpace(commentOverrides.ClassDocstringStyles[classKey])
-			WriteClassDocstring(&buf, 1, docstring, style)
-			hasOverrideClassDocstring = true
+		hasSwaggerClassDocstring := false
+		if docstring := strings.TrimSpace(schemaDescription(model.Schema)); docstring != "" && !modelHasCustomClassDocstring(model) {
+			WriteClassDocstring(&buf, 1, docstring, "block")
+			hasSwaggerClassDocstring = true
 		}
 		properties := map[string]*openapi.Schema{}
 		if model.Schema != nil {
@@ -2647,7 +2603,7 @@ func renderPackageModelDefinitions(
 				len(model.ExtraCode) == 0 &&
 				len(model.BeforeValidators) == 0 &&
 				len(model.Builders) == 0 {
-				if !hasOverrideClassDocstring {
+				if !hasSwaggerClassDocstring {
 					buf.WriteString("    pass\n")
 				}
 				buf.WriteString("\n")
@@ -2739,21 +2695,12 @@ func renderPackageModelDefinitions(
 			if propertySchema, ok := properties[fieldName]; ok {
 				typeName := modelFieldType(model, fieldName, PythonTypeForSchemaWithAliases(doc, propertySchema, requiredSet[fieldName], schemaAliases))
 				normalizedFieldName := NormalizePythonIdentifier(fieldName)
-				inlineFieldComment := strings.TrimSpace(commentOverrides.InlineFieldComments[classKey+"."+normalizedFieldName])
-				if inlineFieldComment != "" {
-					inlineFieldComment = strings.TrimPrefix(inlineFieldComment, "#")
-					inlineFieldComment = strings.TrimSpace(inlineFieldComment)
-				}
-				fieldComment := LinesFromCommentOverride(commentOverrides.FieldComments[classKey+"."+normalizedFieldName])
-				if len(fieldComment) > 0 && inlineFieldComment == "" {
+				fieldComment := schemaCommentLines(doc, propertySchema)
+				if len(fieldComment) > 0 {
 					WriteLineComments(&buf, 1, fieldComment)
 				}
 				if requiredSet[fieldName] {
-					if inlineFieldComment != "" {
-						buf.WriteString(fmt.Sprintf("    %s: %s  # %s\n", normalizedFieldName, typeName, inlineFieldComment))
-					} else {
-						buf.WriteString(fmt.Sprintf("    %s: %s\n", normalizedFieldName, typeName))
-					}
+					buf.WriteString(fmt.Sprintf("    %s: %s\n", normalizedFieldName, typeName))
 					hasRenderedField = true
 				} else {
 					defaultValue := modelFieldDefault(model, fieldName)
@@ -2764,11 +2711,7 @@ func renderPackageModelDefinitions(
 							typeName = unwrapOptionalType(typeName)
 						}
 					}
-					if inlineFieldComment != "" {
-						buf.WriteString(fmt.Sprintf("    %s: %s = %s  # %s\n", normalizedFieldName, typeName, defaultValue, inlineFieldComment))
-					} else {
-						buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, defaultValue))
-					}
+					buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, defaultValue))
 					hasRenderedField = true
 				}
 				continue
@@ -2786,33 +2729,16 @@ func renderPackageModelDefinitions(
 			if typeName == "" {
 				typeName = "Any"
 			}
-			inlineFieldComment := strings.TrimSpace(commentOverrides.InlineFieldComments[classKey+"."+normalizedFieldName])
-			if inlineFieldComment != "" {
-				inlineFieldComment = strings.TrimPrefix(inlineFieldComment, "#")
-				inlineFieldComment = strings.TrimSpace(inlineFieldComment)
-			}
-			fieldComment := LinesFromCommentOverride(commentOverrides.FieldComments[classKey+"."+normalizedFieldName])
-			if len(fieldComment) > 0 && inlineFieldComment == "" {
-				WriteLineComments(&buf, 1, fieldComment)
-			}
 			alias := strings.TrimSpace(extraField.Alias)
 			if extraField.Required {
 				expr := ""
 				if alias != "" {
 					expr = fmt.Sprintf("Field(alias=%q)", alias)
 				}
-				if inlineFieldComment != "" {
-					if expr != "" {
-						buf.WriteString(fmt.Sprintf("    %s: %s = %s  # %s\n", normalizedFieldName, typeName, expr, inlineFieldComment))
-					} else {
-						buf.WriteString(fmt.Sprintf("    %s: %s  # %s\n", normalizedFieldName, typeName, inlineFieldComment))
-					}
+				if expr != "" {
+					buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, expr))
 				} else {
-					if expr != "" {
-						buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, expr))
-					} else {
-						buf.WriteString(fmt.Sprintf("    %s: %s\n", normalizedFieldName, typeName))
-					}
+					buf.WriteString(fmt.Sprintf("    %s: %s\n", normalizedFieldName, typeName))
 				}
 				hasRenderedField = true
 				continue
@@ -2828,11 +2754,7 @@ func renderPackageModelDefinitions(
 			if alias != "" {
 				expr = fmt.Sprintf("Field(default=%s, alias=%q)", defaultValue, alias)
 			}
-			if inlineFieldComment != "" {
-				buf.WriteString(fmt.Sprintf("    %s: %s = %s  # %s\n", normalizedFieldName, typeName, expr, inlineFieldComment))
-			} else {
-				buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, expr))
-			}
+			buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, expr))
 			hasRenderedField = true
 		}
 		combinedExtraCode := make([]string, 0, len(model.ExtraCode)+3)
@@ -3210,6 +3132,94 @@ func modelHasCustomClassDocstring(model packageModelDefinition) bool {
 	return CodeBlocksHaveLeadingDocstring(model.PrependCode) || CodeBlocksHaveLeadingDocstring(model.ExtraCode)
 }
 
+func schemaDescription(schema *openapi.Schema) string {
+	if schema == nil {
+		return ""
+	}
+	return normalizeSwaggerDescription(schema.Description)
+}
+
+func schemaCommentLines(doc *openapi.Document, schema *openapi.Schema) []string {
+	if schema == nil {
+		return nil
+	}
+	description := strings.TrimSpace(schema.Description)
+	if description == "" && doc != nil {
+		if resolved := doc.ResolveSchema(schema); resolved != nil && resolved != schema {
+			description = strings.TrimSpace(resolved.Description)
+		}
+	}
+	return descriptionLines(description)
+}
+
+func descriptionLines(description string) []string {
+	normalized := normalizeSwaggerDescription(description)
+	if normalized == "" {
+		return nil
+	}
+	text := strings.ReplaceAll(normalized, "\r\n", "\n")
+	rawLines := strings.Split(text, "\n")
+	lines := make([]string, 0, len(rawLines))
+	for _, raw := range rawLines {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+		lines = append(lines, line)
+	}
+	return lines
+}
+
+func normalizeSwaggerDescription(description string) string {
+	text := strings.TrimSpace(description)
+	if text == "" {
+		return ""
+	}
+	if strings.HasPrefix(text, "{") && strings.Contains(text, "\"insert\"") && strings.Contains(text, "\"ops\"") {
+		if extracted := extractSwaggerRichText(text); extracted != "" {
+			return extracted
+		}
+		return ""
+	}
+	return text
+}
+
+func extractSwaggerRichText(raw string) string {
+	var node interface{}
+	if err := json.Unmarshal([]byte(raw), &node); err != nil {
+		return ""
+	}
+	fragments := make([]string, 0, 32)
+	collectRichTextInserts(node, &fragments)
+	parts := make([]string, 0, len(fragments))
+	for _, fragment := range fragments {
+		line := strings.TrimSpace(fragment)
+		if line == "" || line == "*" {
+			continue
+		}
+		parts = append(parts, line)
+	}
+	return strings.TrimSpace(strings.Join(parts, " "))
+}
+
+func collectRichTextInserts(node interface{}, fragments *[]string) {
+	switch typed := node.(type) {
+	case map[string]interface{}:
+		for key, value := range typed {
+			if key == "insert" {
+				if text, ok := value.(string); ok {
+					*fragments = append(*fragments, text)
+				}
+			}
+			collectRichTextInserts(value, fragments)
+		}
+	case []interface{}:
+		for _, item := range typed {
+			collectRichTextInserts(item, fragments)
+		}
+	}
+}
+
 func packageClientClassName(meta PackageMeta, async bool) string {
 	if meta.Package != nil {
 		if async && strings.TrimSpace(meta.Package.AsyncClientClass) != "" {
@@ -3264,54 +3274,6 @@ func mappingGeneratesAsync(mapping *config.OperationMapping) bool {
 	return !mapping.SyncOnly
 }
 
-func applyMethodDocstringOverrides(block string, classKey string, commentOverrides config.CommentOverrides) string {
-	trimmedBlock := strings.TrimRight(block, "\n")
-	if strings.TrimSpace(trimmedBlock) == "" {
-		return block
-	}
-	lines := strings.Split(trimmedBlock, "\n")
-	out := make([]string, 0, len(lines))
-	for i := 0; i < len(lines); i++ {
-		line := lines[i]
-		name, ok := ParseDefName(strings.TrimSpace(line))
-		if !ok {
-			out = append(out, line)
-			continue
-		}
-
-		signatureEnd := i
-		for signatureEnd+1 < len(lines) && !strings.HasSuffix(strings.TrimSpace(lines[signatureEnd]), ":") {
-			signatureEnd++
-		}
-		for j := i; j <= signatureEnd && j < len(lines); j++ {
-			out = append(out, lines[j])
-		}
-
-		methodKey := strings.TrimSpace(classKey) + "." + name
-		rawDoc, exists := commentOverrides.MethodDocstrings[methodKey]
-		if exists {
-			docstring := strings.TrimSpace(rawDoc)
-			if docstring != "" {
-				nextNonEmpty := signatureEnd + 1
-				for nextNonEmpty < len(lines) && strings.TrimSpace(lines[nextNonEmpty]) == "" {
-					nextNonEmpty++
-				}
-				if nextNonEmpty >= len(lines) || !IsDocstringLine(strings.TrimSpace(lines[nextNonEmpty])) {
-					indent := line[:len(line)-len(strings.TrimLeft(line, " "))]
-					docLines := RenderMethodDocstringLines(
-						docstring,
-						strings.TrimSpace(commentOverrides.MethodDocstringStyles[methodKey]),
-						indent+"    ",
-					)
-					out = append(out, docLines...)
-				}
-			}
-		}
-		i = signatureEnd
-	}
-	return strings.Join(out, "\n")
-}
-
 func OrderClassMethodBlocks(blocks []ClassMethodBlock) []ClassMethodBlock {
 	if len(blocks) == 0 {
 		return blocks
@@ -3352,8 +3314,6 @@ func renderChildClientProperty(
 	meta PackageMeta,
 	child config.ChildClient,
 	async bool,
-	classKey string,
-	commentOverrides config.CommentOverrides,
 ) string {
 	attribute := NormalizePythonIdentifier(child.Attribute)
 	typeName := child.SyncClass
@@ -3366,14 +3326,6 @@ func renderChildClientProperty(
 	var buf bytes.Buffer
 	buf.WriteString("    @property\n")
 	buf.WriteString(fmt.Sprintf("    def %s(self) -> \"%s\":\n", attribute, typeName))
-	methodKey := strings.TrimSpace(classKey) + "." + attribute
-	if docstring, ok := commentOverrides.MethodDocstrings[methodKey]; ok {
-		docstring = strings.TrimSpace(docstring)
-		if docstring != "" {
-			style := strings.TrimSpace(commentOverrides.MethodDocstringStyles[methodKey])
-			WriteMethodDocstring(&buf, 2, docstring, style)
-		}
-	}
 	buf.WriteString(fmt.Sprintf("        if not self._%s:\n", attribute))
 
 	if module == "" {
@@ -3458,17 +3410,146 @@ func buildRenderQueryFields(
 	return fields
 }
 
+func shouldSuppressSwaggerMethodDocstring(binding OperationBinding) bool {
+	if binding.Mapping == nil {
+		return false
+	}
+	pagination := strings.TrimSpace(binding.Mapping.Pagination)
+	if pagination == "token" || pagination == "number" {
+		return true
+	}
+	if methodOverride := strings.TrimSpace(binding.Mapping.HTTPMethodOverride); methodOverride != "" &&
+		strings.ToLower(methodOverride) != strings.ToLower(binding.Details.Method) {
+		return true
+	}
+	return false
+}
+
+func singleLineDescription(value string) string {
+	lines := descriptionLines(value)
+	if len(lines) == 0 {
+		return ""
+	}
+	return strings.Join(lines, " ")
+}
+
+func buildSwaggerMethodDocstring(
+	doc *openapi.Document,
+	binding OperationBinding,
+	details openapi.OperationDetails,
+	pathParamNameMap map[string]string,
+	queryFields []RenderQueryField,
+	bodyFieldNames []string,
+	requestBodyType string,
+	returnType string,
+	paramAliases map[string]string,
+) string {
+	if shouldSuppressSwaggerMethodDocstring(binding) {
+		return ""
+	}
+
+	docLines := make([]string, 0, 16)
+	summary := strings.TrimSpace(details.Summary)
+	if summary != "" {
+		docLines = append(docLines, summary)
+	}
+	description := strings.TrimSpace(details.Description)
+	descriptionText := singleLineDescription(description)
+	if descriptionText != "" && descriptionText != summary {
+		if len(docLines) > 0 {
+			docLines = append(docLines, "")
+		}
+		docLines = append(docLines, descriptionLines(description)...)
+	}
+
+	paramDocs := make([]string, 0, len(details.Parameters)+len(bodyFieldNames))
+	for _, param := range details.PathParameters {
+		description := singleLineDescription(param.Description)
+		if description == "" {
+			continue
+		}
+		argName := strings.TrimSpace(pathParamNameMap[param.Name])
+		if argName == "" {
+			argName = OperationArgName(param.Name, paramAliases)
+		}
+		paramDocs = append(paramDocs, fmt.Sprintf(":param %s: %s", argName, description))
+	}
+
+	queryArgByRaw := make(map[string]string, len(queryFields))
+	for _, field := range queryFields {
+		queryArgByRaw[field.RawName] = field.ArgName
+	}
+	for _, param := range details.QueryParameters {
+		description := singleLineDescription(param.Description)
+		if description == "" {
+			continue
+		}
+		argName := strings.TrimSpace(queryArgByRaw[param.Name])
+		if argName == "" {
+			argName = OperationArgName(param.Name, paramAliases)
+		}
+		paramDocs = append(paramDocs, fmt.Sprintf(":param %s: %s", argName, description))
+	}
+
+	for _, param := range details.HeaderParameters {
+		description := singleLineDescription(param.Description)
+		if description == "" {
+			continue
+		}
+		argName := OperationArgName(param.Name, paramAliases)
+		paramDocs = append(paramDocs, fmt.Sprintf(":param %s: %s", argName, description))
+	}
+
+	if len(bodyFieldNames) > 0 && details.RequestBodySchema != nil {
+		seen := map[string]struct{}{}
+		for _, bodyField := range bodyFieldNames {
+			if _, exists := seen[bodyField]; exists {
+				continue
+			}
+			seen[bodyField] = struct{}{}
+			descriptionLines := schemaCommentLines(doc, BodyFieldSchema(doc, details.RequestBodySchema, bodyField))
+			if len(descriptionLines) == 0 {
+				continue
+			}
+			description := strings.Join(descriptionLines, " ")
+			argName := OperationArgName(bodyField, paramAliases)
+			paramDocs = append(paramDocs, fmt.Sprintf(":param %s: %s", argName, description))
+		}
+	} else if requestBodyType != "" && details.RequestBody != nil {
+		description := singleLineDescription(details.RequestBody.Description)
+		if description != "" {
+			paramDocs = append(paramDocs, fmt.Sprintf(":param body: %s", description))
+		}
+	}
+
+	if len(paramDocs) > 0 {
+		if len(docLines) > 0 {
+			docLines = append(docLines, "")
+		}
+		docLines = append(docLines, paramDocs...)
+	}
+
+	if strings.TrimSpace(returnType) != "" && strings.TrimSpace(returnType) != "None" && details.Response != nil {
+		description := singleLineDescription(details.Response.Description)
+		if description != "" {
+			if len(docLines) > 0 {
+				docLines = append(docLines, "")
+			}
+			docLines = append(docLines, fmt.Sprintf(":return: %s", description))
+		}
+	}
+
+	return strings.TrimSpace(strings.Join(docLines, "\n"))
+}
+
 func RenderOperationMethod(doc *openapi.Document, binding OperationBinding, async bool) string {
-	return RenderOperationMethodWithComments(doc, binding, async, "", "", config.CommentOverrides{})
+	return RenderOperationMethodWithComments(doc, binding, async)
 }
 
 func RenderOperationMethodWithComments(
 	doc *openapi.Document,
 	binding OperationBinding,
 	async bool,
-	modulePath string,
-	className string,
-	commentOverrides config.CommentOverrides,
 ) string {
 	details := binding.Details
 	requestMethod := strings.ToLower(strings.TrimSpace(details.Method))
@@ -3785,45 +3866,14 @@ func RenderOperationMethodWithComments(
 		}
 		buf.WriteString(fmt.Sprintf("    )%s:\n", returnAnnotation))
 	}
-	overrideDocstring := ""
-	overrideDocstringStyle := ""
-	overrideDocstringExists := false
-	if modulePath != "" && className != "" {
-		key := strings.TrimSpace(modulePath) + "." + strings.TrimSpace(className) + "." + binding.MethodName
-		rawDocstring, ok := commentOverrides.MethodDocstrings[key]
-		if ok {
-			overrideDocstringExists = true
-			overrideDocstring = strings.TrimSpace(rawDocstring)
-		}
-		overrideDocstringStyle = strings.TrimSpace(commentOverrides.MethodDocstringStyles[key])
-	}
 	if binding.Mapping != nil && len(binding.Mapping.PreDocstringCode) > 0 {
 		for _, block := range binding.Mapping.PreDocstringCode {
 			AppendIndentedCode(&buf, block, 2)
 		}
 	}
-	if overrideDocstringExists {
-		if overrideDocstring == "" {
-			// Explicitly disabled via comment overrides.
-		} else {
-			WriteMethodDocstring(&buf, 2, overrideDocstring, overrideDocstringStyle)
-		}
-	} else {
-		summary := details.Summary
-		if binding.Mapping != nil {
-			pagination := strings.TrimSpace(binding.Mapping.Pagination)
-			if pagination == "token" || pagination == "number" {
-				summary = ""
-			}
-			if methodOverride := strings.TrimSpace(binding.Mapping.HTTPMethodOverride); methodOverride != "" &&
-				strings.ToLower(methodOverride) != strings.ToLower(details.Method) {
-				summary = ""
-			}
-		}
-		summary = strings.TrimSpace(summary)
-		if summary != "" {
-			buf.WriteString(fmt.Sprintf("        \"\"\"%s\"\"\"\n", EscapeDocstring(summary)))
-		}
+	methodDocstring := buildSwaggerMethodDocstring(doc, binding, details, pathParamNameMap, queryFields, bodyFieldNames, requestBodyType, returnType, paramAliases)
+	if methodDocstring != "" {
+		WriteMethodDocstring(&buf, 2, methodDocstring, "block")
 	}
 	if delegateTo != "" {
 		callArgs := BuildDelegateCallArgs(signatureArgs, binding.Mapping, async)

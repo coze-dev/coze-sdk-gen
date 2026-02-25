@@ -338,7 +338,7 @@ func TestRenderOperationMethodAndTypeHelpers(t *testing.T) {
 	if !strings.Contains(asyncCode, "await self._requester.arequest") {
 		t.Fatalf("unexpected async method code:\n%s", asyncCode)
 	}
-	if !strings.Contains(asyncCode, "\"\"\"line1 line2\"\"\"") {
+	if !strings.Contains(asyncCode, "\"\"\"\n        line1\n        line2\n        \"\"\"") {
 		t.Fatalf("expected escaped docstring, got:\n%s", asyncCode)
 	}
 	if !strings.Contains(asyncCode, "header_values") {
@@ -1296,8 +1296,9 @@ func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
 func TestRenderOperationMethodPreDocstringCode(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
-		Path:   "/v1/demo",
-		Method: "post",
+		Path:    "/v1/demo",
+		Method:  "post",
+		Summary: "Upload demo item.",
 	}
 	binding := pygen.OperationBinding{
 		PackageName: "demo",
@@ -1309,18 +1310,129 @@ func TestRenderOperationMethodPreDocstringCode(t *testing.T) {
 			},
 		},
 	}
-	commentOverrides := config.CommentOverrides{
-		MethodDocstrings: map[string]string{
-			"cozepy.demo.DemoClient.create": "Upload demo item.",
-		},
-	}
-
-	code := pygen.RenderOperationMethodWithComments(doc, binding, false, "cozepy.demo", "DemoClient", commentOverrides)
+	code := pygen.RenderOperationMethodWithComments(doc, binding, false)
 	warnIdx := strings.Index(code, `warnings.warn("deprecated", DeprecationWarning, stacklevel=2)`)
-	docIdx := strings.Index(code, `"""Upload demo item."""`)
+	docIdx := strings.Index(code, "Upload demo item.")
 	urlIdx := strings.Index(code, `url = f"{self._base_url}/v1/demo"`)
 	if warnIdx < 0 || docIdx < 0 || urlIdx < 0 || !(warnIdx < docIdx && docIdx < urlIdx) {
 		t.Fatalf("expected pre_docstring_code to be emitted before docstring and url:\n%s", code)
+	}
+}
+
+func TestRenderOperationMethodUsesSwaggerComments(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:        "/v1/demo/{demo_id}",
+		Method:      "get",
+		Summary:     "Retrieve demo",
+		Description: "Retrieve detail for one demo.",
+		PathParameters: []openapi.ParameterSpec{
+			{
+				Name:        "demo_id",
+				In:          "path",
+				Description: "Demo identifier",
+				Required:    true,
+				Schema:      &openapi.Schema{Type: "string"},
+			},
+		},
+		QueryParameters: []openapi.ParameterSpec{
+			{
+				Name:        "expand",
+				In:          "query",
+				Description: "Include extra fields",
+				Required:    false,
+				Schema:      &openapi.Schema{Type: "boolean"},
+			},
+		},
+		Response:       &openapi.Response{Description: "Demo object"},
+		ResponseSchema: &openapi.Schema{Type: "object"},
+	}
+	binding := pygen.OperationBinding{
+		PackageName: "demo",
+		MethodName:  "retrieve",
+		Details:     details,
+	}
+
+	code := pygen.RenderOperationMethod(doc, binding, false)
+	if !strings.Contains(code, "Retrieve demo") {
+		t.Fatalf("expected summary in docstring:\n%s", code)
+	}
+	if !strings.Contains(code, "Retrieve detail for one demo.") {
+		t.Fatalf("expected description in docstring:\n%s", code)
+	}
+	if !strings.Contains(code, ":param demo_id: Demo identifier") {
+		t.Fatalf("expected path param description in docstring:\n%s", code)
+	}
+	if !strings.Contains(code, ":param expand: Include extra fields") {
+		t.Fatalf("expected query param description in docstring:\n%s", code)
+	}
+	if !strings.Contains(code, ":return: Demo object") {
+		t.Fatalf("expected return description in docstring:\n%s", code)
+	}
+}
+
+func TestRenderOperationMethodSanitizesRichTextDescription(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:        "/v1/demo",
+		Method:      "post",
+		Description: `{"0":{"ops":[{"insert":"first line"},{"insert":"second line"}],"zoneType":"Z"}}`,
+	}
+	binding := pygen.OperationBinding{
+		PackageName: "demo",
+		MethodName:  "create",
+		Details:     details,
+	}
+
+	code := pygen.RenderOperationMethod(doc, binding, false)
+	if !strings.Contains(code, "first line second line") {
+		t.Fatalf("expected rich text payload converted to plain text:\n%s", code)
+	}
+	if strings.Contains(code, "\"ops\"") {
+		t.Fatalf("did not expect raw rich text JSON in docstring:\n%s", code)
+	}
+}
+
+func TestRenderPackageModuleUsesSwaggerFieldDescriptions(t *testing.T) {
+	doc := &openapi.Document{
+		Components: openapi.Components{
+			Schemas: map[string]*openapi.Schema{
+				"DemoModel": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"id": {
+							Type:        "string",
+							Description: "Demo identifier.",
+						},
+						"name": {
+							Type:        "string",
+							Description: "Demo display name.",
+						},
+					},
+					Required: []string{"id"},
+				},
+			},
+		},
+	}
+	meta := pygen.PackageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Schema: "DemoModel",
+					Name:   "DemoModel",
+				},
+			},
+		},
+	}
+
+	code := pygen.RenderPackageModule(doc, meta, nil)
+	if !strings.Contains(code, "# Demo identifier.\n    id: str") {
+		t.Fatalf("expected required field description comment:\n%s", code)
+	}
+	if !strings.Contains(code, "# Demo display name.\n    name: Optional[str] = None") {
+		t.Fatalf("expected optional field description comment:\n%s", code)
 	}
 }
 
@@ -1381,7 +1493,7 @@ func TestRenderPackageModuleIntEnumMixinBase(t *testing.T) {
 		},
 	}
 
-	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	code := pygen.RenderPackageModule(doc, meta, nil)
 	if !strings.Contains(code, "from enum import Enum") {
 		t.Fatalf("expected Enum import for int_enum base:\n%s", code)
 	}
@@ -1450,7 +1562,7 @@ func TestRenderPackageModuleAutoAddsReferencedSchemasForSameName(t *testing.T) {
 		},
 	}
 
-	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	code := pygen.RenderPackageModule(doc, meta, nil)
 	if !strings.Contains(code, "support_emotions: Optional[List[EmotionInfo]] = None") {
 		t.Fatalf("expected support_emotions to keep model type, got:\n%s", code)
 	}
@@ -1513,7 +1625,7 @@ func TestRenderPackageModulePrunesUnorderedSchemaDependencies(t *testing.T) {
 		},
 	}
 
-	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	code := pygen.RenderPackageModule(doc, meta, nil)
 	if !strings.Contains(code, "used_info: Optional[UsedInfo] = None") {
 		t.Fatalf("expected used_info typed with referenced UsedInfo model, got:\n%s", code)
 	}
@@ -1545,7 +1657,7 @@ func TestRenderPackageModuleAutoNumberPagedResponseMethods(t *testing.T) {
 		},
 	}
 
-	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	code := pygen.RenderPackageModule(doc, meta, nil)
 	if !strings.Contains(code, "class _PrivateListWorkflowData(CozeModel, NumberPagedResponse[WorkflowBasic]):") {
 		t.Fatalf("expected paged model class definition:\n%s", code)
 	}
@@ -1580,7 +1692,7 @@ func TestRenderPackageModuleAutoNumberPagedResponseMethodsWithCustomFieldNames(t
 		},
 	}
 
-	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	code := pygen.RenderPackageModule(doc, meta, nil)
 	if !strings.Contains(code, "def get_total(self) -> Optional[int]:\n        return self.total_count") {
 		t.Fatalf("expected auto generated get_total from total_count:\n%s", code)
 	}
@@ -1624,7 +1736,7 @@ func TestRenderPackageModuleAutoTokenAndLastIDPagedResponseMethods(t *testing.T)
 		},
 	}
 
-	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	code := pygen.RenderPackageModule(doc, meta, nil)
 	if !strings.Contains(code, "def get_next_page_token(self) -> Optional[str]:\n        return self.next_page_token") {
 		t.Fatalf("expected auto generated get_next_page_token for TokenPagedResponse:\n%s", code)
 	}
@@ -1642,36 +1754,37 @@ func TestRenderPackageModuleAutoTokenAndLastIDPagedResponseMethods(t *testing.T)
 	}
 }
 
-func TestRenderPackageModuleEmptyModelWithOverrideDocstringOmitsPass(t *testing.T) {
-	doc := mustParseSwagger(t)
+func TestRenderPackageModuleEmptyModelWithSwaggerDocstringOmitsPass(t *testing.T) {
+	doc := &openapi.Document{
+		Components: openapi.Components{
+			Schemas: map[string]*openapi.Schema{
+				"DeleteConversationResp": {
+					Type:        "object",
+					Description: "删除会话的响应结构体\n不包含任何字段，仅用于表示操作成功",
+				},
+			},
+		},
+	}
 	meta := pygen.PackageMeta{
 		Name:       "conversations",
 		ModulePath: "conversations",
 		Package: &config.Package{
 			ModelSchemas: []config.ModelSchema{
 				{
-					Name:                  "DeleteConversationResp",
-					AllowMissingInSwagger: true,
+					Schema: "DeleteConversationResp",
+					Name:   "DeleteConversationResp",
 				},
 			},
 		},
 	}
-	overrides := config.CommentOverrides{
-		ClassDocstrings: map[string]string{
-			"cozepy.conversations.DeleteConversationResp": "删除会话的响应结构体\n不包含任何字段，仅用于表示操作成功",
-		},
-		ClassDocstringStyles: map[string]string{
-			"cozepy.conversations.DeleteConversationResp": "block",
-		},
-	}
 
-	code := pygen.RenderPackageModule(doc, meta, nil, overrides)
+	code := pygen.RenderPackageModule(doc, meta, nil)
 	classStart := strings.Index(code, "class DeleteConversationResp(CozeModel):")
 	if classStart < 0 {
 		t.Fatalf("expected empty model class definition:\n%s", code)
 	}
 	if !strings.Contains(code, "删除会话的响应结构体") {
-		t.Fatalf("expected override class docstring content:\n%s", code)
+		t.Fatalf("expected swagger class docstring content:\n%s", code)
 	}
 	nextClass := strings.Index(code[classStart+1:], "\nclass ")
 	classBlock := code[classStart:]
@@ -1702,7 +1815,7 @@ func TestRenderPackageModuleExtraFieldAlias(t *testing.T) {
 		},
 	}
 
-	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	code := pygen.RenderPackageModule(doc, meta, nil)
 	if !strings.Contains(code, `from_: Optional[str] = Field(alias="from")`) {
 		t.Fatalf("expected alias field rendering for required extra field:\n%s", code)
 	}
@@ -1742,7 +1855,7 @@ func TestRenderPackageModuleBeforeValidators(t *testing.T) {
 		},
 	}
 
-	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	code := pygen.RenderPackageModule(doc, meta, nil)
 	if !strings.Contains(code, `@field_validator("publish_time", mode="before")`) {
 		t.Fatalf("expected int_to_string before validator:\n%s", code)
 	}
@@ -1797,7 +1910,7 @@ func TestRenderPackageModuleBuilders(t *testing.T) {
 		},
 	}
 
-	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	code := pygen.RenderPackageModule(doc, meta, nil)
 	if !strings.Contains(code, "@staticmethod\n    def build_no_auto_update() -> \"DocumentUpdateRule\":") {
 		t.Fatalf("expected builder staticmethod for no_auto_update:\n%s", code)
 	}

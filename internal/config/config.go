@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -12,12 +11,10 @@ import (
 )
 
 type Config struct {
-	Language             string           `yaml:"-"`
-	OutputSDK            string           `yaml:"-"`
-	CommentOverridesFile string           `yaml:"comment_overrides_file"`
-	Diff                 DiffConfig       `yaml:"diff"`
-	API                  APIConfig        `yaml:"api"`
-	CommentOverrides     CommentOverrides `yaml:"-"`
+	Language  string     `yaml:"-"`
+	OutputSDK string     `yaml:"-"`
+	Diff      DiffConfig `yaml:"diff"`
+	API       APIConfig  `yaml:"api"`
 }
 
 type DiffConfig struct {
@@ -46,17 +43,6 @@ var defaultDiffIgnorePathsByLanguage = map[string][]string{
 		"README.md",
 		"*_test.go",
 	},
-}
-
-type CommentOverrides struct {
-	ClassDocstrings         map[string]string   `yaml:"class_docstrings"`
-	ClassDocstringStyles    map[string]string   `yaml:"class_docstring_styles"`
-	MethodDocstrings        map[string]string   `yaml:"method_docstrings"`
-	MethodDocstringStyles   map[string]string   `yaml:"method_docstring_styles"`
-	FieldComments           map[string][]string `yaml:"field_comments"`
-	InlineFieldComments     map[string]string   `yaml:"inline_field_comments"`
-	EnumMemberComments      map[string][]string `yaml:"enum_member_comments"`
-	InlineEnumMemberComment map[string]string   `yaml:"inline_enum_member_comments"`
 }
 
 type APIConfig struct {
@@ -275,9 +261,6 @@ func Load(path string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := cfg.loadCommentOverrides(path); err != nil {
-		return nil, err
-	}
 	return cfg, nil
 }
 
@@ -318,7 +301,6 @@ func (c *Config) applyDefaults() {
 	if c.API.FieldAliases == nil {
 		c.API.FieldAliases = map[string]map[string]string{}
 	}
-	c.CommentOverrides.ensureMaps()
 	for i := range c.API.OperationMappings {
 		if strings.TrimSpace(c.API.OperationMappings[i].QueryBuilder) == "" {
 			c.API.OperationMappings[i].QueryBuilder = "dump_exclude_none"
@@ -326,55 +308,6 @@ func (c *Config) applyDefaults() {
 		if strings.TrimSpace(c.API.OperationMappings[i].BodyBuilder) == "" {
 			c.API.OperationMappings[i].BodyBuilder = "dump_exclude_none"
 		}
-	}
-}
-
-func (c *Config) loadCommentOverrides(configPath string) error {
-	c.CommentOverrides.ensureMaps()
-	overridesPath := strings.TrimSpace(c.CommentOverridesFile)
-	if overridesPath == "" {
-		return nil
-	}
-	if !filepath.IsAbs(overridesPath) {
-		overridesPath = filepath.Join(filepath.Dir(configPath), overridesPath)
-	}
-	content, err := os.ReadFile(overridesPath)
-	if err != nil {
-		return fmt.Errorf("read comment_overrides_file %q: %w", overridesPath, err)
-	}
-	var overrides CommentOverrides
-	if err := yaml.Unmarshal(content, &overrides); err != nil {
-		return fmt.Errorf("parse comment_overrides_file %q: %w", overridesPath, err)
-	}
-	overrides.ensureMaps()
-	c.CommentOverrides = overrides
-	return nil
-}
-
-func (c *CommentOverrides) ensureMaps() {
-	if c.ClassDocstrings == nil {
-		c.ClassDocstrings = map[string]string{}
-	}
-	if c.ClassDocstringStyles == nil {
-		c.ClassDocstringStyles = map[string]string{}
-	}
-	if c.MethodDocstrings == nil {
-		c.MethodDocstrings = map[string]string{}
-	}
-	if c.MethodDocstringStyles == nil {
-		c.MethodDocstringStyles = map[string]string{}
-	}
-	if c.FieldComments == nil {
-		c.FieldComments = map[string][]string{}
-	}
-	if c.InlineFieldComments == nil {
-		c.InlineFieldComments = map[string]string{}
-	}
-	if c.EnumMemberComments == nil {
-		c.EnumMemberComments = map[string][]string{}
-	}
-	if c.InlineEnumMemberComment == nil {
-		c.InlineEnumMemberComment = map[string]string{}
 	}
 }
 
