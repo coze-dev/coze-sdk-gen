@@ -820,7 +820,7 @@ func (r *workflowsChat) Stream(ctx context.Context, req *WorkflowsChatStreamReq)
 		URL:    %q,
 		Body:   req,
 	}
-	response := new(SwaggerOperationResponse)
+	response := new(workflowsChatStreamResp)
 	err := r.client.rawRequest(ctx, request, response)
 	return newStream(ctx, r.client, response.HTTPResponse, parseChatEvent), err
 }
@@ -834,6 +834,10 @@ type WorkflowsChatStreamReq struct {
 	BotID              *string           `+"`json:\"bot_id,omitempty\"`"+`          // 机器人ID
 	ConversationID     *string           `+"`json:\"conversation_id,omitempty\"`"+` // 会话ID
 	Ext                map[string]string `+"`json:\"ext,omitempty\"`"+`             // 扩展信息
+}
+
+type workflowsChatStreamResp struct {
+	HTTPResponse *http.Response `+"`json:\"-\"`"+`
 }
 
 type workflowsChat struct {
