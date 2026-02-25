@@ -372,8 +372,6 @@ api:
             - name: text
               type: str
               required: true
-      async_method_order:
-        - create
       path_prefixes:
         - /v1/audio/transcriptions
     - name: audio_live
@@ -419,10 +417,6 @@ api:
             - name: stream_infos
               type: List[StreamInfo]
               required: true
-      sync_method_order:
-        - retrieve
-      async_method_order:
-        - retrieve
       path_prefixes:
         - /v1/audio/live
     - name: audio_voiceprint_groups
@@ -712,12 +706,6 @@ api:
               required: true
       override_pagination_classes:
         - _PrivateListVoiceData
-      sync_method_order:
-        - clone
-        - list
-      async_method_order:
-        - clone
-        - list
       path_prefixes:
         - /v1/audio/voices
     - name: bots
@@ -1177,28 +1165,6 @@ api:
                   )
               else:
                   return await self._list_v1(space_id=space_id, page_num=page_num, page_size=page_size, **kwargs)
-      sync_method_order:
-        - create
-        - update
-        - publish
-        - unpublish
-        - retrieve
-        - _retrieve_v1
-        - _retrieve_v2
-        - list
-        - _list_v1
-        - _list_v2
-      async_method_order:
-        - create
-        - update
-        - publish
-        - unpublish
-        - retrieve
-        - _retrieve_v1
-        - _retrieve_v2
-        - list
-        - _list_v1
-        - _list_v2
       path_prefixes:
         - /v1/bot
         - /v1/bots
@@ -1335,8 +1301,6 @@ api:
             - id
         - schema: ChatV3MessageDetail
           name: Message
-          blank_line_before_fields:
-            - id
           exclude_unordered_fields: true
           required_fields:
             - __none__
@@ -1495,10 +1459,6 @@ api:
             input_count: "0"
         - schema: ChatV3ChatDetail
           name: Chat
-          blank_line_before_fields:
-            - required_action
-            - usage
-            - inserted_additional_messages
           exclude_unordered_fields: true
           required_fields:
             - __none__
@@ -1932,25 +1892,6 @@ api:
                   conversation_id=conversation_id, chat_id=chat_id, stream=True, tool_outputs=tool_outputs
               ):
                   yield item
-      sync_method_order:
-        - create
-        - stream
-        - create_and_poll
-        - _create
-        - retrieve
-        - submit_tool_outputs
-        - cancel
-        - messages
-      async_method_order:
-        - create
-        - stream
-        - _create
-        - retrieve
-        - submit_tool_outputs
-        - submit_tool_outputs_stream
-        - _submit_tool_outputs
-        - cancel
-        - messages
       path_prefixes:
         - /v3/chat
     - name: chat_message
@@ -2003,10 +1944,6 @@ api:
               value: 3
         - name: UpdateConnectorBotResp
           allow_missing_in_swagger: true
-      sync_method_order:
-        - update
-      async_method_order:
-        - update
       path_prefixes:
         - /v1/connectors
     - name: conversations
@@ -2057,22 +1994,6 @@ api:
               删除会话的响应结构体
               不包含任何字段，仅用于表示操作成功
               """
-      sync_method_order:
-        - create
-        - list
-        - retrieve
-        - clear
-        - update
-        - delete
-        - messages
-      async_method_order:
-        - create
-        - list
-        - retrieve
-        - clear
-        - update
-        - delete
-        - messages
       path_prefixes:
         - /v1/conversation
         - /v1/conversations
@@ -2215,20 +2136,6 @@ api:
                   requestor=self._requester,
                   request_maker=request_maker,
               )
-      sync_method_order:
-        - feedback
-        - create
-        - list
-        - retrieve
-        - update
-        - delete
-      async_method_order:
-        - feedback
-        - create
-        - list
-        - retrieve
-        - update
-        - delete
       path_prefixes:
         - /v1/conversation/message
     - name: conversations_message_feedback
@@ -2549,8 +2456,6 @@ api:
             - update_time
         - name: DocumentSourceInfo
           allow_missing_in_swagger: true
-          blank_line_before_fields:
-            - source_file_id
           extra_fields:
             - name: file_base64
               type: Optional[str]
@@ -2736,12 +2641,6 @@ api:
               required: true
       override_pagination_classes:
         - _PrivateListPhotosData
-      sync_method_order:
-        - update
-        - list
-      async_method_order:
-        - update
-        - list
       path_prefixes:
         - /v1/datasets
     - name: enterprises
@@ -2779,14 +2678,6 @@ api:
         - CreateEnterpriseMemberResp
         - DeleteEnterpriseMemberResp
         - UpdateEnterpriseMemberResp
-      sync_method_order:
-        - create
-        - delete
-        - update
-      async_method_order:
-        - create
-        - delete
-        - update
       path_prefixes:
         - /v1/enterprises
     - name: files
@@ -2861,12 +2752,6 @@ api:
               url = f"{self._base_url}/v1/files/retrieve"
               params = {"file_id": file_id}
               return await self._requester.arequest("get", url, False, File, params=params)
-      sync_method_order:
-        - upload
-        - retrieve
-      async_method_order:
-        - upload
-        - retrieve
       path_prefixes:
         - /v1/files
     - name: folders
@@ -2965,10 +2850,6 @@ api:
 
                   self._documents = AsyncDocumentsClient(base_url=self._base_url, requester=self._requester)
               return self._documents
-      sync_method_order:
-        - documents
-      async_method_order:
-        - documents
       path_prefixes:
         - /open_api/knowledge/document
     - name: knowledge_documents
@@ -3239,12 +3120,6 @@ api:
                   cast=UpdateVariableResp,
                   body=body,
               )
-      sync_method_order:
-        - retrieve
-        - update
-      async_method_order:
-        - retrieve
-        - update
       path_prefixes:
         - /v1/variables
     - name: workflows
@@ -3433,18 +3308,6 @@ api:
                   requestor=self._requester,
                   request_maker=request_maker,
               )
-      sync_method_order:
-        - runs
-        - chat
-        - versions
-        - retrieve
-        - list
-      async_method_order:
-        - runs
-        - chat
-        - versions
-        - retrieve
-        - list
       path_prefixes:
         - /v1/workflow
         - /v1/workflows
@@ -3465,12 +3328,6 @@ api:
           from cozepy.model import AsyncIteratorHTTPResponse, AsyncStream, IteratorHTTPResponse, Stream
           from cozepy.request import Requester
           from cozepy.util import remove_none_values, remove_url_trailing_slash
-      sync_method_order:
-        - stream
-        - _create
-      async_method_order:
-        - stream
-        - _create
       path_prefixes:
         - /v1/workflows/chat
     - name: workflows_runs
@@ -3580,11 +3437,6 @@ api:
               required: true
         - name: WorkflowEvent
           allow_missing_in_swagger: true
-          blank_line_before_fields:
-            - message
-            - interrupt
-            - error
-            - unknown
           extra_fields:
             - name: id
               type: int
@@ -3632,16 +3484,6 @@ api:
                   )
               else:
                   return WorkflowEvent(id=id, event=WorkflowEventType.UNKNOWN, unknown=data)
-      sync_method_order:
-        - create
-        - stream
-        - resume
-        - run_histories
-      async_method_order:
-        - create
-        - stream
-        - resume
-        - run_histories
       path_prefixes:
         - /v1/workflow
     - name: workflows_runs_run_histories
@@ -3714,8 +3556,6 @@ api:
           name: WorkflowRunHistory
           separate_commented_fields: true
           exclude_unordered_fields: true
-          blank_line_before_fields:
-            - node_execute_status
           field_order:
             - execute_id
             - execute_status
@@ -3766,12 +3606,6 @@ api:
                   if v == "":
                       return 0
                   return v
-      sync_method_order:
-        - execute_nodes
-        - retrieve
-      async_method_order:
-        - execute_nodes
-        - retrieve
       path_prefixes:
         - /v1/workflows
     - name: workflows_runs_run_histories_execute_nodes
@@ -4002,12 +3836,6 @@ api:
                   requestor=self._requester,
                   request_maker=request_maker,
               )
-      sync_method_order:
-        - members
-        - list
-      async_method_order:
-        - members
-        - list
       path_prefixes:
         - /v1/workspaces
     - name: workspaces_members
@@ -4075,12 +3903,6 @@ api:
             - name: owner_not_support_remove_user_ids
               type: List[str]
               required: true
-      sync_method_order:
-        - create
-        - delete
-      async_method_order:
-        - create
-        - delete
       path_prefixes:
         - /v1/workspaces
     - name: websockets
