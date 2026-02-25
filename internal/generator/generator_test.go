@@ -88,7 +88,9 @@ func TestGenerateGoFromSwagger(t *testing.T) {
 		t.Fatalf("expected >=3 generated operations, got %d", result.GeneratedOps)
 	}
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "client.go"), "type CozeAPI struct")
-	assertFileContains(t, filepath.Join(cfg.OutputSDK, "apps.go"), "func (r *apps) OpenApiChat(")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "apps.go"), "func (r *apps) List(")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "users.go"), "func (r *users) Me(")
+	assertFileContains(t, filepath.Join(cfg.OutputSDK, "templates.go"), "func (r *templates) Duplicate(")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "go.mod"), "module github.com/coze-dev/coze-go")
 }
 
