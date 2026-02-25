@@ -132,7 +132,7 @@ func buildGoSwaggerOperationBindings(cfg *config.Config, doc *openapi.Document, 
 			isFile := false
 			summary := ""
 			if hasDetails {
-				summary = oneLineText(details.Summary)
+				summary = goOperationSummary(details)
 				contentType := strings.ToLower(strings.TrimSpace(details.RequestBodyContentType))
 				isFile = strings.Contains(contentType, "multipart/form-data")
 			}
