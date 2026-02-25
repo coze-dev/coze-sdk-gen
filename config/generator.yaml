@@ -388,6 +388,7 @@ api:
       allow_missing_in_swagger: true
       client_class: VoiceprintGroupsClient
       async_client_class: AsyncVoiceprintGroupsClient
+      http_request_from_model: true
       override_pagination_classes:
         - _PrivateListVoicePrintGroupData
       child_clients:
@@ -485,6 +486,7 @@ api:
       allow_missing_in_swagger: true
       client_class: VoiceprintGroupsFeaturesClient
       async_client_class: AsyncVoiceprintGroupsFeaturesClient
+      http_request_from_model: true
       override_pagination_classes:
         - _PrivateListVoicePrintGroupFeatureData
       model_schemas:
@@ -572,6 +574,7 @@ api:
       separate_commented_fields: true
       client_class: VoicesClient
       async_client_class: AsyncVoicesClient
+      http_request_from_model: true
       model_schemas:
         - name: VoiceState
           allow_missing_in_swagger: true
@@ -2216,6 +2219,7 @@ api:
       separate_commented_fields: true
       client_class: DatasetsDocumentsClient
       async_client_class: AsyncDatasetsDocumentsClient
+      http_request_from_model: true
       override_pagination_classes:
         - _PrivateListDocumentsData
       model_schemas:
@@ -2752,6 +2756,7 @@ api:
       source_dir: cozepy/knowledge/documents
       client_class: DocumentsClient
       async_client_class: AsyncDocumentsClient
+      http_request_from_model: true
       override_pagination_classes:
         - _PrivateListDocumentsData
       sync_init_pre_code:
@@ -3456,6 +3461,7 @@ api:
       separate_commented_fields: true
       client_class: WorkflowsVersionsClient
       async_client_class: AsyncWorkflowsVersionsClient
+      http_request_from_model: true
       model_schemas:
         - schema: OpenAPIUserInfo
           name: WorkflowUserInfo

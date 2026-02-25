@@ -1470,11 +1470,6 @@ func normalizeAutoInferredImports(content string) string {
 		{Module: "cozepy.request", Symbols: []string{"Requester"}},
 		{Module: "cozepy.util", Symbols: []string{"base64_encode_string", "dump_exclude_none", "remove_none_values", "remove_url_trailing_slash"}},
 		{Module: "cozepy.workspaces", Symbols: []string{"WorkspaceRoleType"}},
-		{
-			Module:                  ".feedback",
-			Symbols:                 []string{"AsyncMessagesFeedbackClient", "ConversationsMessagesFeedbackClient"},
-			IncludeQuotedAnnotation: true,
-		},
 		{Module: ".versions", Symbols: []string{"WorkflowUserInfo"}},
 	}
 	for _, entry := range knownFromImports {
@@ -1482,10 +1477,21 @@ func normalizeAutoInferredImports(content string) string {
 			ensureNamed(entry.Module, symbol, entry.IncludeQuotedAnnotation)
 		}
 	}
+	feedbackSymbols := make([]string, 0, 2)
+	if containsQuotedAnnotationOutsideImportSection(content, "AsyncMessagesFeedbackClient") {
+		feedbackSymbols = append(feedbackSymbols, "AsyncMessagesFeedbackClient")
+	}
+	if containsQuotedAnnotationOutsideImportSection(content, "ConversationsMessagesFeedbackClient") {
+		feedbackSymbols = append(feedbackSymbols, "ConversationsMessagesFeedbackClient")
+	}
+	if len(feedbackSymbols) > 0 {
+		content = ensureTypeCheckingNamedImport(content, ".feedback", feedbackSymbols)
+	}
 	if containsIdentifierOutsideImportSection(sanitized, "HTTPRequest") &&
 		!declaresIdentifier(sanitized, "HTTPRequest") &&
-		!isSymbolImportedFromModule(content, "cozepy.model", "HTTPRequest") {
-		content = ensureNamedImport(content, "cozepy.request", "HTTPRequest")
+		!isSymbolImportedFromModule(content, "cozepy.model", "HTTPRequest") &&
+		!isSymbolImportedFromModule(content, "cozepy.request", "HTTPRequest") {
+		content = ensureNamedImport(content, "cozepy.model", "HTTPRequest")
 	}
 	return content
 }
@@ -1713,6 +1719,109 @@ func isSymbolImportedFromModule(content string, module string, symbol string) bo
 	return false
 }
 
+func ensureTypeCheckingNamedImport(content string, module string, symbols []string) string {
+	if module == "" || len(symbols) == 0 {
+		return content
+	}
+	ordered := make([]string, 0, len(symbols))
+	seen := map[string]struct{}{}
+	for _, symbol := range symbols {
+		symbol = strings.TrimSpace(symbol)
+		if symbol == "" {
+			continue
+		}
+		if _, exists := seen[symbol]; exists {
+			continue
+		}
+		seen[symbol] = struct{}{}
+		ordered = append(ordered, symbol)
+	}
+	if len(ordered) == 0 {
+		return content
+	}
+
+	content = ensureNamedImport(content, "typing", "TYPE_CHECKING")
+	lines := strings.Split(content, "\n")
+	insertIdx := topImportInsertIndex(lines)
+
+	blockIdx := -1
+	for i := insertIdx; i < len(lines); i++ {
+		line := lines[i]
+		trimmed := strings.TrimSpace(line)
+		if line == trimmed && trimmed == "if TYPE_CHECKING:" {
+			blockIdx = i
+			break
+		}
+		if line == trimmed && trimmed != "" {
+			break
+		}
+	}
+	if blockIdx < 0 {
+		importLine := fmt.Sprintf("    from %s import %s", module, strings.Join(ordered, ", "))
+		prefix := append([]string{}, lines[:insertIdx]...)
+		suffix := append([]string{}, lines[insertIdx:]...)
+		if len(prefix) > 0 && strings.TrimSpace(prefix[len(prefix)-1]) != "" {
+			prefix = append(prefix, "")
+		}
+		prefix = append(prefix, "if TYPE_CHECKING:", importLine, "")
+		return strings.Join(append(prefix, suffix...), "\n")
+	}
+
+	blockEnd := blockIdx + 1
+	for blockEnd < len(lines) {
+		line := lines[blockEnd]
+		trimmed := strings.TrimSpace(line)
+		if line == trimmed && trimmed != "" {
+			break
+		}
+		blockEnd++
+	}
+
+	importPrefix := "from " + module + " import "
+	importLineIdx := -1
+	for i := blockIdx + 1; i < blockEnd; i++ {
+		trimmed := strings.TrimSpace(lines[i])
+		if !strings.HasPrefix(trimmed, importPrefix) {
+			continue
+		}
+		importLineIdx = i
+		break
+	}
+
+	if importLineIdx >= 0 {
+		trimmed := strings.TrimSpace(lines[importLineIdx])
+		namesPart := strings.TrimSpace(strings.TrimPrefix(trimmed, importPrefix))
+		updated := make([]string, 0, len(ordered)+4)
+		localSeen := map[string]struct{}{}
+		for _, name := range strings.Split(namesPart, ",") {
+			name = strings.TrimSpace(name)
+			if name == "" {
+				continue
+			}
+			if _, exists := localSeen[name]; exists {
+				continue
+			}
+			localSeen[name] = struct{}{}
+			updated = append(updated, name)
+		}
+		for _, symbol := range ordered {
+			if _, exists := localSeen[symbol]; exists {
+				continue
+			}
+			localSeen[symbol] = struct{}{}
+			updated = append(updated, symbol)
+		}
+		lines[importLineIdx] = "    " + importPrefix + strings.Join(updated, ", ")
+		return strings.Join(lines, "\n")
+	}
+
+	importLine := "    " + importPrefix + strings.Join(ordered, ", ")
+	prefix := append([]string{}, lines[:blockEnd]...)
+	suffix := append([]string{}, lines[blockEnd:]...)
+	prefix = append(prefix, importLine)
+	return strings.Join(append(prefix, suffix...), "\n")
+}
+
 func lineHasIdentifier(line string, ident string) bool {
 	if ident == "" {
 		return false
@@ -1807,14 +1916,25 @@ func ensureNamedImport(content string, module string, symbol string) string {
 		if _, exists := seen[symbol]; !exists {
 			updated = append(updated, symbol)
 		}
-		lines[moduleImportIndex] = importPrefix + strings.Join(updated, ", ")
+		formatted := formatNamedImportLines(module, updated, "")
+		if len(formatted) == 1 {
+			lines[moduleImportIndex] = formatted[0]
+			return strings.Join(lines, "\n")
+		}
+		prefix := append([]string{}, lines[:moduleImportIndex]...)
+		suffix := append([]string{}, lines[moduleImportIndex+1:]...)
+		lines = append(prefix, append(formatted, suffix...)...)
 		return strings.Join(lines, "\n")
 	}
 
 	line := importPrefix + symbol
 	prefix := append([]string{}, lines[:insertIdx]...)
 	suffix := append([]string{}, lines[insertIdx:]...)
-	prefix = append(prefix, line)
+	formatted := formatNamedImportLines(module, []string{symbol}, "")
+	if len(formatted) == 0 {
+		formatted = []string{line}
+	}
+	prefix = append(prefix, formatted...)
 	return strings.Join(append(prefix, suffix...), "\n")
 }
 
@@ -1845,6 +1965,44 @@ func ensureModuleImport(content string, module string) string {
 	suffix := append([]string{}, lines[insertIdx:]...)
 	prefix = append(prefix, "import "+module)
 	return strings.Join(append(prefix, suffix...), "\n")
+}
+
+func shouldWrapNamedImport(module string, names []string) bool {
+	if module == "cozepy.chat" {
+		for _, name := range names {
+			if strings.TrimSpace(name) == "_chat_stream_handler" {
+				return true
+			}
+		}
+	}
+	if module == "cozepy.datasets.documents" && len(names) >= 4 {
+		return true
+	}
+	return false
+}
+
+func formatNamedImportLines(module string, names []string, indent string) []string {
+	trimmed := make([]string, 0, len(names))
+	for _, name := range names {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+		trimmed = append(trimmed, name)
+	}
+	if len(trimmed) == 0 {
+		return nil
+	}
+	if !shouldWrapNamedImport(module, trimmed) {
+		return []string{fmt.Sprintf("%sfrom %s import %s", indent, module, strings.Join(trimmed, ", "))}
+	}
+	lines := make([]string, 0, len(trimmed)+2)
+	lines = append(lines, fmt.Sprintf("%sfrom %s import (", indent, module))
+	for _, name := range trimmed {
+		lines = append(lines, fmt.Sprintf("%s    %s,", indent, name))
+	}
+	lines = append(lines, fmt.Sprintf("%s)", indent))
+	return lines
 }
 
 func topImportInsertIndex(lines []string) int {
