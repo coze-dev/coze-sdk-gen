@@ -25,6 +25,5 @@ go.work.sum
 .env
 /coze-sdk-gen
 exist-repo
-AGENTS.md
 scripts/gen-real-py.sh
 scripts/gen-real-go.sh
