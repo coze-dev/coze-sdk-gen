@@ -103,6 +103,7 @@ Constraint: in the current phase, alignment is based on APIs/fields already impl
 
 - Use small, complete commits (one complete objective per commit).
 - Commit messages must be in English and follow conventional style (`feat:`, `fix:`, `refactor:`, etc.).
+- Use `feat:` for non-trivial API surface changes: added APIs, added fields, modified APIs, or modified fields. Pure API ordering-only changes and comment-only changes are excluded.
 - Before each commit, all of the following are required:
   - formatting
   - lint

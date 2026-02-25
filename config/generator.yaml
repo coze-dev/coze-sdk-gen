@@ -166,38 +166,26 @@ api:
           module: .rooms
           sync_class: RoomsClient
           async_class: AsyncRoomsClient
-          nil_check: is_none
-          init_with_keywords: true
         - attribute: speech
           module: .speech
           sync_class: SpeechClient
           async_class: AsyncSpeechClient
-          nil_check: is_none
-          init_with_keywords: true
         - attribute: transcriptions
           module: .transcriptions
           sync_class: TranscriptionsClient
           async_class: AsyncTranscriptionsClient
-          nil_check: is_none
-          init_with_keywords: true
         - attribute: voices
           module: .voices
           sync_class: VoicesClient
           async_class: AsyncVoicesClient
-          nil_check: is_none
-          init_with_keywords: true
         - attribute: voiceprint_groups
           module: .voiceprint_groups
           sync_class: VoiceprintGroupsClient
           async_class: AsyncVoiceprintGroupsClient
-          nil_check: is_none
-          init_with_keywords: true
         - attribute: live
           module: .live
           sync_class: LiveClient
           async_class: AsyncLiveClient
-          nil_check: is_none
-          init_with_keywords: true
       path_prefixes:
         - /v1/audio
     - name: audio_rooms
@@ -391,8 +379,6 @@ api:
           module: .features
           sync_class: VoiceprintGroupsFeaturesClient
           async_class: AsyncVoiceprintGroupsFeaturesClient
-          nil_check: is_none
-          init_with_keywords: true
       model_schemas:
         - name: CreateVoicePrintGroupResp
           allow_missing_in_swagger: true
@@ -1088,8 +1074,6 @@ api:
           module: .message
           sync_class: ChatMessagesClient
           async_class: AsyncChatMessagesClient
-          nil_check: is_none
-          multiline_signature: true
       model_schemas:
         - name: MessageRole
           allow_missing_in_swagger: true
@@ -1796,7 +1780,6 @@ api:
           module: .bots
           sync_class: ConnectorsBotsClient
           async_class: AsyncConnectorsBotsClient
-          disable_type_hints: true
       path_prefixes:
         - /v1/connectors
     - name: connectors_bots
@@ -1831,7 +1814,6 @@ api:
           module: .message
           sync_class: MessagesClient
           async_class: AsyncMessagesClient
-          disable_type_hints: true
       model_schemas:
         - schema: ConversationData
           name: Conversation
@@ -2018,14 +2000,10 @@ api:
           module: .documents
           sync_class: DatasetsDocumentsClient
           async_class: AsyncDatasetsDocumentsClient
-          nil_check: is_none
-          init_with_keywords: true
         - attribute: images
           module: .images
           sync_class: DatasetsImagesClient
           async_class: AsyncDatasetsImagesClient
-          nil_check: is_none
-          init_with_keywords: true
       extra_imports:
         - module: cozepy.datasets.documents
           names:
@@ -2513,11 +2491,6 @@ api:
         - /v1/datasets
     - name: enterprises
       source_dir: cozepy/enterprises
-      child_clients:
-        - attribute: members
-          module: .members
-          sync_class: EnterprisesMembersClient
-          async_class: AsyncEnterprisesMembersClient
       path_prefixes:
         - /v1/enterprises
     - name: enterprises_members
@@ -2927,23 +2900,6 @@ api:
     - name: workflows
       source_dir: cozepy/workflows
       separate_commented_fields: true
-      child_clients:
-        - attribute: runs
-          module: .runs
-          sync_class: WorkflowsRunsClient
-          async_class: AsyncWorkflowsRunsClient
-        - attribute: chat
-          module: .chat
-          sync_class: WorkflowsChatClient
-          async_class: AsyncWorkflowsChatClient
-        - attribute: collaborators
-          module: .collaborators
-          sync_class: WorkflowsCollaboratorsClient
-          async_class: AsyncWorkflowsCollaboratorsClient
-        - attribute: versions
-          module: .versions
-          sync_class: WorkflowsVersionsClient
-          async_class: AsyncWorkflowsVersionsClient
       model_schemas:
         - schema: OpenAPIWorkflowMode
           name: WorkflowMode
@@ -3120,11 +3076,6 @@ api:
       separate_commented_enum_members: true
       client_class: WorkflowsRunsClient
       async_client_class: AsyncWorkflowsRunsClient
-      child_clients:
-        - attribute: run_histories
-          module: .run_histories
-          sync_class: WorkflowsRunsRunHistoriesClient
-          async_class: AsyncWorkflowsRunsRunHistoriesClient
       model_schemas:
         - name: WorkflowRunResult
           allow_missing_in_swagger: true
@@ -3267,8 +3218,6 @@ api:
           module: .execute_nodes
           sync_class: WorkflowsRunsRunHistoriesExecuteNodesClient
           async_class: AsyncWorkflowsRunsRunHistoriesExecuteNodesClient
-          nil_check: is_none
-          init_with_keywords: true
       model_schemas:
         - name: WorkflowExecuteStatus
           allow_missing_in_swagger: true
@@ -3438,11 +3387,6 @@ api:
         - /v1/workflows
     - name: workspaces
       source_dir: cozepy/workspaces
-      child_clients:
-        - attribute: members
-          module: .members
-          sync_class: WorkspacesMembersClient
-          async_class: AsyncWorkspacesMembersClient
       model_schemas:
         - schema: WorkspaceRoleType
           name: WorkspaceRoleType

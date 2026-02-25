@@ -96,15 +96,11 @@ type Package struct {
 }
 
 type ChildClient struct {
-	Attribute          string `yaml:"attribute"`
-	Module             string `yaml:"module"`
-	TypeImportModule   string `yaml:"type_import_module"`
-	SyncClass          string `yaml:"sync_class"`
-	AsyncClass         string `yaml:"async_class"`
-	NilCheck           string `yaml:"nil_check"`
-	InitWithKeywords   bool   `yaml:"init_with_keywords"`
-	DisableTypeHints   bool   `yaml:"disable_type_hints"`
-	MultilineSignature bool   `yaml:"multiline_signature"`
+	Attribute        string `yaml:"attribute"`
+	Module           string `yaml:"module"`
+	TypeImportModule string `yaml:"type_import_module"`
+	SyncClass        string `yaml:"sync_class"`
+	AsyncClass       string `yaml:"async_class"`
 }
 
 type ModelSchema struct {
@@ -433,13 +429,6 @@ func (c *Config) Validate() error {
 			}
 			if strings.TrimSpace(child.SyncClass) == "" || strings.TrimSpace(child.AsyncClass) == "" {
 				return fmt.Errorf("api.packages[%d].child_clients[%d].sync_class and async_class are required", i, j)
-			}
-			if strings.TrimSpace(child.NilCheck) != "" {
-				switch strings.TrimSpace(child.NilCheck) {
-				case "truthy", "is_none":
-				default:
-					return fmt.Errorf("api.packages[%d].child_clients[%d].nil_check must be one of: truthy, is_none", i, j)
-				}
 			}
 		}
 		for j, imp := range pkg.ExtraImports {

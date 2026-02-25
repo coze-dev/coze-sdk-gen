@@ -9,6 +9,29 @@ import (
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
 )
 
+var childAttributeLexicon = map[string]string{
+	"app":          "apps",
+	"audio":        "audio",
+	"bot":          "bots",
+	"dataset":      "datasets",
+	"document":     "documents",
+	"event":        "events",
+	"execute_node": "execute_nodes",
+	"file":         "files",
+	"folder":       "folders",
+	"image":        "images",
+	"member":       "members",
+	"message":      "messages",
+	"room":         "rooms",
+	"run_history":  "run_histories",
+	"template":     "templates",
+	"user":         "users",
+	"variable":     "variables",
+	"version":      "versions",
+	"voice":        "voices",
+	"workflow":     "workflows",
+}
+
 func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []OperationBinding {
 	allOps := doc.ListOperationDetails()
 	bindings := make([]OperationBinding, 0)
@@ -206,5 +229,125 @@ func buildPackageMeta(cfg *config.Config, packages map[string][]OperationBinding
 			DirPath:    name,
 		}
 	}
+	mergeAutoInferredChildClients(metas, packages)
 	return metas
+}
+
+func mergeAutoInferredChildClients(metas map[string]PackageMeta, packageBindings map[string][]OperationBinding) {
+	inferred := inferChildClientsByPackageHierarchy(metas)
+	for pkgName, children := range inferred {
+		meta, ok := metas[pkgName]
+		if !ok || meta.Package == nil || len(children) == 0 {
+			continue
+		}
+		blockedNames := collectReservedMemberNames(meta.Package, packageBindings[pkgName])
+		for _, child := range meta.Package.ChildClients {
+			attr := NormalizePythonIdentifier(strings.TrimSpace(child.Attribute))
+			if attr == "" {
+				continue
+			}
+			blockedNames[attr] = struct{}{}
+		}
+		for _, child := range children {
+			attr := NormalizePythonIdentifier(strings.TrimSpace(child.Attribute))
+			if attr == "" {
+				continue
+			}
+			if _, exists := blockedNames[attr]; exists {
+				continue
+			}
+			meta.Package.ChildClients = append(meta.Package.ChildClients, child)
+			blockedNames[attr] = struct{}{}
+		}
+		metas[pkgName] = meta
+	}
+}
+
+func collectReservedMemberNames(pkg *config.Package, bindings []OperationBinding) map[string]struct{} {
+	reserved := map[string]struct{}{}
+	if pkg == nil {
+		return reserved
+	}
+	for _, block := range pkg.SyncExtraMethods {
+		name := NormalizePythonIdentifier(strings.TrimSpace(DetectMethodBlockName(block)))
+		if name == "" {
+			continue
+		}
+		reserved[name] = struct{}{}
+	}
+	for _, block := range pkg.AsyncExtraMethods {
+		name := NormalizePythonIdentifier(strings.TrimSpace(DetectMethodBlockName(block)))
+		if name == "" {
+			continue
+		}
+		reserved[name] = struct{}{}
+	}
+	for _, binding := range bindings {
+		name := NormalizePythonIdentifier(strings.TrimSpace(binding.MethodName))
+		if name == "" {
+			continue
+		}
+		reserved[name] = struct{}{}
+	}
+	return reserved
+}
+
+func inferChildClientsByPackageHierarchy(metas map[string]PackageMeta) map[string][]config.ChildClient {
+	packageNameByDir := map[string]string{}
+	for pkgName, meta := range metas {
+		dir := strings.Trim(strings.TrimSpace(meta.DirPath), "/")
+		if dir == "" {
+			continue
+		}
+		packageNameByDir[dir] = pkgName
+	}
+
+	result := map[string][]config.ChildClient{}
+	for _, childMeta := range metas {
+		childDir := strings.Trim(strings.TrimSpace(childMeta.DirPath), "/")
+		if childDir == "" {
+			continue
+		}
+		slash := strings.LastIndex(childDir, "/")
+		if slash <= 0 || slash >= len(childDir)-1 {
+			continue
+		}
+		parentDir := childDir[:slash]
+		childLeaf := childDir[slash+1:]
+		attribute := preferredChildAttribute(childLeaf)
+		if attribute == "" {
+			continue
+		}
+		parentName, ok := packageNameByDir[parentDir]
+		if !ok {
+			continue
+		}
+		result[parentName] = append(result[parentName], config.ChildClient{
+			Attribute: attribute,
+			Module:    "." + childLeaf,
+			SyncClass: packageClientClassName(childMeta, false),
+			AsyncClass: packageClientClassName(
+				childMeta,
+				true,
+			),
+		})
+	}
+
+	for pkgName := range result {
+		sort.Slice(result[pkgName], func(i, j int) bool {
+			return result[pkgName][i].Attribute < result[pkgName][j].Attribute
+		})
+	}
+	return result
+}
+
+func preferredChildAttribute(leaf string) string {
+	key := NormalizePythonIdentifier(strings.TrimSpace(leaf))
+	if key == "" {
+		return ""
+	}
+	if preferred, ok := childAttributeLexicon[key]; ok {
+		return preferred
+	}
+	return key
 }

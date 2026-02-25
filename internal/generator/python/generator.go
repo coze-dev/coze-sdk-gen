@@ -579,15 +579,6 @@ func RenderPackageModule(
 		childClientsForSync = append([]config.ChildClient(nil), meta.Package.ChildClients...)
 		childClientsForAsync = append([]config.ChildClient(nil), meta.Package.ChildClients...)
 	}
-	hasTypedChildClients := false
-	if hasChildClients {
-		for _, child := range childClientsForType {
-			if !child.DisableTypeHints {
-				hasTypedChildClients = true
-				break
-			}
-		}
-	}
 	modelDefs := resolvePackageModelDefinitions(doc, meta)
 	schemaAliases := packageSchemaAliases(meta)
 	for _, model := range modelDefs {
@@ -727,7 +718,7 @@ func RenderPackageModule(
 			}
 		}
 		typingImports := make([]string, 0)
-		if hasTypedChildClients {
+		if hasChildClients {
 			typingImports = append(typingImports, "TYPE_CHECKING")
 		}
 		if needAny {
@@ -739,7 +730,7 @@ func RenderPackageModule(
 		if len(modelDefs) > 0 || hasTokenPagination || hasNumberPagination {
 			typingImports = append(typingImports, "List")
 		}
-		if hasTypedChildClients || len(modelDefs) > 0 || hasTokenPagination || hasNumberPagination || len(bindings) > 0 {
+		if hasChildClients || len(modelDefs) > 0 || hasTokenPagination || hasNumberPagination || len(bindings) > 0 {
 			typingImports = append(typingImports, "Optional")
 		}
 		if len(typingImports) > 0 {
@@ -897,12 +888,9 @@ func RenderPackageModule(
 		buf.WriteString(fmt.Sprintf("from cozepy.types import %s\n", strings.Join(imports, ", ")))
 	}
 
-	if hasTypedChildClients {
+	if hasChildClients {
 		buf.WriteString("\nif TYPE_CHECKING:\n")
 		for _, child := range childClientsForType {
-			if child.DisableTypeHints {
-				continue
-			}
 			typeModule := strings.TrimSpace(child.TypeImportModule)
 			if typeModule == "" {
 				typeModule = strings.TrimSpace(child.Module)
@@ -992,11 +980,7 @@ func RenderPackageModule(
 	if hasChildClients {
 		for _, child := range childClientsForInit {
 			attribute := NormalizePythonIdentifier(child.Attribute)
-			if child.DisableTypeHints {
-				buf.WriteString(fmt.Sprintf("        self._%s = None\n", attribute))
-			} else {
-				buf.WriteString(fmt.Sprintf("        self._%s: Optional[%s] = None\n", attribute, child.SyncClass))
-			}
+			buf.WriteString(fmt.Sprintf("        self._%s: Optional[%s] = None\n", attribute, child.SyncClass))
 		}
 		buf.WriteString("\n")
 	} else if meta.Package == nil || len(meta.Package.SyncInitCode) == 0 {
@@ -1064,11 +1048,7 @@ func RenderPackageModule(
 	if hasChildClients {
 		for _, child := range childClientsForInit {
 			attribute := NormalizePythonIdentifier(child.Attribute)
-			if child.DisableTypeHints {
-				buf.WriteString(fmt.Sprintf("        self._%s = None\n", attribute))
-			} else {
-				buf.WriteString(fmt.Sprintf("        self._%s: Optional[%s] = None\n", attribute, child.AsyncClass))
-			}
+			buf.WriteString(fmt.Sprintf("        self._%s: Optional[%s] = None\n", attribute, child.AsyncClass))
 		}
 		buf.WriteString("\n")
 	} else if meta.Package == nil || len(meta.Package.AsyncInitCode) == 0 {
@@ -3381,32 +3361,11 @@ func renderChildClientProperty(
 		typeName = child.AsyncClass
 	}
 	module := strings.TrimSpace(child.Module)
-	nilCheckIsNone := strings.TrimSpace(child.NilCheck) == "is_none"
-	useKeywords := child.InitWithKeywords
-	constructExpr := fmt.Sprintf("%s(self._base_url, self._requester)", typeName)
-	if useKeywords {
-		constructExpr = fmt.Sprintf("%s(base_url=self._base_url, requester=self._requester)", typeName)
-	}
+	constructExpr := fmt.Sprintf("%s(base_url=self._base_url, requester=self._requester)", typeName)
 
 	var buf bytes.Buffer
 	buf.WriteString("    @property\n")
-	if child.MultilineSignature {
-		if child.DisableTypeHints {
-			buf.WriteString(fmt.Sprintf("    def %s(\n", attribute))
-			buf.WriteString("        self,\n")
-			buf.WriteString("    ):\n")
-		} else {
-			buf.WriteString(fmt.Sprintf("    def %s(\n", attribute))
-			buf.WriteString("        self,\n")
-			buf.WriteString(fmt.Sprintf("    ) -> \"%s\":\n", typeName))
-		}
-	} else {
-		if child.DisableTypeHints {
-			buf.WriteString(fmt.Sprintf("    def %s(self):\n", attribute))
-		} else {
-			buf.WriteString(fmt.Sprintf("    def %s(self) -> \"%s\":\n", attribute, typeName))
-		}
-	}
+	buf.WriteString(fmt.Sprintf("    def %s(self) -> \"%s\":\n", attribute, typeName))
 	methodKey := strings.TrimSpace(classKey) + "." + attribute
 	if docstring, ok := commentOverrides.MethodDocstrings[methodKey]; ok {
 		docstring = strings.TrimSpace(docstring)
@@ -3415,11 +3374,7 @@ func renderChildClientProperty(
 			WriteMethodDocstring(&buf, 2, docstring, style)
 		}
 	}
-	if nilCheckIsNone {
-		buf.WriteString(fmt.Sprintf("        if self._%s is None:\n", attribute))
-	} else {
-		buf.WriteString(fmt.Sprintf("        if not self._%s:\n", attribute))
-	}
+	buf.WriteString(fmt.Sprintf("        if not self._%s:\n", attribute))
 
 	if module == "" {
 		buf.WriteString(fmt.Sprintf("            self._%s = %s\n", attribute, constructExpr))
