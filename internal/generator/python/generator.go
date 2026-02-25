@@ -902,7 +902,6 @@ func RenderPackageModule(
 	asyncClass := packageClientClassName(meta, true)
 	syncClassKey := "cozepy." + meta.ModulePath + "." + syncClass
 	asyncClassKey := "cozepy." + meta.ModulePath + "." + asyncClass
-	blankLineBeforeChildInits := meta.Package != nil && meta.Package.BlankLineBeforeChildInits
 	blankLineBeforeSyncInitCode := meta.Package != nil && meta.Package.BlankLineBeforeSyncInit
 	blankLineBeforeAsyncInitCode := meta.Package != nil && meta.Package.BlankLineBeforeAsyncInit
 
@@ -930,9 +929,6 @@ func RenderPackageModule(
 		}
 	}
 	if hasChildClients {
-		if blankLineBeforeChildInits {
-			buf.WriteString("\n")
-		}
 		for _, child := range childClientsForInit {
 			attribute := NormalizePythonIdentifier(child.Attribute)
 			if child.DisableTypeHints {
@@ -1006,9 +1002,6 @@ func RenderPackageModule(
 		}
 	}
 	if hasChildClients {
-		if blankLineBeforeChildInits {
-			buf.WriteString("\n")
-		}
 		for _, child := range childClientsForInit {
 			attribute := NormalizePythonIdentifier(child.Attribute)
 			if child.DisableTypeHints {

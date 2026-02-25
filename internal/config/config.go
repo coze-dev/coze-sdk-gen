@@ -75,7 +75,6 @@ type Package struct {
 	DisableAutoImports        bool          `yaml:"disable_auto_imports"`
 	SeparateCommentedEnum     bool          `yaml:"separate_commented_enum_members"`
 	SeparateCommentedFields   bool          `yaml:"separate_commented_fields"`
-	BlankLineBeforeChildInits bool          `yaml:"blank_line_before_child_inits"`
 	HTTPRequestFromModel      bool          `yaml:"http_request_from_model"`
 	ClientClass               string        `yaml:"client_class"`
 	AsyncClientClass          string        `yaml:"async_client_class"`

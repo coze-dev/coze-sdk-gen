@@ -28,7 +28,6 @@ api:
       source_dir: cozepy/api_apps
       client_class: APIAppsClient
       async_client_class: AsyncAPIAppsClient
-      blank_line_before_child_inits: true
       model_schemas:
         - schema: AppTypeOpen
           name: AppType
@@ -143,7 +142,6 @@ api:
         - /v1/apps
     - name: audio
       source_dir: cozepy/audio
-      blank_line_before_child_inits: true
       type_checking_child_order:
         - live
         - rooms
@@ -431,7 +429,6 @@ api:
       source_dir: cozepy/audio/voiceprint_groups
       allow_missing_in_swagger: true
       disable_auto_imports: true
-      blank_line_before_child_inits: true
       client_class: VoiceprintGroupsClient
       async_client_class: AsyncVoiceprintGroupsClient
       override_pagination_classes:
@@ -2822,7 +2819,6 @@ api:
         - /v1/datasets
     - name: enterprises
       source_dir: cozepy/enterprises
-      blank_line_before_child_inits: true
       child_clients:
         - attribute: members
           module: .members
@@ -3575,7 +3571,6 @@ api:
       disable_auto_imports: true
       separate_commented_fields: true
       separate_commented_enum_members: true
-      blank_line_before_child_inits: true
       client_class: WorkflowsRunsClient
       async_client_class: AsyncWorkflowsRunsClient
       raw_imports:
@@ -3745,7 +3740,6 @@ api:
     - name: workflows_runs_run_histories
       source_dir: cozepy/workflows/runs/run_histories
       disable_auto_imports: true
-      blank_line_before_child_inits: true
       client_class: WorkflowsRunsRunHistoriesClient
       async_client_class: AsyncWorkflowsRunsRunHistoriesClient
       raw_imports:
@@ -3974,7 +3968,6 @@ api:
     - name: workspaces
       source_dir: cozepy/workspaces
       disable_auto_imports: true
-      blank_line_before_child_inits: true
       raw_imports:
         - |
           from typing import TYPE_CHECKING, List, Optional
