@@ -9,6 +9,29 @@ import (
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
 )
 
+var childAttributeLexicon = map[string]string{
+	"app":          "apps",
+	"audio":        "audio",
+	"bot":          "bots",
+	"dataset":      "datasets",
+	"document":     "documents",
+	"event":        "events",
+	"execute_node": "execute_nodes",
+	"file":         "files",
+	"folder":       "folders",
+	"image":        "images",
+	"member":       "members",
+	"message":      "messages",
+	"room":         "rooms",
+	"run_history":  "run_histories",
+	"template":     "templates",
+	"user":         "users",
+	"variable":     "variables",
+	"version":      "versions",
+	"voice":        "voices",
+	"workflow":     "workflows",
+}
+
 func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []OperationBinding {
 	allOps := doc.ListOperationDetails()
 	bindings := make([]OperationBinding, 0)
@@ -291,12 +314,16 @@ func inferChildClientsByPackageHierarchy(metas map[string]PackageMeta) map[strin
 		}
 		parentDir := childDir[:slash]
 		childLeaf := childDir[slash+1:]
+		attribute := preferredChildAttribute(childLeaf)
+		if attribute == "" {
+			continue
+		}
 		parentName, ok := packageNameByDir[parentDir]
 		if !ok {
 			continue
 		}
 		result[parentName] = append(result[parentName], config.ChildClient{
-			Attribute: childLeaf,
+			Attribute: attribute,
 			Module:    "." + childLeaf,
 			SyncClass: packageClientClassName(childMeta, false),
 			AsyncClass: packageClientClassName(
@@ -312,4 +339,15 @@ func inferChildClientsByPackageHierarchy(metas map[string]PackageMeta) map[strin
 		})
 	}
 	return result
+}
+
+func preferredChildAttribute(leaf string) string {
+	key := NormalizePythonIdentifier(strings.TrimSpace(leaf))
+	if key == "" {
+		return ""
+	}
+	if preferred, ok := childAttributeLexicon[key]; ok {
+		return preferred
+	}
+	return key
 }

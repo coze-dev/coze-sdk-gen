@@ -135,3 +135,53 @@ def feedback(self):
 		}
 	}
 }
+
+func TestBuildPackageMetaInferredChildUsesPluralLexicon(t *testing.T) {
+	cfg := &config.Config{
+		API: config.APIConfig{
+			Packages: []config.Package{
+				{
+					Name:      "chat",
+					SourceDir: "cozepy/chat",
+					ChildClients: []config.ChildClient{
+						{
+							Attribute:  "messages",
+							Module:     ".message",
+							SyncClass:  "ChatMessagesClient",
+							AsyncClass: "AsyncChatMessagesClient",
+						},
+					},
+				},
+				{
+					Name:             "chat_message",
+					SourceDir:        "cozepy/chat/message",
+					ClientClass:      "ChatMessagesClient",
+					AsyncClientClass: "AsyncChatMessagesClient",
+				},
+			},
+		},
+	}
+
+	metas := buildPackageMeta(cfg, nil)
+	parent, ok := metas["chat"]
+	if !ok || parent.Package == nil {
+		t.Fatalf("missing chat package meta: %+v", parent)
+	}
+
+	messageAttrCount := 0
+	messagesAttrCount := 0
+	for _, child := range parent.Package.ChildClients {
+		switch child.Attribute {
+		case "message":
+			messageAttrCount++
+		case "messages":
+			messagesAttrCount++
+		}
+	}
+	if messageAttrCount != 0 {
+		t.Fatalf("did not expect singular message child attribute, got %+v", parent.Package.ChildClients)
+	}
+	if messagesAttrCount != 1 {
+		t.Fatalf("expected one messages child attribute, got %+v", parent.Package.ChildClients)
+	}
+}
