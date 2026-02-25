@@ -165,17 +165,17 @@ func writePythonSDK(
 			return err
 		}
 	}
-	if err := writePythonSpecialAssets(rootDir, writer); err != nil {
+	if err := writePythonRuntimeAssets(rootDir, writer); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func writePythonSpecialAssets(rootDir string, writer *fileWriter) error {
+func writePythonRuntimeAssets(rootDir string, writer *fileWriter) error {
 	// These modules are not represented by the OpenAPI schema (OAuth/websocket runtime wiring).
 	// Keep them in an explicit, minimal whitelist and render through the generator pipeline.
-	specialAssets := []struct {
+	runtimeAssets := []struct {
 		relPath string
 		asset   string
 	}{
@@ -188,7 +188,7 @@ func writePythonSpecialAssets(rootDir string, writer *fileWriter) error {
 		{relPath: "websockets/chat/__init__.py", asset: "cozepy/websockets/chat/__init__.py.tpl"},
 		{relPath: "websockets/ws.py", asset: "cozepy/websockets/ws.py.tpl"},
 	}
-	for _, item := range specialAssets {
+	for _, item := range runtimeAssets {
 		content, err := RenderPythonRawAsset(item.asset)
 		if err != nil {
 			return err
