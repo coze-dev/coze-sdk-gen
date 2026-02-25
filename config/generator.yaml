@@ -5639,7 +5639,7 @@ api:
       response_type: User
       response_cast: User
       allow_missing_in_swagger: true
-  ignore_operations:
+  ignore_apis:
     - path: /v1/apps/{app_id}/collaborators
       method: post
     - path: /v1/apps/{app_id}/collaborators/{user_id}
