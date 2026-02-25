@@ -1,5 +1,3 @@
-language: python
-output_sdk: exist-repo/coze-py-generated
 comment_overrides_file: comment_overrides.yaml
 api:
   generate_only_mapped: true

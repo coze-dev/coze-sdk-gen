@@ -14,25 +14,19 @@ func TestLoadConfigAndValidate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
-
-	if cfg.Language != "python" {
-		t.Fatalf("unexpected language: %q", cfg.Language)
-	}
-	if cfg.OutputSDK == "" {
-		t.Fatalf("output should not be empty")
-	}
 	if len(cfg.API.OperationMappings) != 3 {
 		t.Fatalf("unexpected operation mappings count: %d", len(cfg.API.OperationMappings))
 	}
 }
 
-func TestParseInvalidConfig(t *testing.T) {
-	_, err := Parse([]byte("language: ruby\noutput_sdk: b"))
-	if err == nil {
-		t.Fatal("expected Parse() to fail with unsupported language")
+func TestValidateRuntimeLanguage(t *testing.T) {
+	cfg, err := Parse([]byte("api: {}\n"))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
 	}
-	if !strings.Contains(err.Error(), "supported languages: python, go") {
-		t.Fatalf("unexpected error: %v", err)
+	cfg.Language = "ruby"
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected Validate() to fail with unsupported language")
 	}
 }
 
@@ -98,7 +92,7 @@ func TestValidateAgainstNilSwagger(t *testing.T) {
 }
 
 func TestDefaultsApplied(t *testing.T) {
-	cfg, err := Parse([]byte("language: python\noutput_sdk: out\n"))
+	cfg, err := Parse([]byte("api: {}\n"))
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -120,13 +114,16 @@ func TestDefaultsApplied(t *testing.T) {
 	}
 }
 
-func TestParseGoLanguage(t *testing.T) {
-	cfg, err := Parse([]byte("language: go\noutput_sdk: out\n"))
+func TestParseIgnoresRuntimeOptionsInYAML(t *testing.T) {
+	cfg, err := Parse([]byte("language: go\noutput_sdk: out\napi: {}\n"))
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
-	if cfg.Language != "go" {
-		t.Fatalf("unexpected language: %q", cfg.Language)
+	if cfg.Language != "" {
+		t.Fatalf("expected language to be ignored from yaml, got %q", cfg.Language)
+	}
+	if cfg.OutputSDK != "" {
+		t.Fatalf("expected output_sdk to be ignored from yaml, got %q", cfg.OutputSDK)
 	}
 }
 

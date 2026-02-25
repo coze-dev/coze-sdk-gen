@@ -20,10 +20,16 @@ The legacy SDK shape and the OpenAPI document are not fully 1:1.
 
 ## Quick Start
 
-1. Run generator:
+1. Run Python generator:
 
 ```bash
-./scripts/generate.sh
+./scripts/genpy.sh
+```
+
+Run Go generator:
+
+```bash
+./scripts/gengo.sh
 ```
 
 2. Compare generated SDK with baseline SDK:

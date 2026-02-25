@@ -27,8 +27,8 @@ func run(args []string, stdout io.Writer) error {
 	showVersion := fs.Bool("version", false, "print version")
 	configPath := fs.String("config", "config/generator.yaml", "path to generator config file")
 	swaggerPath := fs.String("swagger", "coze-openapi.yaml", "path to OpenAPI swagger yaml file")
-	languageOverride := fs.String("language", "", "override language in config (python/go)")
-	outputOverride := fs.String("output-sdk", "", "override output sdk directory in config")
+	languageArg := fs.String("language", "", "target language (python/go), required")
+	outputArg := fs.String("output-sdk", "", "output sdk directory, required")
 
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -38,17 +38,24 @@ func run(args []string, stdout io.Writer) error {
 		_, err := fmt.Fprintln(stdout, version.String())
 		return err
 	}
+	lang := strings.ToLower(strings.TrimSpace(*languageArg))
+	if lang == "" {
+		return fmt.Errorf("--language is required")
+	}
+	if lang != "python" && lang != "go" {
+		return fmt.Errorf("unsupported language %q, supported languages: python, go", lang)
+	}
+	output := strings.TrimSpace(*outputArg)
+	if output == "" {
+		return fmt.Errorf("--output-sdk is required")
+	}
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
 		return err
 	}
-	if *languageOverride != "" {
-		cfg.Language = strings.ToLower(strings.TrimSpace(*languageOverride))
-	}
-	if *outputOverride != "" {
-		cfg.OutputSDK = *outputOverride
-	}
+	cfg.Language = lang
+	cfg.OutputSDK = output
 	if err := cfg.Validate(); err != nil {
 		return err
 	}

@@ -1,5 +1,3 @@
-language: python
-output_sdk: exist-repo/coze-py-generated
 api:
   packages:
     - name: chat

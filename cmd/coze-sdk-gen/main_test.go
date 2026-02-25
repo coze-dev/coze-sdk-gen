@@ -31,8 +31,6 @@ paths:
       operationId: OpenApiChat
 `)
 	writeFile(t, cfgPath, `
-language: python
-output_sdk: `+outDir+`
 api:
   packages:
     - name: chat
@@ -48,7 +46,12 @@ api:
 `)
 
 	var out bytes.Buffer
-	err := run([]string{"--config", cfgPath, "--swagger", swaggerPath}, &out)
+	err := run([]string{
+		"--config", cfgPath,
+		"--swagger", swaggerPath,
+		"--language", "python",
+		"--output-sdk", outDir,
+	}, &out)
 	if err != nil {
 		t.Fatalf("run() error = %v", err)
 	}
@@ -62,6 +65,14 @@ func TestRunInvalidArgs(t *testing.T) {
 	var out bytes.Buffer
 	if err := run([]string{"--invalid-flag"}, &out); err == nil {
 		t.Fatal("expected run() to return flag error")
+	}
+}
+
+func TestRunMissingRequiredRuntimeArgs(t *testing.T) {
+	var out bytes.Buffer
+	err := run([]string{"--config", "config/generator.yaml"}, &out)
+	if err == nil || !strings.Contains(err.Error(), "--language is required") {
+		t.Fatalf("expected missing language error, got: %v", err)
 	}
 }
 

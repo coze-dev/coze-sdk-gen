@@ -12,8 +12,8 @@ import (
 )
 
 type Config struct {
-	Language             string           `yaml:"language"`
-	OutputSDK            string           `yaml:"output_sdk"`
+	Language             string           `yaml:"-"`
+	OutputSDK            string           `yaml:"-"`
 	CommentOverridesFile string           `yaml:"comment_overrides_file"`
 	API                  APIConfig        `yaml:"api"`
 	CommentOverrides     CommentOverrides `yaml:"-"`
@@ -336,15 +336,11 @@ func (c *CommentOverrides) ensureMaps() {
 }
 
 func (c *Config) Validate() error {
-	if c.Language == "" {
-		return fmt.Errorf("language is required")
-	}
-	lang := strings.ToLower(c.Language)
-	if lang != "python" && lang != "go" {
-		return fmt.Errorf("unsupported language %q, supported languages: python, go", c.Language)
-	}
-	if c.OutputSDK == "" {
-		return fmt.Errorf("output_sdk is required")
+	if strings.TrimSpace(c.Language) != "" {
+		lang := strings.ToLower(strings.TrimSpace(c.Language))
+		if lang != "python" && lang != "go" {
+			return fmt.Errorf("unsupported language %q, supported languages: python, go", c.Language)
+		}
 	}
 
 	seenPackageName := map[string]struct{}{}
