@@ -91,6 +91,30 @@ Constraint: in the current phase, alignment is based on APIs/fields already impl
 5. Compare generated outputs with baselines and iteratively reduce diff.
 6. Repeat until both Python and Go reach zero diff.
 
+# Downstream coze-py PR Workflow
+
+When asked to sync generated Python SDK output into `coze-py` and complete the PR lifecycle, follow this exact flow:
+
+1. Run generation with CI checks against the target SDK path:
+   - `./scripts/genpy.sh --output-sdk <coze-py-path> --ci-check`
+2. Inspect actual `coze-py` git diff and identify changed files/functions.
+3. Inspect related `coze-sdk-gen` commits (`git log` + `git show`) and map generator/config changes to SDK output changes.
+4. Draft PR title/body from facts above:
+   - include SDK behavior change summary
+   - include generator commit(s) and what config/generation logic changed
+   - include validation command and result summary
+   - never include literal `\n` text in PR body; use real line breaks only
+5. Create branch, commit, and push in `coze-py`.
+6. Create or update PR.
+   - Prefer `gh pr create` / `gh pr edit` when token scopes allow.
+   - If `gh` GraphQL fails due org scope restrictions (for example missing `read:org`), use GitHub REST API as fallback:
+     - `PATCH /repos/{owner}/{repo}/pulls/{number}` for title/body updates
+     - `POST /repos/{owner}/{repo}/issues/{number}/labels` for required labels
+7. Ensure required PR labels are present (for `coze-py`: one of `feature`, `enhancement`, `fix`, `bugfix`, `bug`, `chore`, `documentation`) so label checks pass.
+8. Poll PR checks until completion; resolve failures before merge.
+9. Merge PR only after required checks pass and branch protection conditions are satisfied.
+10. Report final PR URL, status, and merge result.
+
 # Quality Gates
 
 - Language: generator implementation must be Go.
@@ -137,3 +161,4 @@ Constraint: in the current phase, alignment is based on APIs/fields already impl
 - [ ] `lint` / `test` / `build` all pass
 - [ ] Coverage >= 80%
 - [ ] Commit message follows conventions and scope is clear
+- [ ] If downstream `coze-py` PR is required: PR title/body/labels/checks/merge all completed

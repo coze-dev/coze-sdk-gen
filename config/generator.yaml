@@ -93,6 +93,11 @@ api:
         - /v1/api_apps
     - name: apps
       source_dir: cozepy/apps
+      child_clients:
+        - attribute: collaborators
+          module: .collaborators
+          sync_class: AppsCollaboratorsClient
+          async_class: AsyncAppsCollaboratorsClient
       extra_imports:
         - module: cozepy.bots
           names:
@@ -118,8 +123,6 @@ api:
             - is_published
             - owner_user_id
             - updated_at
-      empty_models:
-        - RemoveAppCollaboratorResp
       top_level_code:
         - |
           class _PrivateListAppsData(CozeModel, NumberPagedResponse[SimpleApp]):
@@ -138,6 +141,18 @@ api:
         - _PrivateListAppsData
       path_prefixes:
         - /v1/apps
+    - name: apps_collaborators
+      source_dir: cozepy/apps/collaborators
+      client_class: AppsCollaboratorsClient
+      async_client_class: AsyncAppsCollaboratorsClient
+      model_schemas:
+        - schema: properties_collaborators_items
+          name: AppCollaborator
+      empty_models:
+        - AddAppCollaboratorResp
+        - RemoveAppCollaboratorResp
+      path_prefixes:
+        - /v1/apps/{app_id}/collaborators
     - name: audio
       source_dir: cozepy/audio
       path_prefixes:
@@ -3745,6 +3760,31 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page_index
       pagination_page_size_field: page_size
+    - path: /v1/apps/{app_id}/collaborators
+      method: post
+      order: 51
+      sdk_methods:
+        - apps_collaborators.create
+      body_builder: remove_none_values
+      body_fields:
+        - collaborators
+      body_required_fields:
+        - collaborators
+      body_field_values:
+        collaborators: |-
+          [i.model_dump() for i in collaborators] if collaborators else []
+      arg_types:
+        collaborators: List[AppCollaborator]
+      response_type: AddAppCollaboratorResp
+      response_cast: AddAppCollaboratorResp
+    - path: /v1/apps/{app_id}/collaborators/{user_id}
+      method: delete
+      order: 52
+      sdk_methods:
+        - apps_collaborators.delete
+      disable_request_body: true
+      response_type: RemoveAppCollaboratorResp
+      response_cast: RemoveAppCollaboratorResp
     - path: /v1/conversation/create
       method: post
       order: 55
@@ -5480,17 +5520,7 @@ api:
       response_type: User
       response_cast: User
       allow_missing_in_swagger: true
-    - path: /v1/apps/{app_id}/collaborators/{user_id}
-      method: delete
-      order: 51
-      sdk_methods:
-        - apps.delete_collaborator
-      disable_request_body: true
-      response_type: RemoveAppCollaboratorResp
-      response_cast: RemoveAppCollaboratorResp
   ignore_apis:
-    - path: /v1/apps/{app_id}/collaborators
-      method: post
     - path: /v1/connectors/{connector_id}/install
       method: post
     - path: /v1/connectors/{connector_id}/user_configs
