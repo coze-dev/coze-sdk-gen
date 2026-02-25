@@ -52,35 +52,50 @@ func PaginationOrderedFields(fields []RenderQueryField, pageSizeField string, pa
 	return out
 }
 
-func OrderSignatureQueryFields(fields []RenderQueryField, orderedRawNames []string) []RenderQueryField {
-	if len(fields) == 0 || len(orderedRawNames) == 0 {
+func OrderSignatureQueryFields(fields []RenderQueryField, mapping *config.OperationMapping, async bool) []RenderQueryField {
+	if len(fields) <= 1 {
 		return fields
 	}
-	fieldByName := make(map[string]RenderQueryField, len(fields))
+	tailFields := make([]RenderQueryField, 0, len(fields))
+	requiredFields := make([]RenderQueryField, 0, len(fields))
+	optionalWithoutDefault := make([]RenderQueryField, 0, len(fields))
+	optionalWithDefault := make([]RenderQueryField, 0, len(fields))
 	for _, field := range fields {
-		fieldByName[field.RawName] = field
-	}
-	result := make([]RenderQueryField, 0, len(fields))
-	seen := make(map[string]struct{}, len(fields))
-	for _, rawName := range orderedRawNames {
-		name := strings.TrimSpace(rawName)
-		if name == "" {
+		if isSignatureTailField(field) {
+			tailFields = append(tailFields, field)
 			continue
 		}
-		field, ok := fieldByName[name]
-		if !ok {
+		defaultValue := strings.TrimSpace(field.DefaultValue)
+		if override, ok := OperationArgDefault(mapping, field.RawName, field.ArgName, async); ok {
+			defaultValue = override
+		}
+		if field.Required {
+			requiredFields = append(requiredFields, field)
 			continue
 		}
-		result = append(result, field)
-		seen[name] = struct{}{}
-	}
-	for _, field := range fields {
-		if _, ok := seen[field.RawName]; ok {
+		if defaultValue == "" {
+			optionalWithoutDefault = append(optionalWithoutDefault, field)
 			continue
 		}
-		result = append(result, field)
+		optionalWithDefault = append(optionalWithDefault, field)
 	}
-	return result
+	ordered := make([]RenderQueryField, 0, len(fields))
+	ordered = append(ordered, requiredFields...)
+	ordered = append(ordered, optionalWithoutDefault...)
+	ordered = append(ordered, optionalWithDefault...)
+	ordered = append(ordered, tailFields...)
+	return ordered
+}
+
+func isSignatureTailField(field RenderQueryField) bool {
+	names := []string{field.RawName, field.ArgName}
+	for _, name := range names {
+		switch strings.ToLower(strings.TrimSpace(name)) {
+		case "page_size", "page_number", "page_num":
+			return true
+		}
+	}
+	return false
 }
 
 func SignatureArgName(argDecl string) string {

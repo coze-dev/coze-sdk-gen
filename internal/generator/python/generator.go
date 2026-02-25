@@ -3902,10 +3902,7 @@ func renderOperationMethodWithContext(
 		bodyFixedValues = map[string]string{}
 	}
 	queryFields := buildRenderQueryFields(doc, details, binding.Mapping, paramAliases, argTypes)
-	signatureQueryFields := queryFields
-	if binding.Mapping != nil && len(binding.Mapping.SignatureQueryFields) > 0 {
-		signatureQueryFields = OrderSignatureQueryFields(queryFields, binding.Mapping.SignatureQueryFields)
-	}
+	signatureQueryFields := OrderSignatureQueryFields(queryFields, binding.Mapping, async)
 	bodyRequiredSet := map[string]bool{}
 	if details.RequestBodySchema != nil {
 		for _, requiredName := range details.RequestBodySchema.Required {
