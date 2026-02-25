@@ -66,8 +66,17 @@ if [ "$RUN_CI_CHECK" = "1" ]; then
   fi
 
   pushd "$OUTPUT_SDK" >/dev/null
-  echo "[coze-go-ci] go test ./..."
-  go test ./...
+  echo "[coze-go-ci] go test ./... (quiet mode)"
+  test_log="$(mktemp -t coze-go-test.XXXXXX.log)"
+  if ! go test ./... >"$test_log" 2>&1; then
+    echo "[coze-go-ci] go test failed, full output:"
+    cat "$test_log"
+    rm -f "$test_log"
+    popd >/dev/null
+    exit 1
+  fi
+  rm -f "$test_log"
+  echo "[coze-go-ci] go test passed"
   if [ -d .git ]; then
     if [ -n "$(git status --porcelain)" ]; then
       echo "[coze-go-ci] generated output has diff:"
