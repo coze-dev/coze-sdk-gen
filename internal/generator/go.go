@@ -26,6 +26,10 @@ func GenerateGo(cfg *config.Config, doc *openapi.Document) (Result, error) {
 	if doc == nil {
 		return Result{}, fmt.Errorf("swagger document is required")
 	}
+	report := cfg.ValidateAgainstSwagger(doc)
+	if report.HasErrors() {
+		return Result{}, fmt.Errorf("config and swagger mismatch: %s", report.Error())
+	}
 
 	bindings := buildGoOperationBindings(cfg, doc)
 	if len(bindings) == 0 {
@@ -202,7 +206,10 @@ func writeGoAPIModules(cfg *config.Config, doc *openapi.Document, writer *fileWr
 }
 
 func renderGoAppsModule(cfg *config.Config, doc *openapi.Document) (string, error) {
-	listPath := findGoOperationPath(cfg, doc, "apps.list", "get", "/v1/apps")
+	listPath, err := findGoOperationPath(cfg, doc, "apps.list", "get", "/v1/apps")
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf(`package coze
 
 import (
@@ -289,7 +296,10 @@ func newApps(core *core) *apps {
 }
 
 func renderGoAudioLiveModule(cfg *config.Config, doc *openapi.Document) (string, error) {
-	retrievePath := findGoOperationPath(cfg, doc, "audio_live.retrieve", "get", "/v1/audio/live/{live_id}")
+	retrievePath, err := findGoOperationPath(cfg, doc, "audio_live.retrieve", "get", "/v1/audio/live/{live_id}")
+	if err != nil {
+		return "", err
+	}
 	retrievePath = convertCurlyPathToColon(retrievePath)
 	return fmt.Sprintf(`package coze
 
@@ -362,7 +372,10 @@ func newAudioLive(core *core) *audioLive {
 }
 
 func renderGoAudioSpeechModule(cfg *config.Config, doc *openapi.Document) (string, error) {
-	createPath := findGoOperationPath(cfg, doc, "audio_speech.create", "post", "/v1/audio/speech")
+	createPath, err := findGoOperationPath(cfg, doc, "audio_speech.create", "post", "/v1/audio/speech")
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf(`package coze
 
 import (
@@ -436,7 +449,10 @@ func newAudioSpeech(core *core) *audioSpeech {
 }
 
 func renderGoAudioTranscriptionsModule(cfg *config.Config, doc *openapi.Document) (string, error) {
-	createPath := findGoOperationPath(cfg, doc, "audio_transcriptions.create", "post", "/v1/audio/transcriptions")
+	createPath, err := findGoOperationPath(cfg, doc, "audio_transcriptions.create", "post", "/v1/audio/transcriptions")
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf(`package coze
 
 import (
@@ -487,7 +503,10 @@ func newAudioTranscriptions(core *core) *audioTranscriptions {
 }
 
 func renderGoChatsMessagesModule(cfg *config.Config, doc *openapi.Document) (string, error) {
-	listPath := findGoOperationPath(cfg, doc, "chat_messages.list", "get", "/v3/chat/message/list")
+	listPath, err := findGoOperationPath(cfg, doc, "chat_messages.list", "get", "/v3/chat/message/list")
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf(`package coze
 
 import (
@@ -538,8 +557,14 @@ func newChatMessages(core *core) *chatMessages {
 }
 
 func renderGoFilesModule(cfg *config.Config, doc *openapi.Document) (string, error) {
-	uploadPath := findGoOperationPath(cfg, doc, "files.upload", "post", "/v1/files/upload")
-	retrievePath := findGoOperationPath(cfg, doc, "files.retrieve", "get", "/v1/files/retrieve")
+	uploadPath, err := findGoOperationPath(cfg, doc, "files.upload", "post", "/v1/files/upload")
+	if err != nil {
+		return "", err
+	}
+	retrievePath, err := findGoOperationPath(cfg, doc, "files.retrieve", "get", "/v1/files/retrieve")
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf(`package coze
 
 import (
@@ -649,7 +674,10 @@ func newFiles(core *core) *files {
 }
 
 func renderGoTemplatesModule(cfg *config.Config, doc *openapi.Document) (string, error) {
-	duplicatePath := findGoOperationPath(cfg, doc, "templates.duplicate", "post", "/v1/templates/{template_id}/duplicate")
+	duplicatePath, err := findGoOperationPath(cfg, doc, "templates.duplicate", "post", "/v1/templates/{template_id}/duplicate")
+	if err != nil {
+		return "", err
+	}
 	duplicatePath = convertCurlyPathToColon(duplicatePath)
 	return fmt.Sprintf(`package coze
 
@@ -713,7 +741,10 @@ func newTemplates(core *core) *templates {
 }
 
 func renderGoUsersModule(cfg *config.Config, doc *openapi.Document) (string, error) {
-	mePath := findGoOperationPath(cfg, doc, "users.me", "get", "/v1/users/me")
+	mePath, err := findGoOperationPath(cfg, doc, "users.me", "get", "/v1/users/me")
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf(`package coze
 
 import (
@@ -762,7 +793,10 @@ func newUsers(core *core) *users {
 }
 
 func renderGoWorkflowsChatModule(cfg *config.Config, doc *openapi.Document) (string, error) {
-	streamPath := findGoOperationPath(cfg, doc, "workflows_chat.stream", "post", "/v1/workflows/chat")
+	streamPath, err := findGoOperationPath(cfg, doc, "workflows_chat.stream", "post", "/v1/workflows/chat")
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf(`package coze
 
 import (
@@ -804,7 +838,7 @@ func newWorkflowsChat(core *core) *workflowsChat {
 `, streamPath), nil
 }
 
-func findGoOperationPath(cfg *config.Config, doc *openapi.Document, sdkMethod string, method string, fallback string) string {
+func findGoOperationPath(cfg *config.Config, doc *openapi.Document, sdkMethod string, method string, fallback string) (string, error) {
 	if cfg != nil {
 		for _, mapping := range cfg.API.OperationMappings {
 			if !strings.EqualFold(strings.TrimSpace(mapping.Method), strings.TrimSpace(method)) {
@@ -812,15 +846,20 @@ func findGoOperationPath(cfg *config.Config, doc *openapi.Document, sdkMethod st
 			}
 			for _, m := range mapping.SDKMethods {
 				if strings.TrimSpace(m) == strings.TrimSpace(sdkMethod) {
-					return strings.TrimSpace(mapping.Path)
+					return strings.TrimSpace(mapping.Path), nil
 				}
 			}
 		}
 	}
 	if doc != nil && doc.HasOperation(method, fallback) {
-		return fallback
+		return fallback, nil
 	}
-	return fallback
+	return "", fmt.Errorf(
+		"resolve go operation path failed for sdk_method=%q method=%q fallback=%q",
+		strings.TrimSpace(sdkMethod),
+		strings.ToUpper(strings.TrimSpace(method)),
+		strings.TrimSpace(fallback),
+	)
 }
 
 func convertCurlyPathToColon(path string) string {

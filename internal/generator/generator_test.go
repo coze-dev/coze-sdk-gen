@@ -74,10 +74,11 @@ func TestGeneratePythonNilDoc(t *testing.T) {
 }
 
 func TestGenerateGoFromSwagger(t *testing.T) {
-	cfg := testConfig(t.TempDir())
+	cfg, doc := mustLoadRealConfigAndSwagger(t)
 	cfg.Language = "go"
+	cfg.OutputSDK = t.TempDir()
 
-	result, err := GenerateGo(cfg, mustParseSwagger(t))
+	result, err := GenerateGo(cfg, doc)
 	if err != nil {
 		t.Fatalf("GenerateGo() error = %v", err)
 	}
@@ -94,10 +95,35 @@ func TestGenerateGoFromSwagger(t *testing.T) {
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "go.mod"), "module github.com/coze-dev/coze-go")
 }
 
-func TestRunGoLanguage(t *testing.T) {
-	cfg := testConfig(t.TempDir())
+func TestGenerateGoValidationFailure(t *testing.T) {
+	cfg, doc := mustLoadRealConfigAndSwagger(t)
 	cfg.Language = "go"
-	if _, err := Run(cfg, mustParseSwagger(t)); err != nil {
+	cfg.OutputSDK = t.TempDir()
+	cfg.API.OperationMappings = append(cfg.API.OperationMappings, config.OperationMapping{
+		Path:       "/v1/not-exist",
+		Method:     "post",
+		SDKMethods: []string{"chat.not_exist"},
+	})
+
+	if _, err := GenerateGo(cfg, doc); err == nil {
+		t.Fatal("expected swagger validation failure")
+	}
+}
+
+func TestFindGoOperationPathError(t *testing.T) {
+	cfg := testConfig(t.TempDir())
+	doc := mustParseSwagger(t)
+
+	if _, err := findGoOperationPath(cfg, doc, "chat.not_exist", "post", "/v1/not-exist"); err == nil {
+		t.Fatal("expected path resolution error for missing mapping and missing swagger operation")
+	}
+}
+
+func TestRunGoLanguage(t *testing.T) {
+	cfg, doc := mustLoadRealConfigAndSwagger(t)
+	cfg.Language = "go"
+	cfg.OutputSDK = t.TempDir()
+	if _, err := Run(cfg, doc); err != nil {
 		t.Fatalf("expected Run() to support go language, got error: %v", err)
 	}
 }
@@ -1268,6 +1294,23 @@ func testConfig(output string) *config.Config {
 			},
 		},
 	}
+}
+
+func mustLoadRealConfigAndSwagger(t *testing.T) (*config.Config, *openapi.Document) {
+	t.Helper()
+	root := filepath.Clean(filepath.Join("..", ".."))
+	cfgPath := filepath.Join(root, "config", "generator.yaml")
+	swaggerPath := filepath.Join(root, "exist-repo", "coze-openapi-swagger.yaml")
+
+	cfg, err := config.Load(cfgPath)
+	if err != nil {
+		t.Fatalf("config.Load(%q) error = %v", cfgPath, err)
+	}
+	doc, err := openapi.Load(swaggerPath)
+	if err != nil {
+		t.Fatalf("openapi.Load(%q) error = %v", swaggerPath, err)
+	}
+	return cfg, doc
 }
 
 func assertFileContains(t *testing.T, pathName string, expected string) {

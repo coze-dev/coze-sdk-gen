@@ -5409,6 +5409,12 @@ api:
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
       pagination_headers_before_params: true
+    - path: /v1/stores/plugins
+      method: get
+      order: 751
+      sdk_methods:
+        - go.stores_plugins.list
+      allow_missing_in_swagger: true
     - path: /v1/api_apps/{api_app_id}/events
       method: post
       order: 76
@@ -6409,6 +6415,12 @@ api:
       async_response_type: AsyncIterator[ChatEvent]
       response_cast: None
       use_kwargs_headers: true
+    - path: /v1/workspaces
+      method: get
+      order: 969
+      sdk_methods:
+        - go.workspaces.list
+      allow_missing_in_swagger: true
     - path: /v1/workspaces/{workspace_id}/members
       method: delete
       order: 97

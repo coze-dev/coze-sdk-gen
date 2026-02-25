@@ -368,7 +368,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/stores/plugins",
-				SDKMethod:    "stores_plugins.list",
+				SDKMethod:    "go.stores_plugins.list",
 				Method:       "get",
 				FallbackPath: "/v1/stores/plugins",
 			},
@@ -448,7 +448,7 @@ var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
 		PathReplacements: []goPathReplacementSpec{
 			{
 				Placeholder:  "/v1/workspaces",
-				SDKMethod:    "workspaces.list",
+				SDKMethod:    "go.workspaces.list",
 				Method:       "get",
 				FallbackPath: "/v1/workspaces",
 			},
@@ -516,7 +516,10 @@ func renderGoAPITemplateModule(cfg *config.Config, doc *openapi.Document, spec g
 	}
 	rendered := string(content)
 	for _, replacement := range spec.PathReplacements {
-		resolvedPath := findGoOperationPath(cfg, doc, replacement.SDKMethod, replacement.Method, replacement.FallbackPath)
+		resolvedPath, err := findGoOperationPath(cfg, doc, replacement.SDKMethod, replacement.Method, replacement.FallbackPath)
+		if err != nil {
+			return "", err
+		}
 		if replacement.ConvertCurlyPath {
 			resolvedPath = convertCurlyPathToColon(resolvedPath)
 		}
