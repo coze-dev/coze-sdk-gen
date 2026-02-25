@@ -392,24 +392,6 @@ api:
 `,
 		},
 		{
-			name: "conflicting pagination order flags",
-			content: `
-language: python
-output_sdk: out
-api:
-  operation_mappings:
-    - path: /v1/apps
-      method: get
-      sdk_methods:
-        - apps.list
-      pagination: number
-      pagination_data_class: _PrivateListAppsData
-      pagination_item_type: App
-      pagination_headers_before_params: true
-      pagination_cast_before_headers: true
-`,
-		},
-		{
 			name: "empty pre body code",
 			content: `
 language: python

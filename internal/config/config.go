@@ -201,7 +201,6 @@ type OperationMapping struct {
 	PaginationPageNumField         string            `yaml:"pagination_page_num_field"`
 	PaginationPageSizeField        string            `yaml:"pagination_page_size_field"`
 	PaginationPageTokenField       string            `yaml:"pagination_page_token_field"`
-	PaginationHeadersBeforeParams  bool              `yaml:"pagination_headers_before_params"`
 	PaginationCastBeforeHeaders    bool              `yaml:"pagination_cast_before_headers"`
 	DisableHeadersArg              bool              `yaml:"disable_headers_arg"`
 	AsyncIncludeKwargs             bool              `yaml:"async_include_kwargs"`
@@ -692,9 +691,6 @@ func (c *Config) Validate() error {
 			}
 			if strings.TrimSpace(mapping.PaginationDataClass) == "" || strings.TrimSpace(mapping.PaginationItemType) == "" {
 				return fmt.Errorf("api.operation_mappings[%d].pagination_data_class and pagination_item_type are required for pagination", i)
-			}
-			if mapping.PaginationHeadersBeforeParams && mapping.PaginationCastBeforeHeaders {
-				return fmt.Errorf("api.operation_mappings[%d] cannot set both pagination_headers_before_params and pagination_cast_before_headers", i)
 			}
 		}
 	}

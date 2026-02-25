@@ -2180,8 +2180,8 @@ func RenderOperationMethodWithComments(
 	streamKeyword := binding.Mapping != nil && binding.Mapping.StreamKeyword
 	streamWrap := binding.Mapping != nil && binding.Mapping.StreamWrap
 	asyncIncludeKwargs := async && binding.Mapping != nil && binding.Mapping.AsyncIncludeKwargs
-	paginationHeadersBeforeParams := binding.Mapping != nil && binding.Mapping.PaginationHeadersBeforeParams
 	paginationCastBeforeHeaders := binding.Mapping != nil && binding.Mapping.PaginationCastBeforeHeaders
+	headersBeforePaginationParams := !paginationCastBeforeHeaders
 	delegateTo := ""
 	delegateAsyncYield := false
 	streamWrapHandler := ""
@@ -2700,7 +2700,7 @@ func RenderOperationMethodWithComments(
 			buf.WriteString("            return await self._requester.amake_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
-			if paginationHeadersBeforeParams && includePaginationHeaders {
+			if headersBeforePaginationParams && includePaginationHeaders {
 				buf.WriteString("                headers=headers,\n")
 			}
 			if paginationParamsVariable {
@@ -2737,10 +2737,10 @@ func RenderOperationMethodWithComments(
 				}
 			}
 			if includePaginationHeaders {
-				if paginationCastBeforeHeaders && !paginationHeadersBeforeParams {
+				if paginationCastBeforeHeaders && !headersBeforePaginationParams {
 					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 					buf.WriteString("                headers=headers,\n")
-				} else if paginationHeadersBeforeParams {
+				} else if headersBeforePaginationParams {
 					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 				} else {
 					buf.WriteString("                headers=headers,\n")
@@ -2796,7 +2796,7 @@ func RenderOperationMethodWithComments(
 			buf.WriteString("            return self._requester.make_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
-			if paginationHeadersBeforeParams && includePaginationHeaders {
+			if headersBeforePaginationParams && includePaginationHeaders {
 				buf.WriteString("                headers=headers,\n")
 			}
 			if paginationParamsVariable {
@@ -2833,10 +2833,10 @@ func RenderOperationMethodWithComments(
 				}
 			}
 			if includePaginationHeaders {
-				if paginationCastBeforeHeaders && !paginationHeadersBeforeParams {
+				if paginationCastBeforeHeaders && !headersBeforePaginationParams {
 					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 					buf.WriteString("                headers=headers,\n")
-				} else if paginationHeadersBeforeParams {
+				} else if headersBeforePaginationParams {
 					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 				} else {
 					buf.WriteString("                headers=headers,\n")
@@ -2885,7 +2885,7 @@ func RenderOperationMethodWithComments(
 			buf.WriteString("            return await self._requester.amake_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
-			if paginationHeadersBeforeParams && includePaginationHeaders {
+			if headersBeforePaginationParams && includePaginationHeaders {
 				buf.WriteString("                headers=headers,\n")
 			}
 			if queryBuilder == "raw" {
@@ -2918,10 +2918,10 @@ func RenderOperationMethodWithComments(
 				buf.WriteString("                ),\n")
 			}
 			if includePaginationHeaders {
-				if paginationCastBeforeHeaders && !paginationHeadersBeforeParams {
+				if paginationCastBeforeHeaders && !headersBeforePaginationParams {
 					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 					buf.WriteString("                headers=headers,\n")
-				} else if paginationHeadersBeforeParams {
+				} else if headersBeforePaginationParams {
 					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 				} else {
 					buf.WriteString("                headers=headers,\n")
@@ -2946,7 +2946,7 @@ func RenderOperationMethodWithComments(
 			buf.WriteString("            return self._requester.make_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
-			if paginationHeadersBeforeParams && includePaginationHeaders {
+			if headersBeforePaginationParams && includePaginationHeaders {
 				buf.WriteString("                headers=headers,\n")
 			}
 			if queryBuilder == "raw" {
@@ -2979,10 +2979,10 @@ func RenderOperationMethodWithComments(
 				buf.WriteString("                ),\n")
 			}
 			if includePaginationHeaders {
-				if paginationCastBeforeHeaders && !paginationHeadersBeforeParams {
+				if paginationCastBeforeHeaders && !headersBeforePaginationParams {
 					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 					buf.WriteString("                headers=headers,\n")
-				} else if paginationHeadersBeforeParams {
+				} else if headersBeforePaginationParams {
 					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 				} else {
 					buf.WriteString("                headers=headers,\n")

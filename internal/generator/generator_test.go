@@ -963,10 +963,9 @@ func TestRenderOperationMethodPaginationOrderOptions(t *testing.T) {
 		MethodName:  "list",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			Pagination:                    "number",
-			PaginationDataClass:           "_PrivateListAppsData",
-			PaginationItemType:            "App",
-			PaginationHeadersBeforeParams: true,
+			Pagination:          "number",
+			PaginationDataClass: "_PrivateListAppsData",
+			PaginationItemType:  "App",
 		},
 	}, false)
 	idxHeaders := strings.Index(codeHeadersFirst, "headers=headers")

@@ -4677,7 +4677,6 @@ api:
       pagination_total_field: total_count
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
-      pagination_headers_before_params: true
     - path: /v1/datasets/{dataset_id}
       method: put
       order: 63
@@ -4891,7 +4890,6 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page
       pagination_page_size_field: size
-      pagination_headers_before_params: true
       response_type: NumberPaged[Document]
       async_response_type: AsyncNumberPaged[Document]
     - path: /open_api/knowledge/document/create
@@ -5133,7 +5131,6 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page
       pagination_page_size_field: size
-      pagination_headers_before_params: true
       response_type: NumberPaged[Document]
       async_response_type: AsyncNumberPaged[Document]
     - path: /v1/bot/create
@@ -5362,7 +5359,6 @@ api:
       pagination_total_field: total_count
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
-      pagination_headers_before_params: true
     - path: /v1/stores/plugins
       method: get
       order: 751
@@ -5993,7 +5989,6 @@ api:
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
       pagination_http_method: get
-      pagination_headers_before_params: true
     - path: /v1/datasets/{dataset_id}/images/{document_id}
       method: put
       order: 91
@@ -6399,7 +6394,6 @@ api:
       pagination: number
       pagination_data_class: WorkspaceMember
       pagination_item_type: WorkspaceMember
-      pagination_headers_before_params: true
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
     - path: /v1/templates/{template_id}/duplicate
