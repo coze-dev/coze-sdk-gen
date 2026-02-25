@@ -5538,8 +5538,6 @@ api:
       response_cast: User
       allow_missing_in_swagger: true
   ignore_apis:
-    - path: /v1/apps/{app_id}/collaborators
-      method: post
     - path: /v1/connectors/{connector_id}/user_configs
       method: post
     - path: /v1/enterprises/{enterprise_id}/organizations
