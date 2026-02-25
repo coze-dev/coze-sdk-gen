@@ -211,18 +211,8 @@ api:
         - /v1/audio
     - name: audio_rooms
       source_dir: cozepy/audio/rooms
-      disable_auto_imports: true
       client_class: RoomsClient
       async_client_class: AsyncRoomsClient
-      raw_imports:
-        - |
-          from typing import Optional
-
-          from pydantic import Field
-
-          from cozepy.model import CozeModel, DynamicStrEnum
-          from cozepy.request import Requester
-          from cozepy.util import remove_none_values, remove_url_trailing_slash
       model_schemas:
         - name: RoomAudioConfig
           allow_missing_in_swagger: true
@@ -311,16 +301,8 @@ api:
         - /v1/audio/rooms
     - name: audio_speech
       source_dir: cozepy/audio/speech
-      disable_auto_imports: true
       client_class: SpeechClient
       async_client_class: AsyncSpeechClient
-      raw_imports:
-        - |
-          from typing import Optional
-
-          from cozepy.model import DynamicStrEnum, FileHTTPResponse
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
       model_schemas:
         - name: AudioFormat
           allow_missing_in_swagger: true
@@ -354,17 +336,8 @@ api:
         - /v1/audio/speech
     - name: audio_transcriptions
       source_dir: cozepy/audio/transcriptions
-      disable_auto_imports: true
       client_class: TranscriptionsClient
       async_client_class: AsyncTranscriptionsClient
-      raw_imports:
-        - |
-          from typing import Optional
-
-          from cozepy.files import FileTypes, _try_fix_file
-          from cozepy.model import CozeModel
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
       model_schemas:
         - name: CreateTranscriptionsResp
           allow_missing_in_swagger: true
@@ -377,17 +350,8 @@ api:
     - name: audio_live
       source_dir: cozepy/audio/live
       allow_missing_in_swagger: true
-      disable_auto_imports: true
       client_class: LiveClient
       async_client_class: AsyncLiveClient
-      raw_imports:
-        - |
-          from enum import Enum
-          from typing import List
-
-          from cozepy.model import CozeModel
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
       model_schemas:
         - name: LiveType
           allow_missing_in_swagger: true
@@ -422,20 +386,11 @@ api:
     - name: audio_voiceprint_groups
       source_dir: cozepy/audio/voiceprint_groups
       allow_missing_in_swagger: true
-      disable_auto_imports: true
       client_class: VoiceprintGroupsClient
       async_client_class: AsyncVoiceprintGroupsClient
+      http_request_from_model: true
       override_pagination_classes:
         - _PrivateListVoicePrintGroupData
-      raw_imports:
-        - |
-          from typing import TYPE_CHECKING, List, Optional
-
-          from cozepy.audio.voiceprint_groups.features import UserInfo
-          from cozepy.files import FileTypes, _try_fix_file
-          from cozepy.model import AsyncNumberPaged, CozeModel, HTTPRequest, NumberPaged, NumberPagedResponse
-          from cozepy.request import Requester
-          from cozepy.util import remove_none_values, remove_url_trailing_slash
       child_clients:
         - attribute: features
           module: .features
@@ -519,19 +474,11 @@ api:
     - name: audio_voiceprint_groups_features
       source_dir: cozepy/audio/voiceprint_groups/features
       allow_missing_in_swagger: true
-      disable_auto_imports: true
       client_class: VoiceprintGroupsFeaturesClient
       async_client_class: AsyncVoiceprintGroupsFeaturesClient
+      http_request_from_model: true
       override_pagination_classes:
         - _PrivateListVoicePrintGroupFeatureData
-      raw_imports:
-        - |
-          from typing import List, Optional
-
-          from cozepy.files import FileTypes, _try_fix_file
-          from cozepy.model import AsyncNumberPaged, CozeModel, HTTPRequest, NumberPaged, NumberPagedResponse
-          from cozepy.request import Requester
-          from cozepy.util import remove_none_values, remove_url_trailing_slash
       model_schemas:
         - name: UserInfo
           allow_missing_in_swagger: true
@@ -604,18 +551,10 @@ api:
         - /v1/audio/voiceprint_groups
     - name: audio_voices
       source_dir: cozepy/audio/voices
-      disable_auto_imports: true
+      separate_commented_fields: true
       client_class: VoicesClient
       async_client_class: AsyncVoicesClient
-      raw_imports:
-        - |
-          from typing import List, Optional
-
-          from cozepy import AudioFormat
-          from cozepy.files import FileTypes, _try_fix_file
-          from cozepy.model import AsyncNumberPaged, CozeModel, DynamicStrEnum, HTTPRequest, NumberPaged, NumberPagedResponse
-          from cozepy.request import Requester
-          from cozepy.util import remove_none_values, remove_url_trailing_slash
+      http_request_from_model: true
       model_schemas:
         - name: VoiceState
           allow_missing_in_swagger: true
@@ -1145,30 +1084,7 @@ api:
         - /v1/bots
     - name: chat
       source_dir: cozepy/chat
-      disable_auto_imports: true
       separate_commented_enum_members: true
-      raw_imports:
-        - |
-          import base64
-          import json
-          import time
-          from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, List, Optional, Union, overload
-
-          import httpx
-          from typing_extensions import Literal
-
-          from cozepy.exception import CozeAPIError
-          from cozepy.model import (
-              AsyncIteratorHTTPResponse,
-              AsyncStream,
-              CozeModel,
-              DynamicStrEnum,
-              IteratorHTTPResponse,
-              ListResponse,
-              Stream,
-          )
-          from cozepy.request import Requester
-          from cozepy.util import remove_none_values, remove_url_trailing_slash
       child_clients:
         - attribute: messages
           module: .message
@@ -1384,6 +1300,7 @@ api:
               value: reply_message
         - schema: InterruptFunction
           name: ChatToolCallFunction
+          separate_commented_fields: true
           field_order:
             - name
             - arguments
@@ -1392,6 +1309,7 @@ api:
             - arguments
         - schema: InterruptPlugin
           name: ChatToolCall
+          separate_commented_fields: true
           field_order:
             - id
             - type
@@ -1410,6 +1328,7 @@ api:
             tool_calls: List[ChatToolCall]
         - schema: RequiredAction
           name: ChatRequiredAction
+          separate_commented_fields: true
           field_order:
             - type
             - submit_tool_outputs
@@ -1420,6 +1339,7 @@ api:
             submit_tool_outputs: Optional[ChatSubmitToolOutputs]
         - schema: Usage2
           name: ChatUsage
+          separate_commented_fields: true
           field_order:
             - token_count
             - output_count
@@ -1867,15 +1787,8 @@ api:
         - /v3/chat
     - name: chat_message
       source_dir: cozepy/chat/message
-      disable_auto_imports: true
       client_class: ChatMessagesClient
       async_client_class: AsyncChatMessagesClient
-      raw_imports:
-        - |
-          from cozepy.chat import Message
-          from cozepy.model import ListResponse
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
       path_prefixes:
         - /v3/chat/message
     - name: connectors
@@ -1891,17 +1804,8 @@ api:
     - name: connectors_bots
       source_dir: cozepy/connectors/bots
       allow_missing_in_swagger: true
-      disable_auto_imports: true
       client_class: ConnectorsBotsClient
       async_client_class: AsyncConnectorsBotsClient
-      raw_imports:
-        - |
-          from enum import Enum
-          from typing import Optional
-
-          from cozepy.model import CozeModel
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
       model_schemas:
         - name: AuditStatus
           allow_missing_in_swagger: true
@@ -1970,22 +1874,10 @@ api:
         - /v1/conversations
     - name: conversations_message
       source_dir: cozepy/conversations/message
-      disable_auto_imports: true
       blank_line_before_sync_init_code: true
       blank_line_before_async_init_code: true
       client_class: MessagesClient
       async_client_class: AsyncMessagesClient
-      raw_imports:
-        - |
-          from typing import TYPE_CHECKING, Dict, List, Optional
-
-          from cozepy.chat import Message, MessageContentType, MessageRole
-          from cozepy.model import AsyncLastIDPaged, CozeModel, HTTPRequest, LastIDPaged, LastIDPagedResponse
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
-
-          if TYPE_CHECKING:
-              from .feedback import AsyncMessagesFeedbackClient, ConversationsMessagesFeedbackClient
       sync_init_code:
         - |
 
@@ -2271,19 +2163,12 @@ api:
         - /v1/datasets
     - name: datasets_documents
       source_dir: cozepy/datasets/documents
-      disable_auto_imports: true
+      separate_commented_fields: true
       client_class: DatasetsDocumentsClient
       async_client_class: AsyncDatasetsDocumentsClient
+      http_request_from_model: true
       override_pagination_classes:
         - _PrivateListDocumentsData
-      raw_imports:
-        - |
-          from enum import IntEnum
-          from typing import List, Optional
-
-          from cozepy.model import AsyncNumberPaged, CozeModel, HTTPRequest, ListResponse, NumberPaged, NumberPagedResponse
-          from cozepy.request import Requester
-          from cozepy.util import base64_encode_string, remove_url_trailing_slash
       model_schemas:
         - name: DocumentChunkStrategy
           allow_missing_in_swagger: true
@@ -2642,16 +2527,7 @@ api:
         - /v1/enterprises
     - name: files
       source_dir: cozepy/files
-      disable_auto_imports: true
-      raw_imports:
-        - |
-          import os
-          from pathlib import Path
-          from typing import IO, Optional, Tuple, Union
-
-          from cozepy.model import CozeModel
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
+      separate_commented_fields: true
       pre_model_code:
         - |
           FileContent = Union[IO[bytes], bytes, str, Path]
@@ -2745,14 +2621,6 @@ api:
         - /v1/folders
     - name: knowledge
       source_dir: cozepy/knowledge
-      disable_auto_imports: true
-      raw_imports:
-        - |
-          import warnings
-          from typing import TYPE_CHECKING, Optional
-
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
       pre_model_code:
         - |
           if TYPE_CHECKING:
@@ -2813,25 +2681,11 @@ api:
         - /open_api/knowledge/document
     - name: knowledge_documents
       source_dir: cozepy/knowledge/documents
-      disable_auto_imports: true
       client_class: DocumentsClient
       async_client_class: AsyncDocumentsClient
+      http_request_from_model: true
       override_pagination_classes:
         - _PrivateListDocumentsData
-      raw_imports:
-        - |
-          import warnings
-          from typing import List, Optional
-
-          from cozepy.datasets.documents import (
-              Document,
-              DocumentBase,
-              DocumentChunkStrategy,
-              DocumentUpdateRule,
-          )
-          from cozepy.model import AsyncNumberPaged, CozeModel, HTTPRequest, NumberPaged, NumberPagedResponse
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
       sync_init_pre_code:
         - |
           warnings.warn(
@@ -2865,14 +2719,6 @@ api:
         - /open_api/knowledge/document
     - name: templates
       source_dir: cozepy/templates
-      disable_auto_imports: true
-      raw_imports:
-        - |
-          from typing import Optional
-
-          from cozepy.model import CozeModel, DynamicStrEnum
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
       model_schemas:
         - name: TemplateEntityType
           allow_missing_in_swagger: true
@@ -2894,14 +2740,6 @@ api:
       allow_missing_in_swagger: true
     - name: users
       source_dir: cozepy/users
-      disable_auto_imports: true
-      raw_imports:
-        - |
-          from typing import Optional
-
-          from cozepy.model import CozeModel
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
       model_schemas:
         - name: User
           allow_missing_in_swagger: true
@@ -2923,14 +2761,6 @@ api:
       allow_missing_in_swagger: true
     - name: variables
       source_dir: cozepy/variables
-      disable_auto_imports: true
-      raw_imports:
-        - |
-          from typing import List, Optional
-
-          from cozepy.model import CozeModel, ListResponse
-          from cozepy.request import Requester
-          from cozepy.util import remove_none_values, remove_url_trailing_slash
       model_schemas:
         - name: VariableValue
           allow_missing_in_swagger: true
@@ -3073,17 +2903,7 @@ api:
         - /v1/variables
     - name: workflows
       source_dir: cozepy/workflows
-      disable_auto_imports: true
-      raw_imports:
-        - |
-          from typing import TYPE_CHECKING, List, Optional
-
-          from cozepy.bots import PublishStatus
-          from cozepy.model import AsyncNumberPaged, CozeModel, DynamicStrEnum, HTTPRequest, NumberPaged, NumberPagedResponse
-          from cozepy.request import Requester
-          from cozepy.util import remove_none_values, remove_url_trailing_slash
-
-          from .versions import WorkflowUserInfo
+      separate_commented_fields: true
       child_clients:
         - attribute: runs
           module: .runs
@@ -3261,40 +3081,22 @@ api:
         - /v1/workflows
     - name: workflows_chat
       source_dir: cozepy/workflows/chat
-      disable_auto_imports: true
       client_class: WorkflowsChatClient
       async_client_class: AsyncWorkflowsChatClient
-      raw_imports:
-        - |
-          from typing import Any, AsyncIterator, Dict, List, Optional
-
-          from cozepy.chat import (
-              ChatEvent,
-              Message,
-              _chat_stream_handler,
-          )
-          from cozepy.model import AsyncIteratorHTTPResponse, AsyncStream, IteratorHTTPResponse, Stream
-          from cozepy.request import Requester
-          from cozepy.util import remove_none_values, remove_url_trailing_slash
+      sync_method_order:
+        - stream
+        - _create
+      async_method_order:
+        - stream
+        - _create
       path_prefixes:
         - /v1/workflows/chat
     - name: workflows_runs
       source_dir: cozepy/workflows/runs
-      disable_auto_imports: true
+      separate_commented_fields: true
       separate_commented_enum_members: true
       client_class: WorkflowsRunsClient
       async_client_class: AsyncWorkflowsRunsClient
-      raw_imports:
-        - |
-          from enum import Enum
-          from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, Optional
-
-          import httpx
-
-          from cozepy.chat import ChatUsage
-          from cozepy.model import AsyncIteratorHTTPResponse, AsyncStream, CozeModel, IteratorHTTPResponse, Stream
-          from cozepy.request import Requester
-          from cozepy.util import remove_none_values, remove_url_trailing_slash
       child_clients:
         - attribute: run_histories
           module: .run_histories
@@ -3435,20 +3237,8 @@ api:
         - /v1/workflow
     - name: workflows_runs_run_histories
       source_dir: cozepy/workflows/runs/run_histories
-      disable_auto_imports: true
       client_class: WorkflowsRunsRunHistoriesClient
       async_client_class: AsyncWorkflowsRunsRunHistoriesClient
-      raw_imports:
-        - |
-          from enum import Enum, IntEnum
-          from typing import TYPE_CHECKING, Dict, Optional
-
-          from pydantic import field_validator
-
-          from cozepy.chat import ChatUsage
-          from cozepy.model import CozeModel, ListResponse
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
       child_clients:
         - attribute: execute_nodes
           module: .execute_nodes
@@ -3501,6 +3291,7 @@ api:
             sub_execute_id: "None"
         - schema: WorkflowExecuteHistory
           name: WorkflowRunHistory
+          separate_commented_fields: true
           exclude_unordered_fields: true
           field_order:
             - execute_id
@@ -3556,16 +3347,8 @@ api:
         - /v1/workflows
     - name: workflows_runs_run_histories_execute_nodes
       source_dir: cozepy/workflows/runs/run_histories/execute_nodes
-      disable_auto_imports: true
       client_class: WorkflowsRunsRunHistoriesExecuteNodesClient
       async_client_class: AsyncWorkflowsRunsRunHistoriesExecuteNodesClient
-      raw_imports:
-        - |
-          from typing import Optional
-
-          from cozepy.model import CozeModel
-          from cozepy.request import Requester
-          from cozepy.util import remove_url_trailing_slash
       model_schemas:
         - schema: WorkflowNodeExecuteHistory
           name: WorkflowNodeExecuteHistory
@@ -3582,17 +3365,10 @@ api:
         - /v1/workflows
     - name: workflows_versions
       source_dir: cozepy/workflows/versions
-      disable_auto_imports: true
+      separate_commented_fields: true
       client_class: WorkflowsVersionsClient
       async_client_class: AsyncWorkflowsVersionsClient
-      raw_imports:
-        - |
-          from typing import List, Optional
-
-          from cozepy.bots import PublishStatus
-          from cozepy.model import AsyncTokenPaged, CozeModel, HTTPRequest, TokenPaged, TokenPagedResponse
-          from cozepy.request import Requester
-          from cozepy.util import dump_exclude_none, remove_none_values, remove_url_trailing_slash
+      http_request_from_model: true
       model_schemas:
         - schema: OpenAPIUserInfo
           name: WorkflowUserInfo
@@ -3643,14 +3419,6 @@ api:
         - /v1/workflows
     - name: workspaces
       source_dir: cozepy/workspaces
-      disable_auto_imports: true
-      raw_imports:
-        - |
-          from typing import TYPE_CHECKING, List, Optional
-
-          from cozepy.model import AsyncNumberPaged, CozeModel, DynamicStrEnum, HTTPRequest, NumberPaged, NumberPagedResponse
-          from cozepy.request import Requester
-          from cozepy.util import remove_none_values, remove_url_trailing_slash
       child_clients:
         - attribute: members
           module: .members
@@ -3787,18 +3555,9 @@ api:
       source_dir: cozepy/workspaces/members
       client_class: WorkspacesMembersClient
       async_client_class: AsyncWorkspacesMembersClient
-      disable_auto_imports: true
       http_request_from_model: true
       override_pagination_classes:
         - WorkspaceMember
-      raw_imports:
-        - |
-          from typing import List, Optional
-
-          from cozepy.model import AsyncNumberPaged, CozeModel, HTTPRequest, NumberPaged
-          from cozepy.request import Requester
-          from cozepy.util import remove_none_values, remove_url_trailing_slash
-          from cozepy.workspaces import WorkspaceRoleType
       model_schemas:
         - name: WorkspaceMember
           allow_missing_in_swagger: true
