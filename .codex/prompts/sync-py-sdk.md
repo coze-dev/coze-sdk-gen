@@ -24,7 +24,7 @@ When asked to sync generated Python SDK output into `coze-py` and complete the P
 
 1. Resolve `<coze-py-path>` first:
    - Use a random temporary path for each run (do not reuse existing local repo paths), for example:
-     - `<coze-py-path>=/tmp/coze-py-$RANDOM-$RANDOM`
+     - `<coze-py-path>=$(mktemp -d /tmp/coze-py-XXXXXX)`
 2. Prepare `coze-py` repository:
    - Always clone a fresh repository into `<coze-py-path>` for this run:
      - `git clone https://github.com/coze-dev/coze-py <coze-py-path>`
