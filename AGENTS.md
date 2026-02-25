@@ -113,7 +113,14 @@ When asked to sync generated Python SDK output to `coze-py` and complete the PR 
 5. After feedback is addressed, you must push and keep updating the same PR; approval status is only based on downstream `coze-py` PR (`LGTM approve` by human or GitHub PR status `approved`).
 6. Continuously poll PR checks; except explicitly ignored items, all required checks must pass before entering next stages.
 7. PR descriptions must not contain literal `\\n`; use real line breaks.
-8. PR create/update tool strategy:
+8. PR traceability must be bidirectional:
+   - Downstream `coze-py` PR must include the related upstream `coze-sdk-gen` PR link.
+   - Upstream `coze-sdk-gen` PR must be backfilled with the downstream `coze-py` PR link after downstream PR creation.
+9. For Python SDK workflow tasks, both repositories must have PRs:
+   - `coze-sdk-gen` PR is required.
+   - `coze-py` PR is required.
+   - Do not mark the task complete until both PRs exist and are traceable.
+10. PR create/update tool strategy:
    - Prefer `gh pr create` / `gh pr edit`.
    - If `gh` fails due permission issues (for example missing `read:org`), use REST API fallback:
      - `PATCH /repos/{owner}/{repo}/pulls/{number}`
@@ -139,11 +146,12 @@ When asked to sync generated Python SDK output to `coze-py` and complete the PR 
 
 ### Stage 2: Prepare `coze-sdk-gen` Changes
 
-1. If this task changes `coze-sdk-gen`, complete commits in this repository first:
+1. Complete `coze-sdk-gen` changes in this repository first:
    - Commit behavior must satisfy Rule 2.
    - Push the working branch.
    - Create or update the `coze-sdk-gen` PR, and keep that PR updated in later changes.
    - `coze-sdk-gen` PR handling must satisfy Rule 1.
+   - In this workflow, `coze-sdk-gen` PR is mandatory (paired with downstream `coze-py` PR).
 2. Do not merge `coze-sdk-gen` branch into `main` at this stage; only do so after downstream `coze-py` PR gets human `LGTM approve` or status `approved`.
 
 ### Stage 3: Generate and Update Downstream PR
@@ -158,7 +166,10 @@ When asked to sync generated Python SDK output to `coze-py` and complete the PR 
    - PR title/description must include: behavior changes, generator changes, and validation results.
 3. Commit and push in `coze-py`, then create or update PR:
    - Execution method must follow Rule 1.
-4. Ensure PR has a required label (one of `feature`, `enhancement`, `fix`, `bugfix`, `bug`, `chore`, `documentation`).
+4. Ensure PR has a required label selected from labels that already exist in the target repository.
+   - First list available labels (for example via `gh label list`) and choose one matching intent.
+   - Preferred semantic set: `feature`, `enhancement`, `fix`, `bugfix`, `bug`, `chore`, `documentation`.
+   - If `fix`/`bugfix` does not exist, choose the closest existing equivalent (for example `bug`); do not assume a label exists.
 
 ### Stage 4: Post-LGTM Release Sync and Merge
 
@@ -174,5 +185,7 @@ When asked to sync generated Python SDK output to `coze-py` and complete the PR 
    - Merge downstream `coze-py` PR after all required checks pass.
    - If new commits trigger new checks or comments, return to Stage 3.
 5. Final report:
+   - `coze-sdk-gen` PR URL / status / merge result
    - Downstream `coze-py` PR URL / status / merge result
-   - `coze-sdk-gen` commit / push result (if this task changed it)
+   - `coze-sdk-gen` commit / push result
+   - Task completion response must explicitly include both PR links.
