@@ -168,6 +168,9 @@ func collectPublicTopLevelClassesFromSource(content string) []string {
 		if className == "" || strings.HasPrefix(className, "_") {
 			continue
 		}
+		if strings.HasSuffix(className, "Client") {
+			continue
+		}
 		if _, exists := seen[className]; exists {
 			continue
 		}

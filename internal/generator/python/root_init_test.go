@@ -18,6 +18,9 @@ class _Private:
 class PublicWithParent(PublicBase):
     pass
 
+class AsyncBotsClient:
+    pass
+
 if True:
     class Nested:
         pass
@@ -44,7 +47,7 @@ func TestRenderPythonRootInit(t *testing.T) {
 
 	writeTestPythonFile(t, filepath.Join(root, "__init__.py"), "class ShouldBeIgnored:\n    pass\n")
 	writeTestPythonFile(t, filepath.Join(root, "coze.py"), "class Coze:\n    pass\n\nclass AsyncCoze:\n    pass\n")
-	writeTestPythonFile(t, filepath.Join(root, "apps", "__init__.py"), "class AppsClient:\n    pass\n")
+	writeTestPythonFile(t, filepath.Join(root, "apps", "__init__.py"), "class AppsClient:\n    pass\n\nclass SimpleApp:\n    pass\n")
 	writeTestPythonFile(t, filepath.Join(root, "apps", "collaborators", "__init__.py"), "class AppCollaborator:\n    pass\n")
 	writeTestPythonFile(t, filepath.Join(root, "auth", "__init__.py"), "class Auth:\n    pass\n\ndef load_oauth_app_from_config():\n    pass\n")
 	writeTestPythonFile(t, filepath.Join(root, "config.py"), "COZE_COM_BASE_URL = \"x\"\nCOZE_CN_BASE_URL = \"y\"\nDEFAULT_TIMEOUT = 10\nDEFAULT_CONNECTION_LIMITS = 5\n")
@@ -57,7 +60,7 @@ func TestRenderPythonRootInit(t *testing.T) {
 	}
 
 	containsAll := []string{
-		"from .apps import AppsClient",
+		"from .apps import SimpleApp",
 		"from .apps.collaborators import AppCollaborator",
 		"from .coze import (",
 		"    AsyncCoze,",
@@ -72,7 +75,7 @@ func TestRenderPythonRootInit(t *testing.T) {
 		"    DEFAULT_TIMEOUT,",
 		"from .log import setup_logging",
 		"from .version import VERSION",
-		"\"AppsClient\"",
+		"\"SimpleApp\"",
 		"\"AppCollaborator\"",
 		"\"AsyncCoze\"",
 		"\"Coze\"",
@@ -87,6 +90,9 @@ func TestRenderPythonRootInit(t *testing.T) {
 	}
 	if strings.Contains(content, "ShouldBeIgnored") {
 		t.Fatalf("root package __init__.py classes should not be scanned: %s", content)
+	}
+	if strings.Contains(content, "AppsClient") {
+		t.Fatalf("client classes should not be exported: %s", content)
 	}
 }
 
