@@ -1426,6 +1426,88 @@ func TestRenderPackageModuleAutoNumberPagedResponseMethods(t *testing.T) {
 	}
 }
 
+func TestRenderPackageModuleAutoNumberPagedResponseMethodsWithCustomFieldNames(t *testing.T) {
+	doc := mustParseSwagger(t)
+	meta := pygen.PackageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Name:                  "_PrivateListDatasetsData",
+					AllowMissingInSwagger: true,
+					BaseClasses:           []string{"CozeModel", "NumberPagedResponse[Dataset]"},
+					ExtraFields: []config.ModelField{
+						{Name: "total_count", Type: "int", Required: true},
+						{Name: "dataset_list", Type: "List[Dataset]", Required: true},
+					},
+				},
+			},
+		},
+	}
+
+	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	if !strings.Contains(code, "def get_total(self) -> Optional[int]:\n        return self.total_count") {
+		t.Fatalf("expected auto generated get_total from total_count:\n%s", code)
+	}
+	if !strings.Contains(code, "def get_has_more(self) -> Optional[bool]:\n        return None") {
+		t.Fatalf("expected auto generated get_has_more=None when has_more is absent:\n%s", code)
+	}
+	if !strings.Contains(code, "def get_items(self) -> List[Dataset]:\n        return self.dataset_list") {
+		t.Fatalf("expected auto generated get_items from dataset_list:\n%s", code)
+	}
+}
+
+func TestRenderPackageModuleAutoTokenAndLastIDPagedResponseMethods(t *testing.T) {
+	doc := mustParseSwagger(t)
+	meta := pygen.PackageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Name:                  "_PrivateListWorkflowVersionData",
+					AllowMissingInSwagger: true,
+					BaseClasses:           []string{"CozeModel", "TokenPagedResponse[WorkflowVersionInfo]"},
+					ExtraFields: []config.ModelField{
+						{Name: "items", Type: "List[WorkflowVersionInfo]", Required: true},
+						{Name: "has_more", Type: "bool", Required: true},
+						{Name: "next_page_token", Type: "Optional[str]", Required: false, Default: "None"},
+					},
+				},
+				{
+					Name:                  "_PrivateListMessageResp",
+					AllowMissingInSwagger: true,
+					BaseClasses:           []string{"CozeModel", "LastIDPagedResponse[Message]"},
+					ExtraFields: []config.ModelField{
+						{Name: "first_id", Type: "str", Required: true},
+						{Name: "last_id", Type: "str", Required: true},
+						{Name: "has_more", Type: "bool", Required: true},
+						{Name: "items", Type: "List[Message]", Required: true},
+					},
+				},
+			},
+		},
+	}
+
+	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	if !strings.Contains(code, "def get_next_page_token(self) -> Optional[str]:\n        return self.next_page_token") {
+		t.Fatalf("expected auto generated get_next_page_token for TokenPagedResponse:\n%s", code)
+	}
+	if !strings.Contains(code, "def get_items(self) -> List[WorkflowVersionInfo]:\n        return self.items") {
+		t.Fatalf("expected auto generated get_items for TokenPagedResponse:\n%s", code)
+	}
+	if !strings.Contains(code, "def get_first_id(self) -> str:\n        return self.first_id") {
+		t.Fatalf("expected auto generated get_first_id for LastIDPagedResponse:\n%s", code)
+	}
+	if !strings.Contains(code, "def get_last_id(self) -> str:\n        return self.last_id") {
+		t.Fatalf("expected auto generated get_last_id for LastIDPagedResponse:\n%s", code)
+	}
+	if !strings.Contains(code, "def get_has_more(self) -> bool:\n        return self.has_more") {
+		t.Fatalf("expected auto generated get_has_more for LastIDPagedResponse:\n%s", code)
+	}
+}
+
 func mustParseSwagger(t *testing.T) *openapi.Document {
 	t.Helper()
 	doc, err := openapi.Parse([]byte(`

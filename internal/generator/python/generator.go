@@ -1988,26 +1988,101 @@ func autoModelExtraCodeForPagination(
 	}
 
 	itemType, ok := numberPagedResponseItemType(model.BaseClasses)
-	if !ok {
-		return nil
-	}
-	if !modelHasField("items", properties, extraFieldByName) || !modelHasField("has_more", properties, extraFieldByName) {
-		return nil
-	}
-	if modelHasField("total", properties, extraFieldByName) {
-		return nil
+	if ok {
+		itemsField, ok := pagedItemsField(model, properties, extraFieldByName, itemType)
+		if !ok {
+			return nil
+		}
+		totalExpr := "None"
+		if totalField, ok := pagedTotalField(properties, extraFieldByName); ok {
+			totalExpr = fmt.Sprintf("self.%s", totalField)
+		}
+		hasMoreExpr := "None"
+		if hasMoreField, ok := pagedHasMoreField(properties, extraFieldByName); ok {
+			hasMoreExpr = fmt.Sprintf("self.%s", hasMoreField)
+		}
+		return []string{
+			fmt.Sprintf(
+				"def get_total(self) -> Optional[int]:\n    return %s\n\ndef get_has_more(self) -> Optional[bool]:\n    return %s\n\ndef get_items(self) -> List[%s]:\n    return self.%s",
+				totalExpr,
+				hasMoreExpr,
+				itemType,
+				itemsField,
+			),
+		}
 	}
 
-	return []string{
-		fmt.Sprintf(
-			"def get_total(self) -> Optional[int]:\n    return None\n\ndef get_has_more(self) -> Optional[bool]:\n    return self.has_more\n\ndef get_items(self) -> List[%s]:\n    return self.items",
-			itemType,
-		),
+	itemType, ok = tokenPagedResponseItemType(model.BaseClasses)
+	if ok {
+		itemsField, ok := pagedItemsField(model, properties, extraFieldByName, itemType)
+		if !ok {
+			return nil
+		}
+		nextTokenField, ok := pagedNextPageTokenField(properties, extraFieldByName)
+		if !ok {
+			return nil
+		}
+		hasMoreField, ok := pagedHasMoreField(properties, extraFieldByName)
+		if !ok {
+			return nil
+		}
+		return []string{
+			fmt.Sprintf(
+				"def get_next_page_token(self) -> Optional[str]:\n    return self.%s\n\ndef get_has_more(self) -> Optional[bool]:\n    return self.%s\n\ndef get_items(self) -> List[%s]:\n    return self.%s",
+				nextTokenField,
+				hasMoreField,
+				itemType,
+				itemsField,
+			),
+		}
 	}
+
+	itemType, ok = lastIDPagedResponseItemType(model.BaseClasses)
+	if ok {
+		itemsField, ok := pagedItemsField(model, properties, extraFieldByName, itemType)
+		if !ok {
+			return nil
+		}
+		firstIDField, ok := pagedFirstIDField(properties, extraFieldByName)
+		if !ok {
+			return nil
+		}
+		lastIDField, ok := pagedLastIDField(properties, extraFieldByName)
+		if !ok {
+			return nil
+		}
+		hasMoreField, ok := pagedHasMoreField(properties, extraFieldByName)
+		if !ok {
+			return nil
+		}
+		return []string{
+			fmt.Sprintf(
+				"def get_first_id(self) -> str:\n    return self.%s\n\ndef get_last_id(self) -> str:\n    return self.%s\n\ndef get_has_more(self) -> bool:\n    return self.%s\n\ndef get_items(self) -> List[%s]:\n    return self.%s",
+				firstIDField,
+				lastIDField,
+				hasMoreField,
+				itemType,
+				itemsField,
+			),
+		}
+	}
+
+	return nil
 }
 
 func numberPagedResponseItemType(baseClasses []string) (string, bool) {
-	const prefix = "NumberPagedResponse["
+	return pagedResponseItemType(baseClasses, "NumberPagedResponse[")
+}
+
+func tokenPagedResponseItemType(baseClasses []string) (string, bool) {
+	return pagedResponseItemType(baseClasses, "TokenPagedResponse[")
+}
+
+func lastIDPagedResponseItemType(baseClasses []string) (string, bool) {
+	return pagedResponseItemType(baseClasses, "LastIDPagedResponse[")
+}
+
+func pagedResponseItemType(baseClasses []string, prefix string) (string, bool) {
 	for _, rawBaseClass := range baseClasses {
 		baseClass := strings.TrimSpace(rawBaseClass)
 		if !strings.HasPrefix(baseClass, prefix) || !strings.HasSuffix(baseClass, "]") {
@@ -2021,6 +2096,87 @@ func numberPagedResponseItemType(baseClasses []string) (string, bool) {
 		return itemType, true
 	}
 	return "", false
+}
+
+func pagedItemsField(
+	model packageModelDefinition,
+	properties map[string]*openapi.Schema,
+	extraFieldByName map[string]config.ModelField,
+	itemType string,
+) (string, bool) {
+	if modelHasField("items", properties, extraFieldByName) {
+		return "items", true
+	}
+	for _, field := range model.ExtraFields {
+		if strings.TrimSpace(field.Name) == "" {
+			continue
+		}
+		if isListFieldType(field.Type, itemType) {
+			return strings.TrimSpace(field.Name), true
+		}
+	}
+	for _, fieldName := range model.FieldOrder {
+		typeName, ok := model.FieldTypes[fieldName]
+		if !ok {
+			continue
+		}
+		if isListFieldType(typeName, itemType) {
+			return strings.TrimSpace(fieldName), true
+		}
+	}
+	return "", false
+}
+
+func pagedTotalField(properties map[string]*openapi.Schema, extraFieldByName map[string]config.ModelField) (string, bool) {
+	for _, candidate := range []string{"total", "total_count"} {
+		if modelHasField(candidate, properties, extraFieldByName) {
+			return candidate, true
+		}
+	}
+	return "", false
+}
+
+func pagedHasMoreField(properties map[string]*openapi.Schema, extraFieldByName map[string]config.ModelField) (string, bool) {
+	if modelHasField("has_more", properties, extraFieldByName) {
+		return "has_more", true
+	}
+	return "", false
+}
+
+func pagedNextPageTokenField(properties map[string]*openapi.Schema, extraFieldByName map[string]config.ModelField) (string, bool) {
+	if modelHasField("next_page_token", properties, extraFieldByName) {
+		return "next_page_token", true
+	}
+	return "", false
+}
+
+func pagedFirstIDField(properties map[string]*openapi.Schema, extraFieldByName map[string]config.ModelField) (string, bool) {
+	if modelHasField("first_id", properties, extraFieldByName) {
+		return "first_id", true
+	}
+	return "", false
+}
+
+func pagedLastIDField(properties map[string]*openapi.Schema, extraFieldByName map[string]config.ModelField) (string, bool) {
+	if modelHasField("last_id", properties, extraFieldByName) {
+		return "last_id", true
+	}
+	return "", false
+}
+
+func isListFieldType(typeName, itemType string) bool {
+	normalizedType := strings.ReplaceAll(strings.TrimSpace(typeName), " ", "")
+	normalizedItemType := strings.ReplaceAll(strings.TrimSpace(itemType), " ", "")
+	if normalizedType == "" || normalizedItemType == "" {
+		return false
+	}
+	if normalizedType == "List["+normalizedItemType+"]" {
+		return true
+	}
+	if normalizedType == "Optional[List["+normalizedItemType+"]]" {
+		return true
+	}
+	return false
 }
 
 func modelHasField(name string, properties map[string]*openapi.Schema, extraFieldByName map[string]config.ModelField) bool {

@@ -520,16 +520,6 @@ api:
             - name: total
               type: int
               required: true
-          extra_code:
-            - |
-              def get_total(self) -> Optional[int]:
-                  return self.total
-
-              def get_has_more(self) -> Optional[bool]:
-                  return None
-
-              def get_items(self) -> List[VoicePrintGroup]:
-                  return self.items
       sync_method_order:
         - features
         - create
@@ -630,16 +620,6 @@ api:
             - name: total
               type: int
               required: true
-          extra_code:
-            - |
-              def get_total(self) -> Optional[int]:
-                  return self.total
-
-              def get_has_more(self) -> Optional[bool]:
-                  return None
-
-              def get_items(self) -> List[VoicePrintGroupFeature]:
-                  return self.items
       sync_method_order:
         - create
         - update
@@ -730,16 +710,6 @@ api:
             - name: has_more
               type: bool
               required: true
-          extra_code:
-            - |
-              def get_total(self) -> Optional[int]:
-                  return None
-
-              def get_has_more(self) -> Optional[bool]:
-                  return self.has_more
-
-              def get_items(self) -> List[Voice]:
-                  return self.voice_list
       override_pagination_classes:
         - _PrivateListVoiceData
       sync_method_order:
@@ -2151,19 +2121,6 @@ api:
             - name: items
               type: List[Message]
               required: true
-          extra_code:
-            - |
-              def get_first_id(self) -> str:
-                  return self.first_id
-
-              def get_last_id(self) -> str:
-                  return self.last_id
-
-              def get_has_more(self) -> bool:
-                  return self.has_more
-
-              def get_items(self) -> List[Message]:
-                  return self.items
       sync_extra_methods:
         - |
           @property
@@ -2394,16 +2351,6 @@ api:
             - name: dataset_list
               type: List[Dataset]
               required: true
-          extra_code:
-            - |
-              def get_total(self) -> Optional[int]:
-                  return self.total_count
-
-              def get_has_more(self) -> Optional[bool]:
-                  return None
-
-              def get_items(self) -> List[Dataset]:
-                  return self.dataset_list
         - schema: DocumentProgress
           name: DocumentProgress
           field_order:
@@ -2685,16 +2632,6 @@ api:
             - name: total
               type: int
               required: true
-          extra_code:
-            - |
-              def get_total(self) -> Optional[int]:
-                  return self.total
-
-              def get_has_more(self) -> Optional[bool]:
-                  return None
-
-              def get_items(self) -> List[Document]:
-                  return self.document_infos
       sync_method_order:
         - create
         - update
@@ -2797,16 +2734,6 @@ api:
             - name: total_count
               type: int
               required: true
-          extra_code:
-            - |
-              def get_total(self) -> Optional[int]:
-                  return self.total_count
-
-              def get_has_more(self) -> Optional[bool]:
-                  return None
-
-              def get_items(self) -> List[Photo]:
-                  return self.photo_infos
       override_pagination_classes:
         - _PrivateListPhotosData
       sync_method_order:
@@ -3094,16 +3021,6 @@ api:
             - name: total
               type: int
               required: true
-          extra_code:
-            - |
-              def get_total(self) -> Optional[int]:
-                  return self.total
-
-              def get_has_more(self) -> Optional[bool]:
-                  return None
-
-              def get_items(self) -> List[Document]:
-                  return self.document_infos
       sync_method_order:
         - create
         - update
@@ -3941,16 +3858,6 @@ api:
             items: List[WorkflowVersionInfo]
           field_defaults:
             next_page_token: "None"
-          extra_code:
-            - |
-              def get_next_page_token(self) -> Optional[str]:
-                  return self.next_page_token
-
-              def get_has_more(self) -> Optional[bool]:
-                  return self.has_more
-
-              def get_items(self) -> List[WorkflowVersionInfo]:
-                  return self.items
       override_pagination_classes:
         - _PrivateListWorkflowVersionData
       path_prefixes:
@@ -4021,16 +3928,6 @@ api:
             - name: workspaces
               type: List[Workspace]
               required: true
-          extra_code:
-            - |
-              def get_total(self) -> Optional[int]:
-                  return self.total_count
-
-              def get_has_more(self) -> Optional[bool]:
-                  return None
-
-              def get_items(self) -> List[Workspace]:
-                  return self.workspaces
       sync_extra_methods:
         - |
           def list(
