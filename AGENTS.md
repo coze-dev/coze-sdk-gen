@@ -91,39 +91,6 @@ Constraint: in the current phase, alignment is based on APIs/fields already impl
 5. Compare generated outputs with baselines and iteratively reduce diff.
 6. Repeat until both Python and Go reach zero diff.
 
-# Downstream coze-py PR Workflow
-
-When asked to sync generated Python SDK output into `coze-py` and complete the PR lifecycle, follow this exact flow:
-
-1. Resolve `<coze-py-path>` first:
-   - If user does not provide `<coze-py-path>`, default to `~/coze-dev/coze-py`.
-2. Prepare `coze-py` repository:
-   - If `<coze-py-path>` does not exist, clone it:
-     - `git clone https://github.com/coze-dev/coze-py <coze-py-path>`
-   - If `<coze-py-path>` exists, sync with remote `main` before generation:
-     - `git -C <coze-py-path> fetch origin`
-     - `git -C <coze-py-path> checkout main`
-     - `git -C <coze-py-path> pull --ff-only origin main`
-3. Run generation with CI checks against target SDK path:
-   - `./scripts/genpy.sh --output-sdk <coze-py-path> --ci-check`
-4. Inspect actual `coze-py` git diff and identify changed files/functions.
-5. Inspect related `coze-sdk-gen` commits (`git log` + `git show`) and map generator/config changes to SDK output changes.
-6. Draft PR title/body from facts above:
-   - include SDK behavior change summary
-   - include generator commit(s) and what config/generation logic changed
-   - include validation command and result summary
-   - never include literal `\n` text in PR body; use real line breaks only
-7. Create branch, commit, and push in `coze-py`.
-8. Create or update PR.
-   - Prefer `gh pr create` / `gh pr edit` when token scopes allow.
-   - If `gh` GraphQL fails due org scope restrictions (for example missing `read:org`), use GitHub REST API as fallback:
-     - `PATCH /repos/{owner}/{repo}/pulls/{number}` for title/body updates
-     - `POST /repos/{owner}/{repo}/issues/{number}/labels` for required labels
-9. Ensure required PR labels are present (for `coze-py`: one of `feature`, `enhancement`, `fix`, `bugfix`, `bug`, `chore`, `documentation`) so label checks pass.
-10. Poll PR checks until completion; resolve failures before merge.
-11. Merge PR only after required checks pass and branch protection conditions are satisfied.
-12. Report final PR URL, status, and merge result.
-
 # Quality Gates
 
 - Language: generator implementation must be Go.
