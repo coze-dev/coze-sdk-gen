@@ -580,6 +580,10 @@ api:
               value: big
             - name: SMALL
               value: small
+        - schema: Interval
+          name: Interval
+        - schema: EmotionInfo
+          name: EmotionInfo
         - schema: OpenAPIVoiceData
           name: Voice
           required_fields:
@@ -611,10 +615,6 @@ api:
             - update_time
             - model_type
             - state
-        - schema: EmotionInfo
-          name: EmotionInfo
-        - schema: Interval
-          name: Interval
         - name: _PrivateListVoiceData
           allow_missing_in_swagger: true
           base_classes:
