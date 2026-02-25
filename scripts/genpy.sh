@@ -7,6 +7,7 @@ go run ./cmd/coze-sdk-gen \
   --language python \
   --output-sdk exist-repo/coze-py-generated "$@"
 
+# Format generated Python SDK with the baseline repository formatter settings.
 ruff format \
   --config exist-repo/coze-py/pyproject.toml \
   exist-repo/coze-py-generated/cozepy
