@@ -750,7 +750,7 @@ def _create(self) -> None:
 		ordered[5].Name,
 		ordered[6].Name,
 	}
-	expected := []string{"stream", "create", "clone", "retrieve", "list", "messages", "run_histories"}
+	expected := []string{"run_histories", "stream", "create", "clone", "retrieve", "list", "messages"}
 	for i := range expected {
 		if got[i] != expected[i] {
 			t.Fatalf("unexpected ordered[%d]: got=%q want=%q", i, got[i], expected[i])

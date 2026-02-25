@@ -2137,11 +2137,11 @@ func OrderClassMethodBlocks(blocks []ClassMethodBlock) []ClassMethodBlock {
 	}
 
 	ordered := make([]ClassMethodBlock, 0, len(blocks))
+	ordered = append(ordered, childMethods...)
 	for _, name := range prioritizedMethodNames {
 		ordered = append(ordered, prioritizedBuckets[name]...)
 	}
 	ordered = append(ordered, otherMethods...)
-	ordered = append(ordered, childMethods...)
 	return ordered
 }
 
