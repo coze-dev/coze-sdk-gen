@@ -117,6 +117,8 @@ type ModelSchema struct {
 	BaseClasses            []string          `yaml:"base_classes"`
 	BeforeCode             []string          `yaml:"before_code"`
 	PrependCode            []string          `yaml:"prepend_code"`
+	Builders               []ModelBuilder    `yaml:"builders"`
+	BeforeValidators       []ModelValidator  `yaml:"before_validators"`
 	SeparateCommentedEnum  *bool             `yaml:"separate_commented_enum_members"`
 	FieldOrder             []string          `yaml:"field_order"`
 	RequiredFields         []string          `yaml:"required_fields"`
@@ -133,8 +135,27 @@ type ModelSchema struct {
 type ModelField struct {
 	Name     string `yaml:"name"`
 	Type     string `yaml:"type"`
+	Alias    string `yaml:"alias"`
 	Required bool   `yaml:"required"`
 	Default  string `yaml:"default"`
+}
+
+type ModelValidator struct {
+	Field  string `yaml:"field"`
+	Rule   string `yaml:"rule"`
+	Method string `yaml:"method"`
+}
+
+type ModelBuilder struct {
+	Name       string            `yaml:"name"`
+	Params     []string          `yaml:"params"`
+	ReturnType string            `yaml:"return_type"`
+	Args       []ModelBuilderArg `yaml:"args"`
+}
+
+type ModelBuilderArg struct {
+	Name string `yaml:"name"`
+	Expr string `yaml:"expr"`
 }
 
 type ModelEnumValue struct {

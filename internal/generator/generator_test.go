@@ -1519,6 +1519,176 @@ func TestRenderPackageModuleAutoTokenAndLastIDPagedResponseMethods(t *testing.T)
 	}
 }
 
+func TestRenderPackageModuleEmptyModelWithOverrideDocstringOmitsPass(t *testing.T) {
+	doc := mustParseSwagger(t)
+	meta := pygen.PackageMeta{
+		Name:       "conversations",
+		ModulePath: "conversations",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Name:                  "DeleteConversationResp",
+					AllowMissingInSwagger: true,
+				},
+			},
+		},
+	}
+	overrides := config.CommentOverrides{
+		ClassDocstrings: map[string]string{
+			"cozepy.conversations.DeleteConversationResp": "删除会话的响应结构体\n不包含任何字段，仅用于表示操作成功",
+		},
+		ClassDocstringStyles: map[string]string{
+			"cozepy.conversations.DeleteConversationResp": "block",
+		},
+	}
+
+	code := pygen.RenderPackageModule(doc, meta, nil, overrides)
+	classStart := strings.Index(code, "class DeleteConversationResp(CozeModel):")
+	if classStart < 0 {
+		t.Fatalf("expected empty model class definition:\n%s", code)
+	}
+	if !strings.Contains(code, "删除会话的响应结构体") {
+		t.Fatalf("expected override class docstring content:\n%s", code)
+	}
+	nextClass := strings.Index(code[classStart+1:], "\nclass ")
+	classBlock := code[classStart:]
+	if nextClass >= 0 {
+		classBlock = code[classStart : classStart+1+nextClass]
+	}
+	if strings.Contains(classBlock, "\n    pass\n") {
+		t.Fatalf("did not expect pass when empty model already has override docstring:\n%s", classBlock)
+	}
+}
+
+func TestRenderPackageModuleExtraFieldAlias(t *testing.T) {
+	doc := mustParseSwagger(t)
+	meta := pygen.PackageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Name:                  "TranslateConfig",
+					AllowMissingInSwagger: true,
+					ExtraFields: []config.ModelField{
+						{Name: "from_", Type: "Optional[str]", Alias: "from", Required: true},
+						{Name: "to", Type: "Optional[str]", Required: true},
+					},
+				},
+			},
+		},
+	}
+
+	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	if !strings.Contains(code, `from_: Optional[str] = Field(alias="from")`) {
+		t.Fatalf("expected alias field rendering for required extra field:\n%s", code)
+	}
+	if !strings.Contains(code, "to: Optional[str]") {
+		t.Fatalf("expected normal extra field rendering without alias:\n%s", code)
+	}
+}
+
+func TestRenderPackageModuleBeforeValidators(t *testing.T) {
+	doc := mustParseSwagger(t)
+	meta := pygen.PackageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Name:                  "SimpleBot",
+					AllowMissingInSwagger: true,
+					ExtraFields: []config.ModelField{
+						{Name: "publish_time", Type: "str", Required: true},
+					},
+					BeforeValidators: []config.ModelValidator{
+						{Field: "publish_time", Rule: "int_to_string", Method: "convert_to_string"},
+					},
+				},
+				{
+					Name:                  "WorkflowRunHistory",
+					AllowMissingInSwagger: true,
+					ExtraFields: []config.ModelField{
+						{Name: "error_code", Type: "int", Required: true},
+					},
+					BeforeValidators: []config.ModelValidator{
+						{Field: "error_code", Rule: "empty_string_to_zero", Method: "error_code_empty_str_to_zero"},
+					},
+				},
+			},
+		},
+	}
+
+	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	if !strings.Contains(code, `@field_validator("publish_time", mode="before")`) {
+		t.Fatalf("expected int_to_string before validator:\n%s", code)
+	}
+	if !strings.Contains(code, "def convert_to_string(cls, v):") {
+		t.Fatalf("expected named int_to_string validator method:\n%s", code)
+	}
+	if !strings.Contains(code, "if isinstance(v, int):") {
+		t.Fatalf("expected int_to_string conversion body:\n%s", code)
+	}
+	if !strings.Contains(code, `@field_validator("error_code", mode="before")`) {
+		t.Fatalf("expected empty_string_to_zero before validator:\n%s", code)
+	}
+	if !strings.Contains(code, "def error_code_empty_str_to_zero(cls, v):") {
+		t.Fatalf("expected named empty_string_to_zero validator method:\n%s", code)
+	}
+	if !strings.Contains(code, `if v == "":`) {
+		t.Fatalf("expected empty_string_to_zero conversion body:\n%s", code)
+	}
+}
+
+func TestRenderPackageModuleBuilders(t *testing.T) {
+	doc := mustParseSwagger(t)
+	meta := pygen.PackageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Name:                  "DocumentUpdateRule",
+					AllowMissingInSwagger: true,
+					Builders: []config.ModelBuilder{
+						{
+							Name:       "build_no_auto_update",
+							ReturnType: "DocumentUpdateRule",
+							Args: []config.ModelBuilderArg{
+								{Name: "update_type", Expr: "DocumentUpdateType.NO_AUTO_UPDATE"},
+								{Name: "update_interval", Expr: "24"},
+							},
+						},
+						{
+							Name:       "build_auto_update",
+							ReturnType: "DocumentUpdateRule",
+							Params:     []string{"interval: int"},
+							Args: []config.ModelBuilderArg{
+								{Name: "update_type", Expr: "DocumentUpdateType.AUTO_UPDATE"},
+								{Name: "update_interval", Expr: "interval"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	if !strings.Contains(code, "@staticmethod\n    def build_no_auto_update() -> \"DocumentUpdateRule\":") {
+		t.Fatalf("expected builder staticmethod for no_auto_update:\n%s", code)
+	}
+	if !strings.Contains(code, "return DocumentUpdateRule(update_type=DocumentUpdateType.NO_AUTO_UPDATE, update_interval=24)") {
+		t.Fatalf("expected builder return expression for no_auto_update:\n%s", code)
+	}
+	if !strings.Contains(code, "@staticmethod\n    def build_auto_update(interval: int) -> \"DocumentUpdateRule\":") {
+		t.Fatalf("expected builder staticmethod for auto_update:\n%s", code)
+	}
+	if !strings.Contains(code, "return DocumentUpdateRule(update_type=DocumentUpdateType.AUTO_UPDATE, update_interval=interval)") {
+		t.Fatalf("expected builder return expression for auto_update:\n%s", code)
+	}
+}
+
 func mustParseSwagger(t *testing.T) *openapi.Document {
 	t.Helper()
 	doc, err := openapi.Parse([]byte(`
