@@ -1057,7 +1057,6 @@ api:
           module: .message
           sync_class: ChatMessagesClient
           async_class: AsyncChatMessagesClient
-          multiline_signature: true
       model_schemas:
         - name: MessageRole
           allow_missing_in_swagger: true

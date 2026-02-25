@@ -96,13 +96,12 @@ type Package struct {
 }
 
 type ChildClient struct {
-	Attribute          string `yaml:"attribute"`
-	Module             string `yaml:"module"`
-	TypeImportModule   string `yaml:"type_import_module"`
-	SyncClass          string `yaml:"sync_class"`
-	AsyncClass         string `yaml:"async_class"`
-	DisableTypeHints   bool   `yaml:"disable_type_hints"`
-	MultilineSignature bool   `yaml:"multiline_signature"`
+	Attribute        string `yaml:"attribute"`
+	Module           string `yaml:"module"`
+	TypeImportModule string `yaml:"type_import_module"`
+	SyncClass        string `yaml:"sync_class"`
+	AsyncClass       string `yaml:"async_class"`
+	DisableTypeHints bool   `yaml:"disable_type_hints"`
 }
 
 type ModelSchema struct {

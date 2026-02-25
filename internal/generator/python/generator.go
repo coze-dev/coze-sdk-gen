@@ -3385,22 +3385,10 @@ func renderChildClientProperty(
 
 	var buf bytes.Buffer
 	buf.WriteString("    @property\n")
-	if child.MultilineSignature {
-		if child.DisableTypeHints {
-			buf.WriteString(fmt.Sprintf("    def %s(\n", attribute))
-			buf.WriteString("        self,\n")
-			buf.WriteString("    ):\n")
-		} else {
-			buf.WriteString(fmt.Sprintf("    def %s(\n", attribute))
-			buf.WriteString("        self,\n")
-			buf.WriteString(fmt.Sprintf("    ) -> \"%s\":\n", typeName))
-		}
+	if child.DisableTypeHints {
+		buf.WriteString(fmt.Sprintf("    def %s(self):\n", attribute))
 	} else {
-		if child.DisableTypeHints {
-			buf.WriteString(fmt.Sprintf("    def %s(self):\n", attribute))
-		} else {
-			buf.WriteString(fmt.Sprintf("    def %s(self) -> \"%s\":\n", attribute, typeName))
-		}
+		buf.WriteString(fmt.Sprintf("    def %s(self) -> \"%s\":\n", attribute, typeName))
 	}
 	methodKey := strings.TrimSpace(classKey) + "." + attribute
 	if docstring, ok := commentOverrides.MethodDocstrings[methodKey]; ok {
