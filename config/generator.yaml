@@ -144,34 +144,6 @@ api:
         - /v1/apps
     - name: audio
       source_dir: cozepy/audio
-      type_checking_child_order:
-        - live
-        - rooms
-        - speech
-        - transcriptions
-        - voiceprint_groups
-        - voices
-      init_child_order:
-        - rooms
-        - voices
-        - speech
-        - transcriptions
-        - voiceprint_groups
-        - live
-      sync_child_order:
-        - rooms
-        - speech
-        - transcriptions
-        - voices
-        - voiceprint_groups
-        - live
-      async_child_order:
-        - rooms
-        - speech
-        - voices
-        - transcriptions
-        - voiceprint_groups
-        - live
       child_clients:
         - attribute: rooms
           module: .rooms
@@ -2943,22 +2915,14 @@ api:
           module: .chat
           sync_class: WorkflowsChatClient
           async_class: AsyncWorkflowsChatClient
+        - attribute: collaborators
+          module: .collaborators
+          sync_class: WorkflowsCollaboratorsClient
+          async_class: AsyncWorkflowsCollaboratorsClient
         - attribute: versions
           module: .versions
           sync_class: WorkflowsVersionsClient
           async_class: AsyncWorkflowsVersionsClient
-      type_checking_child_order:
-        - chat
-        - runs
-        - versions
-      sync_child_order:
-        - runs
-        - chat
-        - versions
-      async_child_order:
-        - runs
-        - chat
-        - versions
       model_schemas:
         - schema: OpenAPIWorkflowMode
           name: WorkflowMode
@@ -3121,6 +3085,14 @@ api:
         - _create
       path_prefixes:
         - /v1/workflows/chat
+    - name: workflows_collaborators
+      source_dir: cozepy/workflows/collaborators
+      client_class: WorkflowsCollaboratorsClient
+      async_client_class: AsyncWorkflowsCollaboratorsClient
+      empty_models:
+        - RemoveWorkflowCollaboratorResp
+      path_prefixes:
+        - /v1/workflows/{workflow_id}/collaborators
     - name: workflows_runs
       source_dir: cozepy/workflows/runs
       separate_commented_fields: true
@@ -5449,6 +5421,14 @@ api:
       pagination_page_size_field: page_size
       pagination_init_page_token_expr: page_token or ""
       pagination_params_variable: true
+    - path: /v1/workflows/{workflow_id}/collaborators/{user_id}
+      method: delete
+      order: 951
+      sdk_methods:
+        - workflows_collaborators.delete
+      disable_request_body: true
+      response_type: RemoveWorkflowCollaboratorResp
+      response_cast: RemoveWorkflowCollaboratorResp
     - path: /v1/workflows/chat
       method: post
       order: 96

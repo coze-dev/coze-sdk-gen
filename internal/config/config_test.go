@@ -409,19 +409,6 @@ api:
             - ""
 `,
 		},
-		{
-			name: "empty async child order",
-			content: `
-language: python
-output_sdk: out
-api:
-  packages:
-    - name: audio
-      source_dir: a
-      async_child_order:
-        - ""
-`,
-		},
 	}
 
 	for _, tc := range cases {
