@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -99,6 +100,18 @@ func TestDefaultsApplied(t *testing.T) {
 	if cfg.API.FieldAliases == nil {
 		t.Fatal("expected field aliases map to be initialized")
 	}
+	if cfg.CommentOverrides.ClassDocstrings == nil {
+		t.Fatal("expected comment overrides maps to be initialized")
+	}
+	if cfg.CommentOverrides.ClassDocstringStyles == nil {
+		t.Fatal("expected class docstring style map to be initialized")
+	}
+	if cfg.CommentOverrides.InlineFieldComments == nil {
+		t.Fatal("expected inline field comments map to be initialized")
+	}
+	if cfg.CommentOverrides.InlineEnumMemberComment == nil {
+		t.Fatal("expected inline enum comments map to be initialized")
+	}
 	if len(cfg.Diff.IgnorePathsByLanguage["python"]) == 0 {
 		t.Fatal("expected default diff ignore paths for python")
 	}
@@ -162,6 +175,96 @@ api: {}
 	goPaths := cfg.DiffIgnorePathsForLanguage("go")
 	if len(goPaths) != 2 || goPaths[1] != ".github" {
 		t.Fatalf("unexpected go diff paths: %#v", goPaths)
+	}
+}
+
+func TestLoadCommentOverrides(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "generator.yaml")
+	commentsPath := filepath.Join(dir, "comments.yaml")
+	configYAML := `
+language: python
+output_sdk: out
+comment_overrides_file: comments.yaml
+api:
+  packages:
+    - name: chat
+      source_dir: cozepy/chat
+`
+	commentsYAML := `
+class_docstrings:
+  cozepy.chat.Chat: Chat doc
+class_docstring_styles:
+  cozepy.chat.Chat: block
+method_docstrings:
+  cozepy.chat.ChatClient.create: Create chat
+method_docstring_styles:
+  cozepy.chat.ChatClient.create: block
+field_comments:
+  cozepy.chat.Chat.id:
+    - chat id
+inline_field_comments:
+  cozepy.chat.Chat.name: inline field
+enum_member_comments:
+  cozepy.chat.ChatStatus.CREATED:
+    - created status
+inline_enum_member_comments:
+  cozepy.chat.ChatStatus.UNKNOWN: unknown status
+`
+	if err := os.WriteFile(configPath, []byte(configYAML), 0o644); err != nil {
+		t.Fatalf("write config error: %v", err)
+	}
+	if err := os.WriteFile(commentsPath, []byte(commentsYAML), 0o644); err != nil {
+		t.Fatalf("write comments error: %v", err)
+	}
+
+	cfg, err := Load(configPath)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if got := cfg.CommentOverrides.ClassDocstrings["cozepy.chat.Chat"]; got != "Chat doc" {
+		t.Fatalf("unexpected class docstring override: %q", got)
+	}
+	if got := cfg.CommentOverrides.ClassDocstringStyles["cozepy.chat.Chat"]; got != "block" {
+		t.Fatalf("unexpected class docstring style override: %q", got)
+	}
+	if got := cfg.CommentOverrides.MethodDocstrings["cozepy.chat.ChatClient.create"]; got != "Create chat" {
+		t.Fatalf("unexpected method docstring override: %q", got)
+	}
+	if got := cfg.CommentOverrides.MethodDocstringStyles["cozepy.chat.ChatClient.create"]; got != "block" {
+		t.Fatalf("unexpected method docstring style override: %q", got)
+	}
+	if got := cfg.CommentOverrides.FieldComments["cozepy.chat.Chat.id"]; len(got) != 1 || got[0] != "chat id" {
+		t.Fatalf("unexpected field comments override: %#v", got)
+	}
+	if got := cfg.CommentOverrides.EnumMemberComments["cozepy.chat.ChatStatus.CREATED"]; len(got) != 1 || got[0] != "created status" {
+		t.Fatalf("unexpected enum comments override: %#v", got)
+	}
+	if got := cfg.CommentOverrides.InlineFieldComments["cozepy.chat.Chat.name"]; got != "inline field" {
+		t.Fatalf("unexpected inline field comment override: %q", got)
+	}
+	if got := cfg.CommentOverrides.InlineEnumMemberComment["cozepy.chat.ChatStatus.UNKNOWN"]; got != "unknown status" {
+		t.Fatalf("unexpected inline enum comment override: %q", got)
+	}
+}
+
+func TestLoadCommentOverridesMissingFile(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "generator.yaml")
+	configYAML := `
+language: python
+output_sdk: out
+comment_overrides_file: missing-comments.yaml
+api:
+  packages:
+    - name: chat
+      source_dir: cozepy/chat
+`
+	if err := os.WriteFile(configPath, []byte(configYAML), 0o644); err != nil {
+		t.Fatalf("write config error: %v", err)
+	}
+	if _, err := Load(configPath); err == nil {
+		t.Fatal("expected Load() to fail for missing comment overrides file")
 	}
 }
 

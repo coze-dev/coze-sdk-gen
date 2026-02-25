@@ -1436,6 +1436,124 @@ func TestRenderPackageModuleUsesSwaggerFieldDescriptions(t *testing.T) {
 	}
 }
 
+func TestRenderPackageModuleFieldCommentsPreferSwaggerFallbackOverrides(t *testing.T) {
+	doc := &openapi.Document{
+		Components: openapi.Components{
+			Schemas: map[string]*openapi.Schema{
+				"DemoModel": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"id": {
+							Type:        "string",
+							Description: "Swagger id description.",
+						},
+						"fallback_field": {
+							Type: "string",
+						},
+					},
+					Required: []string{"id"},
+				},
+			},
+		},
+	}
+	meta := pygen.PackageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Schema: "DemoModel",
+					Name:   "DemoModel",
+					FieldOrder: []string{
+						"id",
+						"fallback_field",
+						"legacy_only",
+					},
+					ExtraFields: []config.ModelField{
+						{Name: "legacy_only", Type: "str", Required: true},
+					},
+				},
+			},
+		},
+	}
+	commentOverrides := config.CommentOverrides{
+		FieldComments: map[string][]string{
+			"cozepy.demo.DemoModel.id":             {"Override id description."},
+			"cozepy.demo.DemoModel.fallback_field": {"Override fallback description."},
+			"cozepy.demo.DemoModel.legacy_only":    {"Legacy field description."},
+		},
+	}
+
+	code := pygen.RenderPackageModuleWithComments(doc, meta, nil, commentOverrides)
+	if !strings.Contains(code, "# Swagger id description.\n    id: str") {
+		t.Fatalf("expected swagger description for id field:\n%s", code)
+	}
+	if strings.Contains(code, "Override id description.") {
+		t.Fatalf("did not expect id override to replace swagger description:\n%s", code)
+	}
+	if !strings.Contains(code, "# Override fallback description.\n    fallback_field: Optional[str] = None") {
+		t.Fatalf("expected fallback override description for swagger-missing field:\n%s", code)
+	}
+	if !strings.Contains(code, "# Legacy field description.\n    legacy_only: str") {
+		t.Fatalf("expected fallback override description for non-swagger extra field:\n%s", code)
+	}
+}
+
+func TestRenderPackageModuleMethodDocstringPreferSwaggerFallbackOverrides(t *testing.T) {
+	doc := mustParseSwagger(t)
+	meta := pygen.PackageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ClientClass:      "DemoClient",
+			AsyncClientClass: "AsyncDemoClient",
+		},
+	}
+	bindings := []pygen.OperationBinding{
+		{
+			PackageName: "demo",
+			MethodName:  "create",
+			Details: openapi.OperationDetails{
+				Path:   "/v1/demo",
+				Method: "post",
+			},
+		},
+		{
+			PackageName: "demo",
+			MethodName:  "retrieve",
+			Details: openapi.OperationDetails{
+				Path:    "/v1/demo/{id}",
+				Method:  "get",
+				Summary: "Retrieve from swagger.",
+				PathParameters: []openapi.ParameterSpec{
+					{Name: "id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+				},
+			},
+		},
+	}
+	commentOverrides := config.CommentOverrides{
+		MethodDocstrings: map[string]string{
+			"cozepy.demo.DemoClient.create":   "Create from overrides.",
+			"cozepy.demo.DemoClient.retrieve": "Retrieve from overrides.",
+		},
+		MethodDocstringStyles: map[string]string{
+			"cozepy.demo.DemoClient.create":   "block",
+			"cozepy.demo.DemoClient.retrieve": "block",
+		},
+	}
+
+	code := pygen.RenderPackageModuleWithComments(doc, meta, bindings, commentOverrides)
+	if !strings.Contains(code, "Create from overrides.") {
+		t.Fatalf("expected override docstring when swagger comment is missing:\n%s", code)
+	}
+	if !strings.Contains(code, "Retrieve from swagger.") {
+		t.Fatalf("expected swagger docstring to be used when available:\n%s", code)
+	}
+	if strings.Contains(code, "Retrieve from overrides.") {
+		t.Fatalf("did not expect override docstring to replace swagger docstring:\n%s", code)
+	}
+}
+
 func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{

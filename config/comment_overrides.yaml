@@ -1,0 +1,3478 @@
+class_docstrings:
+  cozepy.audio.live.AsyncLiveClient: Room service async client.
+  cozepy.audio.live.LiveClient: Live service client.
+  cozepy.audio.rooms.AsyncRoomsClient: Room service async client.
+  cozepy.audio.rooms.RoomsClient: Room service client.
+  cozepy.audio.speech.AsyncSpeechClient: speech service client.
+  cozepy.audio.speech.SpeechClient: speech service client.
+  cozepy.audio.transcriptions.AsyncTranscriptionsClient: Room service async client.
+  cozepy.bots.AsyncBotsClient: Bot class.
+  cozepy.bots.BotModelInfo.CacheType: '扣子的部分模型支持开启或关闭上下文缓存中的前缀缓存。开启前缀缓存后，可以将一些公共前缀内容进行缓存，
+
+    后续调用模型时无需重复发送，从而加快模型的响应速度并降低使用成本。默认为 closed。支持的取值如下：'
+  cozepy.bots.BotsClient: Bot class.
+  cozepy.bots.SuggestReplyMode: 配置智能体回复后，是否提供用户问题建议。
+  cozepy.bots.UserInputType: 用户输入类型
+  cozepy.chat.ChatRequiredAction: Details of the information needed for execution.
+  cozepy.chat.ChatStatus: The running status of the session
+  cozepy.chat.MessageObjectStringType: The content type of the multimodal message.
+  cozepy.connectors.AsyncConnectorsClient: '异步渠道客户端
+
+
+    提供异步渠道相关功能的客户端类。'
+  cozepy.connectors.ConnectorsClient: '渠道客户端
+
+
+    提供渠道相关功能的客户端类。'
+  cozepy.conversations.DeleteConversationResp: '删除会话的响应结构体
+
+    不包含任何字段，仅用于表示操作成功'
+  cozepy.conversations.message.AsyncMessagesClient: Message class.
+  cozepy.conversations.message.MessagesClient: Message class.
+  cozepy.conversations.message.feedback.FeedbackType: 反馈类型
+  cozepy.model.DynamicStrEnum: 动态字符串枚举基类
+  cozepy.request.Requester: http request helper class.
+  cozepy.workflows.WorkflowInfo: '工作流详细信息
+
+
+    包含工作流的完整配置和元数据信息。'
+  cozepy.connectors.bots.AuditStatus: '审核状态枚举
+
+
+    用于表示Bot渠道审核的不同状态。'
+  cozepy.connectors.bots.ConnectorsBotsClient: '渠道Bot客户端
+
+
+    提供渠道Bot相关功能的客户端类，包括更新Bot渠道审核结果等功能。'
+  cozepy.connectors.bots.AsyncConnectorsBotsClient: '异步渠道Bot客户端
+
+
+    提供异步渠道Bot相关功能的客户端类，包括更新Bot渠道审核结果等功能。'
+class_docstring_styles:
+  cozepy.audio.live.AsyncLiveClient: block
+  cozepy.audio.live.LiveClient: block
+  cozepy.audio.rooms.AsyncRoomsClient: block
+  cozepy.audio.rooms.RoomsClient: block
+  cozepy.audio.speech.AsyncSpeechClient: block
+  cozepy.audio.speech.SpeechClient: block
+  cozepy.audio.transcriptions.AsyncTranscriptionsClient: block
+  cozepy.bots.AsyncBotsClient: block
+  cozepy.bots.BotModelInfo.CacheType: block
+  cozepy.bots.BotsClient: block
+  cozepy.bots.SuggestReplyMode: block
+  cozepy.bots.UserInputType: inline
+  cozepy.chat.ChatRequiredAction: inline
+  cozepy.chat.ChatStatus: block
+  cozepy.chat.MessageObjectStringType: block
+  cozepy.connectors.AsyncConnectorsClient: block
+  cozepy.connectors.ConnectorsClient: block
+  cozepy.conversations.DeleteConversationResp: block
+  cozepy.conversations.message.AsyncMessagesClient: block
+  cozepy.conversations.message.MessagesClient: block
+  cozepy.conversations.message.feedback.FeedbackType: block
+  cozepy.model.DynamicStrEnum: block
+  cozepy.request.Requester: block
+  cozepy.workflows.WorkflowInfo: block
+  cozepy.connectors.bots.AuditStatus: block
+  cozepy.connectors.bots.ConnectorsBotsClient: block
+  cozepy.connectors.bots.AsyncConnectorsBotsClient: block
+method_docstrings:
+  cozepy.api_apps.APIAppsClient.__init__: ''
+  cozepy.api_apps.APIAppsClient.create: 'create api app
+
+
+    :param app_type: The type of the api app.
+
+    :param name: The name of the api app, required when app_type is normal.
+
+    :param connector_id: The connector id of the api app, required when app_type is connector.
+
+    :return: The api app object.'
+  cozepy.api_apps.APIAppsClient.delete: ''
+  cozepy.api_apps.APIAppsClient.events: ''
+  cozepy.api_apps.APIAppsClient.list: ''
+  cozepy.api_apps.APIAppsClient.update: 'update api app
+
+
+    :param app_id: The id of the api app.
+
+    :param name: The name of the api app, required when app_type is normal.
+
+    :param callback_url: The callback url of the api app.'
+  cozepy.api_apps.AsyncAPIAppsClient.__init__: ''
+  cozepy.api_apps.AsyncAPIAppsClient.create: 'create api app
+
+
+    :param app_type: The type of the api app.
+
+    :param name: The name of the api app, required when app_type is normal.
+
+    :param connector_id: The connector id of the api app, required when app_type is connector.
+
+    :return: The api app object.'
+  cozepy.api_apps.AsyncAPIAppsClient.delete: ''
+  cozepy.api_apps.AsyncAPIAppsClient.events: ''
+  cozepy.api_apps.AsyncAPIAppsClient.list: ''
+  cozepy.api_apps.AsyncAPIAppsClient.update: 'update api app
+
+
+    :param app_id: The id of the api app.
+
+    :param name: The name of the api app, required when app_type is normal.
+
+    :param callback_url: The callback url of the api app.'
+  cozepy.api_apps._PrivateListAPIAppsData.get_has_more: ''
+  cozepy.api_apps._PrivateListAPIAppsData.get_items: ''
+  cozepy.api_apps._PrivateListAPIAppsData.get_next_page_token: ''
+  cozepy.api_apps.events.APIAppsEventsClient.__init__: ''
+  cozepy.api_apps.events.APIAppsEventsClient.create: ''
+  cozepy.api_apps.events.APIAppsEventsClient.delete: ''
+  cozepy.api_apps.events.APIAppsEventsClient.list: ''
+  cozepy.api_apps.events.AsyncAPIAppsEventsClient.__init__: ''
+  cozepy.api_apps.events.AsyncAPIAppsEventsClient.create: ''
+  cozepy.api_apps.events.AsyncAPIAppsEventsClient.delete: ''
+  cozepy.api_apps.events.AsyncAPIAppsEventsClient.list: ''
+  cozepy.api_apps.events._PrivateListAPIAppsEventsData.get_has_more: ''
+  cozepy.api_apps.events._PrivateListAPIAppsEventsData.get_items: ''
+  cozepy.api_apps.events._PrivateListAPIAppsEventsData.get_next_page_token: ''
+  cozepy.apps.AppsClient.__init__: ''
+  cozepy.apps.AppsClient.list: ':param workspace_id: The ID of the workspace.
+
+    App 所在的 workspace ID。workspace ID 是 workspace 的唯一标识。
+
+    :param page_num: Pagination size. The default is 20, meaning that 20 data entries are returned per page.
+
+    分页大小。默认为 20，即每页返回 20 条数据。
+
+    :param page_size: Page number for paginated queries. The default is 1,
+
+    meaning that the data return starts from the first page.
+
+    分页查询时的页码。默认为 1，即从第一页数据开始返回。
+
+    :return: Specify the list of Apps in the workspace.
+
+    指定 workspace 的 App 列表。'
+  cozepy.apps.AsyncAppsClient.__init__: ''
+  cozepy.apps.AsyncAppsClient.list: ':param workspace_id: The ID of the workspace.
+
+    App 所在的 workspace ID。workspace ID 是 workspace 的唯一标识。
+
+    :param page_num: Pagination size. The default is 20, meaning that 20 data entries are returned per page.
+
+    分页大小。默认为 20，即每页返回 20 条数据。
+
+    :param page_size: Page number for paginated queries. The default is 1,
+
+    meaning that the data return starts from the first page.
+
+    分页查询时的页码。默认为 1，即从第一页数据开始返回。
+
+    :return: Specify the list of Apps in the workspace.
+
+    指定 workspace 的 App 列表。'
+  cozepy.apps._PrivateListAppsData.get_has_more: ''
+  cozepy.apps._PrivateListAppsData.get_items: ''
+  cozepy.apps._PrivateListAppsData.get_total: ''
+  cozepy.audio.AsyncAudioClient.__init__: ''
+  cozepy.audio.AsyncAudioClient.live: ''
+  cozepy.audio.AsyncAudioClient.rooms: ''
+  cozepy.audio.AsyncAudioClient.speech: ''
+  cozepy.audio.AsyncAudioClient.transcriptions: ''
+  cozepy.audio.AsyncAudioClient.voiceprint_groups: ''
+  cozepy.audio.AsyncAudioClient.voices: ''
+  cozepy.audio.AudioClient.__init__: ''
+  cozepy.audio.AudioClient.live: ''
+  cozepy.audio.AudioClient.rooms: ''
+  cozepy.audio.AudioClient.speech: ''
+  cozepy.audio.AudioClient.transcriptions: ''
+  cozepy.audio.AudioClient.voiceprint_groups: ''
+  cozepy.audio.AudioClient.voices: ''
+  cozepy.audio.live.AsyncLiveClient.retrieve: 'retrieve live
+
+
+    :param live_id: The id of the live.
+
+    :return: live info'
+  cozepy.audio.live.LiveClient.retrieve: 'retrieve live
+
+
+    :param live_id: The id of the live.
+
+    :return: live info'
+  cozepy.audio.rooms.AsyncRoomsClient.__init__: ''
+  cozepy.audio.rooms.AsyncRoomsClient.create: 'create rtc room
+
+
+    :param bot_id: The id of the bot.
+
+    :param voice_id: The voice id of the voice.
+
+    :param conversation_id: The id of the conversation.
+
+    :param uid: The id of the user. if not provided, it will be generated by the server.
+
+    :param workflow_id: The id of the workflow.
+
+    :param config: The config of the room.
+
+    :return: create room result'
+  cozepy.audio.rooms.RoomsClient.__init__: ''
+  cozepy.audio.rooms.RoomsClient.create: 'create rtc room
+
+
+    :param bot_id: The id of the bot.
+
+    :param voice_id: The voice id of the voice.
+
+    :param conversation_id: The id of the conversation.
+
+    :param uid: The id of the user. if not provided, it will be generated by the server.
+
+    :param workflow_id: The id of the workflow.
+
+    :param config: The config of the room.
+
+    :return: create room result'
+  cozepy.audio.speech.AsyncSpeechClient.__init__: ''
+  cozepy.audio.speech.AsyncSpeechClient.create: 'Generate speech audio from input text with specified voice
+
+
+    :param input: The text to generate audio for. Maximum length is 1024 characters.
+
+    :param voice_id: The voice ID to generate audio with, obtained via .audio.voices.list
+
+    :param response_format: Audio encoding format, wav / pcm / ogg_opus / mp3, defaults to mp3
+
+    :param speed: Speech speed, [0.2,3], defaults to 1, typically one decimal place is sufficient
+
+    :param sample_rate: Audio sample rate, defaults to 24000, available values: [8000, 16000, 22050, 24000, 32000, 44100, 48000]
+
+    :return: The synthesized audio file content'
+  cozepy.audio.speech.SpeechClient.__init__: ''
+  cozepy.audio.speech.SpeechClient.create: 'Generate speech audio from input text with specified voice
+
+
+    :param input: The text to generate audio for. Maximum length is 1024 characters.
+
+    :param voice_id: The voice ID to generate audio with, obtained via .audio.voices.list
+
+    :param response_format: Audio encoding format, wav / pcm / ogg_opus / mp3, defaults to mp3
+
+    :param speed: Speech speed, [0.2,3], defaults to 1, typically one decimal place is sufficient
+
+    :param sample_rate: Audio sample rate, defaults to 24000, available values: [8000, 16000, 22050, 24000, 32000, 44100, 48000]
+
+    :return: The synthesized audio file content'
+  cozepy.audio.transcriptions.AsyncTranscriptionsClient.__init__: ''
+  cozepy.audio.transcriptions.AsyncTranscriptionsClient.create: 'create transcriptions
+
+
+    :param file: The file to be translated.
+
+    :return: create transcriptions result'
+  cozepy.audio.transcriptions.TranscriptionsClient.__init__: ''
+  cozepy.audio.transcriptions.TranscriptionsClient.create: 'create transcriptions
+
+
+    :param file: The file to be translated.
+
+    :return: create transcriptions result'
+  cozepy.audio.voiceprint_groups.AsyncVoiceprintGroupsClient.list: 'Get available voices, including system voices + user cloned voices
+
+    Tips: Voices cloned under each Volcano account can be reused within the team
+
+
+    :param filter_system_voice: If True, system voices will not be returned.
+
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+
+    first page.
+
+    :param page_size: The size of pagination. Default is 100, meaning that 100 data entries are returned per page.
+
+    :return: list of Voice'
+  cozepy.audio.voiceprint_groups.VoiceprintGroupsClient.list: 'Get available voices, including system voices + user cloned voices
+
+    Tips: Voices cloned under each Volcano account can be reused within the team
+
+
+    :param filter_system_voice: If True, system voices will not be returned.
+
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+
+    first page.
+
+    :param page_size: The size of pagination. Default is 100, meaning that 100 data entries are returned per page.
+
+    :return: list of Voice'
+  cozepy.audio.voices.AsyncVoicesClient.__init__: ''
+  cozepy.audio.voices.AsyncVoicesClient.clone: "Clone the user's voice, and use the cloned voice to create voice speech\nEach Volcano account is assigned a voice by default. A voice can be cloned 10 times,\nand repeated cloning of the same voice will overwrite it.\n\n:param voice_name: The name of the cloned voice, cannot be empty, and the length is greater than 6.\n:param file: Audio Files.\n:param audio_format: Only \"wav\", \"mp3\", \"ogg\", \"m4a\", \"aac\", \"pcm\" formats are supported.\n:param language: Only supports \"zh\", \"en\" \"ja\" \"es\" \"id\" \"pt\" languages.\n:param voice_id: If it is passed in, it will be trained on the original voice, covering the previously\ntrained voice.\n:param preview_text: If a text is passed in, a preview audio will be generated based on the text.\n Otherwise, the default text \"你好，我是你的专属AI克隆声音，希望未来可以一起好好相处哦\".\n:param text: Users can recite the text, and the service will compare the audio with the text.\n If the difference is too large, an error\
+    \ will be returned.\n:param space_id: The space id of the voice.\n:param description: The description of the voice.\n:return: Voice of the cloned."
+  cozepy.audio.voices.AsyncVoicesClient.list: 'Get available voices, including system voices + user cloned voices
+
+    Tips: Voices cloned under each Volcano account can be reused within the team
+
+
+    :param filter_system_voice: If True, system voices will not be returned.
+
+    :param model_type: The type of the voice.
+
+    :param voice_state: The state of the voice.
+
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+
+    first page.
+
+    :param page_size: The size of pagination. Default is 100, meaning that 100 data entries are returned per page.
+
+    :return: list of Voice'
+  cozepy.audio.voices.VoicesClient.__init__: ''
+  cozepy.audio.voices.VoicesClient.clone: "Clone the user's voice, and use the cloned voice to create voice speech\nEach Volcano account is assigned a voice by default. A voice can be cloned 10 times,\nand repeated cloning of the same voice will overwrite it.\n\n:param voice_name: The name of the cloned voice, cannot be empty, and the length is greater than 6.\n:param file: Audio Files.\n:param audio_format: Only \"wav\", \"mp3\", \"ogg\", \"m4a\", \"aac\", \"pcm\" formats are supported.\n:param language: Only supports \"zh\", \"en\" \"ja\" \"es\" \"id\" \"pt\" languages.\n:param voice_id: If it is passed in, it will be trained on the original voice, covering the previously\ntrained voice.\n:param preview_text: If a text is passed in, a preview audio will be generated based on the text.\n Otherwise, the default text \"你好，我是你的专属AI克隆声音，希望未来可以一起好好相处哦\".\n:param text: Users can recite the text, and the service will compare the audio with the text.\n If the difference is too large, an error will\
+    \ be returned.\n:param space_id: The space id of the voice.\n:param description: The description of the voice.\n:return: Voice of the cloned."
+  cozepy.audio.voices.VoicesClient.list: 'Get available voices, including system voices + user cloned voices
+
+    Tips: Voices cloned under each Volcano account can be reused within the team
+
+
+    :param filter_system_voice: If True, system voices will not be returned.
+
+    :param model_type: The type of the voice.
+
+    :param voice_state: The state of the voice.
+
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+
+    first page.
+
+    :param page_size: The size of pagination. Default is 100, meaning that 100 data entries are returned per page.
+
+    :return: list of Voice'
+  cozepy.audio.voices._PrivateListVoiceData.get_has_more: ''
+  cozepy.audio.voices._PrivateListVoiceData.get_items: ''
+  cozepy.audio.voices._PrivateListVoiceData.get_total: ''
+  cozepy.bots.AsyncBotsClient.__init__: ''
+  cozepy.bots.AsyncBotsClient._list_v1: 'Get the bots published as API service.
+
+    查看指定空间发布到 Bot as API 渠道的 Bot 列表。
+
+
+    docs en: https://www.coze.com/docs/developer_guides/published_bots_list
+
+    docs zh: https://www.coze.cn/docs/developer_guides/published_bots_list
+
+
+    :param space_id: The ID of the space.
+
+    Bot 所在的空间的 Space ID。Space ID 是空间的唯一标识。
+
+    :param page_num: Pagination size. The default is 20, meaning that 20 data entries are returned per page.
+
+    分页大小。默认为 20，即每页返回 20 条数据。
+
+    :param page_size: Page number for paginated queries. The default is 1,
+
+    meaning that the data return starts from the first page.
+
+    分页查询时的页码。默认为 1，即从第一页数据开始返回。
+
+    :return: Specify the list of Bots published to the Bot as an API channel in space.
+
+    指定空间发布到 Bot as API 渠道的 Bot 列表。'
+  cozepy.bots.AsyncBotsClient._list_v2: '查看指定空间的智能体列表
+
+
+    docs en: https://www.coze.com/docs/developer_guides/published_bots_list
+
+    docs zh: https://www.coze.cn/open/docs/developer_guides/bots_list_draft_published
+
+
+    :param workspace_id: The ID of the space.
+
+    Bot 所在的空间的 Space ID。Space ID 是空间的唯一标识。
+
+    :param page_num: Pagination size. The default is 20, meaning that 20 data entries are returned per page.
+
+    分页大小。默认为 20，即每页返回 20 条数据。
+
+    :param page_size: Page number for paginated queries. The default is 1,
+
+    meaning that the data return starts from the first page.
+
+    分页查询时的页码。默认为 1，即从第一页数据开始返回。
+
+    :return: Specify the list of Bots published to the Bot as an API channel in space.
+
+    指定空间发布到 Bot as API 渠道的 Bot 列表。'
+  cozepy.bots.AsyncBotsClient._retrieve_v1: 'Get the configuration information of the bot, which must have been published
+
+    to the Bot as API channel.
+
+    获取指定 Bot 的配置信息，此 Bot 必须已发布到 Bot as API 渠道中。
+
+
+    docs en: https://www.coze.com/docs/developer_guides/get_metadata
+
+    docs zh: https://www.coze.cn/docs/developer_guides/get_metadata
+
+
+    :param bot_id: The ID of the bot that the API interacts with.
+
+    要查看的 Bot ID。
+
+    :return: bot object
+
+    Bot 的配置信息'
+  cozepy.bots.AsyncBotsClient._retrieve_v2: '查看智能体配置
+
+
+    查看指定智能体的配置信息，你可以查看该智能体已发布版本的配置，或当前草稿版本的配置。
+
+
+    docs: https://www.coze.cn/open/docs/developer_guides/get_metadata_draft_published
+
+
+    :param bot_id: 要查看的智能体 ID。
+
+    :param is_published: 根据智能体的发布状态筛选对应版本。默认值为 true。'
+  cozepy.bots.AsyncBotsClient.create: '创建智能体
+
+
+    通过指定空间、名称等参数创建一个新的智能体。
+
+
+    docs: https://www.coze.cn/open/docs/developer_guides/create_bot
+
+
+    :param space_id: 空间 ID。智能体将创建在此空间下。
+
+    :param name: 智能体名称。长度限制为 1-20 个字符。
+
+    :param description: 智能体描述。长度限制为 0-500 个字符，默认为空。
+
+    :param icon_file_id: 智能体头像的文件 ID。如需使用自定义头像，请先通过上传文件接口上传本地文件，
+
+    并从接口响应中获取文件 ID。如果未指定文件 ID，平台将分配默认头像。
+
+    :param prompt_info: 智能体的提示词配置信息。
+
+    :param onboarding_info: 智能体的开场白配置信息。
+
+    :param suggest_reply_info: 智能体的建议回复配置信息。
+
+    :param model_info_config: 智能体的模型配置信息。
+
+    :param plugin_id_list: 智能体使用的插件 ID 列表。
+
+    :param workflow_id_list: 智能体使用的工作流 ID 列表。
+
+    :return: 创建成功的智能体对象'
+  cozepy.bots.AsyncBotsClient.list: '查看指定空间的智能体列表
+
+
+    docs en: https://www.coze.com/docs/developer_guides/published_bots_list
+
+    docs zh: https://www.coze.cn/open/docs/developer_guides/bots_list_draft_published
+
+
+    :param space_id: The ID of the space.
+
+    Bot 所在的空间的 Space ID。Space ID 是空间的唯一标识。
+
+    :param page_num: Pagination size. The default is 20, meaning that 20 data entries are returned per page.
+
+    分页大小。默认为 20，即每页返回 20 条数据。
+
+    :param page_size: Page number for paginated queries. The default is 1,
+
+    meaning that the data return starts from the first page.
+
+    分页查询时的页码。默认为 1，即从第一页数据开始返回。
+
+    :return: Specify the list of Bots published to the Bot as an API channel in space.
+
+    指定空间发布到 Bot as API 渠道的 Bot 列表。'
+  cozepy.bots.AsyncBotsClient.publish: ''
+  cozepy.bots.AsyncBotsClient.retrieve: '查看智能体配置
+
+
+    查看指定智能体的配置信息，你可以查看该智能体已发布版本的配置，或当前草稿版本的配置。
+
+
+    docs: https://www.coze.cn/open/docs/developer_guides/get_metadata_draft_published
+
+
+    :param bot_id: 要查看的智能体 ID。
+
+    :param is_published: 根据智能体的发布状态筛选对应版本。默认值为 true。'
+  cozepy.bots.AsyncBotsClient.unpublish: '下架智能体
+
+
+    智能体发布后，你可以调用本 API 从扣子官方渠道及自定义渠道下架智能体。
+
+
+    docs: https://www.coze.cn/open/docs/developer_guides/unpublish_agent
+
+
+    :param bot_id: 待下架的智能体的 ID。
+
+    :param connector_id: 渠道 ID，例如 "1024" 表示 API 渠道。
+
+    :param unpublish_reason: 下架渠道的原因说明，用于记录或说明为何执行下架操作。最大 1024 个字符。
+
+    :return: 智能体对象'
+  cozepy.bots.AsyncBotsClient.update: 'Update the configuration of a bot.
+
+    This API can be used to update all bots created through the Coze platform or via the API.
+
+    In addition to updating the bot''s name and description, avatar, personality and reply logic,
+
+    and opening remarks, this API also supports binding a knowledge base to the bot.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/update_bot
+
+    docs zh: https://www.coze.cn/docs/developer_guides/update_bot
+
+
+    :param bot_id: The ID of the bot that the API interacts with.
+
+    :param name: The name of the bot. It should be 1 to 20 characters long.
+
+    :param description: The description of the Bot. It can be 0 to 500 characters long. The default is empty.
+
+    :param icon_file_id: The file ID for the Bot''s avatar. If no file ID is specified, the Coze platform will
+
+    assign a default avatar for the bot. To use a custom avatar, first upload the local file through the Upload
+
+    file interface and obtain the file ID from the interface response.
+
+    :param prompt_info: The personality and reply logic of the bot.
+
+    :param onboarding_info: The settings related to the bot''s opening remarks.
+
+    :param knowledge: The knowledge base that the bot uses to answer user queries.
+
+    :param suggest_reply_info: The suggest reply info for the bot.
+
+    :param model_info_config: The model configuration for the bot.
+
+    :return: None'
+  cozepy.bots.BotsClient.__init__: ''
+  cozepy.bots.BotsClient._list_v1: 'Get the bots published as API service.
+
+    查看指定空间发布到 Bot as API 渠道的 Bot 列表。
+
+
+    docs en: https://www.coze.com/docs/developer_guides/published_bots_list
+
+    docs zh: https://www.coze.cn/docs/developer_guides/published_bots_list
+
+
+    :param space_id: The ID of the space.
+
+    Bot 所在的空间的 Space ID。Space ID 是空间的唯一标识。
+
+    :param page_num: Pagination size. The default is 20, meaning that 20 data entries are returned per page.
+
+    分页大小。默认为 20，即每页返回 20 条数据。
+
+    :param page_size: Page number for paginated queries. The default is 1,
+
+    meaning that the data return starts from the first page.
+
+    分页查询时的页码。默认为 1，即从第一页数据开始返回。
+
+    :return: Specify the list of Bots published to the Bot as an API channel in space.
+
+    指定空间发布到 Bot as API 渠道的 Bot 列表。'
+  cozepy.bots.BotsClient._list_v2: '查看指定空间的智能体列表
+
+
+    docs en: https://www.coze.com/docs/developer_guides/published_bots_list
+
+    docs zh: https://www.coze.cn/open/docs/developer_guides/bots_list_draft_published
+
+
+    :param workspace_id: The ID of the space.
+
+    Bot 所在的空间的 Space ID。Space ID 是空间的唯一标识。
+
+    :param page_num: Pagination size. The default is 20, meaning that 20 data entries are returned per page.
+
+    分页大小。默认为 20，即每页返回 20 条数据。
+
+    :param page_size: Page number for paginated queries. The default is 1,
+
+    meaning that the data return starts from the first page.
+
+    分页查询时的页码。默认为 1，即从第一页数据开始返回。
+
+    :return: Specify the list of Bots published to the Bot as an API channel in space.
+
+    指定空间发布到 Bot as API 渠道的 Bot 列表。'
+  cozepy.bots.BotsClient._retrieve_v1: 'Get the configuration information of the bot, which must have been published
+
+    to the Bot as API channel.
+
+    获取指定 Bot 的配置信息，此 Bot 必须已发布到 Bot as API 渠道中。
+
+
+    docs en: https://www.coze.com/docs/developer_guides/get_metadata
+
+    docs zh: https://www.coze.cn/docs/developer_guides/get_metadata
+
+
+    :param bot_id: The ID of the bot that the API interacts with.
+
+    要查看的 Bot ID。
+
+    :return: bot object
+
+    Bot 的配置信息'
+  cozepy.bots.BotsClient._retrieve_v2: '查看智能体配置
+
+
+    查看指定智能体的配置信息，你可以查看该智能体已发布版本的配置，或当前草稿版本的配置。
+
+
+    docs: https://www.coze.cn/open/docs/developer_guides/get_metadata_draft_published
+
+
+    :param bot_id: 要查看的智能体 ID。
+
+    :param is_published: 根据智能体的发布状态筛选对应版本。默认值为 true。'
+  cozepy.bots.BotsClient.create: '创建智能体
+
+
+    通过指定空间、名称等参数创建一个新的智能体。
+
+
+    docs: https://www.coze.cn/open/docs/developer_guides/create_bot
+
+
+    :param space_id: 空间 ID。智能体将创建在此空间下。
+
+    :param name: 智能体名称。长度限制为 1-20 个字符。
+
+    :param description: 智能体描述。长度限制为 0-500 个字符，默认为空。
+
+    :param icon_file_id: 智能体头像的文件 ID。如需使用自定义头像，请先通过上传文件接口上传本地文件，
+
+    并从接口响应中获取文件 ID。如果未指定文件 ID，平台将分配默认头像。
+
+    :param prompt_info: 智能体的提示词配置信息。
+
+    :param onboarding_info: 智能体的开场白配置信息。
+
+    :param suggest_reply_info: 智能体的建议回复配置信息。
+
+    :param model_info_config: 智能体的模型配置信息。
+
+    :param plugin_id_list: 智能体使用的插件 ID 列表。
+
+    :param workflow_id_list: 智能体使用的工作流 ID 列表。
+
+    :return: 创建成功的智能体对象'
+  cozepy.bots.BotsClient.list: '查看指定空间的智能体列表
+
+
+    docs en: https://www.coze.com/docs/developer_guides/published_bots_list
+
+    docs zh: https://www.coze.cn/open/docs/developer_guides/bots_list_draft_published
+
+
+    :param space_id: The ID of the space.
+
+    Bot 所在的空间的 Space ID。Space ID 是空间的唯一标识。
+
+    :param page_num: Pagination size. The default is 20, meaning that 20 data entries are returned per page.
+
+    分页大小。默认为 20，即每页返回 20 条数据。
+
+    :param page_size: Page number for paginated queries. The default is 1,
+
+    meaning that the data return starts from the first page.
+
+    分页查询时的页码。默认为 1，即从第一页数据开始返回。
+
+    :return: Specify the list of Bots published to the Bot as an API channel in space.
+
+    指定空间发布到 Bot as API 渠道的 Bot 列表。'
+  cozepy.bots.BotsClient.publish: ''
+  cozepy.bots.BotsClient.retrieve: '查看智能体配置
+
+
+    查看指定智能体的配置信息，你可以查看该智能体已发布版本的配置，或当前草稿版本的配置。
+
+
+    docs: https://www.coze.cn/open/docs/developer_guides/get_metadata_draft_published
+
+
+    :param bot_id: 要查看的智能体 ID。
+
+    :param is_published: 根据智能体的发布状态筛选对应版本。默认值为 true。'
+  cozepy.bots.BotsClient.unpublish: '下架智能体
+
+
+    智能体发布后，你可以调用本 API 从扣子官方渠道及自定义渠道下架智能体。
+
+
+    docs: https://www.coze.cn/open/docs/developer_guides/unpublish_agent
+
+
+    :param bot_id: 待下架的智能体的 ID。
+
+    :param connector_id: 渠道 ID，例如 "1024" 表示 API 渠道。
+
+    :param unpublish_reason: 下架渠道的原因说明，用于记录或说明为何执行下架操作。最大 1024 个字符。
+
+    :return: 智能体对象'
+  cozepy.bots.BotsClient.update: 'Update the configuration of a bot.
+
+    This API can be used to update all bots created through the Coze platform or via the API.
+
+    In addition to updating the bot''s name and description, avatar, personality and reply logic,
+
+    and opening remarks, this API also supports binding a knowledge base to the bot.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/update_bot
+
+    docs zh: https://www.coze.cn/docs/developer_guides/update_bot
+
+
+    :param bot_id: The ID of the bot that the API interacts with.
+
+    :param name: The name of the bot. It should be 1 to 20 characters long.
+
+    :param description: The description of the Bot. It can be 0 to 500 characters long. The default is empty.
+
+    :param icon_file_id: The file ID for the Bot''s avatar. If no file ID is specified, the Coze platform will
+
+    assign a default avatar for the bot. To use a custom avatar, first upload the local file through the Upload
+
+    file interface and obtain the file ID from the interface response.
+
+    :param prompt_info: The personality and reply logic of the bot.
+
+    :param onboarding_info: The settings related to the bot''s opening remarks.
+
+    :param knowledge: The knowledge base that the bot uses to answer user queries.
+
+    :param suggest_reply_info: The suggest reply info for the bot.
+
+    :param model_info_config: The model configuration for the bot.
+
+    :return: None'
+  cozepy.bots.SimpleBot.convert_to_string: ''
+  cozepy.bots._PrivateListBotsDataV1.SimpleBotV1.to_simple_bot: ''
+  cozepy.bots._PrivateListBotsDataV1.get_has_more: ''
+  cozepy.bots._PrivateListBotsDataV1.get_items: ''
+  cozepy.bots._PrivateListBotsDataV1.get_total: ''
+  cozepy.bots._PrivateListBotsDataV2.get_has_more: ''
+  cozepy.bots._PrivateListBotsDataV2.get_items: ''
+  cozepy.bots._PrivateListBotsDataV2.get_total: ''
+  cozepy.chat.AsyncChatClient.__init__: ''
+  cozepy.chat.AsyncChatClient._create: 'Create a conversation.
+
+    Conversation is an interaction between a bot and a user, including one or more messages.'
+  cozepy.chat.AsyncChatClient._submit_tool_outputs: ''
+  cozepy.chat.AsyncChatClient.cancel: 'Call this API to cancel an ongoing chat.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/chat_cancel
+
+    docs zh: https://www.coze.cn/docs/developer_guides/chat_cancel
+
+
+    :param conversation_id: The Conversation ID can be viewed in the ''conversation_id'' field of the Response when
+
+    initiating a conversation through the Chat API.
+
+    :param chat_id: The Chat ID can be viewed in the ''id'' field of the Response when initiating a chat through the
+
+    Chat API. If it is a streaming response, check the ''id'' field in the chat event of the Response.
+
+    :return:'
+  cozepy.chat.AsyncChatClient.create: 'Call the Chat API with non-streaming to send messages to a published Coze bot.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/chat_v3
+
+    docs zh: https://www.coze.cn/docs/developer_guides/chat_v3
+
+
+    :param bot_id: The ID of the bot that the API interacts with.
+
+    :param user_id: The user who calls the API to chat with the bot.
+
+    This parameter is defined, generated, and maintained by the user within their business system.
+
+    :param conversation_id: Indicate which conversation the chat is taking place in.
+
+    :param additional_messages: Additional information for the conversation. You can pass the user''s query for this
+
+    conversation through this field. The array length is limited to 100, meaning up to 100 messages can be input.
+
+    :param custom_variables: The customized variable in a key-value pair.
+
+    :param auto_save_history: Whether to automatically save the history of conversation records.
+
+    :param meta_data: Additional information, typically used to encapsulate some business-related fields.
+
+    :param parameters: Additional parameters for the chat API. pass through to the workflow.
+
+    :return: chat object'
+  cozepy.chat.AsyncChatClient.messages: ''
+  cozepy.chat.AsyncChatClient.retrieve: 'Get the detailed information of the chat.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/retrieve_chat
+
+    docs zh: https://www.coze.cn/docs/developer_guides/retrieve_chat
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :param chat_id: The ID of the chat.
+
+    :return: chat object'
+  cozepy.chat.AsyncChatClient.stream: 'Call the Chat API with streaming to send messages to a published Coze bot.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/chat_v3
+
+    docs zh: https://www.coze.cn/docs/developer_guides/chat_v3
+
+
+    :param bot_id: The ID of the bot that the API interacts with.
+
+    :param user_id: The user who calls the API to chat with the bot.
+
+    This parameter is defined, generated, and maintained by the user within their business system.
+
+    :param conversation_id: Indicate which conversation the chat is taking place in.
+
+    :param additional_messages: Additional information for the conversation. You can pass the user''s query for this
+
+    conversation through this field. The array length is limited to 100, meaning up to 100 messages can be input.
+
+    :param custom_variables: The customized variable in a key-value pair.
+
+    :param auto_save_history: Whether to automatically save the history of conversation records.
+
+    :param meta_data: Additional information, typically used to encapsulate some business-related fields.
+
+    :param parameters: Additional parameters for the chat API. pass through to the workflow.
+
+    :return: iterator of ChatEvent'
+  cozepy.chat.AsyncChatClient.submit_tool_outputs: 'Call this API to submit the results of tool execution.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/chat_submit_tool_outputs
+
+    docs zh: https://www.coze.cn/docs/developer_guides/chat_submit_tool_outputs
+
+
+    :param conversation_id: The Conversation ID can be viewed in the ''conversation_id'' field of the Response when
+
+    initiating a conversation through the Chat API.
+
+    :param chat_id: The Chat ID can be viewed in the ''id'' field of the Response when initiating a chat through the
+
+    Chat API. If it is a streaming response, check the ''id'' field in the chat event of the Response.
+
+    :param tool_outputs: The execution result of the tool. For detailed instructions, refer to the ToolOutput Object
+
+    true: Fill in the context of the previous conversation and continue with streaming response.
+
+    false: (Default) Non-streaming response, only reply with basic information of the conversation.
+
+    :return:'
+  cozepy.chat.AsyncChatClient.submit_tool_outputs_stream: 'Call this API to submit the results of tool execution.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/chat_submit_tool_outputs
+
+    docs zh: https://www.coze.cn/docs/developer_guides/chat_submit_tool_outputs
+
+
+    :param conversation_id: The Conversation ID can be viewed in the ''conversation_id'' field of the Response when
+
+    initiating a conversation through the Chat API.
+
+    :param chat_id: The Chat ID can be viewed in the ''id'' field of the Response when initiating a chat through the
+
+    Chat API. If it is a streaming response, check the ''id'' field in the chat event of the Response.
+
+    :param tool_outputs: The execution result of the tool. For detailed instructions, refer to the ToolOutput Object
+
+    true: Fill in the context of the previous conversation and continue with streaming response.
+
+    false: (Default) Non-streaming response, only reply with basic information of the conversation.
+
+    :return:'
+  cozepy.chat.ChatClient.__init__: ''
+  cozepy.chat.ChatClient._create: Create a chat.
+  cozepy.chat.ChatClient.cancel: 'Call this API to cancel an ongoing chat.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/chat_cancel
+
+    docs zh: https://www.coze.cn/docs/developer_guides/chat_cancel
+
+
+    :param conversation_id: The Conversation ID can be viewed in the ''conversation_id'' field of the Response when
+
+    initiating a conversation through the Chat API.
+
+    :param chat_id: The Chat ID can be viewed in the ''id'' field of the Response when initiating a chat through the
+
+    Chat API. If it is a streaming response, check the ''id'' field in the chat event of the Response.
+
+    :return:'
+  cozepy.chat.ChatClient.create: 'Call the Chat API with non-streaming to send messages to a published Coze bot.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/chat_v3
+
+    docs zh: https://www.coze.cn/docs/developer_guides/chat_v3
+
+
+    :param bot_id: The ID of the bot that the API interacts with.
+
+    :param user_id: The user who calls the API to chat with the bot.
+
+    This parameter is defined, generated, and maintained by the user within their business system.
+
+    :param conversation_id: Indicate which conversation the chat is taking place in.
+
+    :param additional_messages: Additional information for the conversation. You can pass the user''s query for this
+
+    conversation through this field. The array length is limited to 100, meaning up to 100 messages can be input.
+
+    :param custom_variables: The customized variable in a key-value pair.
+
+    :param auto_save_history: Whether to automatically save the history of conversation records.
+
+    :param meta_data: Additional information, typically used to encapsulate some business-related fields.
+
+    :param parameters: Additional parameters for the chat API. pass through to the workflow.
+
+    :return: chat object'
+  cozepy.chat.ChatClient.create_and_poll: 'Call the Chat API with non-streaming to send messages to a published Coze bot and
+
+    fetch chat status & message.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/chat_v3
+
+    docs zh: https://www.coze.cn/docs/developer_guides/chat_v3
+
+
+    :param bot_id: The ID of the bot that the API interacts with.
+
+    :param user_id: The user who calls the API to chat with the bot.
+
+    This parameter is defined, generated, and maintained by the user within their business system.
+
+    :param conversation_id: Indicate which conversation the chat is taking place in.
+
+    :param additional_messages: Additional information for the conversation. You can pass the user''s query for this
+
+    conversation through this field. The array length is limited to 100, meaning up to 100 messages can be input.
+
+    :param custom_variables: The customized variable in a key-value pair.
+
+    :param auto_save_history: Whether to automatically save the history of conversation records.
+
+    :param meta_data: Additional information, typically used to encapsulate some business-related fields.
+
+    :param poll_timeout: poll timeout in seconds
+
+    :param parameters: Additional parameters for the chat API. pass through to the workflow.
+
+    :return: chat object'
+  cozepy.chat.ChatClient.messages: ''
+  cozepy.chat.ChatClient.retrieve: 'Get the detailed information of the chat.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/retrieve_chat
+
+    docs zh: https://www.coze.cn/docs/developer_guides/retrieve_chat
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :param chat_id: The ID of the chat.
+
+    :return: chat object'
+  cozepy.chat.ChatClient.stream: 'Call the Chat API with streaming to send messages to a published Coze bot.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/chat_v3
+
+    docs zh: https://www.coze.cn/docs/developer_guides/chat_v3
+
+
+    :param bot_id: The ID of the bot that the API interacts with.
+
+    :param user_id: The user who calls the API to chat with the bot.
+
+    This parameter is defined, generated, and maintained by the user within their business system.
+
+    :param conversation_id: Indicate which conversation the chat is taking place in.
+
+    :param additional_messages: Additional information for the conversation. You can pass the user''s query for this
+
+    conversation through this field. The array length is limited to 100, meaning up to 100 messages can be input.
+
+    :param custom_variables: The customized variable in a key-value pair.
+
+    :param auto_save_history: Whether to automatically save the history of conversation records.
+
+    :param meta_data: Additional information, typically used to encapsulate some business-related fields.
+
+    :param parameters: Additional parameters for the chat API. pass through to the workflow.
+
+    :return: iterator of ChatEvent'
+  cozepy.chat.ChatClient.submit_tool_outputs: 'Call this API to submit the results of tool execution.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/chat_submit_tool_outputs
+
+    docs zh: https://www.coze.cn/docs/developer_guides/chat_submit_tool_outputs
+
+
+    :param conversation_id: The Conversation ID can be viewed in the ''conversation_id'' field of the Response when
+
+    initiating a conversation through the Chat API.
+
+    :param chat_id: The Chat ID can be viewed in the ''id'' field of the Response when initiating a chat through the
+
+    Chat API. If it is a streaming response, check the ''id'' field in the chat event of the Response.
+
+    :param tool_outputs: The execution result of the tool. For detailed instructions, refer to the ToolOutput Object
+
+    :param stream: Whether to enable streaming response.
+
+    true: Fill in the context of the previous conversation and continue with streaming response.
+
+    false: (Default) Non-streaming response, only reply with basic information of the conversation.
+
+    :return:'
+  cozepy.chat.Message.build_assistant_answer: ''
+  cozepy.chat.Message.build_user_question_objects: ''
+  cozepy.chat.Message.build_user_question_text: ''
+  cozepy.chat.Message.get_audio: ''
+  cozepy.chat.MessageObjectString.build_audio: ''
+  cozepy.chat.MessageObjectString.build_file: ''
+  cozepy.chat.MessageObjectString.build_image: ''
+  cozepy.chat.MessageObjectString.build_text: ''
+  cozepy.chat.message.AsyncChatMessagesClient.__init__: ''
+  cozepy.chat.message.AsyncChatMessagesClient.list: 'The information of messages in the specified conversation besides the Query, including model replies,
+
+    intermediate results of the Bot''s execution, and other messages.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/list_chat_messages
+
+    docs zh: https://www.coze.cn/docs/developer_guides/list_chat_messages
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :param chat_id: The ID of the chat.
+
+    :return: list of Message object'
+  cozepy.chat.message.ChatMessagesClient.__init__: ''
+  cozepy.chat.message.ChatMessagesClient.list: 'The information of messages in the specified conversation besides the Query, including model replies,
+
+    intermediate results of the Bot''s execution, and other messages.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/list_chat_messages
+
+    docs zh: https://www.coze.cn/docs/developer_guides/list_chat_messages
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :param chat_id: The ID of the chat.
+
+    :return: list of Message object'
+  cozepy.connectors.AsyncConnectorsClient.__init__: ''
+  cozepy.connectors.AsyncConnectorsClient.bots: 异步渠道Bot客户端
+  cozepy.connectors.ConnectorsClient.__init__: ''
+  cozepy.connectors.ConnectorsClient.bots: 渠道Bot客户端
+  cozepy.conversations.AsyncConversationsClient.__init__: ''
+  cozepy.conversations.AsyncConversationsClient.clear: '清空会话内容。
+
+    清空指定会话的所有消息内容，但保留会话本身。
+
+
+    :param conversation_id: 会话ID
+
+    :return: Section对象'
+  cozepy.conversations.AsyncConversationsClient.create: '创建会话。
+
+    会话是Bot与用户之间的交互，包含一条或多条消息。
+
+
+    docs en: https://www.coze.com/docs/developer_guides/create_conversation
+
+    docs zh: https://www.coze.cn/docs/developer_guides/create_conversation
+
+
+    :param messages: 会话中的消息列表。详细信息参见EnterMessage对象。
+
+    :param bot_id: 绑定并隔离不同Bot的会话。
+
+    :param name: 会话名称，最多100个字符。如果不传，则默认取首条消息内容作为名称。
+
+    :param connector_id: 渠道ID，默认值为1024（API）。
+
+    :param meta_data: 创建消息时的附加信息，这些信息在获取消息时也会返回。
+
+    :return: Conversation对象'
+  cozepy.conversations.AsyncConversationsClient.delete: '删除指定的会话。
+
+    删除后会话及其中的所有消息都将被永久删除，无法恢复。
+
+
+    docs: https://www.coze.cn/docs/developer_guides/delete_conversation
+
+
+    :param conversation_id: 要删除的会话ID
+
+    :return: DeleteConversationResp对象表示删除成功'
+  cozepy.conversations.AsyncConversationsClient.list: ''
+  cozepy.conversations.AsyncConversationsClient.messages: ''
+  cozepy.conversations.AsyncConversationsClient.retrieve: 'Get the information of specific conversation.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/retrieve_conversation
+
+    docs cn: https://www.coze.cn/docs/developer_guides/retrieve_conversation
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :return: Conversation object'
+  cozepy.conversations.AsyncConversationsClient.update: '更新会话信息。
+
+    更新指定会话的名称，便于识别与管理。
+
+
+    docs: https://www.coze.cn/docs/developer_guides/edit_conversation
+
+
+    :param conversation_id: 会话ID
+
+    :param name: 新的会话名称，最多100个字符
+
+    :return: 更新后的Conversation对象'
+  cozepy.conversations.ConversationsClient.__init__: ''
+  cozepy.conversations.ConversationsClient.clear: '清空会话内容。
+
+    清空指定会话的所有消息内容，但保留会话本身。
+
+
+    :param conversation_id: 会话ID
+
+    :return: Section对象'
+  cozepy.conversations.ConversationsClient.create: '创建会话。
+
+    会话是Bot与用户之间的交互，包含一条或多条消息。
+
+
+    docs en: https://www.coze.com/docs/developer_guides/create_conversation
+
+    docs zh: https://www.coze.cn/docs/developer_guides/create_conversation
+
+
+    :param messages: 会话中的消息列表。详细信息参见EnterMessage对象。
+
+    :param bot_id: 绑定并隔离不同Bot的会话。
+
+    :param name: 会话名称，最多100个字符。如果不传，则默认取首条消息内容作为名称。
+
+    :param connector_id: 渠道ID，默认值为1024（API）。
+
+    :param meta_data: 创建消息时的附加信息，这些信息在获取消息时也会返回。
+
+    :return: Conversation对象'
+  cozepy.conversations.ConversationsClient.delete: '删除指定的会话。
+
+    删除后会话及其中的所有消息都将被永久删除，无法恢复。
+
+
+    docs: https://www.coze.cn/docs/developer_guides/delete_conversation
+
+
+    :param conversation_id: 要删除的会话ID
+
+    :return: DeleteConversationResp对象表示删除成功'
+  cozepy.conversations.ConversationsClient.list: ''
+  cozepy.conversations.ConversationsClient.messages: ''
+  cozepy.conversations.ConversationsClient.retrieve: 'Get the information of specific conversation.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/retrieve_conversation
+
+    docs cn: https://www.coze.cn/docs/developer_guides/retrieve_conversation
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :return: Conversation object'
+  cozepy.conversations.ConversationsClient.update: '更新会话信息。
+
+    更新指定会话的名称，便于识别与管理。
+
+
+    docs: https://www.coze.cn/docs/developer_guides/edit_conversation
+
+
+    :param conversation_id: 会话ID
+
+    :param name: 新的会话名称，最多100个字符
+
+    :return: 更新后的Conversation对象'
+  cozepy.conversations._PrivateListConversationResp.get_has_more: ''
+  cozepy.conversations._PrivateListConversationResp.get_items: ''
+  cozepy.conversations._PrivateListConversationResp.get_total: ''
+  cozepy.conversations.message.AsyncMessagesClient.__init__: ''
+  cozepy.conversations.message.AsyncMessagesClient.create: 'Create a message and add it to the specified conversation.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/create_message
+
+    docs cn: https://www.coze.cn/docs/developer_guides/create_message
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :param role: The entity that sent this message.
+
+    :param content: The content of the message, supporting pure text, multimodal (mixed input of text, images,
+
+    files), cards, and various types of content.
+
+    :param content_type: The type of message content.
+
+    :param meta_data: Additional information when creating a message, and this additional information will also be
+
+    returned when retrieving messages.
+
+    :return:'
+  cozepy.conversations.message.AsyncMessagesClient.delete: 'Call the API to delete a message within a specified conversation.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/delete_message
+
+    docs zh: https://www.coze.cn/docs/developer_guides/delete_message
+
+
+    :param conversation_id:
+
+    :param message_id:
+
+    :return:'
+  cozepy.conversations.message.AsyncMessagesClient.feedback: ''
+  cozepy.conversations.message.AsyncMessagesClient.list: 'Get the message list of a specified conversation.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/list_message
+
+    docs zh: https://www.coze.cn/docs/developer_guides/list_message
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :param order: The sorting method for the message list.
+
+    :param chat_id: The ID of the Chat.
+
+    :param before_id: Get messages before the specified position.
+
+    :param after_id: Get messages after the specified position.
+
+    :param limit: The amount of data returned per query. Default is 50, with a range of 1 to 50.
+
+    :return: The message list of the specified conversation.'
+  cozepy.conversations.message.AsyncMessagesClient.retrieve: 'Get the detailed information of specified message.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/retrieve_message
+
+    docs zh: https://www.coze.cn/docs/developer_guides/retrieve_message
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :param message_id: The ID of the message.
+
+    :return: The detailed information of specified message.'
+  cozepy.conversations.message.AsyncMessagesClient.update: 'Modify a message, supporting the modification of message content, additional content, and message type.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/modify_message
+
+    docs cn: https://www.coze.cn/docs/developer_guides/modify_message
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :param message_id: The ID of the message.
+
+    :param content: The content of the message, supporting pure text, multimodal (mixed input of text, images,
+
+    files), cards, and various types of content.
+
+    :param content_type: The type of message content.
+
+    :param meta_data:
+
+    :return: The detailed information of specified message.'
+  cozepy.conversations.message.MessagesClient.__init__: ''
+  cozepy.conversations.message.MessagesClient.create: 'Create a message and add it to the specified conversation.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/create_message
+
+    docs cn: https://www.coze.cn/docs/developer_guides/create_message
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :param role: The entity that sent this message.
+
+    :param content: The content of the message, supporting pure text, multimodal (mixed input of text, images,
+
+    files), cards, and various types of content.
+
+    :param content_type: The type of message content.
+
+    :param meta_data: Additional information when creating a message, and this additional information will also be
+
+    returned when retrieving messages.
+
+    :return:'
+  cozepy.conversations.message.MessagesClient.delete: 'Call the API to delete a message within a specified conversation.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/delete_message
+
+    docs zh: https://www.coze.cn/docs/developer_guides/delete_message
+
+
+    :param conversation_id:
+
+    :param message_id:
+
+    :return:'
+  cozepy.conversations.message.MessagesClient.feedback: ''
+  cozepy.conversations.message.MessagesClient.list: 'Get the message list of a specified conversation.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/list_message
+
+    docs zh: https://www.coze.cn/docs/developer_guides/list_message
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :param order: The sorting method for the message list.
+
+    :param chat_id: The ID of the Chat.
+
+    :param before_id: Get messages before the specified position.
+
+    :param after_id: Get messages after the specified position.
+
+    :param limit: The amount of data returned per query. Default is 50, with a range of 1 to 50.
+
+    :return: The message list of the specified conversation.'
+  cozepy.conversations.message.MessagesClient.retrieve: 'Get the detailed information of specified message.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/retrieve_message
+
+    docs zh: https://www.coze.cn/docs/developer_guides/retrieve_message
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :param message_id: The ID of the message.
+
+    :return: The detailed information of specified message.'
+  cozepy.conversations.message.MessagesClient.update: 'Modify a message, supporting the modification of message content, additional content, and message type.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/modify_message
+
+    docs cn: https://www.coze.cn/docs/developer_guides/modify_message
+
+
+    :param conversation_id: The ID of the conversation.
+
+    :param message_id: The ID of the message.
+
+    :param content: The content of the message, supporting pure text, multimodal (mixed input of text, images,
+
+    files), cards, and various types of content.
+
+    :param content_type: The type of message content.
+
+    :param meta_data:
+
+    :return: The detailed information of specified message.'
+  cozepy.conversations.message._PrivateListMessageResp.get_first_id: ''
+  cozepy.conversations.message._PrivateListMessageResp.get_has_more: ''
+  cozepy.conversations.message._PrivateListMessageResp.get_items: ''
+  cozepy.conversations.message._PrivateListMessageResp.get_last_id: ''
+  cozepy.conversations.message.feedback.AsyncMessagesFeedbackClient.__init__: ''
+  cozepy.conversations.message.feedback.AsyncMessagesFeedbackClient.create: ''
+  cozepy.conversations.message.feedback.AsyncMessagesFeedbackClient.delete: ''
+  cozepy.conversations.message.feedback.ConversationsMessagesFeedbackClient.__init__: ''
+  cozepy.conversations.message.feedback.ConversationsMessagesFeedbackClient.create: ''
+  cozepy.conversations.message.feedback.ConversationsMessagesFeedbackClient.delete: ''
+  cozepy.datasets.AsyncDatasetsClient.__init__: ''
+  cozepy.datasets.AsyncDatasetsClient.create: 'Create Dataset
+
+
+    :param name: The name of the dataset
+
+    :param space_id: The ID of the space that the dataset belongs to
+
+    :param format_type: The format type of the dataset, 0: text, 2: image
+
+    :param description: The description of the dataset
+
+    :param icon_file_id: The ID of the icon file, uploaded by `coze.files.upload`'
+  cozepy.datasets.AsyncDatasetsClient.delete: 'Delete Dataset
+
+    The workspace administrator can delete all knowledge bases in the team, while other members can only delete knowledge bases they own.
+
+    When deleting a knowledge base, all files uploaded to the knowledge base will be deleted simultaneously, and any agents bound to this knowledge base will be automatically unbound.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/delete_dataset
+
+    docs zh: https://www.coze.cn/docs/developer_guides/delete_dataset
+
+
+    :param dataset_id: The ID of the dataset'
+  cozepy.datasets.AsyncDatasetsClient.documents: ''
+  cozepy.datasets.AsyncDatasetsClient.images: ''
+  cozepy.datasets.AsyncDatasetsClient.list: 'List Datasets
+
+
+    docs en: https://www.coze.com/docs/developer_guides/list_dataset
+
+    docs zh: https://www.coze.cn/docs/developer_guides/list_dataset
+
+
+    :param space_id: The ID of the space that the dataset belongs to
+
+    :param name: The name of the dataset, supports fuzzy search
+
+    :param format_type: The format type of the dataset, 0: text, 1: table, 2: image
+
+    :param page_num: The page number. The minimum value is 1, and the default is 1.
+
+    :param page_size: The page size. The value range is 1~300, and the default is 10.'
+  cozepy.datasets.AsyncDatasetsClient.process: 'Check the upload progress
+
+    Call this API to get the upload progress of knowledge base files.
+
+    This API supports viewing the upload progress of all types of knowledge base files, such as text, images, and tables.
+
+    It supports batch viewing of multiple files'' progress, but the files must be located in the same knowledge base.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/get_dataset_progress
+
+    docs zh: https://www.coze.cn/docs/developer_guides/get_dataset_progress
+
+
+    :param dataset_id: The ID of the dataset
+
+    :param document_ids: The IDs of the documents'
+  cozepy.datasets.AsyncDatasetsClient.update: 'Update Dataset
+
+    This API will fully refresh the knowledge base''s name, file_id, and description settings. If these parameters are not set, they will revert to default settings.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/update_dataset
+
+    docs zh: https://www.coze.cn/docs/developer_guides/update_dataset
+
+
+    :param dataset_id: The ID of the dataset
+
+    :param name: The name of the dataset
+
+    :param description: The description of the dataset
+
+    :param icon_file_id: The ID of the icon file, uploaded by `coze.files.upload`'
+  cozepy.datasets.DatasetsClient.__init__: ''
+  cozepy.datasets.DatasetsClient.create: 'Create Dataset
+
+
+    docs en: https://www.coze.com/docs/developer_guides/create_dataset
+
+    docs zh: https://www.coze.cn/docs/developer_guides/create_dataset
+
+
+    :param name: The name of the dataset
+
+    :param space_id: The ID of the space that the dataset belongs to
+
+    :param format_type: The format type of the dataset, 0: text, 2: image
+
+    :param description: The description of the dataset
+
+    :param icon_file_id: The ID of the icon file, uploaded by `coze.files.upload`'
+  cozepy.datasets.DatasetsClient.delete: 'Delete Dataset
+
+    The workspace administrator can delete all knowledge bases in the team, while other members can only delete knowledge bases they own.
+
+    When deleting a knowledge base, all files uploaded to the knowledge base will be deleted simultaneously, and any agents bound to this knowledge base will be automatically unbound.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/delete_dataset
+
+    docs zh: https://www.coze.cn/docs/developer_guides/delete_dataset
+
+
+    :param dataset_id: The ID of the dataset'
+  cozepy.datasets.DatasetsClient.documents: ''
+  cozepy.datasets.DatasetsClient.images: ''
+  cozepy.datasets.DatasetsClient.list: 'List Datasets
+
+
+    docs en: https://www.coze.com/docs/developer_guides/list_dataset
+
+    docs zh: https://www.coze.cn/docs/developer_guides/list_dataset
+
+
+    :param space_id: The ID of the space that the dataset belongs to
+
+    :param name: The name of the dataset, supports fuzzy search
+
+    :param format_type: The format type of the dataset, 0: text, 1: table, 2: image
+
+    :param page_num: The page number. The minimum value is 1, and the default is 1.
+
+    :param page_size: The page size. The value range is 1~300, and the default is 10.'
+  cozepy.datasets.DatasetsClient.process: 'Check the upload progress
+
+    Call this API to get the upload progress of knowledge base files.
+
+    This API supports viewing the upload progress of all types of knowledge base files, such as text, images, and tables.
+
+    It supports batch viewing of multiple files'' progress, but the files must be located in the same knowledge base.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/get_dataset_progress
+
+    docs zh: https://www.coze.cn/docs/developer_guides/get_dataset_progress
+
+
+    :param dataset_id: The ID of the dataset
+
+    :param document_ids: The IDs of the documents'
+  cozepy.datasets.DatasetsClient.update: 'Update Dataset
+
+    This API will fully refresh the knowledge base''s name, file_id, and description settings. If these parameters are not set, they will revert to default settings.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/update_dataset
+
+    docs zh: https://www.coze.cn/docs/developer_guides/update_dataset
+
+
+    :param dataset_id: The ID of the dataset
+
+    :param name: The name of the dataset
+
+    :param description: The description of the dataset
+
+    :param icon_file_id: The ID of the icon file, uploaded by `coze.files.upload`'
+  cozepy.datasets._PrivateListDatasetsData.get_has_more: ''
+  cozepy.datasets._PrivateListDatasetsData.get_items: ''
+  cozepy.datasets._PrivateListDatasetsData.get_total: ''
+  cozepy.datasets.images.AsyncDatasetsImagesClient.__init__: ''
+  cozepy.datasets.images.AsyncDatasetsImagesClient.list: 'Call this API to view detailed information of images in the image knowledge base.
+
+    When viewing images, it is supported to filter through image annotations.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/get_images
+
+    docs zh: https://www.coze.cn/docs/developer_guides/get_images
+
+
+    :param dataset_id: The ID of the knowledge base.
+
+    :param keyword: The keyword to filter images.
+
+    :param has_caption: Whether the image has a caption.
+
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+
+    first page.
+
+    :param page_size: The size of pagination. Default is 10, meaning that 10 data entries are returned per page. The value range is 1~299, with a default of 10.'
+  cozepy.datasets.images.AsyncDatasetsImagesClient.update: 'Call this API to update the description of images in the knowledge base.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/update_image_caption
+
+    docs zh: https://www.coze.cn/docs/developer_guides/update_image_caption
+
+
+    :param dataset_id: The ID of the knowledge base.
+
+    :param document_id: The ID of the image.
+
+    :param caption: The description of the image.
+
+    :return: None'
+  cozepy.datasets.images.DatasetsImagesClient.__init__: ''
+  cozepy.datasets.images.DatasetsImagesClient.list: 'Call this API to view detailed information of images in the image knowledge base.
+
+    When viewing images, it is supported to filter through image annotations.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/get_images
+
+    docs zh: https://www.coze.cn/docs/developer_guides/get_images
+
+
+    :param dataset_id: The ID of the knowledge base.
+
+    :param keyword: The keyword to filter images.
+
+    :param has_caption: Whether the image has a caption.
+
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+
+    first page.
+
+    :param page_size: The size of pagination. Default is 10, meaning that 10 data entries are returned per page. The value range is 1~299, with a default of 10.'
+  cozepy.datasets.images.DatasetsImagesClient.update: 'Call this API to update the description of images in the knowledge base.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/update_image_caption
+
+    docs zh: https://www.coze.cn/docs/developer_guides/update_image_caption
+
+
+    :param dataset_id: The ID of the knowledge base.
+
+    :param document_id: The ID of the image.
+
+    :param caption: The description of the image.
+
+    :return: None'
+  cozepy.datasets.images._PrivateListPhotosData.get_has_more: ''
+  cozepy.datasets.images._PrivateListPhotosData.get_items: ''
+  cozepy.datasets.images._PrivateListPhotosData.get_total: ''
+  cozepy.enterprises.AsyncEnterprisesClient.__init__: ''
+  cozepy.enterprises.AsyncEnterprisesClient.members: ''
+  cozepy.enterprises.EnterprisesClient.__init__: ''
+  cozepy.enterprises.EnterprisesClient.members: ''
+  cozepy.enterprises.members.AsyncEnterprisesMembersClient.__init__: ''
+  cozepy.enterprises.members.AsyncEnterprisesMembersClient.create: ''
+  cozepy.enterprises.members.AsyncEnterprisesMembersClient.delete: ''
+  cozepy.enterprises.members.AsyncEnterprisesMembersClient.update: ''
+  cozepy.enterprises.members.EnterprisesMembersClient.__init__: ''
+  cozepy.enterprises.members.EnterprisesMembersClient.create: ''
+  cozepy.enterprises.members.EnterprisesMembersClient.delete: ''
+  cozepy.enterprises.members.EnterprisesMembersClient.update: ''
+  cozepy.files.AsyncFilesClient.__init__: ''
+  cozepy.files.AsyncFilesClient.retrieve: 'Get the information of the specific file uploaded to Coze platform.
+
+
+    查看已上传的文件详情。
+
+
+    docs en: https://www.coze.com/docs/developer_guides/retrieve_files
+
+    docs cn: https://www.coze.cn/docs/developer_guides/retrieve_files
+
+
+    :param file_id: file id
+
+    :return: file info'
+  cozepy.files.AsyncFilesClient.upload: 'Upload files to Coze platform.
+
+
+    Local files cannot be used directly in messages. Before creating messages or conversations,
+
+    you need to call this interface to upload local files to the platform first.
+
+    After uploading the file, you can use it directly in multimodal content in messages
+
+    by specifying the file_id.
+
+
+    调用接口上传文件到扣子。
+
+
+    docs en: https://www.coze.com/docs/developer_guides/upload_files
+
+    docs zh: https://www.coze.cn/docs/developer_guides/upload_files
+
+
+    :param file: local file path
+
+    :return: file info'
+  cozepy.files.FilesClient.__init__: ''
+  cozepy.files.FilesClient.retrieve: 'Get the information of the specific file uploaded to Coze platform.
+
+
+    查看已上传的文件详情。
+
+
+    docs en: https://www.coze.com/docs/developer_guides/retrieve_files
+
+    docs cn: https://www.coze.cn/docs/developer_guides/retrieve_files
+
+
+    :param file_id: file id
+
+    :return: file info'
+  cozepy.files.FilesClient.upload: 'Upload files to Coze platform.
+
+
+    Local files cannot be used directly in messages. Before creating messages or conversations,
+
+    you need to call this interface to upload local files to the platform first.
+
+    After uploading the file, you can use it directly in multimodal content in messages
+
+    by specifying the file_id.
+
+
+    调用接口上传文件到扣子。
+
+
+    docs en: https://www.coze.com/docs/developer_guides/upload_files
+
+    docs zh: https://www.coze.cn/docs/developer_guides/upload_files
+
+
+    :param file: local file path
+
+    :return: file info'
+  cozepy.folders.AsyncFoldersClient.__init__: ''
+  cozepy.folders.AsyncFoldersClient.list: ''
+  cozepy.folders.AsyncFoldersClient.retrieve: ''
+  cozepy.folders.FoldersClient.__init__: ''
+  cozepy.folders.FoldersClient.list: ''
+  cozepy.folders.FoldersClient.retrieve: ''
+  cozepy.folders._PrivateListFoldersData.get_has_more: ''
+  cozepy.folders._PrivateListFoldersData.get_items: ''
+  cozepy.folders._PrivateListFoldersData.get_total: ''
+  cozepy.knowledge.AsyncKnowledgeClient.__init__: ''
+  cozepy.knowledge.AsyncKnowledgeClient.documents: ''
+  cozepy.knowledge.KnowledgeClient.__init__: ''
+  cozepy.knowledge.KnowledgeClient.documents: ''
+  cozepy.model.AsyncIteratorHTTPResponse.__init__: ''
+  cozepy.model.AsyncLastIDPaged.__aiter__: ''
+  cozepy.model.AsyncLastIDPaged.__init__: ''
+  cozepy.model.AsyncLastIDPaged._check_has_more: ''
+  cozepy.model.AsyncLastIDPaged._fetch_page: ''
+  cozepy.model.AsyncLastIDPaged.build: ''
+  cozepy.model.AsyncLastIDPaged.has_more: ''
+  cozepy.model.AsyncLastIDPaged.items: ''
+  cozepy.model.AsyncLastIDPaged.iter_pages: ''
+  cozepy.model.AsyncLastIDPaged.response: ''
+  cozepy.model.AsyncNumberPaged.__aiter__: ''
+  cozepy.model.AsyncNumberPaged.__init__: ''
+  cozepy.model.AsyncNumberPaged._fetch_page: ':rtype: object'
+  cozepy.model.AsyncNumberPaged._is_page_has_more: ''
+  cozepy.model.AsyncNumberPaged.build: ''
+  cozepy.model.AsyncNumberPaged.has_more: ''
+  cozepy.model.AsyncNumberPaged.items: ''
+  cozepy.model.AsyncNumberPaged.iter_pages: ''
+  cozepy.model.AsyncNumberPaged.response: ''
+  cozepy.model.AsyncNumberPaged.total: ''
+  cozepy.model.AsyncPagedBase.has_more: ''
+  cozepy.model.AsyncPagedBase.items: ''
+  cozepy.model.AsyncPagedBase.iter_pages: ''
+  cozepy.model.AsyncPagedBase.response: ''
+  cozepy.model.AsyncStream.__aiter__: ''
+  cozepy.model.AsyncStream.__anext__: ''
+  cozepy.model.AsyncStream.__init__: ''
+  cozepy.model.AsyncStream.__stream__: ''
+  cozepy.model.AsyncStream._extra_field_data: ''
+  cozepy.model.AsyncStream._make_data: ''
+  cozepy.model.AsyncStream.response: ''
+  cozepy.model.AsyncTokenPaged.__aiter__: ''
+  cozepy.model.AsyncTokenPaged.__init__: ''
+  cozepy.model.AsyncTokenPaged._fetch_page: ':rtype: object'
+  cozepy.model.AsyncTokenPaged._is_page_has_more: ''
+  cozepy.model.AsyncTokenPaged.build: ''
+  cozepy.model.AsyncTokenPaged.has_more: ''
+  cozepy.model.AsyncTokenPaged.items: ''
+  cozepy.model.AsyncTokenPaged.iter_pages: ''
+  cozepy.model.AsyncTokenPaged.response: ''
+  cozepy.model.AsyncTokenPaged.total: ''
+  cozepy.model.CozeModel.response: ''
+  cozepy.model.DynamicStrEnum._missing_: ''
+  cozepy.model.DynamicStrEnum.is_dynamic: 检查此枚举成员是否为动态创建的
+  cozepy.model.FileHTTPResponse.__init__: ''
+  cozepy.model.FileHTTPResponse.response: ''
+  cozepy.model.FileHTTPResponse.write_to_file: ''
+  cozepy.model.HTTPRequest.as_httpx: ''
+  cozepy.model.HTTPResponse.__init__: ''
+  cozepy.model.HTTPResponse.logid: ''
+  cozepy.model.IteratorHTTPResponse.__init__: ''
+  cozepy.model.LastIDPaged.__init__: ''
+  cozepy.model.LastIDPaged.__iter__: ''
+  cozepy.model.LastIDPaged._check_has_more: ''
+  cozepy.model.LastIDPaged._fetch_page: ''
+  cozepy.model.LastIDPaged.has_more: ''
+  cozepy.model.LastIDPaged.items: ''
+  cozepy.model.LastIDPaged.iter_pages: ''
+  cozepy.model.LastIDPaged.response: ''
+  cozepy.model.LastIDPagedResponse.get_first_id: ''
+  cozepy.model.LastIDPagedResponse.get_has_more: ''
+  cozepy.model.LastIDPagedResponse.get_items: ''
+  cozepy.model.LastIDPagedResponse.get_last_id: ''
+  cozepy.model.ListResponse.__contains__: ''
+  cozepy.model.ListResponse.__delitem__: ''
+  cozepy.model.ListResponse.__getitem__: ''
+  cozepy.model.ListResponse.__init__: ''
+  cozepy.model.ListResponse.__iter__: ''
+  cozepy.model.ListResponse.__len__: ''
+  cozepy.model.ListResponse.__reversed__: ''
+  cozepy.model.ListResponse.__setitem__: ''
+  cozepy.model.ListResponse.response: ''
+  cozepy.model.NumberPaged.__init__: ''
+  cozepy.model.NumberPaged.__iter__: ''
+  cozepy.model.NumberPaged._fetch_page: ''
+  cozepy.model.NumberPaged._is_page_has_more: ''
+  cozepy.model.NumberPaged.has_more: ''
+  cozepy.model.NumberPaged.items: ''
+  cozepy.model.NumberPaged.iter_pages: ''
+  cozepy.model.NumberPaged.response: ''
+  cozepy.model.NumberPaged.total: ''
+  cozepy.model.NumberPagedResponse.get_has_more: ''
+  cozepy.model.NumberPagedResponse.get_items: ''
+  cozepy.model.NumberPagedResponse.get_total: ''
+  cozepy.model.NumberPagedResponse.response: ''
+  cozepy.model.PagedBase.has_more: ''
+  cozepy.model.PagedBase.items: ''
+  cozepy.model.PagedBase.iter_pages: ''
+  cozepy.model.PagedBase.response: ''
+  cozepy.model.Stream.__init__: ''
+  cozepy.model.Stream.__iter__: ''
+  cozepy.model.Stream.__next__: ''
+  cozepy.model.Stream._extra_event: ''
+  cozepy.model.Stream._extra_field_data: ''
+  cozepy.model.Stream.response: ''
+  cozepy.model.TokenPaged.__init__: ''
+  cozepy.model.TokenPaged.__iter__: ''
+  cozepy.model.TokenPaged._fetch_page: ''
+  cozepy.model.TokenPaged._is_page_has_more: ''
+  cozepy.model.TokenPaged.has_more: ''
+  cozepy.model.TokenPaged.items: ''
+  cozepy.model.TokenPaged.iter_pages: ''
+  cozepy.model.TokenPaged.response: ''
+  cozepy.model.TokenPaged.total: ''
+  cozepy.model.TokenPagedResponse.get_has_more: ''
+  cozepy.model.TokenPagedResponse.get_items: ''
+  cozepy.model.TokenPagedResponse.get_next_page_token: ''
+  cozepy.model.TokenPagedResponse.response: ''
+  cozepy.request.AsyncHTTPClient.__init__: ''
+  cozepy.request.Requester.__init__: ''
+  cozepy.request.Requester._aparse_requests_code_msg: ''
+  cozepy.request.Requester._aparse_response: ''
+  cozepy.request.Requester._format_requests_code_msg: ''
+  cozepy.request.Requester._parse_requests_code_msg: ''
+  cozepy.request.Requester._parse_response: ''
+  cozepy.request.Requester.amake_request: ''
+  cozepy.request.Requester.arequest: ''
+  cozepy.request.Requester.asend: ''
+  cozepy.request.Requester.async_auth_header: ''
+  cozepy.request.Requester.async_client: ''
+  cozepy.request.Requester.auth_header: ''
+  cozepy.request.Requester.make_request: ''
+  cozepy.request.Requester.request: ''
+  cozepy.request.Requester.send: ''
+  cozepy.request.Requester.sync_client: ''
+  cozepy.request.SyncHTTPClient.__init__: ''
+  cozepy.templates.AsyncTemplatesClient.__init__: ''
+  cozepy.templates.AsyncTemplatesClient.duplicate: ''
+  cozepy.templates.TemplatesClient.__init__: ''
+  cozepy.templates.TemplatesClient.duplicate: ''
+  cozepy.users.AsyncUsersClient.__init__: ''
+  cozepy.users.AsyncUsersClient.me: ''
+  cozepy.users.UsersClient.__init__: ''
+  cozepy.users.UsersClient.me: ''
+  cozepy.variables.AsyncVariablesClient.__init__: ''
+  cozepy.variables.AsyncVariablesClient.retrieve: ''
+  cozepy.variables.AsyncVariablesClient.update: ''
+  cozepy.variables.VariablesClient.__init__: ''
+  cozepy.variables.VariablesClient.retrieve: ''
+  cozepy.variables.VariablesClient.update: ''
+  cozepy.workflows.AsyncWorkflowsClient.__init__: ''
+  cozepy.workflows.AsyncWorkflowsClient.chat: ''
+  cozepy.workflows.AsyncWorkflowsClient.list: ''
+  cozepy.workflows.AsyncWorkflowsClient.retrieve: '获取工作流详细信息。
+
+
+    通过此接口可以获取指定工作流的完整配置和元数据信息。
+
+
+    docs cn: https://www.coze.cn/docs/developer_guides/get_workflow_info
+
+
+    :param workflow_id: 工作流ID
+
+    :return: 返回工作流的详细信息'
+  cozepy.workflows.AsyncWorkflowsClient.runs: ''
+  cozepy.workflows.AsyncWorkflowsClient.versions: ''
+  cozepy.workflows.WorkflowsClient.__init__: ''
+  cozepy.workflows.WorkflowsClient.chat: ''
+  cozepy.workflows.WorkflowsClient.list: ''
+  cozepy.workflows.WorkflowsClient.retrieve: '获取工作流详细信息。
+
+
+    通过此接口可以获取指定工作流的完整配置和元数据信息。
+
+
+    docs cn: https://www.coze.cn/docs/developer_guides/get_workflow_info
+
+
+    :param workflow_id: 工作流ID
+
+    :return: 返回工作流的详细信息'
+  cozepy.workflows.WorkflowsClient.runs: ''
+  cozepy.workflows.WorkflowsClient.versions: ''
+  cozepy.workflows._PrivateListWorkflowData.get_has_more: ''
+  cozepy.workflows._PrivateListWorkflowData.get_items: ''
+  cozepy.workflows._PrivateListWorkflowData.get_total: ''
+  cozepy.workflows.chat.AsyncWorkflowsChatClient.__init__: ''
+  cozepy.workflows.chat.AsyncWorkflowsChatClient._create: ''
+  cozepy.workflows.chat.AsyncWorkflowsChatClient.stream: 'Call the Chat API with streaming to send messages to a published Coze bot.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/workflow_chat
+
+    docs zh: https://www.coze.cn/docs/developer_guides/workflow_chat
+
+
+    :param workflow_id: The ID of the workflow that the API interacts with.
+
+    :param additional_messages: Additional information for the conversation. You can pass the user''s query for this
+
+    conversation through this field. The array length is limited to 50, meaning up to 50 messages can be input.
+
+    :param parameters: The parameters for the workflow.
+
+    :param app_id: The ID of the app that the API interacts with.
+
+    :param bot_id: The ID of the bot that the API interacts with.
+
+    :param conversation_id: Indicate which conversation the chat is taking place in.
+
+    :param ext: The extended information for the workflow.
+
+    :return: iterator of ChatEvent'
+  cozepy.workflows.chat.WorkflowsChatClient.__init__: ''
+  cozepy.workflows.chat.WorkflowsChatClient._create: ''
+  cozepy.workflows.chat.WorkflowsChatClient.stream: 'Call the Chat API with streaming to send messages to a published Coze bot.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/workflow_chat
+
+    docs zh: https://www.coze.cn/docs/developer_guides/workflow_chat
+
+
+    :param workflow_id: The ID of the workflow that the API interacts with.
+
+    :param additional_messages: Additional information for the conversation. You can pass the user''s query for this
+
+    conversation through this field. The array length is limited to 50, meaning up to 50 messages can be input.
+
+    :param parameters: The parameters for the workflow.
+
+    :param app_id: The ID of the app that the API interacts with.
+
+    :param bot_id: The ID of the bot that the API interacts with.
+
+    :param conversation_id: Indicate which conversation the chat is taking place in.
+
+    :param ext: The extended information for the workflow.
+
+    :return: iterator of ChatEvent'
+  cozepy.workflows.runs.AsyncWorkflowsRunsClient.__init__: ''
+  cozepy.workflows.runs.AsyncWorkflowsRunsClient.create: 'Run the published workflow.
+
+    This API is in non-streaming response mode. For nodes that support streaming output,
+
+    you should run the API Run workflow (streaming response) to obtain streaming responses.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/workflow_run
+
+    docs cn: https://www.coze.cn/docs/developer_guides/workflow_run
+
+
+    :param workflow_id: The ID of the workflow, which should have been published.
+
+    :param parameters: Input parameters and their values for the starting node of the workflow. You can view the
+
+    list of parameters on the arrangement page of the specified workflow.
+
+    :param bot_id: The associated Bot ID required for some workflow executions,
+
+    such as workflows with database nodes, variable nodes, etc.
+
+    :param app_id: The app_id is required for some workflow executions,
+
+    :param is_async: Whether to run asynchronously.
+
+    :param ext: Used to specify some additional fields in the format of Map[String][String].
+
+    :return: The result of the workflow execution'
+  cozepy.workflows.runs.AsyncWorkflowsRunsClient.resume: 'docs zh: https://www.coze.cn/docs/developer_guides/workflow_resume
+
+
+    :param workflow_id: The ID of the workflow, which should have been published.
+
+    :param event_id:
+
+    :param resume_data:
+
+    :param interrupt_type:
+
+    :return: The result of the workflow execution'
+  cozepy.workflows.runs.AsyncWorkflowsRunsClient.run_histories: ''
+  cozepy.workflows.runs.AsyncWorkflowsRunsClient.stream: 'Execute the published workflow with a streaming response method.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/workflow_stream_run
+
+    docs zh: https://www.coze.cn/docs/developer_guides/workflow_stream_run
+
+
+    :param workflow_id: The ID of the workflow, which should have been published.
+
+    :param parameters: Input parameters and their values for the starting node of the workflow. You can view the
+
+    list of parameters on the arrangement page of the specified workflow.
+
+    :param bot_id: The associated Bot ID required for some workflow executions,
+
+    such as workflows with database nodes, variable nodes, etc.
+
+    :param app_id: The app_id is required for some workflow executions,
+
+    :param ext: Used to specify some additional fields in the format of Map[String][String].
+
+    :return: The result of the workflow execution'
+  cozepy.workflows.runs.WorkflowsRunsClient.__init__: ''
+  cozepy.workflows.runs.WorkflowsRunsClient.create: 'Run the published workflow.
+
+    This API is in non-streaming response mode. For nodes that support streaming output,
+
+    you should run the API Run workflow (streaming response) to obtain streaming responses.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/workflow_run
+
+    docs cn: https://www.coze.cn/docs/developer_guides/workflow_run
+
+
+    :param workflow_id: The ID of the workflow, which should have been published.
+
+    :param parameters: Input parameters and their values for the starting node of the workflow. You can view the
+
+    list of parameters on the arrangement page of the specified workflow.
+
+    :param bot_id: The associated Bot ID required for some workflow executions,
+
+    such as workflows with database nodes, variable nodes, etc.
+
+    :param app_id: The app_id is required for some workflow executions,
+
+    :param is_async: Whether to run asynchronously.
+
+    :param ext: Used to specify some additional fields in the format of Map[String][String].
+
+    :return: The result of the workflow execution'
+  cozepy.workflows.runs.WorkflowsRunsClient.resume: 'docs zh: https://www.coze.cn/docs/developer_guides/workflow_resume
+
+
+    :param workflow_id: The ID of the workflow, which should have been published.
+
+    :param event_id:
+
+    :param resume_data:
+
+    :param interrupt_type:
+
+    :return: The result of the workflow execution'
+  cozepy.workflows.runs.WorkflowsRunsClient.run_histories: ''
+  cozepy.workflows.runs.WorkflowsRunsClient.stream: 'Execute the published workflow with a streaming response method.
+
+
+    docs en: https://www.coze.com/docs/developer_guides/workflow_stream_run
+
+    docs zh: https://www.coze.cn/docs/developer_guides/workflow_stream_run
+
+
+    :param workflow_id: The ID of the workflow, which should have been published.
+
+    :param parameters: Input parameters and their values for the starting node of the workflow. You can view the
+
+    list of parameters on the arrangement page of the specified workflow.
+
+    :param bot_id: The associated Bot ID required for some workflow executions,
+
+    such as workflows with database nodes, variable nodes, etc.
+
+    :param app_id: The app_id is required for some workflow executions,
+
+    :param ext: Used to specify some additional fields in the format of Map[String][String].
+
+    :return: The result of the workflow execution'
+  cozepy.workflows.runs.run_histories.AsyncWorkflowsRunsRunHistoriesClient.__init__: ''
+  cozepy.workflows.runs.run_histories.AsyncWorkflowsRunsRunHistoriesClient.execute_nodes: ''
+  cozepy.workflows.runs.run_histories.AsyncWorkflowsRunsRunHistoriesClient.retrieve: 'After the workflow runs async, retrieve the execution results.
+
+
+    docs cn: https://www.coze.cn/docs/developer_guides/workflow_history
+
+
+    :param workflow_id: The ID of the workflow.
+
+    :param execute_id: The ID of the workflow async execute.
+
+    :return: The result of the workflow execution'
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.error_code_empty_str_to_zero: ''
+  cozepy.workflows.runs.run_histories.WorkflowsRunsRunHistoriesClient.__init__: ''
+  cozepy.workflows.runs.run_histories.WorkflowsRunsRunHistoriesClient.execute_nodes: ''
+  cozepy.workflows.runs.run_histories.WorkflowsRunsRunHistoriesClient.retrieve: 'After the workflow runs async, retrieve the execution results.
+
+
+    docs cn: https://www.coze.cn/docs/developer_guides/workflow_history
+
+
+    :param workflow_id: The ID of the workflow.
+
+    :param execute_id: The ID of the workflow async execute.
+
+    :return: The result of the workflow execution'
+  cozepy.workflows.runs.run_histories.execute_nodes.AsyncWorkflowsRunsRunHistoriesExecuteNodesClient.__init__: ''
+  cozepy.workflows.runs.run_histories.execute_nodes.AsyncWorkflowsRunsRunHistoriesExecuteNodesClient.retrieve: '查询工作流节点的运行结果
+
+
+    :param workflow_id: 工作流 ID。
+
+    :param execute_id: 工作流执行 ID。
+
+    :param node_execute_uuid: 工作流异步运行结果 API 中返回的节点执行 uuid。'
+  cozepy.workflows.runs.run_histories.execute_nodes.WorkflowsRunsRunHistoriesExecuteNodesClient.__init__: ''
+  cozepy.workflows.runs.run_histories.execute_nodes.WorkflowsRunsRunHistoriesExecuteNodesClient.retrieve: '查询工作流节点的运行结果
+
+
+    :param workflow_id: 工作流 ID。
+
+    :param execute_id: 工作流执行 ID。
+
+    :param node_execute_uuid: 工作流异步运行结果 API 中返回的节点执行 uuid。'
+  cozepy.workflows.versions.AsyncWorkflowsVersionsClient.__init__: ''
+  cozepy.workflows.versions.AsyncWorkflowsVersionsClient.list: '查询工作流版本列表。
+
+
+    通过此接口可以查询指定工作流下的所有版本信息。
+
+
+    docs cn: https://www.coze.cn/docs/developer_guides/list_workflow_version
+
+
+    :param workflow_id: 工作流ID
+
+    :param publish_status: 发布状态，支持 all(全部)、published_online(已发布，默认)、unpublished_draft(未发布)
+
+    :param page_size: 每页返回的版本数量，取值范围为 1~30，默认为 10
+
+    :param page_token: 分页标记，获取下一页时传入上一页返回的 next_page_token 值
+
+    :param kwargs: 额外参数，支持 headers 等
+
+    :return: 返回工作流版本信息的分页列表'
+  cozepy.workflows.versions.WorkflowsVersionsClient.__init__: ''
+  cozepy.workflows.versions.WorkflowsVersionsClient.list: '查询工作流版本列表。
+
+
+    通过此接口可以查询指定工作流下的所有版本信息。
+
+
+    docs cn: https://www.coze.cn/docs/developer_guides/list_workflow_version
+
+
+    :param workflow_id: 工作流ID
+
+    :param publish_status: 发布状态，支持 all(全部)、published_online(已发布，默认)、unpublished_draft(未发布)
+
+    :param page_size: 每页返回的版本数量，取值范围为 1~30，默认为 10
+
+    :param page_token: 分页标记，获取下一页时传入上一页返回的 next_page_token 值
+
+    :param kwargs: 额外参数，支持 headers 等
+
+    :return: 返回工作流版本信息的分页列表'
+  cozepy.workflows.versions._PrivateListWorkflowVersionData.get_has_more: ''
+  cozepy.workflows.versions._PrivateListWorkflowVersionData.get_items: ''
+  cozepy.workflows.versions._PrivateListWorkflowVersionData.get_next_page_token: ''
+  cozepy.workspaces.AsyncWorkspacesClient.__init__: ''
+  cozepy.workspaces.AsyncWorkspacesClient.list: ''
+  cozepy.workspaces.AsyncWorkspacesClient.members: ''
+  cozepy.workspaces.WorkspacesClient.__init__: ''
+  cozepy.workspaces.WorkspacesClient.list: ''
+  cozepy.workspaces.WorkspacesClient.members: ''
+  cozepy.workspaces._PrivateListWorkspacesData.get_has_more: ''
+  cozepy.workspaces._PrivateListWorkspacesData.get_items: ''
+  cozepy.workspaces._PrivateListWorkspacesData.get_total: ''
+  cozepy.workspaces.members.AsyncWorkspacesMembersClient.__init__: ''
+  cozepy.workspaces.members.AsyncWorkspacesMembersClient.create: '批量邀请用户加入空间
+
+
+    :param workspace_id: 需要添加用户的空间 ID。
+
+    :param users: 要添加的成员列表，单次最多添加 20 个成员。'
+  cozepy.workspaces.members.AsyncWorkspacesMembersClient.delete: '"批量移除空间中的用户
+
+
+    :param workspace_id: 需要移除用户的空间 ID。
+
+    :param user_ids: 要移除的成员，单次最多移除 5 个成员。'
+  cozepy.workspaces.members.AsyncWorkspacesMembersClient.list: '查看空间成员列表
+
+
+    :param workspace_id: 需要查看成员列表的空间 ID。
+
+    :param page_num: 分页查询时的页码。最小值为 1，默认为 1，即从第一页数据开始返回。
+
+    :param page_size: 分页大小。取值范围为 1~50，默认为 20。
+
+    :return: 空间成员列表。'
+  cozepy.workspaces.members.WorkspacesMembersClient.__init__: ''
+  cozepy.workspaces.members.WorkspacesMembersClient.create: '批量邀请用户加入空间
+
+
+    :param workspace_id: 需要添加用户的空间 ID。
+
+    :param users: 要添加的成员列表，单次最多添加 20 个成员。'
+  cozepy.workspaces.members.WorkspacesMembersClient.delete: '"批量移除空间中的用户
+
+
+    :param workspace_id: 需要移除用户的空间 ID。
+
+    :param user_ids: 要移除的成员，单次最多移除 5 个成员。'
+  cozepy.workspaces.members.WorkspacesMembersClient.list: '查看空间成员列表
+
+
+    :param workspace_id: 需要查看成员列表的空间 ID。
+
+    :param page_num: 分页查询时的页码。最小值为 1，默认为 1，即从第一页数据开始返回。
+
+    :param page_size: 分页大小。取值范围为 1~50，默认为 20。
+
+    :return: 空间成员列表。'
+  cozepy.connectors.bots.ConnectorsBotsClient.update: |-
+    更新Bot渠道审核结果
+
+    通过此接口可以更新指定Bot在特定渠道的审核结果，包括通过或拒绝审核。
+
+    docs: https://www.coze.cn/open/docs/developer_guides/update_review_result
+
+    :param bot_id: Bot ID
+    :param connector_id: 渠道ID
+    :param audit_status: 审核结果状态，可选值：AuditStatus.PENDING（1-审核中）、AuditStatus.APPROVED（2-审核通过）、AuditStatus.REJECTED（3-审核不通过）
+    :param reason: 审核意见，当audit_status为3（审核不通过）时必填
+    :return: 返回更新审核结果后的响应信息
+  cozepy.connectors.bots.AsyncConnectorsBotsClient.update: |-
+    异步更新Bot渠道审核结果
+
+    通过此接口可以异步更新指定Bot在特定渠道的审核结果，包括通过或拒绝审核。
+
+    :param bot_id: Bot ID
+    :param connector_id: 渠道ID
+    :param audit_status: 审核结果状态，可选值：AuditStatus.PENDING（1-审核中）、AuditStatus.APPROVED（2-审核通过）、AuditStatus.REJECTED（3-审核不通过）
+    :param reason: 审核意见，当audit_status为3（审核不通过）时必填
+    :return: 返回更新审核结果后的响应信息
+  cozepy.datasets.documents.DatasetsDocumentsClient.create: |-
+    Upload files to the specific knowledge.
+
+    docs en: https://www.coze.com/docs/developer_guides/create_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/create_knowledge_files
+
+    :param dataset_id: The ID of the knowledge base.
+    :param document_bases: The metadata information of the files awaiting upload. The array has a maximum length of
+    10, meaning up to 10 files can be uploaded at a time. For detailed instructions, refer to the DocumentBase
+    object.
+    :param chunk_strategy: Chunk strategy. These rules must be set only when uploading a file to a new knowledge
+    for the first time. For subsequent file uploads to this knowledge, it is not necessary to pass these rules; the
+    default is to continue using the initial settings, and modifications are not supported.
+    For detailed instructions, refer to the ChunkStrategy object.
+    :return: list of Document
+  cozepy.datasets.documents.DatasetsDocumentsClient.update: |-
+    Modify the knowledge base file name and update strategy.
+
+    docs en: https://www.coze.com/docs/developer_guides/modify_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/modify_knowledge_files
+
+    :param document_id: The ID of the knowledge base file.
+    :param document_name: The new name of the knowledge base file.
+    :param update_rule: The update strategy for online web pages. Defaults to no automatic updates.
+    For detailed information, refer to the UpdateRule object.
+    :return: None
+  cozepy.datasets.documents.DatasetsDocumentsClient.delete: |-
+    Delete text, images, sheets, and other files in the knowledge base, supporting batch deletion.
+
+    docs en: https://www.coze.com/docs/developer_guides/delete_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/delete_knowledge_files
+
+    :param document_ids: The list of knowledge base files to be deleted. The maximum length of the array is 100,
+    meaning a maximum of 100 files can be deleted at one time.
+    :return: None
+  cozepy.datasets.documents.DatasetsDocumentsClient.list: |-
+    View the file list of a specified knowledge base, which includes lists of documents, spreadsheets, or images.
+
+    docs en: https://www.coze.com/docs/developer_guides/list_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/list_knowledge_files
+
+    :param dataset_id: The ID of the knowledge base.
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+    first page.
+    :param page_size: The size of pagination. Default is 10, meaning that 10 data entries are returned per page.
+    :return: list of Document
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.create: |-
+    Upload files to the specific knowledge.
+
+    docs en: https://www.coze.com/docs/developer_guides/create_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/create_knowledge_files
+
+    :param dataset_id: The ID of the knowledge base.
+    :param document_bases: The metadata information of the files awaiting upload. The array has a maximum length of
+    10, meaning up to 10 files can be uploaded at a time. For detailed instructions, refer to the DocumentBase
+    object.
+    :param chunk_strategy: Chunk strategy. These rules must be set only when uploading a file to a new knowledge
+    for the first time. For subsequent file uploads to this knowledge, it is not necessary to pass these rules; the
+    default is to continue using the initial settings, and modifications are not supported.
+    For detailed instructions, refer to the ChunkStrategy object.
+    :return: list of Document
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.update: |-
+    Modify the knowledge base file name and update strategy.
+
+    docs en: https://www.coze.com/docs/developer_guides/modify_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/modify_knowledge_files
+
+    :param document_id: The ID of the knowledge base file.
+    :param document_name: The new name of the knowledge base file.
+    :param update_rule: The update strategy for online web pages. Defaults to no automatic updates.
+    For detailed information, refer to the UpdateRule object.
+    :return: None
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.delete: |-
+    Delete text, images, sheets, and other files in the knowledge base, supporting batch deletion.
+
+    docs en: https://www.coze.com/docs/developer_guides/delete_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/delete_knowledge_files
+
+    :param document_ids: The list of knowledge base files to be deleted. The maximum length of the array is 100,
+    meaning a maximum of 100 files can be deleted at one time.
+    :return: None
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.list: |-
+    View the file list of a specified knowledge base, which includes lists of documents, spreadsheets, or images.
+
+    docs en: https://www.coze.com/docs/developer_guides/list_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/list_knowledge_files
+
+    :param dataset_id: The ID of the knowledge base.
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+    first page.
+    :param page_size: The size of pagination. Default is 10, meaning that 10 data entries are returned per page.
+    :return: list of Document
+  cozepy.knowledge.documents.DocumentsClient.create: |-
+    Upload files to the specific knowledge.
+
+    docs en: https://www.coze.com/docs/developer_guides/create_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/create_knowledge_files
+
+    :param dataset_id: The ID of the knowledge base.
+    :param document_bases: The metadata information of the files awaiting upload. The array has a maximum length of
+    10, meaning up to 10 files can be uploaded at a time. For detailed instructions, refer to the DocumentBase
+    object.
+    :param chunk_strategy: Chunk strategy. These rules must be set only when uploading a file to a new knowledge
+    for the first time. For subsequent file uploads to this knowledge, it is not necessary to pass these rules; the
+    default is to continue using the initial settings, and modifications are not supported.
+    For detailed instructions, refer to the ChunkStrategy object.
+    :return: list of Document
+  cozepy.knowledge.documents.DocumentsClient.update: |-
+    Modify the knowledge base file name and update strategy.
+
+    docs en: https://www.coze.com/docs/developer_guides/modify_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/modify_knowledge_files
+
+    :param document_id: The ID of the knowledge base file.
+    :param document_name: The new name of the knowledge base file.
+    :param update_rule: The update strategy for online web pages. Defaults to no automatic updates.
+    For detailed information, refer to the UpdateRule object.
+    :return: None
+  cozepy.knowledge.documents.DocumentsClient.delete: |-
+    Delete text, images, sheets, and other files in the knowledge base, supporting batch deletion.
+
+    docs en: https://www.coze.com/docs/developer_guides/delete_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/delete_knowledge_files
+
+    :param document_ids: The list of knowledge base files to be deleted. The maximum length of the array is 100,
+    meaning a maximum of 100 files can be deleted at one time.
+    :return: None
+  cozepy.knowledge.documents.DocumentsClient.list: |-
+    View the file list of a specified knowledge base, which includes lists of documents, spreadsheets, or images.
+
+    docs en: https://www.coze.com/docs/developer_guides/list_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/list_knowledge_files
+
+
+    :param dataset_id: The ID of the knowledge base.
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+    first page.
+    :param page_size: The size of pagination. Default is 10, meaning that 10 data entries are returned per page.
+    :return: list of Document
+  cozepy.knowledge.documents.AsyncDocumentsClient.create: |-
+    Upload files to the specific knowledge.
+
+    docs en: https://www.coze.com/docs/developer_guides/create_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/create_knowledge_files
+
+    :param dataset_id: The ID of the knowledge base.
+    :param document_bases: The metadata information of the files awaiting upload. The array has a maximum length of
+    10, meaning up to 10 files can be uploaded at a time. For detailed instructions, refer to the DocumentBase
+    object.
+    :param chunk_strategy: Chunk strategy. These rules must be set only when uploading a file to a new knowledge
+    for the first time. For subsequent file uploads to this knowledge, it is not necessary to pass these rules; the
+    default is to continue using the initial settings, and modifications are not supported.
+    For detailed instructions, refer to the ChunkStrategy object.
+    :return: list of Document
+  cozepy.knowledge.documents.AsyncDocumentsClient.update: |-
+    Modify the knowledge base file name and update strategy.
+
+    docs en: https://www.coze.com/docs/developer_guides/modify_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/modify_knowledge_files
+
+    :param document_id: The ID of the knowledge base file.
+    :param document_name: The new name of the knowledge base file.
+    :param update_rule: The update strategy for online web pages. Defaults to no automatic updates.
+    For detailed information, refer to the UpdateRule object.
+    :return: None
+  cozepy.knowledge.documents.AsyncDocumentsClient.delete: |-
+    Delete text, images, sheets, and other files in the knowledge base, supporting batch deletion.
+
+    docs en: https://www.coze.com/docs/developer_guides/delete_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/delete_knowledge_files
+
+    :param document_ids: The list of knowledge base files to be deleted. The maximum length of the array is 100,
+    meaning a maximum of 100 files can be deleted at one time.
+    :return: None
+  cozepy.knowledge.documents.AsyncDocumentsClient.list: |-
+    View the file list of a specified knowledge base, which includes lists of documents, spreadsheets, or images.
+
+    docs en: https://www.coze.com/docs/developer_guides/list_knowledge_files
+    docs zh: https://www.coze.cn/docs/developer_guides/list_knowledge_files
+
+
+    :param dataset_id: The ID of the knowledge base.
+    :param page_num: The page number for paginated queries. Default is 1, meaning the data return starts from the
+    first page.
+    :param page_size: The size of pagination. Default is 10, meaning that 10 data entries are returned per page.
+    :return: list of Document
+method_docstring_styles:
+  cozepy.api_apps.APIAppsClient.create: inline
+  cozepy.api_apps.APIAppsClient.update: block
+  cozepy.api_apps.AsyncAPIAppsClient.create: inline
+  cozepy.api_apps.AsyncAPIAppsClient.update: block
+  cozepy.apps.AppsClient.list: block
+  cozepy.apps.AsyncAppsClient.list: block
+  cozepy.audio.rooms.AsyncRoomsClient.create: block
+  cozepy.audio.rooms.RoomsClient.create: block
+  cozepy.audio.live.AsyncLiveClient.retrieve: block
+  cozepy.audio.live.LiveClient.retrieve: block
+  cozepy.audio.speech.AsyncSpeechClient.create: block
+  cozepy.audio.speech.SpeechClient.create: block
+  cozepy.audio.transcriptions.AsyncTranscriptionsClient.create: block
+  cozepy.audio.transcriptions.TranscriptionsClient.create: block
+  cozepy.audio.voiceprint_groups.AsyncVoiceprintGroupsClient.list: block
+  cozepy.audio.voiceprint_groups.VoiceprintGroupsClient.list: block
+  cozepy.audio.voices.AsyncVoicesClient.clone: block
+  cozepy.audio.voices.AsyncVoicesClient.list: block
+  cozepy.audio.voices.VoicesClient.clone: block
+  cozepy.audio.voices.VoicesClient.list: block
+  cozepy.bots.AsyncBotsClient._list_v1: block
+  cozepy.bots.AsyncBotsClient._list_v2: block
+  cozepy.bots.AsyncBotsClient._retrieve_v1: block
+  cozepy.bots.AsyncBotsClient._retrieve_v2: inline
+  cozepy.bots.AsyncBotsClient.create: block
+  cozepy.bots.AsyncBotsClient.list: block
+  cozepy.bots.AsyncBotsClient.retrieve: inline
+  cozepy.bots.AsyncBotsClient.unpublish: block
+  cozepy.bots.AsyncBotsClient.update: block
+  cozepy.bots.BotsClient._list_v1: block
+  cozepy.bots.BotsClient._list_v2: block
+  cozepy.bots.BotsClient._retrieve_v1: block
+  cozepy.bots.BotsClient._retrieve_v2: inline
+  cozepy.bots.BotsClient.create: block
+  cozepy.bots.BotsClient.list: block
+  cozepy.bots.BotsClient.retrieve: inline
+  cozepy.bots.BotsClient.unpublish: block
+  cozepy.bots.BotsClient.update: block
+  cozepy.chat.AsyncChatClient._create: block
+  cozepy.chat.AsyncChatClient.cancel: block
+  cozepy.chat.AsyncChatClient.create: block
+  cozepy.chat.AsyncChatClient.retrieve: block
+  cozepy.chat.AsyncChatClient.stream: block
+  cozepy.chat.AsyncChatClient.submit_tool_outputs: block
+  cozepy.chat.AsyncChatClient.submit_tool_outputs_stream: block
+  cozepy.chat.ChatClient._create: block
+  cozepy.chat.ChatClient.cancel: block
+  cozepy.chat.ChatClient.create: block
+  cozepy.chat.ChatClient.create_and_poll: block
+  cozepy.chat.ChatClient.retrieve: block
+  cozepy.chat.ChatClient.stream: block
+  cozepy.chat.ChatClient.submit_tool_outputs: block
+  cozepy.chat.message.AsyncChatMessagesClient.list: block
+  cozepy.chat.message.ChatMessagesClient.list: block
+  cozepy.connectors.AsyncConnectorsClient.bots: block
+  cozepy.connectors.ConnectorsClient.bots: block
+  cozepy.conversations.AsyncConversationsClient.clear: block
+  cozepy.conversations.AsyncConversationsClient.create: block
+  cozepy.conversations.AsyncConversationsClient.delete: block
+  cozepy.conversations.AsyncConversationsClient.retrieve: block
+  cozepy.conversations.AsyncConversationsClient.update: block
+  cozepy.conversations.ConversationsClient.clear: block
+  cozepy.conversations.ConversationsClient.create: block
+  cozepy.conversations.ConversationsClient.delete: block
+  cozepy.conversations.ConversationsClient.retrieve: block
+  cozepy.conversations.ConversationsClient.update: block
+  cozepy.conversations.message.AsyncMessagesClient.create: block
+  cozepy.conversations.message.AsyncMessagesClient.delete: block
+  cozepy.conversations.message.AsyncMessagesClient.list: block
+  cozepy.conversations.message.AsyncMessagesClient.retrieve: block
+  cozepy.conversations.message.AsyncMessagesClient.update: block
+  cozepy.conversations.message.MessagesClient.create: block
+  cozepy.conversations.message.MessagesClient.delete: block
+  cozepy.conversations.message.MessagesClient.list: block
+  cozepy.conversations.message.MessagesClient.retrieve: block
+  cozepy.conversations.message.MessagesClient.update: block
+  cozepy.datasets.AsyncDatasetsClient.create: block
+  cozepy.datasets.AsyncDatasetsClient.delete: block
+  cozepy.datasets.AsyncDatasetsClient.list: block
+  cozepy.datasets.AsyncDatasetsClient.process: block
+  cozepy.datasets.AsyncDatasetsClient.update: block
+  cozepy.datasets.DatasetsClient.create: block
+  cozepy.datasets.DatasetsClient.delete: block
+  cozepy.datasets.DatasetsClient.list: block
+  cozepy.datasets.DatasetsClient.process: block
+  cozepy.datasets.DatasetsClient.update: block
+  cozepy.datasets.images.AsyncDatasetsImagesClient.list: block
+  cozepy.datasets.images.AsyncDatasetsImagesClient.update: block
+  cozepy.datasets.images.DatasetsImagesClient.list: block
+  cozepy.datasets.images.DatasetsImagesClient.update: block
+  cozepy.files.AsyncFilesClient.retrieve: block
+  cozepy.files.AsyncFilesClient.upload: block
+  cozepy.files.FilesClient.retrieve: block
+  cozepy.files.FilesClient.upload: block
+  cozepy.model.AsyncNumberPaged._fetch_page: block
+  cozepy.model.AsyncTokenPaged._fetch_page: block
+  cozepy.model.DynamicStrEnum.is_dynamic: block
+  cozepy.workflows.AsyncWorkflowsClient.retrieve: block
+  cozepy.workflows.WorkflowsClient.retrieve: block
+  cozepy.workflows.chat.AsyncWorkflowsChatClient.stream: block
+  cozepy.workflows.chat.WorkflowsChatClient.stream: block
+  cozepy.workflows.runs.AsyncWorkflowsRunsClient.create: block
+  cozepy.workflows.runs.AsyncWorkflowsRunsClient.resume: block
+  cozepy.workflows.runs.AsyncWorkflowsRunsClient.stream: block
+  cozepy.workflows.runs.WorkflowsRunsClient.create: block
+  cozepy.workflows.runs.WorkflowsRunsClient.resume: block
+  cozepy.workflows.runs.WorkflowsRunsClient.stream: block
+  cozepy.workflows.runs.run_histories.AsyncWorkflowsRunsRunHistoriesClient.retrieve: block
+  cozepy.workflows.runs.run_histories.WorkflowsRunsRunHistoriesClient.retrieve: block
+  cozepy.workflows.runs.run_histories.execute_nodes.AsyncWorkflowsRunsRunHistoriesExecuteNodesClient.retrieve: inline
+  cozepy.workflows.runs.run_histories.execute_nodes.WorkflowsRunsRunHistoriesExecuteNodesClient.retrieve: inline
+  cozepy.workflows.versions.AsyncWorkflowsVersionsClient.list: block
+  cozepy.workflows.versions.WorkflowsVersionsClient.list: block
+  cozepy.workspaces.members.AsyncWorkspacesMembersClient.create: inline
+  cozepy.workspaces.members.AsyncWorkspacesMembersClient.delete: inline
+  cozepy.workspaces.members.AsyncWorkspacesMembersClient.list: inline
+  cozepy.workspaces.members.WorkspacesMembersClient.create: inline
+  cozepy.workspaces.members.WorkspacesMembersClient.delete: inline
+  cozepy.workspaces.members.WorkspacesMembersClient.list: inline
+  cozepy.connectors.bots.ConnectorsBotsClient.update: block
+  cozepy.connectors.bots.AsyncConnectorsBotsClient.update: block
+  cozepy.datasets.documents.DatasetsDocumentsClient.create: block
+  cozepy.datasets.documents.DatasetsDocumentsClient.update: block
+  cozepy.datasets.documents.DatasetsDocumentsClient.delete: block
+  cozepy.datasets.documents.DatasetsDocumentsClient.list: block
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.create: block
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.update: block
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.delete: block
+  cozepy.datasets.documents.AsyncDatasetsDocumentsClient.list: block
+  cozepy.knowledge.documents.DocumentsClient.create: block
+  cozepy.knowledge.documents.DocumentsClient.update: block
+  cozepy.knowledge.documents.DocumentsClient.delete: block
+  cozepy.knowledge.documents.DocumentsClient.list: block
+  cozepy.knowledge.documents.AsyncDocumentsClient.create: block
+  cozepy.knowledge.documents.AsyncDocumentsClient.update: block
+  cozepy.knowledge.documents.AsyncDocumentsClient.delete: block
+  cozepy.knowledge.documents.AsyncDocumentsClient.list: block
+field_comments:
+  cozepy.audio.rooms.CreateRoomResp.app_id:
+  - App id to join the room
+  cozepy.audio.rooms.CreateRoomResp.room_id:
+  - The id of room
+  cozepy.audio.rooms.CreateRoomResp.token:
+  - Token to join the room
+  cozepy.audio.rooms.CreateRoomResp.uid:
+  - The id of user
+  cozepy.audio.rooms.RoomAudioConfig.codec:
+  - 房间音频编码格式，支持设置为：
+  - 'AACLC: AAC-LC 编码格式。'
+  - 'G711A: G711A 编码格式。'
+  - 'OPUS: （默认）Opus 编码格式。'
+  - 'G722: G.722 编码格式。'
+  cozepy.audio.rooms.RoomConfig.audio_config:
+  - The audio config of the room.
+  cozepy.audio.rooms.RoomConfig.prologue_content:
+  - 自定义开场白
+  cozepy.audio.rooms.RoomConfig.prologue_delay_duration_ms:
+  - 在进房后等待多长时间播放开场白，默认是500ms，[0, 5000]
+  cozepy.audio.rooms.RoomConfig.room_mode:
+  - 房间模式
+  cozepy.audio.rooms.RoomConfig.translate_config:
+  - 同传配置，仅在房间模式为同传时生效
+  cozepy.audio.rooms.RoomConfig.video_config:
+  - The video config of the room.
+  cozepy.audio.rooms.RoomVideoConfig.codec:
+  - 房间视频编码格式，支持设置为：
+  - H264:（默认）H264 编码格式。
+  - 'BYTEVC1: 火山引擎自研的视频编码格式。'
+  cozepy.audio.rooms.RoomVideoConfig.stream_video_type:
+  - 房间视频流类型, 支持 main 和 screen。
+  - 'main: 主流，包括通过摄像头/麦克风的内部采集机制获取的流，以及通过自定义采集方式获取的流。'
+  - 'screen: 屏幕流，用于屏幕共享或屏幕录制的视频流。'
+  cozepy.audio.rooms.RoomVideoConfig.video_frame_expire_duration:
+  - 视频帧过期时间,单位为s，默认值是1，范围[1, 10]
+  cozepy.audio.rooms.RoomVideoConfig.video_frame_rate:
+  - 视频抽帧速率, 默认值是 1, 范围 [1, 24]
+  cozepy.audio.transcriptions.CreateTranscriptionsResp.text:
+  - The text of translation
+  cozepy.audio.voices.Voice.available_training_times:
+  - Number of remaining training times available for current voice
+  cozepy.audio.voices.Voice.create_time:
+  - Voice creation timestamp
+  cozepy.audio.voices.Voice.is_system_voice:
+  - If is system voice
+  cozepy.audio.voices.Voice.language_code:
+  - Language code
+  cozepy.audio.voices.Voice.language_name:
+  - Language name
+  cozepy.audio.voices.Voice.model_type:
+  - Voice model type
+  cozepy.audio.voices.Voice.name:
+  - The name of voice
+  cozepy.audio.voices.Voice.preview_audio:
+  - Preview audio URL for the voice
+  cozepy.audio.voices.Voice.preview_text:
+  - Preview text for the voice
+  cozepy.audio.voices.Voice.state:
+  - Voice state
+  cozepy.audio.voices.Voice.update_time:
+  - Voice last update timestamp
+  cozepy.audio.voices.Voice.voice_id:
+  - The id of voice
+  cozepy.bots.Bot.background_image_info:
+  - The background image info for the bot.
+  cozepy.bots.Bot.bot_id:
+  - The ID for the bot.
+  cozepy.bots.Bot.bot_mode:
+  - 'The mode of the Bot, values: 0: Single Agent mode, 1: Multi Agent mode, 3: Single Agent Workflow mode.'
+  cozepy.bots.Bot.create_time:
+  - The creation time, in the format of a 10-digit Unix timestamp in seconds (s).
+  cozepy.bots.Bot.default_user_input_type:
+  - The default user input type for the bot.
+  cozepy.bots.Bot.description:
+  - The description of the bot.
+  cozepy.bots.Bot.folder_id:
+  - The folder ID for the bot.
+  cozepy.bots.Bot.icon_url:
+  - The URL address for the bot's avatar.
+  cozepy.bots.Bot.knowledge:
+  - The knowledge configuration for the bot. For more information, see Knowledge object.
+  cozepy.bots.Bot.model_info:
+  - The model configured for the bot. For more information, see Model object.
+  cozepy.bots.Bot.name:
+  - The name of the bot.
+  cozepy.bots.Bot.onboarding_info:
+  - The onboarding message configuration for the bot. For more information, see Onboarding object.
+  cozepy.bots.Bot.owner_user_id:
+  - The user ID of the bot's owner.
+  cozepy.bots.Bot.plugin_info_list:
+  - The plugins configured for the bot. For more information, see  Plugin object.
+  cozepy.bots.Bot.prompt_info:
+  - The prompt configuration for the bot. For more information, see Prompt object.
+  cozepy.bots.Bot.suggest_reply_info:
+  - The suggest reply info for the bot.
+  cozepy.bots.Bot.update_time:
+  - The update time, in the format of a 10-digit Unix timestamp in seconds (s).
+  cozepy.bots.Bot.variables:
+  - The list of variables configured for the bot. For more information, see Variable object.
+  cozepy.bots.Bot.version:
+  - The latest version of the bot.
+  cozepy.bots.Bot.voice_info_list:
+  - The voice info for the bot.
+  cozepy.bots.Bot.workflow_info_list:
+  - The workflow info for the bot.
+  cozepy.bots.BotKnowledge.auto_call:
+  - Whether to call knowledge base automatically.
+  cozepy.bots.BotKnowledge.dataset_ids:
+  - Configured dataset ids of the bot.
+  cozepy.bots.BotKnowledge.search_strategy:
+  - 'Configured search strategy of the bot, values: 0: semantic search, 1: hybrid search, 20: full-text search.'
+  cozepy.bots.BotModelInfo.cache_type:
+  - 扣子的部分模型支持开启或关闭上下文缓存中的前缀缓存。
+  cozepy.bots.BotModelInfo.context_round:
+  - The context_round of the model.
+  - 携带上下文轮数。
+  cozepy.bots.BotModelInfo.frequency_penalty:
+  - The frequency_penalty of the model.
+  - 重复语句惩罚。
+  cozepy.bots.BotModelInfo.max_tokens:
+  - The max_tokens of the model.
+  cozepy.bots.BotModelInfo.model_id:
+  - The ID of the model.
+  cozepy.bots.BotModelInfo.model_name:
+  - The name of the model.
+  cozepy.bots.BotModelInfo.parameters:
+  - The parameters of the model.
+  - 'claude: {"thinking_type": "disabled/enable", "thinking_budget_tokens": "2000"}'
+  - 'gemini: {"thinking_type": "disabled/enable"}'
+  - 'doubao: {"thinking_type": "auto/disabled/enable"}'
+  cozepy.bots.BotModelInfo.presence_penalty:
+  - The presence_penalty of the model.
+  - 重复主题惩罚。
+  cozepy.bots.BotModelInfo.response_format:
+  - The response format of the model.
+  cozepy.bots.BotModelInfo.sp_anti_leak:
+  - 是否启用 SP 拼接防泄露指令，开启后，当用户尝试获取或复述系统内部的规则、提示词或其他敏感内容时，智能体将礼貌地拒绝用户的请求，确保机密信息不被泄露。
+  cozepy.bots.BotModelInfo.sp_current_time:
+  - 是否在 SP 中包含当前时间信息。
+  cozepy.bots.BotModelInfo.temperature:
+  - The temperature of the model.
+  cozepy.bots.BotModelInfo.top_k:
+  - The top_k of the model.
+  cozepy.bots.BotModelInfo.top_p:
+  - The top_p of the model.
+  cozepy.bots.BotOnboardingInfo.prologue:
+  - Configured prologue of the bot.
+  cozepy.bots.BotOnboardingInfo.suggested_questions:
+  - The list of recommended questions configured for the bot.
+  - This field will not be returned when user suggested questions are not enabled.
+  cozepy.bots.BotPluginAPIInfo.api_id:
+  - The ID of the tool.
+  cozepy.bots.BotPluginAPIInfo.description:
+  - The description of the tool.
+  cozepy.bots.BotPluginAPIInfo.name:
+  - The name of the tool.
+  cozepy.bots.BotPluginInfo.api_info_list:
+  - The list of tool information for the plugin. For more information, see PluginAPI object.
+  cozepy.bots.BotPluginInfo.description:
+  - The description of the plugin.
+  cozepy.bots.BotPluginInfo.icon_url:
+  - The avatar URL for the plugin.
+  cozepy.bots.BotPluginInfo.name:
+  - The name of the plugin.
+  cozepy.bots.BotPluginInfo.plugin_id:
+  - The unique identifier for the plugin.
+  cozepy.bots.BotPromptInfo.prompt:
+  - Configured prompt of the bot.
+  cozepy.bots.BotSuggestReplyInfo.customized_prompt:
+  - 关于用户问题建议的 Prompt。当 reply_mode 设置为 customized时，需要设置提示词内容。智能体会根据该提示词生成用户问题建议。
+  cozepy.bots.BotSuggestReplyInfo.reply_mode:
+  - 配置智能体回复后，是否提供用户问题建议。
+  cozepy.bots.BotVariable.channel:
+  - The source of the variable.
+  cozepy.bots.BotVariable.default_value:
+  - The default value of the variable.
+  cozepy.bots.BotVariable.description:
+  - The description of the variable.
+  cozepy.bots.BotVariable.enable:
+  - Whether the variable is enabled.
+  cozepy.bots.BotVariable.keyword:
+  - The name of the variable.
+  cozepy.bots.BotVariable.prompt_enable:
+  - Whether the variable is supported in the prompt.
+  cozepy.bots.BotVariable.variable_type:
+  - The type of the variable.
+  cozepy.bots.PluginIDList.PluginIDInfo.api_id:
+  - 智能体绑定的插件工具 ID
+  cozepy.bots.PluginIDList.PluginIDInfo.plugin_id:
+  - 智能体绑定的插件 ID
+  cozepy.bots.SimpleBot.bot_id:
+  - compatibility fields
+  cozepy.bots.WorkflowIDList.WorkflowIDInfo.id:
+  - 智能体绑定的工作流 ID
+  cozepy.chat.Chat.bot_id:
+  - The ID of the bot.
+  cozepy.chat.Chat.completed_at:
+  - Indicates the end time of the chat. The value format is Unix timestamp in seconds.
+  cozepy.chat.Chat.conversation_id:
+  - The ID of the conversation.
+  cozepy.chat.Chat.created_at:
+  - Indicates the create time of the chat. The value format is Unix timestamp in seconds.
+  cozepy.chat.Chat.failed_at:
+  - Indicates the failure time of the chat. The value format is Unix timestamp in seconds.
+  cozepy.chat.Chat.id:
+  - The ID of the chat.
+  cozepy.chat.Chat.last_error:
+  - 'When the chat encounters an exception, this field returns detailed error information, including:'
+  - 'Code: The error code. An integer type. 0 indicates success, other values indicate failure.'
+  - 'Msg: The error message. A string type.'
+  cozepy.chat.Chat.meta_data:
+  - Additional information when creating a message, and this additional information will also be returned when retrieving messages.
+  - Custom key-value pairs should be specified in Map object format, with a length of 16 key-value pairs. The length of the key should be between 1 and 64 characters, and the length of the value should be between 1 and 512 characters.
+  cozepy.chat.Chat.required_action:
+  - Details of the information needed for execution.
+  cozepy.chat.Chat.status:
+  - 'The running status of the session. The values are:'
+  - 'created: The session has been created.'
+  - 'in_progress: The Bot is processing.'
+  - 'completed: The Bot has finished processing, and the session has ended.'
+  - 'failed: The session has failed.'
+  - 'requires_action: The session is interrupted and requires further processing.'
+  cozepy.chat.Chat.usage:
+  - Detailed information about Token consumption.
+  cozepy.chat.ChatError.code:
+  - The error code. An integer type. 0 indicates success, other values indicate failure.
+  cozepy.chat.ChatError.msg:
+  - The error message. A string type.
+  cozepy.chat.ChatEvent.event:
+  - 'logid: str'
+  cozepy.chat.ChatRequiredAction.submit_tool_outputs:
+  - Details of the results that need to be submitted, uploaded through the submission API, and
+  - the chat can continue afterward.
+  cozepy.chat.ChatRequiredAction.type:
+  - The type of additional operation, with the enum value of submit_tool_outputs.
+  cozepy.chat.ChatSubmitToolOutputs.tool_calls:
+  - Details of the specific reported information.
+  cozepy.chat.ChatToolCall.function:
+  - The definition of the execution method function.
+  cozepy.chat.ChatToolCall.id:
+  - The ID for reporting the running results.
+  cozepy.chat.ChatToolCall.type:
+  - The type of tool, with the enum value of function.
+  cozepy.chat.ChatToolCallFunction.arguments:
+  - The parameters of the method.
+  cozepy.chat.ChatToolCallFunction.name:
+  - The name of the method.
+  cozepy.chat.ChatUsage.input_count:
+  - The total number of Tokens consumed for the input part.
+  cozepy.chat.ChatUsage.output_count:
+  - The total number of Tokens consumed for the output part.
+  cozepy.chat.ChatUsage.token_count:
+  - The total number of Tokens consumed in this chat, including the consumption for both the input
+  - and output parts.
+  cozepy.chat.Message.content:
+  - The content of the message. It supports various types of content, including plain text, multimodal (a mix of text, images, and files), message cards, and more.
+  cozepy.chat.Message.content_type:
+  - The type of message content.
+  cozepy.chat.Message.meta_data:
+  - Additional information when creating a message, and this additional information will also be returned when retrieving messages.
+  - Custom key-value pairs should be specified in Map object format, with a length of 16 key-value pairs. The length of the key should be between 1 and 64 characters, and the length of the value should be between 1 and 512 characters.
+  cozepy.chat.Message.role:
+  - The entity that sent this message.
+  cozepy.chat.Message.section_id:
+  - section_id is used to distinguish the context sections of the session history. The same section is one context.
+  cozepy.chat.Message.type:
+  - The type of message.
+  cozepy.chat.MessageObjectString.file_id:
+  - The ID of the file or image content.
+  - 在 type 为 file 或 image 时，file_id 和 file_url 应至少指定一个。
+  cozepy.chat.MessageObjectString.file_url:
+  - The online address of the file or image content.<br>Must be a valid address that is publicly accessible.
+  - file_id or file_url must be specified when type is file or image.
+  - 文件或图片内容的在线地址。必须是可公共访问的有效地址。
+  - 在 type 为 file 或 image 时，file_id 和 file_url 应至少指定一个。
+  cozepy.chat.MessageObjectString.text:
+  - Text content. Required when type is text.
+  - 文本内容。
+  cozepy.chat.MessageObjectString.type:
+  - The content type of the multimodal message.
+  - 多模态消息内容类型
+  cozepy.chat.ToolOutput.output:
+  - 工具的执行结果。
+  cozepy.chat.ToolOutput.tool_call_id:
+  - 上报运行结果的 ID。你可以在扣子智能语音对话信令事件的 tool_calls 字段下查看此 ID。
+  cozepy.conversations.Conversation.last_section_id:
+  - section_id is used to distinguish the context sections of the session history. The same section is one context.
+  cozepy.files.File.bytes:
+  - The total byte size of the file.
+  - 文件的总字节数。
+  cozepy.files.File.created_at:
+  - The upload time of the file, in the format of a 10-digit Unix timestamp in seconds (s).
+  - 文件的上传时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+  cozepy.files.File.file_name:
+  - The name of the file.
+  - 文件名称。
+  cozepy.files.File.id:
+  - 已上传的文件 ID。
+  - The ID of the uploaded file.
+  cozepy.workflows.WorkflowBasic.created_at:
+  - 创建时间，Unix时间戳
+  cozepy.workflows.WorkflowBasic.creator:
+  - 创建者信息
+  cozepy.workflows.WorkflowBasic.updated_at:
+  - 更新时间，Unix时间戳
+  cozepy.workflows.runs.WorkflowEvent.event:
+  - The current streaming data packet event.
+  cozepy.workflows.runs.WorkflowEvent.id:
+  - The event ID of this message in the interface response. It starts from 0.
+  cozepy.workflows.runs.WorkflowEventError.error_code:
+  - Status code. 0 represents a successful API call. Other values indicate that the call has failed. You can
+  - determine the detailed reason for the error through the error_message field.
+  - 调用状态码。0 表示调用成功。其他值表示调用失败。你可以通过 error_message 字段判断详细的错误原因。
+  cozepy.workflows.runs.WorkflowEventError.error_message:
+  - Status message. You can get detailed error information when the API call fails.
+  - 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+  cozepy.workflows.runs.WorkflowEventInterrupt.interrupt_data:
+  - The content of interruption event.
+  - 中断控制内容。
+  cozepy.workflows.runs.WorkflowEventInterrupt.node_title:
+  - The name of the node that outputs the message, such as "Question".
+  - 输出消息的节点名称，例如“问答”。
+  cozepy.workflows.runs.WorkflowEventInterruptData.event_id:
+  - The workflow interruption event ID, which should be passed back when resuming the workflow.
+  - 工作流中断事件 ID，恢复运行时应回传此字段。
+  cozepy.workflows.runs.WorkflowEventInterruptData.type:
+  - The type of workflow interruption, which should be passed back when resuming the workflow.
+  - 工作流中断类型，恢复运行时应回传此字段。
+  cozepy.workflows.runs.WorkflowEventMessage.content:
+  - The content of the streamed output message.
+  - 流式输出的消息内容。
+  cozepy.workflows.runs.WorkflowEventMessage.ext:
+  - Additional fields.
+  - 额外字段。
+  cozepy.workflows.runs.WorkflowEventMessage.node_is_finish:
+  - Whether the current message is the last data packet for this node.
+  - 当前消息是否为此节点的最后一个数据包。
+  cozepy.workflows.runs.WorkflowEventMessage.node_seq_id:
+  - The message ID of this message within the node, starting at 0, for example, the 5th message of the message node.
+  - 此消息在节点中的消息 ID，从 0 开始计数，例如消息节点的第 5 条消息。
+  cozepy.workflows.runs.WorkflowEventMessage.node_title:
+  - The name of the node that outputs the message, such as the message node or end node.
+  - 输出消息的节点名称，例如消息节点、结束节点。
+  cozepy.workflows.runs.WorkflowEventMessage.usage:
+  - 资源使用情况，包含本次 API 调用消耗的 Token 数量等信息。
+  - 此处大模型返回的消耗 Token 仅供参考，以火山引擎账单实际为准。
+  cozepy.workflows.runs.WorkflowRunResult.data:
+  - Workflow execution result, usually a JSON serialized string. In some scenarios, a
+  - string with a non-JSON structure may be returned.
+  cozepy.workflows.runs.WorkflowRunResult.execute_id:
+  - Execution ID of asynchronous execution. Only returned when the workflow is executed
+  - asynchronously (is_async=true). You can use execute_id to call the Query Workflow
+  - Asynchronous Execution Result API to obtain the final execution result of the workflow.
+  cozepy.workflows.runs.WorkflowRunResult.usage:
+  - 资源使用情况，包含本次 API 调用消耗的 Token 数量等信息。
+  - 此处大模型返回的消耗 Token 仅供参考，以火山引擎账单实际为准。
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.bot_id:
+  - The Bot ID specified when executing the workflow. Returns 0 if no Bot ID was specified.
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.connector_id:
+  - The release connector ID of the agent. By default, only the Agent as API connector is
+  - displayed, and the connector ID is 1024.
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.connector_uid:
+  - User ID, the user_id specified by the ext field when executing the workflow. If not
+  - specified, the token applicant's button ID is returned.
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.create_time:
+  - The start time of the workflow, in Unix time timestamp format, in seconds.
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.debug_url:
+  - Workflow trial run debugging page. Visit this page to view the running results, input
+  - and output information of each workflow node.
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.error_code:
+  - Status code. 0 represents a successful API call. Other values indicate that the call has failed. You can
+  - determine the detailed reason for the error through the error_message field.
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.error_message:
+  - Status message. You can get detailed error information when the API call fails.
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.execute_id:
+  - The ID of execute.
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.execute_status:
+  - 'Execute status:'
+  - '  success: Execution succeeded.'
+  - '  running: Execution in progress.'
+  - '  fail: Execution failed.'
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.is_output_trimmed:
+  - 标识工作流的输出内容是否因过大而不完整。
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.logid:
+  - The Log ID of the asynchronously running workflow. If the workflow is executed abnormally,
+  - you can contact the service team to troubleshoot the problem through the Log ID.
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.output:
+  - The output of the workflow is usually a JSON serialized string, but it may also be a
+  - non-JSON structured string.
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.run_mode:
+  - 'How the workflow runs:'
+  - '  0: Synchronous operation.'
+  - '  1: Streaming operation.'
+  - '  2: Asynchronous operation.'
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.update_time:
+  - The workflow resume running time, in Unix time timestamp format, in seconds.
+  cozepy.workflows.runs.run_histories.WorkflowRunHistory.usage:
+  - 资源使用情况，包含本次 API 调用消耗的 Token 数量等信息。
+  - 此处大模型返回的消耗 Token 仅供参考，以火山引擎账单实际为准。
+  cozepy.workflows.runs.run_histories.WorkflowRunHistoryNodeExecuteStatus.batch_index:
+  - 当前节点在批处理节点中的执行次数。
+  cozepy.workflows.runs.run_histories.WorkflowRunHistoryNodeExecuteStatus.is_finish:
+  - 工作流中的节点是否已经运行结束。
+  cozepy.workflows.runs.run_histories.WorkflowRunHistoryNodeExecuteStatus.loop_index:
+  - 当前节点在循环节点中的循环次数。
+  cozepy.workflows.runs.run_histories.WorkflowRunHistoryNodeExecuteStatus.node_execute_uuid:
+  - 节点每次执行的 ID，用于追踪和识别工作流中特定节点的单次执行情况。
+  cozepy.workflows.runs.run_histories.WorkflowRunHistoryNodeExecuteStatus.node_id:
+  - 工作流中的节点 ID。
+  cozepy.workflows.runs.run_histories.WorkflowRunHistoryNodeExecuteStatus.sub_execute_id:
+  - 子流程执行的 ID。
+  cozepy.workflows.runs.run_histories.WorkflowRunHistoryNodeExecuteStatus.update_time:
+  - 工作流上次运行的时间，采用 Unix 时间戳格式，单位为秒。
+  cozepy.workflows.runs.run_histories.execute_nodes.WorkflowNodeExecuteHistory.is_finish:
+  - 节点是否执行完成。true 表示执行已完成，false表示执行未完成。
+  cozepy.workflows.runs.run_histories.execute_nodes.WorkflowNodeExecuteHistory.node_output:
+  - 节点的执行结果输出信息。
+  cozepy.workflows.versions.WorkflowUserInfo.id:
+  - 用户ID
+  cozepy.workflows.versions.WorkflowUserInfo.name:
+  - 用户名称
+  cozepy.workflows.versions.WorkflowVersionInfo.created_at:
+  - 创建时间，Unix时间戳
+  cozepy.workflows.versions.WorkflowVersionInfo.creator:
+  - 创建者信息
+  cozepy.workflows.versions.WorkflowVersionInfo.description:
+  - 版本描述
+  cozepy.workflows.versions.WorkflowVersionInfo.updated_at:
+  - 更新时间，Unix时间戳
+  cozepy.workflows.versions.WorkflowVersionInfo.version:
+  - 版本号
+  cozepy.workflows.versions.WorkflowVersionInfo.workflow_id:
+  - 工作流ID
+  cozepy.workspaces.Workspace.enterprise_id:
+  - enterprise id
+  cozepy.workspaces.Workspace.icon_url:
+  - workspace icon url
+  cozepy.workspaces.Workspace.id:
+  - workspace id
+  cozepy.workspaces.Workspace.name:
+  - workspace name
+  cozepy.workspaces.Workspace.role_type:
+  - user in workspace role type
+  cozepy.workspaces.Workspace.workspace_type:
+  - workspace type
+  cozepy.workspaces.members.CreateWorkspaceMemberResp.added_success_user_ids:
+  - 团队或企业版成功添加的用户 ID 列表。
+  cozepy.workspaces.members.CreateWorkspaceMemberResp.already_invited_user_ids:
+  - 已经发起邀请但用户还未同意加入的用户 ID 列表。
+  - 仅个人版的空间添加用户时需要发出邀请，用户同意后才会加入空间。
+  cozepy.workspaces.members.CreateWorkspaceMemberResp.already_joined_user_ids:
+  - 用户在该工作空间中已经存在，不重复添加。
+  cozepy.workspaces.members.CreateWorkspaceMemberResp.invited_success_user_ids:
+  - 个人版中，发起邀请且用户同意加入的用户 ID 列表。
+  cozepy.workspaces.members.CreateWorkspaceMemberResp.not_exist_user_ids:
+  - 因用户不存在而导致添加失败的用户 ID 列表。
+  cozepy.workspaces.members.DeleteWorkspaceMemberResp.not_in_workspace_user_ids:
+  - 不在当前空间中的用户 ID 列表，这些用户不会被处理。
+  cozepy.workspaces.members.DeleteWorkspaceMemberResp.owner_not_support_remove_user_ids:
+  - 移除失败，该用户为空间所有者。
+  cozepy.workspaces.members.DeleteWorkspaceMemberResp.removed_success_user_ids:
+  - 成功移除的成员列表。
+  cozepy.datasets.documents.DocumentChunkStrategy.chunk_type:
+  - 'Segmentation setting. Values include:'
+  - '0: Automatic segmentation and cleaning. Use preset rules for data segmentation and processing.'
+  - '1: Custom. At this time, you need to specify segmentation rule details through separator, max_tokens,'
+  - remove_extra_spaces, and remove_urls_emails.
+  - 分段设置。取值包括：
+  - 0：自动分段与清洗。采用扣子预置规则进行数据分段与处理。
+  - 1：自定义。此时需要通过 separator、max_tokens、remove_extra_spaces 和 remove_urls_emails 分段规则细节。
+  cozepy.datasets.documents.DocumentChunkStrategy.caption_type:
+  - 'Image knowledge base annotation method:'
+  - '0: (Default) System automatically annotates description information'
+  - '1: Manual annotation'
+  cozepy.datasets.documents.DocumentChunkStrategy.max_tokens:
+  - Maximum segment length, with a range of 100 to 2000.
+  - Required when chunk_type=1.
+  - 最大分段长度，取值范围为 100~2000。
+  - 在 chunk_type=1 时必选。
+  cozepy.datasets.documents.DocumentChunkStrategy.remove_extra_spaces:
+  - 'Whether to automatically filter continuous spaces, line breaks, and tabs. Values include:'
+  - 'true: Automatically filter'
+  - 'false: (Default) Do not automatically filter<br>Effective when chunk_type=1.'
+  - 是否自动过滤连续的空格、换行符和制表符。取值包括：
+  - true：自动过滤
+  - false：（默认）不自动过滤
+  - 在 chunk_type=1 时生效。
+  cozepy.datasets.documents.DocumentChunkStrategy.remove_urls_emails:
+  - 'Whether to automatically filter all URLs and email addresses. Values include:'
+  - 'true: Automatically filter'
+  - 'false: (Default) Do not automatically filter'
+  - Effective when chunk_type=1.
+  - 是否自动过滤所有 URL 和电子邮箱地址。取值包括：
+  - true：自动过滤
+  - false：（默认）不自动过滤
+  - 在 chunk_type=1 时生效。
+  cozepy.datasets.documents.DocumentChunkStrategy.separator:
+  - Segmentation identifier.
+  - Required when chunk_type=1.
+  - 分段标识符。
+  - 在 chunk_type=1 时必选。
+  cozepy.datasets.documents.Document.document_id:
+  - File ID.
+  cozepy.datasets.documents.Document.char_count:
+  - Total number of characters in the document content.
+  cozepy.datasets.documents.Document.chunk_strategy:
+  - Segmentation rules.
+  cozepy.datasets.documents.Document.format_type:
+  - 文件的格式类型。取值包括：
+  - 0：文档类型，例如 txt 、pdf 、在线网页等格式均属于文档类型。
+  - 1：表格类型，例如 xls 表格等格式属于表格类型。
+  - 2：照片类型，例如 png 图片等格式属于照片类型。
+  - 'The type of file format. Values include:'
+  - '0: Document type, such as txt, pdf, online web pages, etc.'
+  - '1: Spreadsheet type, such as xls spreadsheets, etc.'
+  - '2: Photo type, such as png images, etc.'
+  cozepy.datasets.documents.Document.hit_count:
+  - The number of times the file has been hit in conversations.
+  - 被对话命中的次数。
+  cozepy.datasets.documents.Document.name:
+  - The name of the file.
+  - 文件的名称。
+  cozepy.datasets.documents.Document.size:
+  - The size of the file in bytes.
+  - 文件的大小，单位为字节。
+  cozepy.datasets.documents.Document.slice_count:
+  - The number of slices the file has been divided into.
+  - 文件的分段数量。
+  cozepy.datasets.documents.Document.source_type:
+  - 'The method of uploading the file. Values include:'
+  - '0: Upload local files.'
+  - '1: Upload online web pages.'
+  - 文件的上传方式。取值包括：
+  - 0：上传本地文件。
+  - 1：上传在线网页。
+  cozepy.datasets.documents.Document.status:
+  - 'The processing status of the file. Values include:'
+  - '0: Processing'
+  - '1: Completed'
+  - '9: Processing failed, it is recommended to re-upload'
+  - 文件的处理状态。取值包括：
+  - 0：处理中
+  - 1：处理完毕
+  - 9：处理失败，建议重新上传
+  cozepy.datasets.documents.Document.type:
+  - The format of the local file, i.e., the file extension, such as "txt". Supported formats include PDF, TXT, DOC,
+  - DOCX.
+  - 本地文件格式，即文件后缀，例如 txt。格式支持 pdf、txt、doc、docx 类型。
+  cozepy.datasets.documents.Document.update_interval:
+  - The frequency of automatic updates for online web pages, in hours.
+  - 在线网页自动更新的频率。单位为小时。
+  cozepy.datasets.documents.Document.update_type:
+  - 'Whether the online web page is automatically updated. Values include:'
+  - '0: Do not automatically update'
+  - '1: Automatically update'
+  - 在线网页是否自动更新。取值包括：
+  - 0：不自动更新
+  - 1：自动更新
+  cozepy.datasets.documents.Document.create_time:
+  - The upload time of the file, in the format of a 10-digit Unix timestamp.
+  cozepy.datasets.documents.Document.update_time:
+  - The last modified time of the file, in the format of a 10-digit Unix timestamp.
+  cozepy.datasets.documents.DocumentSourceInfo.file_base64:
+  - 本地文件的 Base64 编码。
+  - 上传本地文件时必选
+  cozepy.datasets.documents.DocumentSourceInfo.file_type:
+  - 本地文件格式，即文件后缀，例如 txt。格式支持 pdf、txt、doc、docx 类型。
+  - 上传的文件类型应与知识库类型匹配，例如 txt 文件只能上传到文档类型的知识库中。
+  - 上传本地文件时必选
+  cozepy.datasets.documents.DocumentSourceInfo.web_url:
+  - 网页的 URL 地址。
+  - 上传在线网页时必选
+  cozepy.datasets.documents.DocumentSourceInfo.document_source:
+  - 文件的上传方式。支持设置为 1，表示上传在线网页。
+  - 上传在线网页时必选
+  cozepy.datasets.documents.DocumentUpdateRule.update_type:
+  - 在线网页是否自动更新。取值包括：
+  - 0：不自动更新
+  - 1：自动更新
+  cozepy.datasets.documents.DocumentUpdateRule.update_interval:
+  - 在线网页自动更新的频率。单位为小时，最小值为 24。
+  cozepy.datasets.documents.DocumentBase.name:
+  - 文件名称。
+  cozepy.datasets.documents.DocumentBase.source_info:
+  - 文件的元数据信息。详细信息可参考 DocumentSourceInfo object。
+  cozepy.datasets.documents.DocumentBase.update_rule:
+  - 在线网页的更新策略。默认不自动更新。
+inline_field_comments:
+  cozepy.chat.InsertedMessage.id: Inserted message id
+  cozepy.datasets.Dataset.all_file_size: The total size of all files in the dataset
+  cozepy.datasets.Dataset.avatar_url: The avatar URL of the dataset creator
+  cozepy.datasets.Dataset.bot_used_count: The count of the bots used in the dataset
+  cozepy.datasets.Dataset.can_edit: Whether the dataset can be edited
+  cozepy.datasets.Dataset.chunk_strategy: The chunk strategy of the dataset
+  cozepy.datasets.Dataset.create_time: The creation second-level timestamp of the dataset
+  cozepy.datasets.Dataset.creator_id: The ID of the dataset creator
+  cozepy.datasets.Dataset.creator_name: The name of the dataset creator
+  cozepy.datasets.Dataset.dataset_id: The ID of the dataset
+  cozepy.datasets.Dataset.description: The description of the dataset
+  cozepy.datasets.Dataset.doc_count: The count of the documents in the dataset
+  cozepy.datasets.Dataset.failed_file_list: The list of files that failed to be uploaded in the dataset
+  cozepy.datasets.Dataset.file_list: The list of files in the dataset
+  cozepy.datasets.Dataset.format_type: 'The format type of the dataset, 0: text, 1: table, 2: image'
+  cozepy.datasets.Dataset.hit_count: The count of the hits in the dataset
+  cozepy.datasets.Dataset.icon_url: The icon URL of the dataset
+  cozepy.datasets.Dataset.name: The name of the dataset
+  cozepy.datasets.Dataset.processing_file_id_list: The list of file IDs that are being processed in the dataset
+  cozepy.datasets.Dataset.processing_file_list: The list of files that are being processed in the dataset
+  cozepy.datasets.Dataset.slice_count: The count of the segments in the dataset
+  cozepy.datasets.Dataset.space_id: The ID of the space that the dataset belongs to
+  cozepy.datasets.Dataset.status: 'The status of the dataset, 1: enable, 3: disable'
+  cozepy.datasets.Dataset.update_time: The update second-level timestamp of the dataset
+  cozepy.datasets.DocumentProgress.document_id: File ID.
+  cozepy.datasets.DocumentProgress.document_name: File name.
+  cozepy.datasets.DocumentProgress.progress: File upload progress. Unit is percentage.
+  cozepy.datasets.DocumentProgress.remaining_time: Estimated remaining time, in seconds.
+  cozepy.datasets.DocumentProgress.size: The size of the file, in bytes.
+  cozepy.datasets.DocumentProgress.status: 'File processing status. Values include: 0: In processing, 1: Processing completed, 9: Processing failed, recommend re-uploading'
+  cozepy.datasets.DocumentProgress.status_descript: Detailed description of the failure status, for example, the failure information returned when slicing fails. This parameter is returned only when document processing fails.
+  cozepy.datasets.DocumentProgress.update_interval: Frequency of automatic updates for online web pages. Unit is hours.
+  cozepy.datasets.DocumentProgress.update_type: 'Will the webpage automatically update online. Values include:'
+  cozepy.datasets.DocumentProgress.url: File address.
+  cozepy.datasets.documents.DocumentSourceInfo.source_file_id: uploaded by `coze.files.upload`
+  cozepy.datasets.images.Photo.caption: Image description information.
+  cozepy.datasets.images.Photo.create_time: The creation time of the image.
+  cozepy.datasets.images.Photo.creator_id: The ID of the creator.
+  cozepy.datasets.images.Photo.document_id: The ID of the image.
+  cozepy.datasets.images.Photo.name: The name of the image.
+  cozepy.datasets.images.Photo.size: The size of the image, in bytes.
+  cozepy.datasets.images.Photo.source_type: The source type of the image.
+  cozepy.datasets.images.Photo.status: 'Status of the file. Values include: 0: In processing, 1: Completed, 9: Processing failed, it is recommended to re-upload'
+  cozepy.datasets.images.Photo.type: File format, i.e., file extension, such as jpg, png.
+  cozepy.datasets.images.Photo.update_time: The update time of the image.
+  cozepy.datasets.images.Photo.url: The URL of the image.
+  cozepy.enterprises.members.EnterpriseMember.role: 当前用户角色
+  cozepy.enterprises.members.EnterpriseMember.user_id: 用户ID
+  cozepy.workspaces.members.WorkspaceMember.avatar_url: 头像 （添加成员时不用传）
+  cozepy.workspaces.members.WorkspaceMember.role_type: 当前用户角色
+  cozepy.workspaces.members.WorkspaceMember.user_id: 用户ID
+  cozepy.workspaces.members.WorkspaceMember.user_nickname: 昵称（添加成员时不用传）
+  cozepy.workspaces.members.WorkspaceMember.user_unique_name: 用户名（添加成员时不用传）
+enum_member_comments:
+  cozepy.bots.BotModelInfo.CacheType.CLOSED:
+  - 关闭上下文缓存。
+  cozepy.bots.BotModelInfo.CacheType.PREFIX:
+  - 前缀缓存模式。
+  cozepy.bots.SuggestReplyMode.CUSTOMIZED:
+  - The bot suggests replies based on the customized prompt.
+  - 开启用户问题建议，并根据用户自定义的 Prompt 提供用户问题建议。你需要在 customized_prompt 参数中设置关于用户问题建议的 Prompt。
+  cozepy.bots.SuggestReplyMode.DISABLE:
+  - The bot does not suggest replies.
+  - 在每次智能体回复后，不会提供任何用户问题建议。
+  cozepy.bots.SuggestReplyMode.ENABLE:
+  - The bot suggests replies.
+  - 在智能体回复后，提供最多 3 条用户问题建议。
+  cozepy.bots.UserInputType.CALL:
+  - 语音通话
+  cozepy.bots.UserInputType.TEXT:
+  - 文本输入
+  cozepy.bots.UserInputType.VOICE:
+  - 语音输入
+  cozepy.bots.VariableChannel.VariableChannelAPP:
+  - The variable is an app variable.
+  cozepy.bots.VariableChannel.VariableChannelCustom:
+  - The variable is a custom variable.
+  cozepy.bots.VariableChannel.VariableChannelFeishu:
+  - The variable is a Feishu variable.
+  cozepy.bots.VariableChannel.VariableChannelLocation:
+  - The variable is a location variable.
+  cozepy.bots.VariableChannel.VariableChannelSystem:
+  - The variable is a system variable.
+  cozepy.bots.VariableType.KVVariable:
+  - The variable is a key-value pair.
+  cozepy.bots.VariableType.ListVariable:
+  - The variable is a list.
+  cozepy.chat.ChatEventType.CONVERSATION_AUDIO_DELTA:
+  - If there is a voice message in the input message, the conversation.audio.delta event will be returned in the
+  - streaming response event. The data of this event corresponds to the Message Object. The content_type is audio,
+  - and the content is a PCM audio clip with a sampling rate of 24kHz, raw 16 bit, 1 channel, little-endian.
+  - 如果入参的消息中有语音消息，那么流式响应事件中，会返回 conversation.audio.delta 事件，此事件的 data 对应 Message Object。
+  - content_type 为 audio，content 为采样率 24kHz，raw 16 bit, 1 channel, little-endian 的 pcm 音频片段。
+  cozepy.chat.ChatEventType.CONVERSATION_CHAT_COMPLETED:
+  - The conversation is completed.
+  - 对话完成。
+  cozepy.chat.ChatEventType.CONVERSATION_CHAT_CREATED:
+  - Event for creating a conversation, indicating the start of the conversation.
+  - 创建对话的事件，表示对话开始。
+  cozepy.chat.ChatEventType.CONVERSATION_CHAT_FAILED:
+  - This event is used to mark a failed conversation.
+  - 此事件用于标识对话失败。
+  cozepy.chat.ChatEventType.CONVERSATION_CHAT_IN_PROGRESS:
+  - The server is processing the conversation.
+  - 服务端正在处理对话。
+  cozepy.chat.ChatEventType.CONVERSATION_CHAT_REQUIRES_ACTION:
+  - The conversation is interrupted and requires the user to report the execution results of the tool.
+  - 对话中断，需要使用方上报工具的执行结果。
+  cozepy.chat.ChatEventType.CONVERSATION_MESSAGE_COMPLETED:
+  - The message has been completely replied to. At this point, the streaming package contains the spliced results of all message.delta, and each message is in a completed state.
+  - message 已回复完成。此时流式包中带有所有 message.delta 的拼接结果，且每个消息均为 completed 状态。
+  cozepy.chat.ChatEventType.CONVERSATION_MESSAGE_DELTA:
+  - Incremental message, usually an incremental message when type=answer.
+  - 增量消息，通常是 type=answer 时的增量消息。
+  cozepy.chat.ChatEventType.DONE:
+  - The streaming response for this session ended normally.
+  - 本次会话的流式返回正常结束。
+  cozepy.chat.ChatEventType.ERROR:
+  - Error events during the streaming response process. For detailed explanations of code and msg, please refer to Error codes.
+  - 流式响应过程中的错误事件。关于 code 和 msg 的详细说明，可参考错误码。
+  cozepy.chat.ChatStatus.CANCELED:
+  - The session is canceled.
+  cozepy.chat.ChatStatus.COMPLETED:
+  - The Bot has finished processing, and the session has ended.
+  cozepy.chat.ChatStatus.CREATED:
+  - The session has been created.
+  cozepy.chat.ChatStatus.FAILED:
+  - The session has failed.
+  cozepy.chat.ChatStatus.IN_PROGRESS:
+  - The Bot is processing.
+  cozepy.chat.ChatStatus.REQUIRES_ACTION:
+  - The session is interrupted and requires further processing.
+  cozepy.chat.MessageContentType.AUDIO:
+  - If there is a voice message in the input message, the conversation.audio.delta event will be returned in the
+  - streaming response event. The data of this event corresponds to the Message Object. The content_type is audio,
+  - and the content is a PCM audio clip with a sampling rate of 24kHz, raw 16 bit, 1 channel, little-endian.
+  - 如果入参的消息中有语音消息，那么流式响应事件中，会返回 conversation.audio.delta 事件，此事件的 data 对应 Message Object。
+  - content_type 为 audio，content 为采样率 24kHz，raw 16 bit, 1 channel, little-endian 的 pcm 音频片段。
+  cozepy.chat.MessageContentType.CARD:
+  - message card. This enum value only appears in the interface response and is not supported as an input parameter.
+  - 卡片。此枚举值仅在接口响应中出现，不支持作为入参。
+  cozepy.chat.MessageContentType.OBJECT_STRING:
+  - Multimodal content, that is, a combination of text and files, or a combination of text and images.
+  - 多模态内容，即文本和文件的组合、文本和图片的组合。
+  cozepy.chat.MessageContentType.TEXT:
+  - Text.
+  - 文本。
+  cozepy.chat.MessageRole.ASSISTANT:
+  - Indicates that the content of the message is sent by the bot.
+  cozepy.chat.MessageRole.USER:
+  - Indicates that the content of the message is sent by the user.
+  cozepy.chat.MessageType.ANSWER:
+  - The message content returned by the Bot to the user, supporting incremental return. If the workflow is bound to a message node, there may be multiple answer scenarios, and the end flag of the streaming return can be used to determine that all answers are completed.
+  - Bot 返回给用户的消息内容，支持增量返回。如果工作流绑定了消息节点，可能会存在多 answer 场景，此时可以用流式返回的结束标志来判断所有 answer 完成。
+  cozepy.chat.MessageType.FOLLOW_UP:
+  - If the user question suggestion switch is turned on in the Bot configuration, the reply content related to the recommended questions will be returned.
+  - 如果在 Bot 上配置打开了用户问题建议开关，则会返回推荐问题相关的回复内容。不支持在请求中作为入参。
+  cozepy.chat.MessageType.FUNCTION_CALL:
+  - Intermediate results of the function (function call) called during the Bot conversation process.
+  - Bot 对话过程中调用函数（function call）的中间结果。
+  cozepy.chat.MessageType.QUESTION:
+  - User input content.
+  - 用户输入内容。
+  cozepy.chat.MessageType.TOOL_OUTPUT:
+  - Results returned after calling the tool (function call).
+  - 调用工具 （function call）后返回的结果。
+  cozepy.chat.MessageType.TOOL_RESPONSE:
+  - Results returned after calling the tool (function call).
+  - 调用工具 （function call）后返回的结果。
+  cozepy.chat.MessageType.VERBOSE:
+  - In the scenario of multiple answers, the server will return a verbose package, and the corresponding content is in JSON format. content.msg_type = generate_answer_finish represents that all answers have been replied to.
+  - 多 answer 场景下，服务端会返回一个 verbose 包，对应的 content 为 JSON 格式，content.msg_type =generate_answer_finish 代表全部 answer 回复完成。不支持在请求中作为入参。
+  cozepy.workflows.runs.WorkflowEventType.DONE:
+  - End. Indicates the end of the workflow execution, where data is empty.
+  - 结束。表示工作流执行结束，此时 data 为空。
+  cozepy.workflows.runs.WorkflowEventType.ERROR:
+  - An error has occurred. You can view the error_code and error_message in data to
+  - troubleshoot the issue.
+  - 报错。可以在 data 中查看 error_code 和 error_message，排查问题。
+  cozepy.workflows.runs.WorkflowEventType.INTERRUPT:
+  - Interruption. Indicates the workflow has been interrupted, where the data field
+  - contains specific interruption information.
+  - 中断。表示工作流中断，此时 data 字段中包含具体的中断信息。
+  cozepy.workflows.runs.WorkflowEventType.MESSAGE:
+  - The output message from the workflow node, such as the output message from
+  - the message node or end node. You can view the specific message content in data.
+  - 工作流节点输出消息，例如消息节点、结束节点的输出消息。可以在 data 中查看具体的消息内容。
+  cozepy.workflows.runs.run_histories.WorkflowExecuteStatus.FAIL:
+  - Execution failed.
+  cozepy.workflows.runs.run_histories.WorkflowExecuteStatus.RUNNING:
+  - Execution in progress.
+  cozepy.workflows.runs.run_histories.WorkflowExecuteStatus.SUCCESS:
+  - Execution succeeded.
+  cozepy.datasets.documents.DocumentFormatType.DOCUMENT:
+  - Document type, such as txt, pdf, online web pages, etc.
+  - 文档类型，例如 txt 、pdf 、在线网页等格式均属于文档类型。
+  cozepy.datasets.documents.DocumentFormatType.SPREADSHEET:
+  - 表格类型，例如 xls 表格等格式属于表格类型。
+  - Spreadsheet type, such as xls spreadsheets, etc.
+  cozepy.datasets.documents.DocumentFormatType.IMAGE:
+  - 照片类型，例如 png 图片等格式属于照片类型。
+  - Photo type, such as png images, etc.
+  cozepy.datasets.documents.DocumentStatus.PROCESSING:
+  - Processing
+  - 处理中
+  cozepy.datasets.documents.DocumentStatus.COMPLETED:
+  - Completed
+  - 处理完毕
+  cozepy.datasets.documents.DocumentStatus.FAILED:
+  - Processing failed, it is recommended to re-upload
+  - 处理失败，建议重新上传
+  cozepy.datasets.documents.DocumentUpdateType.NO_AUTO_UPDATE:
+  - Do not automatically update
+  - 不自动更新
+  cozepy.datasets.documents.DocumentUpdateType.AUTO_UPDATE:
+  - Automatically update
+  - 自动更新
+inline_enum_member_comments:
+  cozepy.api_apps.AppType.CONNECTOR: 渠道回调
+  cozepy.api_apps.AppType.NORMAL: 普通回调
+  cozepy.audio.voices.VoiceModelType.BIG: 大模型音色
+  cozepy.audio.voices.VoiceModelType.SMALL: 小模型音色
+  cozepy.audio.voices.VoiceState.ALL: 所有, 只有查询的时候有效
+  cozepy.audio.voices.VoiceState.CLONED: 已克隆
+  cozepy.audio.voices.VoiceState.INIT: 初始化
+  cozepy.bots.PublishStatus.ALL: 所有智能体，且数据为最新草稿版本
+  cozepy.bots.PublishStatus.PUBLISHED_DRAFT: 已发布的最新草稿版本
+  cozepy.bots.PublishStatus.PUBLISHED_ONLINE: 已发布智能体的最新线上版本
+  cozepy.bots.PublishStatus.UNPUBLISHED_DRAFT: 未发布的最新草稿版本
+  cozepy.chat.ChatEventType.UNKNOWN: 默认的未知值
+  cozepy.conversations.message.feedback.FeedbackType.LIKE: 赞
+  cozepy.conversations.message.feedback.FeedbackType.UNLIKE: 踩
+  cozepy.datasets.images.PhotoStatus.COMPLETED: Completed
+  cozepy.datasets.images.PhotoStatus.IN_PROCESSING: In processing
+  cozepy.datasets.images.PhotoStatus.PROCESSING_FAILED: Processing failed
+  cozepy.enterprises.members.EnterpriseMemberRole.ENTERPRISE_ADMIN: 企业管理员
+  cozepy.enterprises.members.EnterpriseMemberRole.ENTERPRISE_MEMBER: 企业成员
+  cozepy.folders.FolderType.DEVELOPMENT: 项目开发
+  cozepy.folders.FolderType.LIBRARY: 资源库
+  cozepy.workflows.runs.WorkflowEventType.UNKNOWN: 默认的未知值
+  cozepy.connectors.bots.AuditStatus.PENDING: 审核中
+  cozepy.connectors.bots.AuditStatus.APPROVED: 审核通过
+  cozepy.connectors.bots.AuditStatus.REJECTED: 审核不通过
+  cozepy.datasets.documents.DocumentSourceType.LOCAL_FILE: Upload local files.
+  cozepy.datasets.documents.DocumentSourceType.ONLINE_WEB: Upload online web pages.
+  cozepy.datasets.documents.DocumentSourceType.CUSTOM: Custom
+  cozepy.datasets.documents.DocumentSourceType.THIRD_PARTY: Third party
+  cozepy.datasets.documents.DocumentSourceType.FRONT_CRAWL: Front-end crawling
+  cozepy.datasets.documents.DocumentSourceType.UPLOAD_FILE_ID: OpenAPI Upload file_id.

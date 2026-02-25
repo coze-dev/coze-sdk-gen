@@ -22,6 +22,7 @@ diff:
       - "*_test.go"
       - main
 
+comment_overrides_file: comment_overrides.yaml
 api:
   generate_only_mapped: true
   packages:
