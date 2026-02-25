@@ -184,7 +184,6 @@ type OperationMapping struct {
 	StreamKeyword                  bool              `yaml:"stream_keyword"`
 	QueryFields                    []OperationField  `yaml:"query_fields"`
 	QueryFieldValues               map[string]string `yaml:"query_field_values"`
-	SignatureQueryFields           []string          `yaml:"signature_query_fields"`
 	ArgDefaults                    map[string]string `yaml:"arg_defaults"`
 	ArgDefaultsSync                map[string]string `yaml:"arg_defaults_sync"`
 	ArgDefaultsAsync               map[string]string `yaml:"arg_defaults_async"`
@@ -550,11 +549,6 @@ func (c *Config) Validate() error {
 			}
 			if strings.TrimSpace(fieldValue) == "" {
 				return fmt.Errorf("api.operation_mappings[%d].query_field_values[%q] is empty", i, fieldName)
-			}
-		}
-		for j, fieldName := range mapping.SignatureQueryFields {
-			if strings.TrimSpace(fieldName) == "" {
-				return fmt.Errorf("api.operation_mappings[%d].signature_query_fields[%d] should not be empty", i, j)
 			}
 		}
 		for fieldName, fieldValue := range mapping.ArgDefaults {

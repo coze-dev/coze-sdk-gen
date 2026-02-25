@@ -3630,9 +3630,6 @@ api:
         - chat_message.list
       force_multiline_signature: true
       query_builder: raw
-      signature_query_fields:
-        - conversation_id
-        - chat_id
       query_fields:
         - name: conversation_id
           type: str
@@ -3714,10 +3711,6 @@ api:
           type: str
           required: true
           default: '""'
-      signature_query_fields:
-        - app_type
-        - page_token
-        - page_size
       pagination: token
       pagination_data_class: _PrivateListAPIAppsData
       pagination_item_type: APIApp
@@ -3728,12 +3721,6 @@ api:
       sdk_methods:
         - apps.list
       query_builder: remove_none_values
-      signature_query_fields:
-        - workspace_id
-        - publish_status
-        - connector_id
-        - page_index
-        - page_size
       query_fields:
         - name: workspace_id
           type: str
@@ -3902,12 +3889,6 @@ api:
         - datasets.list
       blank_line_after_docstring: true
       query_builder: raw
-      signature_query_fields:
-        - space_id
-        - name
-        - format_type
-        - page_num
-        - page_size
       query_fields:
         - name: space_id
           type: str
@@ -4110,10 +4091,6 @@ api:
       param_aliases:
         page: page_num
         size: page_size
-      signature_query_fields:
-        - dataset_id
-        - page_num
-        - page_size
       query_fields:
         - name: dataset_id
           type: str
@@ -4326,10 +4303,6 @@ api:
       param_aliases:
         page: page_num
         size: page_size
-      signature_query_fields:
-        - dataset_id
-        - page_num
-        - page_size
       query_fields:
         - name: dataset_id
           type: str
@@ -4465,10 +4438,6 @@ api:
         - bots._list_v1
       query_builder: raw
       async_include_kwargs: true
-      signature_query_fields:
-        - space_id
-        - page_index
-        - page_size
       query_fields:
         - name: space_id
           type: str
@@ -4496,12 +4465,6 @@ api:
       sdk_methods:
         - bots._list_v2
       query_builder: remove_none_values
-      signature_query_fields:
-        - workspace_id
-        - publish_status
-        - connector_id
-        - page_index
-        - page_size
       query_fields:
         - name: workspace_id
           type: str
@@ -4546,12 +4509,6 @@ api:
       order: 75
       sdk_methods:
         - folders.list
-      signature_query_fields:
-        - workspace_id
-        - folder_type
-        - parent_folder_id
-        - page_num
-        - page_size
       query_fields:
         - name: page_size
           type: int
@@ -4619,9 +4576,6 @@ api:
         - api_apps_events.list
       allow_missing_in_swagger: true
       query_builder: remove_none_values
-      signature_query_fields:
-        - page_token
-        - page_size
       query_fields:
         - name: page_size
           type: int
@@ -4779,12 +4733,6 @@ api:
         - audio_voiceprint_groups.list
       allow_missing_in_swagger: true
       query_builder: remove_none_values
-      signature_query_fields:
-        - name
-        - group_id
-        - user_id
-        - page_num
-        - page_size
       query_fields:
         - name: name
           type: str
@@ -4918,9 +4866,6 @@ api:
         - audio_voiceprint_groups_features.list
       allow_missing_in_swagger: true
       query_builder: remove_none_values
-      signature_query_fields:
-        - page_num
-        - page_size
       query_fields:
         - name: page_num
           type: int
@@ -4969,12 +4914,6 @@ api:
       query_field_values:
         model_type: model_type.value if model_type else None
         voice_state: voice_state.value if voice_state else None
-      signature_query_fields:
-        - filter_system_voice
-        - model_type
-        - voice_state
-        - page_num
-        - page_size
       pagination: number_has_more
       pagination_data_class: _PrivateListVoiceData
       pagination_item_type: Voice
@@ -5138,11 +5077,6 @@ api:
         - name: has_caption
           type: bool
           required: false
-      signature_query_fields:
-        - keyword
-        - has_caption
-        - page_num
-        - page_size
       pagination: number
       pagination_data_class: _PrivateListPhotosData
       pagination_item_type: Photo
@@ -5349,10 +5283,6 @@ api:
         - name: page_token
           type: str
           required: false
-      signature_query_fields:
-        - publish_status
-        - page_size
-        - page_token
       pagination: token
       pagination_data_class: _PrivateListWorkflowVersionData
       pagination_item_type: WorkflowVersionInfo
@@ -5496,9 +5426,6 @@ api:
         - workspaces_members.list
       allow_missing_in_swagger: true
       query_builder: remove_none_values
-      signature_query_fields:
-        - page_num
-        - page_size
       query_fields:
         - name: page_size
           type: int

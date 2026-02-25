@@ -52,35 +52,33 @@ func PaginationOrderedFields(fields []RenderQueryField, pageSizeField string, pa
 	return out
 }
 
-func OrderSignatureQueryFields(fields []RenderQueryField, orderedRawNames []string) []RenderQueryField {
-	if len(fields) == 0 || len(orderedRawNames) == 0 {
+func OrderSignatureQueryFields(fields []RenderQueryField, mapping *config.OperationMapping, async bool) []RenderQueryField {
+	if len(fields) <= 1 {
 		return fields
 	}
-	fieldByName := make(map[string]RenderQueryField, len(fields))
+	requiredFields := make([]RenderQueryField, 0, len(fields))
+	optionalWithoutDefault := make([]RenderQueryField, 0, len(fields))
+	optionalWithDefault := make([]RenderQueryField, 0, len(fields))
 	for _, field := range fields {
-		fieldByName[field.RawName] = field
-	}
-	result := make([]RenderQueryField, 0, len(fields))
-	seen := make(map[string]struct{}, len(fields))
-	for _, rawName := range orderedRawNames {
-		name := strings.TrimSpace(rawName)
-		if name == "" {
+		defaultValue := strings.TrimSpace(field.DefaultValue)
+		if override, ok := OperationArgDefault(mapping, field.RawName, field.ArgName, async); ok {
+			defaultValue = override
+		}
+		if field.Required {
+			requiredFields = append(requiredFields, field)
 			continue
 		}
-		field, ok := fieldByName[name]
-		if !ok {
+		if defaultValue == "" {
+			optionalWithoutDefault = append(optionalWithoutDefault, field)
 			continue
 		}
-		result = append(result, field)
-		seen[name] = struct{}{}
+		optionalWithDefault = append(optionalWithDefault, field)
 	}
-	for _, field := range fields {
-		if _, ok := seen[field.RawName]; ok {
-			continue
-		}
-		result = append(result, field)
-	}
-	return result
+	ordered := make([]RenderQueryField, 0, len(fields))
+	ordered = append(ordered, requiredFields...)
+	ordered = append(ordered, optionalWithoutDefault...)
+	ordered = append(ordered, optionalWithDefault...)
+	return ordered
 }
 
 func SignatureArgName(argDecl string) string {
