@@ -1765,6 +1765,8 @@ api:
           module: .bots
           sync_class: ConnectorsBotsClient
           async_class: AsyncConnectorsBotsClient
+      empty_models:
+        - InstallConnectorResp
       path_prefixes:
         - /v1/connectors
     - name: connectors_bots
@@ -4013,6 +4015,21 @@ api:
       blank_line_after_headers: true
       response_type: UpdateConnectorBotResp
       response_cast: UpdateConnectorBotResp
+    - path: /v1/connectors/{connector_id}/install
+      method: post
+      order: 650
+      sdk_methods:
+        - connectors.install
+      body_builder: raw
+      body_fields:
+        - workspace_id
+      body_required_fields:
+        - workspace_id
+      arg_types:
+        connector_id: str
+        workspace_id: str
+      response_type: InstallConnectorResp
+      response_cast: InstallConnectorResp
     - path: /open_api/knowledge/document/create
       method: post
       order: 652
@@ -5555,8 +5572,6 @@ api:
       response_cast: RemoveAppCollaboratorResp
   ignore_apis:
     - path: /v1/apps/{app_id}/collaborators
-      method: post
-    - path: /v1/connectors/{connector_id}/install
       method: post
     - path: /v1/connectors/{connector_id}/user_configs
       method: post
