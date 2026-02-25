@@ -884,7 +884,6 @@ func TestRenderOperationMethodKwargsOnlySignature(t *testing.T) {
 		MethodName:  "me",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			UseKwargsHeaders:   true,
 			DisableRequestBody: true,
 			ResponseType:       "User",
 			ResponseCast:       "User",
@@ -934,7 +933,6 @@ func TestRenderOperationMethodDelegateTo(t *testing.T) {
 			DelegateCallArgs:      []string{"bot_id=bot_id", "stream=True", "**kwargs"},
 			AsyncDelegateCallArgs: []string{"bot_id=bot_id", "additional_messages=additional_messages", "stream=True", "**kwargs"},
 			DelegateAsyncYield:    true,
-			UseKwargsHeaders:      true,
 			BodyFields:            []string{"bot_id"},
 			ArgTypes: map[string]string{
 				"bot_id": "str",
@@ -970,7 +968,6 @@ func TestRenderOperationMethodPaginationOrderOptions(t *testing.T) {
 			Pagination:                    "number",
 			PaginationDataClass:           "_PrivateListAppsData",
 			PaginationItemType:            "App",
-			UseKwargsHeaders:              true,
 			PaginationHeadersBeforeParams: true,
 		},
 	}, false)
@@ -988,7 +985,6 @@ func TestRenderOperationMethodPaginationOrderOptions(t *testing.T) {
 			Pagination:                  "number",
 			PaginationDataClass:         "_PrivateListAppsData",
 			PaginationItemType:          "App",
-			UseKwargsHeaders:            true,
 			PaginationCastBeforeHeaders: true,
 		},
 	}, false)
@@ -1242,7 +1238,6 @@ func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
 			FilesFields:       []string{"file"},
 			FilesFieldValues:  map[string]string{"file": "_try_fix_file(file)"},
 			FilesBeforeBody:   true,
-			UseKwargsHeaders:  true,
 			HeadersBeforeBody: true,
 			ArgTypes: map[string]string{
 				"group_id": "str",
@@ -1317,7 +1312,6 @@ func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
 		Mapping: &config.OperationMapping{
 			BodyBuilder:           "raw",
 			BodyFields:            []string{"name"},
-			UseKwargsHeaders:      true,
 			HeadersBeforeBody:     true,
 			BlankLineAfterHeaders: true,
 			ArgTypes: map[string]string{

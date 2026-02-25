@@ -177,7 +177,6 @@ type OperationMapping struct {
 	PreDocstringCode               []string          `yaml:"pre_docstring_code"`
 	PreBodyCode                    []string          `yaml:"pre_body_code"`
 	BodyRequiredFields             []string          `yaml:"body_required_fields"`
-	UseKwargsHeaders               bool              `yaml:"use_kwargs_headers"`
 	ParamAliases                   map[string]string `yaml:"param_aliases"`
 	ArgTypes                       map[string]string `yaml:"arg_types"`
 	ResponseType                   string            `yaml:"response_type"`

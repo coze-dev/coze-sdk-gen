@@ -1167,10 +1167,6 @@ func packageNeedsAnyDict(doc *openapi.Document, bindings []OperationBinding, mod
 			}
 		}
 
-		if mapping == nil || (!mapping.UseKwargsHeaders && !mapping.DisableHeadersArg) {
-			needDict = true
-		}
-
 		if binding.Details.RequestBodySchema != nil {
 			disableRequestBody := mapping != nil && mapping.DisableRequestBody
 			hasBodyFields := mapping != nil && len(mapping.BodyFields) > 0
@@ -2178,7 +2174,6 @@ func RenderOperationMethodWithComments(
 	paginationMode := ""
 	returnType, returnCast := ReturnTypeInfo(doc, details.ResponseSchema)
 	requestBodyType, bodyRequired := RequestBodyTypeInfo(doc, details.RequestBodySchema, details.RequestBody)
-	useKwargsHeaders := binding.Mapping != nil && binding.Mapping.UseKwargsHeaders
 	disableHeadersArg := binding.Mapping != nil && binding.Mapping.DisableHeadersArg
 	ignoreHeaderParams := binding.Mapping != nil && binding.Mapping.IgnoreHeaderParams
 	castKeyword := binding.Mapping != nil && binding.Mapping.CastKeyword
@@ -2435,12 +2430,9 @@ func RenderOperationMethodWithComments(
 			signatureArgNames[argName] = struct{}{}
 		}
 	}
-	includeKwargsHeaders := useKwargsHeaders && !disableHeadersArg
-	includeExplicitHeadersArg := !disableHeadersArg && !includeKwargsHeaders
+	includeKwargsHeaders := !disableHeadersArg
 	if includeKwargsHeaders {
 		signatureArgs = append(signatureArgs, "**kwargs")
-	} else if includeExplicitHeadersArg {
-		signatureArgs = append(signatureArgs, "headers: Optional[Dict[str, str]] = None")
 	}
 	if asyncIncludeKwargs && !includeKwargsHeaders {
 		signatureArgs = append(signatureArgs, "**kwargs")
