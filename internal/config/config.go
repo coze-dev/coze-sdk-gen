@@ -211,7 +211,6 @@ type OperationMapping struct {
 	StreamWrapSyncResponseVar      string            `yaml:"stream_wrap_sync_response_var"`
 	StreamWrapCompactAsyncReturn   bool              `yaml:"stream_wrap_compact_async_return"`
 	StreamWrapCompactSyncReturn    bool              `yaml:"stream_wrap_compact_sync_return"`
-	StreamWrapBlankLineBeforeAsync bool              `yaml:"stream_wrap_blank_line_before_return_async"`
 	QueryBuilder                   string            `yaml:"query_builder"`
 	QueryBuilderSync               string            `yaml:"query_builder_sync"`
 	QueryBuilderAsync              string            `yaml:"query_builder_async"`
@@ -224,7 +223,6 @@ type OperationMapping struct {
 	BlankLineAfterHeaders          bool              `yaml:"blank_line_after_headers"`
 	NoBlankLineAfterHeaders        bool              `yaml:"no_blank_line_after_headers"`
 	BlankLineAfterDocstring        bool              `yaml:"blank_line_after_docstring"`
-	BlankLineBeforeReturn          bool              `yaml:"blank_line_before_return"`
 	ForceMultilineSignature        bool              `yaml:"force_multiline_signature"`
 	ForceMultilineSignatureSync    bool              `yaml:"force_multiline_signature_sync"`
 	ForceMultilineSignatureAsync   bool              `yaml:"force_multiline_signature_async"`
