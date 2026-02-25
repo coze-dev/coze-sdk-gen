@@ -35,6 +35,34 @@ func TestGeneratePythonFromSwagger(t *testing.T) {
 	}
 }
 
+func TestGeneratePythonPreservesGitDirectory(t *testing.T) {
+	out := t.TempDir()
+	gitHead := filepath.Join(out, ".git", "HEAD")
+	if err := os.MkdirAll(filepath.Dir(gitHead), 0o755); err != nil {
+		t.Fatalf("mkdir git dir: %v", err)
+	}
+	if err := os.WriteFile(gitHead, []byte("ref: refs/heads/main\n"), 0o644); err != nil {
+		t.Fatalf("write git head: %v", err)
+	}
+	staleFile := filepath.Join(out, "stale.txt")
+	if err := os.WriteFile(staleFile, []byte("stale"), 0o644); err != nil {
+		t.Fatalf("write stale file: %v", err)
+	}
+
+	cfg := testConfig(out)
+	doc := mustParseSwagger(t)
+	if _, err := GeneratePython(cfg, doc); err != nil {
+		t.Fatalf("GeneratePython() error = %v", err)
+	}
+
+	if _, err := os.Stat(gitHead); err != nil {
+		t.Fatalf("expected .git to be preserved, stat err=%v", err)
+	}
+	if _, err := os.Stat(staleFile); !os.IsNotExist(err) {
+		t.Fatalf("expected stale file to be removed, stat err=%v", err)
+	}
+}
+
 func TestGeneratePythonOnlyMapped(t *testing.T) {
 	out := t.TempDir()
 	cfg := testConfig(out)
@@ -95,6 +123,35 @@ func TestGenerateGoFromSwagger(t *testing.T) {
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "users.go"), "func (r *users) Me(")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "templates.go"), "func (r *templates) Duplicate(")
 	assertFileContains(t, filepath.Join(cfg.OutputSDK, "go.mod"), "module github.com/coze-dev/coze-go")
+}
+
+func TestGenerateGoPreservesGitDirectory(t *testing.T) {
+	out := t.TempDir()
+	gitHead := filepath.Join(out, ".git", "HEAD")
+	if err := os.MkdirAll(filepath.Dir(gitHead), 0o755); err != nil {
+		t.Fatalf("mkdir git dir: %v", err)
+	}
+	if err := os.WriteFile(gitHead, []byte("ref: refs/heads/main\n"), 0o644); err != nil {
+		t.Fatalf("write git head: %v", err)
+	}
+	staleFile := filepath.Join(out, "stale.txt")
+	if err := os.WriteFile(staleFile, []byte("stale"), 0o644); err != nil {
+		t.Fatalf("write stale file: %v", err)
+	}
+
+	cfg, doc := mustLoadRealConfigAndSwagger(t)
+	cfg.Language = "go"
+	cfg.OutputSDK = out
+	if _, err := GenerateGo(cfg, doc); err != nil {
+		t.Fatalf("GenerateGo() error = %v", err)
+	}
+
+	if _, err := os.Stat(gitHead); err != nil {
+		t.Fatalf("expected .git to be preserved, stat err=%v", err)
+	}
+	if _, err := os.Stat(staleFile); !os.IsNotExist(err) {
+		t.Fatalf("expected stale file to be removed, stat err=%v", err)
+	}
 }
 
 func TestGenerateGoValidationFailure(t *testing.T) {

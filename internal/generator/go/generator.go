@@ -9,6 +9,7 @@ import (
 	"unicode"
 
 	"github.com/coze-dev/coze-sdk-gen/internal/config"
+	"github.com/coze-dev/coze-sdk-gen/internal/generator/fsutil"
 	pygen "github.com/coze-dev/coze-sdk-gen/internal/generator/python"
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
 )
@@ -47,11 +48,8 @@ func GenerateGo(cfg *config.Config, doc *openapi.Document) (Result, error) {
 		return Result{}, fmt.Errorf("no operations selected for generation")
 	}
 
-	if err := os.RemoveAll(cfg.OutputSDK); err != nil {
-		return Result{}, fmt.Errorf("clean output directory %q: %w", cfg.OutputSDK, err)
-	}
-	if err := os.MkdirAll(cfg.OutputSDK, 0o755); err != nil {
-		return Result{}, fmt.Errorf("create output directory %q: %w", cfg.OutputSDK, err)
+	if err := fsutil.CleanOutputDirPreserveGit(cfg.OutputSDK); err != nil {
+		return Result{}, fmt.Errorf("prepare output directory %q: %w", cfg.OutputSDK, err)
 	}
 
 	writer := &fileWriter{
