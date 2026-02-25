@@ -625,7 +625,6 @@ api:
     - name: audio_voices
       source_dir: cozepy/audio/voices
       disable_auto_imports: true
-      separate_commented_fields: true
       client_class: VoicesClient
       async_client_class: AsyncVoicesClient
       raw_imports:
@@ -1415,7 +1414,6 @@ api:
               value: reply_message
         - schema: InterruptFunction
           name: ChatToolCallFunction
-          separate_commented_fields: true
           field_order:
             - name
             - arguments
@@ -1424,7 +1422,6 @@ api:
             - arguments
         - schema: InterruptPlugin
           name: ChatToolCall
-          separate_commented_fields: true
           field_order:
             - id
             - type
@@ -1443,7 +1440,6 @@ api:
             tool_calls: List[ChatToolCall]
         - schema: RequiredAction
           name: ChatRequiredAction
-          separate_commented_fields: true
           field_order:
             - type
             - submit_tool_outputs
@@ -1454,7 +1450,6 @@ api:
             submit_tool_outputs: Optional[ChatSubmitToolOutputs]
         - schema: Usage2
           name: ChatUsage
-          separate_commented_fields: true
           field_order:
             - token_count
             - output_count
@@ -2330,7 +2325,6 @@ api:
     - name: datasets_documents
       source_dir: cozepy/datasets/documents
       disable_auto_imports: true
-      separate_commented_fields: true
       client_class: DatasetsDocumentsClient
       async_client_class: AsyncDatasetsDocumentsClient
       override_pagination_classes:
@@ -2722,7 +2716,6 @@ api:
     - name: files
       source_dir: cozepy/files
       disable_auto_imports: true
-      separate_commented_fields: true
       raw_imports:
         - |
           import os
@@ -3164,7 +3157,6 @@ api:
     - name: workflows
       source_dir: cozepy/workflows
       disable_auto_imports: true
-      separate_commented_fields: true
       raw_imports:
         - |
           from typing import TYPE_CHECKING, List, Optional
@@ -3382,7 +3374,6 @@ api:
     - name: workflows_runs
       source_dir: cozepy/workflows/runs
       disable_auto_imports: true
-      separate_commented_fields: true
       separate_commented_enum_members: true
       client_class: WorkflowsRunsClient
       async_client_class: AsyncWorkflowsRunsClient
@@ -3603,7 +3594,6 @@ api:
             sub_execute_id: "None"
         - schema: WorkflowExecuteHistory
           name: WorkflowRunHistory
-          separate_commented_fields: true
           exclude_unordered_fields: true
           field_order:
             - execute_id
@@ -3686,7 +3676,6 @@ api:
     - name: workflows_versions
       source_dir: cozepy/workflows/versions
       disable_auto_imports: true
-      separate_commented_fields: true
       client_class: WorkflowsVersionsClient
       async_client_class: AsyncWorkflowsVersionsClient
       raw_imports:

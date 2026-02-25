@@ -1497,7 +1497,6 @@ type packageModelDefinition struct {
 	AllowMissingInSwagger bool
 	ExcludeUnordered      bool
 	SeparateCommentedEnum *bool
-	SeparateCommented     *bool
 }
 
 func packageSchemaAliases(meta PackageMeta) map[string]string {
@@ -1561,7 +1560,6 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 				AllowMissingInSwagger: model.AllowMissingInSwagger,
 				ExcludeUnordered:      model.ExcludeUnorderedFields,
 				SeparateCommentedEnum: model.SeparateCommentedEnum,
-				SeparateCommented:     model.SeparateCommentedFields,
 			})
 			continue
 		}
@@ -1590,7 +1588,6 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 				AllowMissingInSwagger: model.AllowMissingInSwagger,
 				ExcludeUnordered:      model.ExcludeUnorderedFields,
 				SeparateCommentedEnum: model.SeparateCommentedEnum,
-				SeparateCommented:     model.SeparateCommentedFields,
 			})
 			continue
 		}
@@ -1618,7 +1615,6 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 			AllowMissingInSwagger: model.AllowMissingInSwagger,
 			ExcludeUnordered:      model.ExcludeUnorderedFields,
 			SeparateCommentedEnum: model.SeparateCommentedEnum,
-			SeparateCommented:     model.SeparateCommentedFields,
 		})
 	}
 	return result
@@ -1634,7 +1630,6 @@ func renderPackageModelDefinitions(
 	var buf bytes.Buffer
 	modulePrefix := "cozepy." + meta.ModulePath
 	separateCommentedEnum := meta.Package != nil && meta.Package.SeparateCommentedEnum
-	separateCommentedFields := meta.Package != nil && meta.Package.SeparateCommentedFields
 
 	for _, model := range models {
 		classKey := modulePrefix + "." + model.Name
@@ -1647,10 +1642,6 @@ func renderPackageModelDefinitions(
 		modelSeparateCommentedEnum := separateCommentedEnum
 		if model.SeparateCommentedEnum != nil {
 			modelSeparateCommentedEnum = *model.SeparateCommentedEnum
-		}
-		modelSeparateCommentedFields := separateCommentedFields
-		if model.SeparateCommented != nil {
-			modelSeparateCommentedFields = *model.SeparateCommented
 		}
 		if model.IsEnum {
 			if model.EnumBase == "dynamic_str" {
@@ -1829,7 +1820,7 @@ func renderPackageModelDefinitions(
 			fieldNames = append(fieldNames, extraName)
 		}
 
-		prevHasField := false
+		hasRenderedField := false
 		for _, fieldName := range fieldNames {
 			if propertySchema, ok := properties[fieldName]; ok {
 				typeName := modelFieldType(model, fieldName, PythonTypeForSchemaWithAliases(doc, propertySchema, requiredSet[fieldName], schemaAliases))
@@ -1840,9 +1831,6 @@ func renderPackageModelDefinitions(
 					inlineFieldComment = strings.TrimSpace(inlineFieldComment)
 				}
 				fieldComment := LinesFromCommentOverride(commentOverrides.FieldComments[classKey+"."+normalizedFieldName])
-				if modelSeparateCommentedFields && prevHasField && len(fieldComment) > 0 {
-					buf.WriteString("\n")
-				}
 				if len(fieldComment) > 0 && inlineFieldComment == "" {
 					WriteLineComments(&buf, 1, fieldComment)
 				}
@@ -1852,6 +1840,7 @@ func renderPackageModelDefinitions(
 					} else {
 						buf.WriteString(fmt.Sprintf("    %s: %s\n", normalizedFieldName, typeName))
 					}
+					hasRenderedField = true
 				} else {
 					defaultValue := modelFieldDefault(model, fieldName)
 					if defaultValue == "None" && !strings.HasPrefix(typeName, "Optional[") {
@@ -1866,8 +1855,8 @@ func renderPackageModelDefinitions(
 					} else {
 						buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, defaultValue))
 					}
+					hasRenderedField = true
 				}
-				prevHasField = true
 				continue
 			}
 
@@ -1889,9 +1878,6 @@ func renderPackageModelDefinitions(
 				inlineFieldComment = strings.TrimSpace(inlineFieldComment)
 			}
 			fieldComment := LinesFromCommentOverride(commentOverrides.FieldComments[classKey+"."+normalizedFieldName])
-			if modelSeparateCommentedFields && prevHasField && len(fieldComment) > 0 {
-				buf.WriteString("\n")
-			}
 			if len(fieldComment) > 0 && inlineFieldComment == "" {
 				WriteLineComments(&buf, 1, fieldComment)
 			}
@@ -1901,7 +1887,7 @@ func renderPackageModelDefinitions(
 				} else {
 					buf.WriteString(fmt.Sprintf("    %s: %s\n", normalizedFieldName, typeName))
 				}
-				prevHasField = true
+				hasRenderedField = true
 				continue
 			}
 			defaultValue := strings.TrimSpace(extraField.Default)
@@ -1916,9 +1902,9 @@ func renderPackageModelDefinitions(
 			} else {
 				buf.WriteString(fmt.Sprintf("    %s: %s = %s\n", normalizedFieldName, typeName, defaultValue))
 			}
-			prevHasField = true
+			hasRenderedField = true
 		}
-		if prevHasField && len(model.ExtraCode) > 0 {
+		if hasRenderedField && len(model.ExtraCode) > 0 {
 			buf.WriteString("\n")
 		}
 		for _, block := range model.ExtraCode {
