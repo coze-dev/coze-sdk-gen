@@ -373,26 +373,6 @@ api:
             - name: text
               type: str
               required: true
-      async_extra_methods:
-        - |
-          async def create(
-              self,
-              *,
-              file: FileTypes,
-              **kwargs,
-          ) -> CreateTranscriptionsResp:
-              """
-              create transcriptions
-
-              :param file: The file to be translated.
-              :return: create transcriptions result
-              """
-              url = f"{self._base_url}/v1/audio/transcriptions"
-              files = {"file": _try_fix_file(file)}
-              headers: Optional[dict] = kwargs.get("headers")
-              return await self._requester.arequest(
-                  "post", url, stream=False, cast=CreateTranscriptionsResp, headers=headers, files=files
-              )
       async_method_order:
         - create
       path_prefixes:
@@ -5564,7 +5544,6 @@ api:
       order: 81
       sdk_methods:
         - audio_transcriptions.create
-      sync_only: true
       force_multiline_signature: true
       disable_request_body: true
       files_fields:

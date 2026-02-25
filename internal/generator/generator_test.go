@@ -34,6 +34,34 @@ func TestGeneratePythonFromSwagger(t *testing.T) {
 	}
 }
 
+func TestGeneratePythonAudioTranscriptionsAsyncCreateFromMapping(t *testing.T) {
+	cfg, doc := mustLoadRealConfigAndSwagger(t)
+	cfg.Language = "python"
+	cfg.OutputSDK = t.TempDir()
+
+	if _, err := GeneratePython(cfg, doc); err != nil {
+		t.Fatalf("GeneratePython() error = %v", err)
+	}
+
+	modulePath := filepath.Join(cfg.OutputSDK, "cozepy", "audio", "transcriptions", "__init__.py")
+	module := readFile(t, modulePath)
+	if !strings.Contains(module, "class AsyncTranscriptionsClient(object):") {
+		t.Fatalf("expected async transcriptions client class, got:\n%s", module)
+	}
+	if !strings.Contains(module, "async def create(") {
+		t.Fatalf("expected async create method, got:\n%s", module)
+	}
+	if got := strings.Count(module, "async def create("); got != 1 {
+		t.Fatalf("expected exactly one async create method, got %d", got)
+	}
+	if !strings.Contains(module, "files = {\"file\": _try_fix_file(file)}") {
+		t.Fatalf("expected generated files payload from mapping/rendering, got:\n%s", module)
+	}
+	if !strings.Contains(module, "return await self._requester.arequest(") {
+		t.Fatalf("expected async request call, got:\n%s", module)
+	}
+}
+
 func TestGeneratePythonPreservesConfiguredDiffIgnorePaths(t *testing.T) {
 	out := t.TempDir()
 	gitHead := filepath.Join(out, ".git", "HEAD")
