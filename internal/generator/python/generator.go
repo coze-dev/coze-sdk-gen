@@ -2285,7 +2285,7 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 		if model.Schema == nil {
 			continue
 		}
-		referencedSchemaNames := collectModelSchemaRefs(doc, model.Schema, model.FieldTypes)
+		referencedSchemaNames := collectModelSchemaRefs(doc, model)
 		for _, schemaName := range referencedSchemaNames {
 			schemaName = strings.TrimSpace(schemaName)
 			if schemaName == "" || schemaName == strings.TrimSpace(model.SchemaName) {
@@ -2392,11 +2392,11 @@ func isSchemaEnum(schema *openapi.Schema, explicitEnumValues []config.ModelEnumV
 	return len(schema.Enum) > 0 && (schema.Type == "string" || schema.Type == "integer" || schema.Type == "")
 }
 
-func collectModelSchemaRefs(doc *openapi.Document, schema *openapi.Schema, fieldTypeOverrides map[string]string) []string {
-	if doc == nil || schema == nil {
+func collectModelSchemaRefs(doc *openapi.Document, model packageModelDefinition) []string {
+	if doc == nil || model.Schema == nil {
 		return nil
 	}
-	resolvedRoot := doc.ResolveSchema(schema)
+	resolvedRoot := doc.ResolveSchema(model.Schema)
 	if resolvedRoot == nil {
 		return nil
 	}
@@ -2437,25 +2437,17 @@ func collectModelSchemaRefs(doc *openapi.Document, schema *openapi.Schema, field
 		}
 	}
 
-	for propertyName, property := range resolvedRoot.Properties {
-		override := strings.TrimSpace(fieldTypeOverrides[propertyName])
+	propertyNames := modelRenderedPropertyNames(resolvedRoot.Properties, model.FieldOrder, model.ExcludeUnordered)
+	for _, propertyName := range propertyNames {
+		property := resolvedRoot.Properties[propertyName]
+		if property == nil {
+			continue
+		}
+		override := strings.TrimSpace(model.FieldTypes[propertyName])
 		if override != "" {
 			continue
 		}
 		walk(property)
-	}
-	walk(resolvedRoot.Items)
-	for _, item := range resolvedRoot.AllOf {
-		walk(item)
-	}
-	for _, item := range resolvedRoot.AnyOf {
-		walk(item)
-	}
-	for _, item := range resolvedRoot.OneOf {
-		walk(item)
-	}
-	if additional, ok := resolvedRoot.AdditionalProperties.(*openapi.Schema); ok {
-		walk(additional)
 	}
 
 	names := make([]string, 0, len(refs))
@@ -2468,6 +2460,40 @@ func collectModelSchemaRefs(doc *openapi.Document, schema *openapi.Schema, field
 	}
 	sort.Strings(names)
 	return names
+}
+
+func modelRenderedPropertyNames(properties map[string]*openapi.Schema, fieldOrder []string, excludeUnordered bool) []string {
+	if len(properties) == 0 {
+		return nil
+	}
+	fieldNames := make([]string, 0, len(properties))
+	seen := map[string]struct{}{}
+	for _, rawName := range fieldOrder {
+		name := strings.TrimSpace(rawName)
+		if name == "" {
+			continue
+		}
+		if _, ok := properties[name]; !ok {
+			continue
+		}
+		if _, exists := seen[name]; exists {
+			continue
+		}
+		seen[name] = struct{}{}
+		fieldNames = append(fieldNames, name)
+	}
+	if excludeUnordered {
+		return fieldNames
+	}
+	remaining := make([]string, 0, len(properties))
+	for name := range properties {
+		if _, exists := seen[name]; exists {
+			continue
+		}
+		remaining = append(remaining, name)
+	}
+	sort.Strings(remaining)
+	return append(fieldNames, remaining...)
 }
 
 func orderModelDefinitionsByDependencies(doc *openapi.Document, models []packageModelDefinition) []packageModelDefinition {
@@ -2487,7 +2513,7 @@ func orderModelDefinitionsByDependencies(doc *openapi.Document, models []package
 		if model.Schema == nil {
 			continue
 		}
-		depNames := collectModelSchemaRefs(doc, model.Schema, model.FieldTypes)
+		depNames := collectModelSchemaRefs(doc, model)
 		depIndexes := make([]int, 0, len(depNames))
 		seen := map[int]struct{}{}
 		for _, depName := range depNames {

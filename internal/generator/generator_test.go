@@ -1483,6 +1483,60 @@ func TestRenderPackageModuleAutoAddsReferencedSchemasForSameName(t *testing.T) {
 	}
 }
 
+func TestRenderPackageModulePrunesUnorderedSchemaDependencies(t *testing.T) {
+	doc := &openapi.Document{
+		Components: openapi.Components{
+			Schemas: map[string]*openapi.Schema{
+				"BotInfo": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"used_info":    {Ref: "#/components/schemas/UsedInfo"},
+						"unused_info":  {Ref: "#/components/schemas/ShortcutCommandInfo"},
+						"display_name": {Type: "string"},
+					},
+				},
+				"UsedInfo": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"id": {Type: "string"},
+					},
+				},
+				"ShortcutCommandInfo": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"id": {Type: "string"},
+					},
+				},
+			},
+		},
+	}
+	meta := pygen.PackageMeta{
+		Name:       "bots",
+		ModulePath: "bots",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Schema:                 "BotInfo",
+					Name:                   "Bot",
+					ExcludeUnorderedFields: true,
+					FieldOrder:             []string{"used_info", "display_name"},
+				},
+			},
+		},
+	}
+
+	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	if !strings.Contains(code, "used_info: Optional[UsedInfo] = None") {
+		t.Fatalf("expected used_info typed with referenced UsedInfo model, got:\n%s", code)
+	}
+	if strings.Contains(code, "class ShortcutCommandInfo(CozeModel):") {
+		t.Fatalf("did not expect pruned dependency ShortcutCommandInfo to be generated, got:\n%s", code)
+	}
+	if !strings.Contains(code, "class UsedInfo(CozeModel):") {
+		t.Fatalf("expected used dependency UsedInfo to be generated, got:\n%s", code)
+	}
+}
+
 func TestRenderPackageModuleAutoNumberPagedResponseMethods(t *testing.T) {
 	doc := mustParseSwagger(t)
 	meta := pygen.PackageMeta{
