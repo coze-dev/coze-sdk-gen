@@ -130,6 +130,53 @@ func TestOperationDetailsAndSchemaResolution(t *testing.T) {
 	}
 }
 
+func TestOperationDetailsKeepsDescriptions(t *testing.T) {
+	doc, err := Parse([]byte(`
+openapi: 3.0.0
+paths:
+  /v1/demo/{id}:
+    get:
+      operationId: GetDemo
+      summary: get demo
+      description: get demo detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: demo id
+          schema:
+            type: string
+      responses:
+        "200":
+          description: demo response
+          content:
+            application/json:
+              schema:
+                type: object
+components: {}
+`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	details, ok := doc.OperationDetails("/v1/demo/{id}", "get")
+	if !ok {
+		t.Fatal("expected operation details")
+	}
+	if details.Description != "get demo detail" {
+		t.Fatalf("unexpected operation description: %q", details.Description)
+	}
+	if len(details.PathParameters) != 1 {
+		t.Fatalf("expected one path parameter, got %d", len(details.PathParameters))
+	}
+	if details.PathParameters[0].Description != "demo id" {
+		t.Fatalf("unexpected path parameter description: %q", details.PathParameters[0].Description)
+	}
+	if details.Response == nil || details.Response.Description != "demo response" {
+		t.Fatalf("unexpected response description: %#v", details.Response)
+	}
+}
+
 func TestListOperationDetails(t *testing.T) {
 	doc, err := Load(filepath.Join("testdata", "swagger_fragment.yaml"))
 	if err != nil {
