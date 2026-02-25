@@ -552,9 +552,12 @@ api:
               value: big
             - name: SMALL
               value: small
+        - schema: Interval
+          name: VoiceEmotionInfoInterval
+        - schema: EmotionInfo
+          name: VoiceEmotionInfo
         - schema: OpenAPIVoiceData
           name: Voice
-          exclude_unordered_fields: true
           required_fields:
             - voice_id
             - name

@@ -1393,6 +1393,138 @@ func TestRenderPackageModuleIntEnumMixinBase(t *testing.T) {
 	}
 }
 
+func TestRenderPackageModuleAutoAddsReferencedSchemasForSameName(t *testing.T) {
+	doc := &openapi.Document{
+		Components: openapi.Components{
+			Schemas: map[string]*openapi.Schema{
+				"OpenAPIVoiceData": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"support_emotions": {
+							Type:  "array",
+							Items: &openapi.Schema{Ref: "#/components/schemas/EmotionInfo"},
+						},
+						"state": {Ref: "#/components/schemas/OpenAPIVoiceState"},
+					},
+				},
+				"EmotionInfo": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"emotion_scale_interval": {Ref: "#/components/schemas/Interval"},
+					},
+				},
+				"Interval": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"max": {Type: "number"},
+					},
+				},
+				"OpenAPIVoiceState": {
+					Type: "string",
+					Enum: []interface{}{"init"},
+				},
+			},
+		},
+	}
+	meta := pygen.PackageMeta{
+		Name:       "audio_voices",
+		ModulePath: "audio.voices",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Name:                  "VoiceState",
+					AllowMissingInSwagger: true,
+					EnumBase:              "dynamic_str",
+					EnumValues: []config.ModelEnumValue{
+						{Name: "INIT", Value: "init"},
+					},
+				},
+				{
+					Schema: "OpenAPIVoiceData",
+					Name:   "Voice",
+					FieldTypes: map[string]string{
+						"state": "VoiceState",
+					},
+				},
+			},
+		},
+	}
+
+	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	if !strings.Contains(code, "support_emotions: Optional[List[EmotionInfo]] = None") {
+		t.Fatalf("expected support_emotions to keep model type, got:\n%s", code)
+	}
+	if strings.Contains(code, "List[Dict[str, Any]]") {
+		t.Fatalf("did not expect support_emotions to fallback to Dict type, got:\n%s", code)
+	}
+	idxInterval := strings.Index(code, "class Interval(CozeModel):")
+	idxEmotionInfo := strings.Index(code, "class EmotionInfo(CozeModel):")
+	idxVoice := strings.Index(code, "class Voice(CozeModel):")
+	if idxInterval < 0 || idxEmotionInfo < 0 || idxVoice < 0 {
+		t.Fatalf("expected Interval/EmotionInfo/Voice classes, got:\n%s", code)
+	}
+	if !(idxInterval < idxEmotionInfo && idxEmotionInfo < idxVoice) {
+		t.Fatalf("expected dependency classes before Voice, got:\n%s", code)
+	}
+	if strings.Contains(code, "class OpenApiVoiceState(") {
+		t.Fatalf("did not expect auto-generated OpenApiVoiceState when field type override is set, got:\n%s", code)
+	}
+}
+
+func TestRenderPackageModulePrunesUnorderedSchemaDependencies(t *testing.T) {
+	doc := &openapi.Document{
+		Components: openapi.Components{
+			Schemas: map[string]*openapi.Schema{
+				"BotInfo": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"used_info":    {Ref: "#/components/schemas/UsedInfo"},
+						"unused_info":  {Ref: "#/components/schemas/ShortcutCommandInfo"},
+						"display_name": {Type: "string"},
+					},
+				},
+				"UsedInfo": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"id": {Type: "string"},
+					},
+				},
+				"ShortcutCommandInfo": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"id": {Type: "string"},
+					},
+				},
+			},
+		},
+	}
+	meta := pygen.PackageMeta{
+		Name:       "bots",
+		ModulePath: "bots",
+		Package: &config.Package{
+			ModelSchemas: []config.ModelSchema{
+				{
+					Schema:                 "BotInfo",
+					Name:                   "Bot",
+					ExcludeUnorderedFields: true,
+					FieldOrder:             []string{"used_info", "display_name"},
+				},
+			},
+		},
+	}
+
+	code := pygen.RenderPackageModule(doc, meta, nil, config.CommentOverrides{})
+	if !strings.Contains(code, "used_info: Optional[UsedInfo] = None") {
+		t.Fatalf("expected used_info typed with referenced UsedInfo model, got:\n%s", code)
+	}
+	if strings.Contains(code, "class ShortcutCommandInfo(CozeModel):") {
+		t.Fatalf("did not expect pruned dependency ShortcutCommandInfo to be generated, got:\n%s", code)
+	}
+	if !strings.Contains(code, "class UsedInfo(CozeModel):") {
+		t.Fatalf("expected used dependency UsedInfo to be generated, got:\n%s", code)
+	}
+}
+
 func TestRenderPackageModuleAutoNumberPagedResponseMethods(t *testing.T) {
 	doc := mustParseSwagger(t)
 	meta := pygen.PackageMeta{
