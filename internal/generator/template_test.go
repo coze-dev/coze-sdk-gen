@@ -81,7 +81,7 @@ func TestRenderPythonTemplateMissing(t *testing.T) {
 }
 
 func TestRenderPythonRawAsset(t *testing.T) {
-	content, err := pygen.RenderPythonRawAsset("special/cozepy/websockets/ws.py.raw")
+	content, err := pygen.RenderPythonRawAsset("special/cozepy/websockets/ws.py.tpl")
 	if err != nil {
 		t.Fatalf("pygen.RenderPythonRawAsset() error = %v", err)
 	}
@@ -89,7 +89,7 @@ func TestRenderPythonRawAsset(t *testing.T) {
 		t.Fatalf("expected websocket event type class in raw asset, got: %q", content[:80])
 	}
 
-	initContent, err := pygen.RenderPythonRawAsset("special/cozepy/__init__.py.raw")
+	initContent, err := pygen.RenderPythonRawAsset("special/cozepy/__init__.py.tpl")
 	if err != nil {
 		t.Fatalf("pygen.RenderPythonRawAsset() error = %v", err)
 	}
