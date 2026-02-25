@@ -127,6 +127,12 @@ func TestDefaultsApplied(t *testing.T) {
 	if got := cfg.DiffIgnorePathsForLanguage("go"); !containsPath(got, "*_test.go") {
 		t.Fatalf("expected go diff ignore paths to include *_test.go, got %#v", got)
 	}
+	if got := cfg.DiffIgnorePathsForLanguage("go"); !containsPath(got, ".github") {
+		t.Fatalf("expected go diff ignore paths to include .github, got %#v", got)
+	}
+	if got := cfg.DiffIgnorePathsForLanguage("go"); !containsPath(got, "README.md") {
+		t.Fatalf("expected go diff ignore paths to include README.md, got %#v", got)
+	}
 }
 
 func TestParseIgnoresRuntimeOptionsInYAML(t *testing.T) {

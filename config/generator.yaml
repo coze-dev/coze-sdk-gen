@@ -16,6 +16,8 @@ diff:
       - tests
     go:
       - .git
+      - .github
+      - README.md
       - "*_test.go"
 
 comment_overrides_file: comment_overrides.yaml

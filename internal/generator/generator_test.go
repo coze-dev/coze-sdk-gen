@@ -219,6 +219,38 @@ func TestGenerateGoPreservesGitDirectory(t *testing.T) {
 	}
 }
 
+func TestGenerateGoPreservesIgnoredReadmeAndGithub(t *testing.T) {
+	out := t.TempDir()
+	readmePath := filepath.Join(out, "README.md")
+	githubWorkflowPath := filepath.Join(out, ".github", "workflows", "ci.yml")
+	if err := os.MkdirAll(filepath.Dir(githubWorkflowPath), 0o755); err != nil {
+		t.Fatalf("mkdir .github workflow dir: %v", err)
+	}
+	if err := os.WriteFile(readmePath, []byte("keep-readme"), 0o644); err != nil {
+		t.Fatalf("write readme: %v", err)
+	}
+	if err := os.WriteFile(githubWorkflowPath, []byte("keep-github"), 0o644); err != nil {
+		t.Fatalf("write github workflow: %v", err)
+	}
+
+	cfg, doc := mustLoadRealConfigAndSwagger(t)
+	cfg.Language = "go"
+	cfg.OutputSDK = out
+
+	if _, err := GenerateGo(cfg, doc); err != nil {
+		t.Fatalf("GenerateGo() error = %v", err)
+	}
+
+	readmeContent := readFile(t, readmePath)
+	if readmeContent != "keep-readme" {
+		t.Fatalf("expected README.md to be preserved, got %q", readmeContent)
+	}
+	githubWorkflowContent := readFile(t, githubWorkflowPath)
+	if githubWorkflowContent != "keep-github" {
+		t.Fatalf("expected .github workflow to be preserved, got %q", githubWorkflowContent)
+	}
+}
+
 func TestGenerateGoValidationFailure(t *testing.T) {
 	cfg, doc := mustLoadRealConfigAndSwagger(t)
 	cfg.Language = "go"

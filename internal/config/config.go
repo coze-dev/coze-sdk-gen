@@ -42,6 +42,8 @@ var defaultDiffIgnorePathsByLanguage = map[string][]string{
 	},
 	"go": {
 		".git",
+		".github",
+		"README.md",
 		"*_test.go",
 	},
 }

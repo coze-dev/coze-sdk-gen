@@ -505,6 +505,9 @@ func listGoAPIModuleRenderers() []goAPIModuleRenderer {
 
 func shouldSkipGoExtraAsset(rel string) bool {
 	target := strings.TrimSuffix(rel, ".tpl")
+	if target == "README.md" || strings.HasPrefix(target, ".github/") {
+		return true
+	}
 	_, ok := goGeneratedAPIModuleFiles[target]
 	return ok
 }
