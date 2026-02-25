@@ -1,7 +1,9 @@
 package gogen
 
 import (
+	"bytes"
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 
@@ -14,17 +16,28 @@ type goAPIModuleRenderer struct {
 	Render   func(cfg *config.Config, doc *openapi.Document) (string, error)
 }
 
-type goTemplateModuleSpec struct {
-	Asset            string
-	PathReplacements []goPathReplacementSpec
+type goSwaggerModuleSpec struct {
+	FileName        string
+	PackageName     string
+	TypeName        string
+	ConstructorName string
+	CoreFieldName   string
+	Children        []goSwaggerModuleChild
 }
 
-type goPathReplacementSpec struct {
-	Placeholder      string
-	SDKMethod        string
-	Method           string
-	FallbackPath     string
-	ConvertCurlyPath bool
+type goSwaggerModuleChild struct {
+	FieldName       string
+	TypeName        string
+	ConstructorName string
+}
+
+type goSwaggerOperationBinding struct {
+	MethodName string
+	HTTPMethod string
+	Path       string
+	Summary    string
+	IsFile     bool
+	Order      int
 }
 
 var goInlineAPIModuleRenderers = []goAPIModuleRenderer{
@@ -39,464 +52,59 @@ var goInlineAPIModuleRenderers = []goAPIModuleRenderer{
 	{FileName: "workflows_chat.go", Render: renderGoWorkflowsChatModule},
 }
 
-var goTemplateAPIModuleSpecs = map[string]goTemplateModuleSpec{
-	"audio_rooms.go": {
-		Asset: "audio_rooms.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/audio/rooms",
-				SDKMethod:    "audio_rooms.create",
-				Method:       "post",
-				FallbackPath: "/v1/audio/rooms",
-			},
-		},
-	},
-	"audio_voiceprint_groups.go": {
-		Asset: "audio_voiceprint_groups.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/audio/voiceprint_groups",
-				SDKMethod:    "audio_voiceprint_groups.create",
-				Method:       "post",
-				FallbackPath: "/v1/audio/voiceprint_groups",
-			},
-			{
-				Placeholder:      "/v1/audio/voiceprint_groups/:group_id",
-				SDKMethod:        "audio_voiceprint_groups.update",
-				Method:           "put",
-				FallbackPath:     "/v1/audio/voiceprint_groups/{group_id}",
-				ConvertCurlyPath: true,
-			},
-		},
-	},
-	"audio_voiceprint_groups_features.go": {
-		Asset: "audio_voiceprint_groups_features.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:      "/v1/audio/voiceprint_groups/:group_id/features",
-				SDKMethod:        "audio_voiceprint_groups_features.create",
-				Method:           "post",
-				FallbackPath:     "/v1/audio/voiceprint_groups/{group_id}/features",
-				ConvertCurlyPath: true,
-			},
-			{
-				Placeholder:      "/v1/audio/voiceprint_groups/:group_id/features/:feature_id",
-				SDKMethod:        "audio_voiceprint_groups_features.update",
-				Method:           "put",
-				FallbackPath:     "/v1/audio/voiceprint_groups/{group_id}/features/{feature_id}",
-				ConvertCurlyPath: true,
-			},
-		},
-	},
-	"audio_voices.go": {
-		Asset: "audio_voices.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/audio/voices/clone",
-				SDKMethod:    "audio_voices.clone",
-				Method:       "post",
-				FallbackPath: "/v1/audio/voices/clone",
-			},
-			{
-				Placeholder:  "/v1/audio/voices",
-				SDKMethod:    "audio_voices.list",
-				Method:       "get",
-				FallbackPath: "/v1/audio/voices",
-			},
-		},
-	},
-	"bots.go": {
-		Asset: "bots.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/bot/create",
-				SDKMethod:    "bots.create",
-				Method:       "post",
-				FallbackPath: "/v1/bot/create",
-			},
-			{
-				Placeholder:  "/v1/bot/update",
-				SDKMethod:    "bots.update",
-				Method:       "post",
-				FallbackPath: "/v1/bot/update",
-			},
-			{
-				Placeholder:  "/v1/bot/publish",
-				SDKMethod:    "bots.publish",
-				Method:       "post",
-				FallbackPath: "/v1/bot/publish",
-			},
-			{
-				Placeholder:  "/v1/space/published_bots_list",
-				SDKMethod:    "bots._list_v1",
-				Method:       "get",
-				FallbackPath: "/v1/space/published_bots_list",
-			},
-			{
-				Placeholder:  "/v1/bot/get_online_info",
-				SDKMethod:    "bots._retrieve_v1",
-				Method:       "get",
-				FallbackPath: "/v1/bot/get_online_info",
-			},
-			{
-				Placeholder:      "/v1/bots/:bot_id",
-				SDKMethod:        "bots._retrieve_v2",
-				Method:           "get",
-				FallbackPath:     "/v1/bots/{bot_id}",
-				ConvertCurlyPath: true,
-			},
-		},
-	},
-	"chats.go": {
-		Asset: "chats.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v3/chat",
-				SDKMethod:    "chat.create",
-				Method:       "post",
-				FallbackPath: "/v3/chat",
-			},
-			{
-				Placeholder:  "/v3/chat/cancel",
-				SDKMethod:    "chat.cancel",
-				Method:       "post",
-				FallbackPath: "/v3/chat/cancel",
-			},
-			{
-				Placeholder:  "/v3/chat/retrieve",
-				SDKMethod:    "chat.retrieve",
-				Method:       "get",
-				FallbackPath: "/v3/chat/retrieve",
-			},
-			{
-				Placeholder:  "/v3/chat/submit_tool_outputs",
-				SDKMethod:    "chat.submit_tool_outputs",
-				Method:       "post",
-				FallbackPath: "/v3/chat/submit_tool_outputs",
-			},
-		},
-	},
-	"conversations.go": {
-		Asset: "conversations.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/conversations",
-				SDKMethod:    "conversations.list",
-				Method:       "get",
-				FallbackPath: "/v1/conversations",
-			},
-			{
-				Placeholder:  "/v1/conversation/create",
-				SDKMethod:    "conversations.create",
-				Method:       "post",
-				FallbackPath: "/v1/conversation/create",
-			},
-			{
-				Placeholder:  "/v1/conversation/retrieve",
-				SDKMethod:    "conversations.retrieve",
-				Method:       "get",
-				FallbackPath: "/v1/conversation/retrieve",
-			},
-			{
-				Placeholder:      "/v1/conversations/:conversation_id/clear",
-				SDKMethod:        "conversations.clear",
-				Method:           "post",
-				FallbackPath:     "/v1/conversations/{conversation_id}/clear",
-				ConvertCurlyPath: true,
-			},
-		},
-	},
-	"conversations_messages.go": {
-		Asset: "conversations_messages.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/conversation/message/list",
-				SDKMethod:    "conversations_message.list",
-				Method:       "post",
-				FallbackPath: "/v1/conversation/message/list",
-			},
-			{
-				Placeholder:  "/v1/conversation/message/create",
-				SDKMethod:    "conversations_message.create",
-				Method:       "post",
-				FallbackPath: "/v1/conversation/message/create",
-			},
-			{
-				Placeholder:  "/v1/conversation/message/retrieve",
-				SDKMethod:    "conversations_message.retrieve",
-				Method:       "get",
-				FallbackPath: "/v1/conversation/message/retrieve",
-			},
-			{
-				Placeholder:  "/v1/conversation/message/modify",
-				SDKMethod:    "conversations_message.update",
-				Method:       "post",
-				FallbackPath: "/v1/conversation/message/modify",
-			},
-			{
-				Placeholder:  "/v1/conversation/message/delete",
-				SDKMethod:    "conversations_message.delete",
-				Method:       "post",
-				FallbackPath: "/v1/conversation/message/delete",
-			},
-		},
-	},
-	"conversations_messages_feedback.go": {
-		Asset: "conversations_messages_feedback.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:      "/v1/conversations/:conversation_id/messages/:message_id/feedback",
-				SDKMethod:        "conversations_message_feedback.create",
-				Method:           "post",
-				FallbackPath:     "/v1/conversations/{conversation_id}/messages/{message_id}/feedback",
-				ConvertCurlyPath: true,
-			},
-		},
-	},
-	"datasets.go": {
-		Asset: "datasets.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/datasets",
-				SDKMethod:    "datasets.create",
-				Method:       "post",
-				FallbackPath: "/v1/datasets",
-			},
-			{
-				Placeholder:      "/v1/datasets/:dataset_id",
-				SDKMethod:        "datasets.update",
-				Method:           "put",
-				FallbackPath:     "/v1/datasets/{dataset_id}",
-				ConvertCurlyPath: true,
-			},
-			{
-				Placeholder:      "/v1/datasets/:dataset_id/process",
-				SDKMethod:        "datasets.process",
-				Method:           "post",
-				FallbackPath:     "/v1/datasets/{dataset_id}/process",
-				ConvertCurlyPath: true,
-			},
-		},
-	},
-	"datasets_documents.go": {
-		Asset: "datasets_documents.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/open_api/knowledge/document/create",
-				SDKMethod:    "datasets_documents.create",
-				Method:       "post",
-				FallbackPath: "/open_api/knowledge/document/create",
-			},
-			{
-				Placeholder:  "/open_api/knowledge/document/update",
-				SDKMethod:    "datasets_documents.update",
-				Method:       "post",
-				FallbackPath: "/open_api/knowledge/document/update",
-			},
-			{
-				Placeholder:  "/open_api/knowledge/document/delete",
-				SDKMethod:    "datasets_documents.delete",
-				Method:       "post",
-				FallbackPath: "/open_api/knowledge/document/delete",
-			},
-			{
-				Placeholder:  "/open_api/knowledge/document/list",
-				SDKMethod:    "datasets_documents.list",
-				Method:       "post",
-				FallbackPath: "/open_api/knowledge/document/list",
-			},
-		},
-	},
-	"datasets_images.go": {
-		Asset: "datasets_images.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:      "/v1/datasets/:dataset_id/images/:document_id",
-				SDKMethod:        "datasets_images.update",
-				Method:           "put",
-				FallbackPath:     "/v1/datasets/{dataset_id}/images/{document_id}",
-				ConvertCurlyPath: true,
-			},
-			{
-				Placeholder:      "/v1/datasets/:dataset_id/images",
-				SDKMethod:        "datasets_images.list",
-				Method:           "get",
-				FallbackPath:     "/v1/datasets/{dataset_id}/images",
-				ConvertCurlyPath: true,
-			},
-		},
-	},
-	"enterprises_members.go": {
-		Asset: "enterprises_members.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:      "/v1/enterprises/:enterprise_id/members",
-				SDKMethod:        "enterprises_members.create",
-				Method:           "post",
-				FallbackPath:     "/v1/enterprises/{enterprise_id}/members",
-				ConvertCurlyPath: true,
-			},
-			{
-				Placeholder:      "/v1/enterprises/:enterprise_id/members/:user_id",
-				SDKMethod:        "enterprises_members.update",
-				Method:           "put",
-				FallbackPath:     "/v1/enterprises/{enterprise_id}/members/{user_id}",
-				ConvertCurlyPath: true,
-			},
-		},
-	},
-	"folders.go": {
-		Asset: "folders.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/folders",
-				SDKMethod:    "folders.list",
-				Method:       "get",
-				FallbackPath: "/v1/folders",
-			},
-			{
-				Placeholder:      "/v1/folders/:folder_id",
-				SDKMethod:        "folders.retrieve",
-				Method:           "get",
-				FallbackPath:     "/v1/folders/{folder_id}",
-				ConvertCurlyPath: true,
-			},
-		},
-	},
-	"stores_plugins.go": {
-		Asset: "stores_plugins.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/stores/plugins",
-				SDKMethod:    "go.stores_plugins.list",
-				Method:       "get",
-				FallbackPath: "/v1/stores/plugins",
-			},
-		},
-	},
-	"variables.go": {
-		Asset: "variables.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/variables",
-				SDKMethod:    "variables.retrieve",
-				Method:       "get",
-				FallbackPath: "/v1/variables",
-			},
-		},
-	},
-	"workflows.go": {
-		Asset: "workflows.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/workflows",
-				SDKMethod:    "workflows.list",
-				Method:       "get",
-				FallbackPath: "/v1/workflows",
-			},
-		},
-	},
-	"workflows_runs.go": {
-		Asset: "workflows_runs.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/workflow/run",
-				SDKMethod:    "workflows_runs.create",
-				Method:       "post",
-				FallbackPath: "/v1/workflow/run",
-			},
-			{
-				Placeholder:  "/v1/workflow/stream_resume",
-				SDKMethod:    "workflows_runs.resume",
-				Method:       "post",
-				FallbackPath: "/v1/workflow/stream_resume",
-			},
-			{
-				Placeholder:  "/v1/workflow/stream_run",
-				SDKMethod:    "workflows_runs.stream",
-				Method:       "post",
-				FallbackPath: "/v1/workflow/stream_run",
-			},
-		},
-	},
-	"workflows_runs_histories.go": {
-		Asset: "workflows_runs_histories.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:      "/v1/workflows/:workflow_id/run_histories/:execute_id",
-				SDKMethod:        "workflows_runs_run_histories.retrieve",
-				Method:           "get",
-				FallbackPath:     "/v1/workflows/{workflow_id}/run_histories/{execute_id}",
-				ConvertCurlyPath: true,
-			},
-		},
-	},
-	"workflows_runs_histories_execute_nodes.go": {
-		Asset: "workflows_runs_histories_execute_nodes.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:      "/v1/workflows/:workflow_id/run_histories/:execute_id/execute_nodes/:node_execute_uuid",
-				SDKMethod:        "workflows_runs_run_histories_execute_nodes.retrieve",
-				Method:           "get",
-				FallbackPath:     "/v1/workflows/{workflow_id}/run_histories/{execute_id}/execute_nodes/{node_execute_uuid}",
-				ConvertCurlyPath: true,
-			},
-		},
-	},
-	"workspaces.go": {
-		Asset: "workspaces.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:  "/v1/workspaces",
-				SDKMethod:    "go.workspaces.list",
-				Method:       "get",
-				FallbackPath: "/v1/workspaces",
-			},
-		},
-	},
-	"workspaces_members.go": {
-		Asset: "workspaces_members.go.tpl",
-		PathReplacements: []goPathReplacementSpec{
-			{
-				Placeholder:      "/v1/workspaces/:workspace_id/members",
-				SDKMethod:        "workspaces_members.list",
-				Method:           "get",
-				FallbackPath:     "/v1/workspaces/{workspace_id}/members",
-				ConvertCurlyPath: true,
-			},
-		},
-	},
+var goSwaggerAPIModuleSpecs = []goSwaggerModuleSpec{
+	{FileName: "audio_rooms.go", PackageName: "audio_rooms", TypeName: "audioRooms", ConstructorName: "newAudioRooms", CoreFieldName: "core"},
+	{FileName: "audio_voiceprint_groups.go", PackageName: "audio_voiceprint_groups", TypeName: "audioVoiceprintGroups", ConstructorName: "newAudioVoiceprintGroups", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Features", TypeName: "audioVoiceprintGroupsFeatures", ConstructorName: "newAudioVoiceprintGroupsFeatures"}}},
+	{FileName: "audio_voiceprint_groups_features.go", PackageName: "audio_voiceprint_groups_features", TypeName: "audioVoiceprintGroupsFeatures", ConstructorName: "newAudioVoiceprintGroupsFeatures", CoreFieldName: "core"},
+	{FileName: "audio_voices.go", PackageName: "audio_voices", TypeName: "audioVoices", ConstructorName: "newAudioVoices", CoreFieldName: "core"},
+	{FileName: "bots.go", PackageName: "bots", TypeName: "bots", ConstructorName: "newBots", CoreFieldName: "core"},
+	{FileName: "chats.go", PackageName: "chat", TypeName: "chat", ConstructorName: "newChats", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Messages", TypeName: "chatMessages", ConstructorName: "newChatMessages"}}},
+	{FileName: "conversations.go", PackageName: "conversations", TypeName: "conversations", ConstructorName: "newConversations", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Messages", TypeName: "conversationsMessages", ConstructorName: "newConversationMessage"}}},
+	{FileName: "conversations_messages.go", PackageName: "conversations_message", TypeName: "conversationsMessages", ConstructorName: "newConversationMessage", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Feedback", TypeName: "conversationsMessagesFeedback", ConstructorName: "newConversationsMessagesFeedback"}}},
+	{FileName: "conversations_messages_feedback.go", PackageName: "conversations_message_feedback", TypeName: "conversationsMessagesFeedback", ConstructorName: "newConversationsMessagesFeedback", CoreFieldName: "core"},
+	{FileName: "datasets.go", PackageName: "datasets", TypeName: "datasets", ConstructorName: "newDatasets", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Documents", TypeName: "datasetsDocuments", ConstructorName: "newDatasetsDocuments"}, {FieldName: "Images", TypeName: "datasetsImages", ConstructorName: "newDatasetsImages"}}},
+	{FileName: "datasets_documents.go", PackageName: "datasets_documents", TypeName: "datasetsDocuments", ConstructorName: "newDatasetsDocuments", CoreFieldName: "core"},
+	{FileName: "datasets_images.go", PackageName: "datasets_images", TypeName: "datasetsImages", ConstructorName: "newDatasetsImages", CoreFieldName: "core"},
+	{FileName: "enterprises_members.go", PackageName: "enterprises_members", TypeName: "enterprisesMembers", ConstructorName: "newEnterprisesMembers", CoreFieldName: "core"},
+	{FileName: "folders.go", PackageName: "folders", TypeName: "folders", ConstructorName: "newFolders", CoreFieldName: "core"},
+	{FileName: "stores_plugins.go", PackageName: "stores_plugins", TypeName: "storesPlugins", ConstructorName: "newStoresPlugins", CoreFieldName: "core"},
+	{FileName: "variables.go", PackageName: "variables", TypeName: "variables", ConstructorName: "newVariables", CoreFieldName: "core"},
+	{FileName: "workflows.go", PackageName: "workflows", TypeName: "workflows", ConstructorName: "newWorkflows", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Runs", TypeName: "workflowRuns", ConstructorName: "newWorkflowRun"}, {FieldName: "Chat", TypeName: "workflowsChat", ConstructorName: "newWorkflowsChat"}}},
+	{FileName: "workflows_runs.go", PackageName: "workflows_runs", TypeName: "workflowRuns", ConstructorName: "newWorkflowRun", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Histories", TypeName: "workflowRunsHistories", ConstructorName: "newWorkflowRunsHistories"}}},
+	{FileName: "workflows_runs_histories.go", PackageName: "workflows_runs_run_histories", TypeName: "workflowRunsHistories", ConstructorName: "newWorkflowRunsHistories", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "ExecuteNodes", TypeName: "workflowsRunsHistoriesExecuteNodes", ConstructorName: "newWorkflowsRunsHistoriesExecuteNodes"}}},
+	{FileName: "workflows_runs_histories_execute_nodes.go", PackageName: "workflows_runs_run_histories_execute_nodes", TypeName: "workflowsRunsHistoriesExecuteNodes", ConstructorName: "newWorkflowsRunsHistoriesExecuteNodes", CoreFieldName: "core"},
+	{FileName: "workspaces.go", PackageName: "workspaces", TypeName: "workspace", ConstructorName: "newWorkspace", CoreFieldName: "core", Children: []goSwaggerModuleChild{{FieldName: "Members", TypeName: "workspacesMembers", ConstructorName: "newWorkspacesMembers"}}},
+	{FileName: "workspaces_members.go", PackageName: "workspaces_members", TypeName: "workspacesMembers", ConstructorName: "newWorkspacesMembers", CoreFieldName: "core"},
 }
 
 var goGeneratedAPIModuleFiles = buildGoGeneratedAPIModuleFiles()
 
 func buildGoGeneratedAPIModuleFiles() map[string]struct{} {
-	files := make(map[string]struct{}, len(goInlineAPIModuleRenderers)+len(goTemplateAPIModuleSpecs))
+	files := make(map[string]struct{}, len(goInlineAPIModuleRenderers)+len(goSwaggerAPIModuleSpecs))
 	for _, renderer := range goInlineAPIModuleRenderers {
 		files[renderer.FileName] = struct{}{}
 	}
-	for fileName := range goTemplateAPIModuleSpecs {
-		files[fileName] = struct{}{}
+	for _, spec := range goSwaggerAPIModuleSpecs {
+		files[spec.FileName] = struct{}{}
 	}
 	return files
 }
 
 func listGoAPIModuleRenderers() []goAPIModuleRenderer {
-	renderers := make([]goAPIModuleRenderer, 0, len(goInlineAPIModuleRenderers)+len(goTemplateAPIModuleSpecs))
+	renderers := make([]goAPIModuleRenderer, 0, len(goInlineAPIModuleRenderers)+len(goSwaggerAPIModuleSpecs))
 	renderers = append(renderers, goInlineAPIModuleRenderers...)
 
-	fileNames := make([]string, 0, len(goTemplateAPIModuleSpecs))
-	for fileName := range goTemplateAPIModuleSpecs {
-		fileNames = append(fileNames, fileName)
-	}
-	sort.Strings(fileNames)
-	for _, fileName := range fileNames {
-		spec := goTemplateAPIModuleSpecs[fileName]
+	specs := append([]goSwaggerModuleSpec(nil), goSwaggerAPIModuleSpecs...)
+	sort.Slice(specs, func(i, j int) bool {
+		return specs[i].FileName < specs[j].FileName
+	})
+	for _, spec := range specs {
 		specCopy := spec
 		renderers = append(renderers, goAPIModuleRenderer{
-			FileName: fileName,
+			FileName: specCopy.FileName,
 			Render: func(cfg *config.Config, doc *openapi.Document) (string, error) {
-				return renderGoAPITemplateModule(cfg, doc, specCopy)
+				bindings := buildGoSwaggerOperationBindings(cfg, doc, specCopy.PackageName)
+				return renderGoSwaggerModule(specCopy, bindings), nil
 			},
 		})
 	}
@@ -512,32 +120,216 @@ func shouldSkipGoExtraAsset(rel string) bool {
 	return ok
 }
 
-func renderGoAPITemplateModule(cfg *config.Config, doc *openapi.Document, spec goTemplateModuleSpec) (string, error) {
-	content, err := renderGoExtraAsset(spec.Asset)
-	if err != nil {
-		return "", err
+func buildGoSwaggerOperationBindings(cfg *config.Config, doc *openapi.Document, packageName string) []goSwaggerOperationBinding {
+	if cfg == nil {
+		return nil
 	}
-	rendered := string(content)
-	for _, replacement := range spec.PathReplacements {
-		resolvedPath, err := findGoOperationPath(cfg, doc, replacement.SDKMethod, replacement.Method, replacement.FallbackPath)
-		if err != nil {
-			return "", err
-		}
-		if replacement.ConvertCurlyPath {
-			resolvedPath = convertCurlyPathToColon(resolvedPath)
-		}
+	packageName = strings.TrimSpace(packageName)
+	if packageName == "" {
+		return nil
+	}
 
-		quotedPlaceholder := fmt.Sprintf("%q", replacement.Placeholder)
-		quotedResolvedPath := fmt.Sprintf("%q", resolvedPath)
-		if strings.Contains(rendered, quotedPlaceholder) {
-			rendered = strings.ReplaceAll(rendered, quotedPlaceholder, quotedResolvedPath)
+	bindings := make([]goSwaggerOperationBinding, 0)
+	for _, mapping := range cfg.API.OperationMappings {
+		if cfg.IsIgnored(mapping.Path, mapping.Method) {
 			continue
 		}
-		if strings.Contains(rendered, replacement.Placeholder) {
-			rendered = strings.ReplaceAll(rendered, replacement.Placeholder, resolvedPath)
-			continue
+		details, hasDetails := resolveGoOperationDetails(doc, mapping)
+		for methodIndex, sdkMethod := range mapping.SDKMethods {
+			pkg, method, ok := parseGoSDKMethod(cfg, mapping.Path, sdkMethod)
+			if !ok || pkg != packageName {
+				continue
+			}
+			goMethod := normalizeGoExportedIdentifier(method)
+			if goMethod == "" {
+				continue
+			}
+			httpMethod := strings.TrimSpace(mapping.HTTPMethodOverride)
+			if httpMethod == "" {
+				httpMethod = strings.TrimSpace(mapping.Method)
+			}
+			if httpMethod == "" {
+				httpMethod = http.MethodGet
+			}
+
+			isFile := false
+			summary := ""
+			if hasDetails {
+				summary = oneLineText(details.Summary)
+				contentType := strings.ToLower(strings.TrimSpace(details.RequestBodyContentType))
+				isFile = strings.Contains(contentType, "multipart/form-data")
+			}
+
+			order := len(bindings)
+			if mapping.Order > 0 {
+				order = mapping.Order + methodIndex
+			}
+			bindings = append(bindings, goSwaggerOperationBinding{
+				MethodName: goMethod,
+				HTTPMethod: strings.ToUpper(httpMethod),
+				Path:       strings.TrimSpace(mapping.Path),
+				Summary:    summary,
+				IsFile:     isFile,
+				Order:      order,
+			})
 		}
-		return "", fmt.Errorf("go api template %q missing path placeholder %q", spec.Asset, replacement.Placeholder)
 	}
-	return rendered, nil
+
+	sort.Slice(bindings, func(i, j int) bool {
+		if bindings[i].Order == bindings[j].Order {
+			if bindings[i].MethodName == bindings[j].MethodName {
+				if bindings[i].HTTPMethod == bindings[j].HTTPMethod {
+					return bindings[i].Path < bindings[j].Path
+				}
+				return bindings[i].HTTPMethod < bindings[j].HTTPMethod
+			}
+			return bindings[i].MethodName < bindings[j].MethodName
+		}
+		return bindings[i].Order < bindings[j].Order
+	})
+
+	seen := map[string]int{}
+	for i := range bindings {
+		name := bindings[i].MethodName
+		count := seen[name]
+		if count > 0 {
+			bindings[i].MethodName = fmt.Sprintf("%s%d", name, count+1)
+		}
+		seen[name] = count + 1
+	}
+	return bindings
+}
+
+func resolveGoOperationDetails(doc *openapi.Document, mapping config.OperationMapping) (openapi.OperationDetails, bool) {
+	if doc == nil {
+		return openapi.OperationDetails{}, false
+	}
+	details, ok := doc.OperationDetails(strings.TrimSpace(mapping.Path), strings.TrimSpace(mapping.Method))
+	if !ok || details == nil {
+		return openapi.OperationDetails{}, false
+	}
+	return *details, true
+}
+
+func parseGoSDKMethod(cfg *config.Config, path string, sdkMethod string) (string, string, bool) {
+	sdkMethod = strings.TrimSpace(sdkMethod)
+	if sdkMethod == "" {
+		return "", "", false
+	}
+	parts := strings.Split(sdkMethod, ".")
+	switch len(parts) {
+	case 1:
+		method := strings.TrimSpace(parts[0])
+		if method == "" || cfg == nil {
+			return "", "", false
+		}
+		pkg, ok := cfg.ResolvePackage(path, "")
+		if !ok {
+			return "", "", false
+		}
+		return strings.TrimSpace(pkg.Name), method, true
+	case 2:
+		pkg := strings.TrimSpace(parts[0])
+		method := strings.TrimSpace(parts[1])
+		if pkg == "" || method == "" {
+			return "", "", false
+		}
+		return pkg, method, true
+	case 3:
+		if strings.TrimSpace(parts[0]) != "go" {
+			return "", "", false
+		}
+		pkg := strings.TrimSpace(parts[1])
+		method := strings.TrimSpace(parts[2])
+		if pkg == "" || method == "" {
+			return "", "", false
+		}
+		return pkg, method, true
+	default:
+		return "", "", false
+	}
+}
+
+func renderGoSwaggerModule(spec goSwaggerModuleSpec, bindings []goSwaggerOperationBinding) string {
+	coreField := strings.TrimSpace(spec.CoreFieldName)
+	if coreField == "" {
+		coreField = "core"
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString("package coze\n\n")
+	if len(bindings) > 0 {
+		buf.WriteString("import (\n")
+		buf.WriteString("\t\"context\"\n")
+		buf.WriteString("\t\"net/http\"\n")
+		buf.WriteString(")\n\n")
+	}
+
+	for _, binding := range bindings {
+		if summary := strings.TrimSpace(binding.Summary); summary != "" {
+			buf.WriteString(fmt.Sprintf("// %s %s\n", binding.MethodName, summary))
+		}
+		buf.WriteString(fmt.Sprintf("func (r *%s) %s(ctx context.Context, req *SwaggerOperationRequest) (*SwaggerOperationResponse, error) {\n", spec.TypeName, binding.MethodName))
+		buf.WriteString("\tif req == nil {\n")
+		buf.WriteString("\t\treq = &SwaggerOperationRequest{}\n")
+		buf.WriteString("\t}\n")
+		buf.WriteString("\trequest := &RawRequestReq{\n")
+		buf.WriteString(fmt.Sprintf("\t\tMethod: %s,\n", goHTTPMethodConstant(binding.HTTPMethod)))
+		buf.WriteString(fmt.Sprintf("\t\tURL:    buildSwaggerOperationURL(%q, req.PathParams, req.QueryParams),\n", binding.Path))
+		buf.WriteString("\t\tBody:   req.Body,\n")
+		if binding.IsFile {
+			buf.WriteString("\t\tIsFile: true,\n")
+		}
+		buf.WriteString("\t}\n")
+		buf.WriteString("\tresponse := new(SwaggerOperationResponse)\n")
+		buf.WriteString(fmt.Sprintf("\terr := r.%s.rawRequest(ctx, request, response)\n", coreField))
+		buf.WriteString("\treturn response, err\n")
+		buf.WriteString("}\n\n")
+	}
+
+	buf.WriteString(fmt.Sprintf("type %s struct {\n", spec.TypeName))
+	buf.WriteString(fmt.Sprintf("\t%s *core\n", coreField))
+	for _, child := range spec.Children {
+		buf.WriteString(fmt.Sprintf("\t%s *%s\n", child.FieldName, child.TypeName))
+	}
+	buf.WriteString("}\n\n")
+
+	buf.WriteString(fmt.Sprintf("func %s(core *core) *%s {\n", spec.ConstructorName, spec.TypeName))
+	if len(spec.Children) == 0 {
+		buf.WriteString(fmt.Sprintf("\treturn &%s{%s: core}\n", spec.TypeName, coreField))
+		buf.WriteString("}\n")
+		return buf.String()
+	}
+
+	buf.WriteString(fmt.Sprintf("\treturn &%s{\n", spec.TypeName))
+	buf.WriteString(fmt.Sprintf("\t\t%s: core,\n", coreField))
+	for _, child := range spec.Children {
+		buf.WriteString(fmt.Sprintf("\t\t%s: %s(core),\n", child.FieldName, child.ConstructorName))
+	}
+	buf.WriteString("\t}\n")
+	buf.WriteString("}\n")
+	return buf.String()
+}
+
+func goHTTPMethodConstant(method string) string {
+	switch strings.ToUpper(strings.TrimSpace(method)) {
+	case http.MethodGet:
+		return "http.MethodGet"
+	case http.MethodPost:
+		return "http.MethodPost"
+	case http.MethodPut:
+		return "http.MethodPut"
+	case http.MethodDelete:
+		return "http.MethodDelete"
+	case http.MethodPatch:
+		return "http.MethodPatch"
+	case http.MethodHead:
+		return "http.MethodHead"
+	case http.MethodOptions:
+		return "http.MethodOptions"
+	case http.MethodTrace:
+		return "http.MethodTrace"
+	default:
+		return fmt.Sprintf("%q", strings.ToUpper(strings.TrimSpace(method)))
+	}
 }

@@ -142,6 +142,7 @@ func writeGoRuntimeScaffolding(outputDir string, writer *fileWriter) error {
 		"request.go":                       "request.go.tpl",
 		"stores.go":                        "stores.go.tpl",
 		"stream_reader.go":                 "stream_reader.go.tpl",
+		"swagger_types_compat.go":          "swagger_types_compat.go.tpl",
 		"user_agent.go":                    "user_agent.go.tpl",
 		"utils.go":                         "utils.go.tpl",
 		"websocket.go":                     "websocket.go.tpl",
@@ -236,7 +237,7 @@ func (r *apps) List(ctx context.Context, req *ListAppReq) (NumberPaged[SimpleApp
 	return NewNumberPaged(
 		func(request *pageRequest) (*pageResponse[SimpleApp], error) {
 			resp := new(listAppResp)
-			err := r.core.tplRequest(ctx, &RawRequestReq{
+			err := r.core.rawRequest(ctx, &RawRequestReq{
 				Method: http.MethodGet,
 				URL:    %q,
 				Body:   req.toReq(request),
@@ -325,7 +326,7 @@ func (r *audioLive) Retrieve(ctx context.Context, req *RetrieveAudioLiveReq) (*L
 		Body:   req,
 	}
 	response := new(retrieveAudioLiveResp)
-	err := r.core.tplRequest(ctx, request, response)
+	err := r.core.rawRequest(ctx, request, response)
 	return response.Data, err
 }
 
@@ -401,7 +402,7 @@ func (r *audioSpeech) Create(ctx context.Context, req *CreateAudioSpeechReq) (*C
 		Body:   req,
 	}
 	response := new(createAudioSpeechResp)
-	err := r.core.tplRequest(ctx, request, response)
+	err := r.core.rawRequest(ctx, request, response)
 	return response.Data, err
 }
 
@@ -478,7 +479,7 @@ func (r *audioTranscriptions) Create(ctx context.Context, req *AudioSpeechTransc
 		IsFile: true,
 	}
 	response := new(createAudioTranscriptionsResp)
-	err := r.core.tplRequest(ctx, request, response)
+	err := r.core.rawRequest(ctx, request, response)
 	return response.CreateAudioTranscriptionsResp, err
 }
 
@@ -530,7 +531,7 @@ func (r *chatMessages) List(ctx context.Context, req *ListChatsMessagesReq) (*Li
 		Body:   req,
 	}
 	response := new(listChatsMessagesResp)
-	err := r.core.tplRequest(ctx, request, response)
+	err := r.core.rawRequest(ctx, request, response)
 	return response.ListChatsMessagesResp, err
 }
 
@@ -590,7 +591,7 @@ func (r *files) Upload(ctx context.Context, req *UploadFilesReq) (*UploadFilesRe
 		IsFile: true,
 	}
 	response := new(uploadFilesResp)
-	err := r.core.tplRequest(ctx, request, response)
+	err := r.core.rawRequest(ctx, request, response)
 	return response.Data, err
 }
 
@@ -601,7 +602,7 @@ func (r *files) Retrieve(ctx context.Context, req *RetrieveFilesReq) (*RetrieveF
 		Body:   req,
 	}
 	response := new(retrieveFilesResp)
-	err := r.core.tplRequest(ctx, request, response)
+	err := r.core.rawRequest(ctx, request, response)
 	return response.Data, err
 }
 
@@ -707,7 +708,7 @@ func (r *templates) Duplicate(ctx context.Context, templateID string, req *Dupli
 		Body:   req,
 	}
 	response := new(templateDuplicateResp)
-	err := r.core.tplRequest(ctx, request, response)
+	err := r.core.rawRequest(ctx, request, response)
 	return response.Data, err
 }
 
@@ -769,7 +770,7 @@ func (r *users) Me(ctx context.Context) (*User, error) {
 		Body:   new(GetUserMeReq),
 	}
 	response := new(meResp)
-	err := r.client.tplRequest(ctx, request, response)
+	err := r.client.rawRequest(ctx, request, response)
 	return response.User, err
 }
 
@@ -819,8 +820,8 @@ func (r *workflowsChat) Stream(ctx context.Context, req *WorkflowsChatStreamReq)
 		URL:    %q,
 		Body:   req,
 	}
-	response := new(createChatsResp)
-	err := r.client.tplRequest(ctx, request, response)
+	response := new(SwaggerOperationResponse)
+	err := r.client.rawRequest(ctx, request, response)
 	return newStream(ctx, r.client, response.HTTPResponse, parseChatEvent), err
 }
 

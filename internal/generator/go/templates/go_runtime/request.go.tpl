@@ -34,6 +34,53 @@ type RawRequestReq struct {
 	options     []CozeAPIOption
 }
 
+// SwaggerOperationRequest is the generic request carrier for swagger-based Go API wrappers.
+// Path and query parameters are encoded into URL, and Body is passed to the request parser.
+type SwaggerOperationRequest struct {
+	PathParams  map[string]string
+	QueryParams map[string]string
+	Body        any
+}
+
+// SwaggerOperationResponse keeps the common response envelope with raw data payload.
+// Stream/file operations still populate HTTPResponse and return transport-level metadata.
+type SwaggerOperationResponse struct {
+	baseResponse
+	Data json.RawMessage `json:"data"`
+}
+
+func buildSwaggerOperationURL(pathTemplate string, pathParams map[string]string, queryParams map[string]string) string {
+	resolved := pathTemplate
+	for key, value := range pathParams {
+		if strings.TrimSpace(key) == "" {
+			continue
+		}
+		escaped := url.PathEscape(value)
+		resolved = strings.ReplaceAll(resolved, "{"+key+"}", escaped)
+		resolved = strings.ReplaceAll(resolved, ":"+key, escaped)
+	}
+
+	if len(queryParams) == 0 {
+		return resolved
+	}
+
+	query := url.Values{}
+	for key, value := range queryParams {
+		if strings.TrimSpace(key) == "" {
+			continue
+		}
+		query.Add(key, value)
+	}
+	encoded := query.Encode()
+	if encoded == "" {
+		return resolved
+	}
+	if strings.Contains(resolved, "?") {
+		return resolved + "&" + encoded
+	}
+	return resolved + "?" + encoded
+}
+
 func (r *core) rawRequest(ctx context.Context, req *RawRequestReq, resp interface{}) (err error) {
 	// 1. parse request
 	rawHttpReq, err := r.parseRawHttpRequest(ctx, req)
