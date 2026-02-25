@@ -3289,13 +3289,18 @@ func normalizeSwaggerDescription(description string) string {
 	if text == "" {
 		return ""
 	}
-	if strings.HasPrefix(text, "{") && strings.Contains(text, "\"insert\"") && strings.Contains(text, "\"ops\"") {
+	if swaggerDescriptionLooksLikeRichText(text) {
 		if extracted := extractSwaggerRichText(text); extracted != "" {
 			return extracted
 		}
 		return ""
 	}
 	return text
+}
+
+func swaggerDescriptionLooksLikeRichText(raw string) bool {
+	text := strings.TrimSpace(raw)
+	return strings.HasPrefix(text, "{") && strings.Contains(text, "\"insert\"") && strings.Contains(text, "\"ops\"")
 }
 
 func extractSwaggerRichText(raw string) string {
@@ -3319,7 +3324,13 @@ func extractSwaggerRichText(raw string) string {
 func collectRichTextInserts(node interface{}, fragments *[]string) {
 	switch typed := node.(type) {
 	case map[string]interface{}:
-		for key, value := range typed {
+		keys := make([]string, 0, len(typed))
+		for key := range typed {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			value := typed[key]
 			if key == "insert" {
 				if text, ok := value.(string); ok {
 					*fragments = append(*fragments, text)
@@ -4056,13 +4067,32 @@ func renderOperationMethodWithContext(
 	}
 	methodDocstring := buildSwaggerMethodDocstring(doc, binding, details, pathParamNameMap, queryFields, bodyFieldNames, requestBodyType, returnType, paramAliases)
 	docstringStyle := "block"
-	if methodDocstring == "" && modulePath != "" && className != "" {
-		key := strings.TrimSpace(modulePath) + "." + strings.TrimSpace(className) + "." + binding.MethodName
-		if raw, ok := commentOverrides.MethodDocstrings[key]; ok {
+	docstringFromOverride := false
+	methodKey := ""
+	if modulePath != "" && className != "" {
+		methodKey = strings.TrimSpace(modulePath) + "." + strings.TrimSpace(className) + "." + binding.MethodName
+	}
+	if methodDocstring == "" && methodKey != "" {
+		if raw, ok := commentOverrides.RichTextMethodDocstrings[methodKey]; ok {
 			methodDocstring = strings.TrimSpace(raw)
-			if style := strings.TrimSpace(commentOverrides.MethodDocstringStyles[key]); style != "" {
-				docstringStyle = style
-			}
+			docstringFromOverride = true
+		}
+	}
+	if methodDocstring == "" && methodKey != "" {
+		if raw, ok := commentOverrides.MethodDocstrings[methodKey]; ok {
+			methodDocstring = strings.TrimSpace(raw)
+			docstringFromOverride = true
+		}
+	}
+	if methodDocstring != "" && methodKey != "" && swaggerDescriptionLooksLikeRichText(details.Description) {
+		if raw, ok := commentOverrides.RichTextMethodDocstrings[methodKey]; ok {
+			methodDocstring = strings.TrimSpace(raw)
+			docstringFromOverride = true
+		}
+	}
+	if methodKey != "" && docstringFromOverride {
+		if style := strings.TrimSpace(commentOverrides.MethodDocstringStyles[methodKey]); style != "" {
+			docstringStyle = style
 		}
 	}
 	if methodDocstring != "" {

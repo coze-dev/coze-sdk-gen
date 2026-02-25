@@ -106,6 +106,9 @@ func TestDefaultsApplied(t *testing.T) {
 	if cfg.CommentOverrides.ClassDocstringStyles == nil {
 		t.Fatal("expected class docstring style map to be initialized")
 	}
+	if cfg.CommentOverrides.RichTextMethodDocstrings == nil {
+		t.Fatal("expected rich text method docstring map to be initialized")
+	}
 	if cfg.CommentOverrides.InlineFieldComments == nil {
 		t.Fatal("expected inline field comments map to be initialized")
 	}
@@ -198,6 +201,8 @@ class_docstring_styles:
   cozepy.chat.Chat: block
 method_docstrings:
   cozepy.chat.ChatClient.create: Create chat
+richtext_method_docstrings:
+  cozepy.chat.ChatClient.create: Rich text create chat
 method_docstring_styles:
   cozepy.chat.ChatClient.create: block
 field_comments:
@@ -230,6 +235,9 @@ inline_enum_member_comments:
 	}
 	if got := cfg.CommentOverrides.MethodDocstrings["cozepy.chat.ChatClient.create"]; got != "Create chat" {
 		t.Fatalf("unexpected method docstring override: %q", got)
+	}
+	if got := cfg.CommentOverrides.RichTextMethodDocstrings["cozepy.chat.ChatClient.create"]; got != "Rich text create chat" {
+		t.Fatalf("unexpected rich text method docstring override: %q", got)
 	}
 	if got := cfg.CommentOverrides.MethodDocstringStyles["cozepy.chat.ChatClient.create"]; got != "block" {
 		t.Fatalf("unexpected method docstring style override: %q", got)

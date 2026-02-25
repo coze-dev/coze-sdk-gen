@@ -1564,6 +1564,46 @@ func TestRenderPackageModuleMethodDocstringPreferSwaggerFallbackOverrides(t *tes
 	}
 }
 
+func TestRenderPackageModuleMethodDocstringUsesRichTextOverrides(t *testing.T) {
+	doc := mustParseSwagger(t)
+	meta := pygen.PackageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ClientClass: "DemoClient",
+		},
+	}
+	bindings := []pygen.OperationBinding{
+		{
+			PackageName: "demo",
+			MethodName:  "create",
+			Details: openapi.OperationDetails{
+				Path:        "/v1/demo",
+				Method:      "post",
+				Description: `{"0":{"ops":[{"insert":"first line"},{"insert":"second line"}],"zoneType":"Z"}}`,
+			},
+		},
+	}
+	commentOverrides := config.CommentOverrides{
+		RichTextMethodDocstrings: map[string]string{
+			"cozepy.demo.DemoClient.create":      "Use rich text override.",
+			"cozepy.demo.AsyncDemoClient.create": "Use rich text override.",
+		},
+		MethodDocstringStyles: map[string]string{
+			"cozepy.demo.DemoClient.create":      "block",
+			"cozepy.demo.AsyncDemoClient.create": "block",
+		},
+	}
+
+	code := pygen.RenderPackageModuleWithComments(doc, meta, bindings, commentOverrides)
+	if !strings.Contains(code, "Use rich text override.") {
+		t.Fatalf("expected rich text override docstring:\n%s", code)
+	}
+	if strings.Contains(code, "first line second line") {
+		t.Fatalf("did not expect raw swagger rich text docstring when override exists:\n%s", code)
+	}
+}
+
 func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
