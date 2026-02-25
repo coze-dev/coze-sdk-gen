@@ -48,7 +48,7 @@ func GenerateGo(cfg *config.Config, doc *openapi.Document) (Result, error) {
 		return Result{}, fmt.Errorf("no operations selected for generation")
 	}
 
-	if err := fsutil.CleanOutputDirPreserveGit(cfg.OutputSDK); err != nil {
+	if err := fsutil.CleanOutputDirPreserveEntries(cfg.OutputSDK, cfg.DiffIgnorePathsForLanguage("go")); err != nil {
 		return Result{}, fmt.Errorf("prepare output directory %q: %w", cfg.OutputSDK, err)
 	}
 

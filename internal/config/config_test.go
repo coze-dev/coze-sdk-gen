@@ -112,6 +112,18 @@ func TestDefaultsApplied(t *testing.T) {
 	if cfg.CommentOverrides.InlineEnumMemberComment == nil {
 		t.Fatal("expected inline enum comments map to be initialized")
 	}
+	if len(cfg.Diff.IgnorePathsByLanguage["python"]) == 0 {
+		t.Fatal("expected default diff ignore paths for python")
+	}
+	if len(cfg.Diff.IgnorePathsByLanguage["go"]) == 0 {
+		t.Fatal("expected default diff ignore paths for go")
+	}
+	if got := cfg.DiffIgnorePathsForLanguage("python"); len(got) == 0 || got[0] != ".git" {
+		t.Fatalf("expected python diff ignore paths with .git, got %#v", got)
+	}
+	if got := cfg.DiffIgnorePathsForLanguage("go"); len(got) == 0 || got[0] != ".git" {
+		t.Fatalf("expected go diff ignore paths with .git, got %#v", got)
+	}
 }
 
 func TestParseIgnoresRuntimeOptionsInYAML(t *testing.T) {
@@ -124,6 +136,36 @@ func TestParseIgnoresRuntimeOptionsInYAML(t *testing.T) {
 	}
 	if cfg.OutputSDK != "" {
 		t.Fatalf("expected output_sdk to be ignored from yaml, got %q", cfg.OutputSDK)
+	}
+}
+
+func TestParseDiffIgnorePathsByLanguage(t *testing.T) {
+	cfg, err := Parse([]byte(`
+diff:
+  ignore_paths_by_language:
+    python:
+      - .git
+      - examples
+      - tests
+    go:
+      - .git
+      - .github
+api: {}
+`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	pythonPaths := cfg.DiffIgnorePathsForLanguage("python")
+	if len(pythonPaths) != 3 {
+		t.Fatalf("expected 3 python diff paths, got %#v", pythonPaths)
+	}
+	if pythonPaths[0] != ".git" || pythonPaths[1] != "examples" || pythonPaths[2] != "tests" {
+		t.Fatalf("unexpected python diff paths: %#v", pythonPaths)
+	}
+	goPaths := cfg.DiffIgnorePathsForLanguage("go")
+	if len(goPaths) != 2 || goPaths[1] != ".github" {
+		t.Fatalf("unexpected go diff paths: %#v", goPaths)
 	}
 }
 
@@ -222,6 +264,18 @@ func TestValidateConfigFailures(t *testing.T) {
 		name    string
 		content string
 	}{
+		{
+			name: "unsupported diff language",
+			content: `
+language: python
+output_sdk: out
+diff:
+  ignore_paths_by_language:
+    java:
+      - .git
+api: {}
+`,
+		},
 		{
 			name: "duplicate package",
 			content: `

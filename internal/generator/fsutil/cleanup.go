@@ -10,6 +10,12 @@ import (
 // CleanOutputDirPreserveGit removes all top-level entries in outputDir except
 // .git, so generation can safely target an existing git repository root.
 func CleanOutputDirPreserveGit(outputDir string) error {
+	return CleanOutputDirPreserveEntries(outputDir, []string{".git"})
+}
+
+// CleanOutputDirPreserveEntries removes all top-level entries in outputDir
+// except the given preserve entries.
+func CleanOutputDirPreserveEntries(outputDir string, preserveEntries []string) error {
 	outputDir = strings.TrimSpace(outputDir)
 	if outputDir == "" {
 		return fmt.Errorf("output directory is empty")
@@ -33,9 +39,17 @@ func CleanOutputDirPreserveGit(outputDir string) error {
 	if err != nil {
 		return fmt.Errorf("read output directory %q: %w", outputDir, err)
 	}
+	preserve := map[string]struct{}{}
+	for _, entry := range preserveEntries {
+		name := topLevelEntryName(entry)
+		if name == "" {
+			continue
+		}
+		preserve[name] = struct{}{}
+	}
 	for _, entry := range entries {
 		name := entry.Name()
-		if name == ".git" {
+		if _, ok := preserve[name]; ok {
 			continue
 		}
 		target := filepath.Join(outputDir, name)
@@ -44,4 +58,30 @@ func CleanOutputDirPreserveGit(outputDir string) error {
 		}
 	}
 	return nil
+}
+
+func topLevelEntryName(value string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return ""
+	}
+	trimmed = strings.ReplaceAll(trimmed, "\\", "/")
+	trimmed = strings.TrimPrefix(trimmed, "./")
+	trimmed = strings.TrimPrefix(trimmed, "/")
+	trimmed = strings.TrimSuffix(trimmed, "/")
+	if trimmed == "" {
+		return ""
+	}
+	cleaned := filepath.Clean(trimmed)
+	if cleaned == "." || cleaned == ".." {
+		return ""
+	}
+	if strings.HasPrefix(cleaned, "../") {
+		return ""
+	}
+	parts := strings.Split(cleaned, "/")
+	if len(parts) == 0 {
+		return ""
+	}
+	return strings.TrimSpace(parts[0])
 }

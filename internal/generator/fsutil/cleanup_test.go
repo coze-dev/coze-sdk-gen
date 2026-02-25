@@ -42,3 +42,44 @@ func TestCleanOutputDirPreserveGitCreatesDir(t *testing.T) {
 		t.Fatalf("expected output dir to be created, stat err = %v", err)
 	}
 }
+
+func TestCleanOutputDirPreserveEntries(t *testing.T) {
+	out := t.TempDir()
+
+	for _, rel := range []string{
+		".github/workflows/ci.yml",
+		"examples/demo.py",
+		"tests/test_demo.py",
+		"README.md",
+		"cozepy/old.py",
+	} {
+		path := filepath.Join(out, rel)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatalf("mkdir %s: %v", path, err)
+		}
+		if err := os.WriteFile(path, []byte("x"), 0o644); err != nil {
+			t.Fatalf("write %s: %v", path, err)
+		}
+	}
+
+	if err := CleanOutputDirPreserveEntries(
+		out,
+		[]string{".github/workflows", "examples", "tests/test_demo.py", "README.md"},
+	); err != nil {
+		t.Fatalf("CleanOutputDirPreserveEntries() error = %v", err)
+	}
+
+	for _, rel := range []string{
+		".github/workflows/ci.yml",
+		"examples/demo.py",
+		"tests/test_demo.py",
+		"README.md",
+	} {
+		if _, err := os.Stat(filepath.Join(out, rel)); err != nil {
+			t.Fatalf("expected preserved path %s, stat error=%v", rel, err)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(out, "cozepy", "old.py")); !os.IsNotExist(err) {
+		t.Fatalf("expected generated content to be cleaned, stat error=%v", err)
+	}
+}

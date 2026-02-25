@@ -59,7 +59,7 @@ func GeneratePython(cfg *config.Config, doc *openapi.Document) (Result, error) {
 	packages := groupBindingsByPackage(bindings)
 	packageMetas := buildPackageMeta(cfg, packages)
 
-	if err := fsutil.CleanOutputDirPreserveGit(cfg.OutputSDK); err != nil {
+	if err := fsutil.CleanOutputDirPreserveEntries(cfg.OutputSDK, cfg.DiffIgnorePathsForLanguage("python")); err != nil {
 		return Result{}, fmt.Errorf("prepare output directory %q: %w", cfg.OutputSDK, err)
 	}
 

@@ -1,3 +1,22 @@
+diff:
+  ignore_paths_by_language:
+    python:
+      - .git
+      - .github
+      - .gitignore
+      - .pre-commit-config.yaml
+      - .vscode
+      - CONTRIBUTING.md
+      - LICENSE
+      - README.md
+      - codecov.yml
+      - examples
+      - poetry.lock
+      - __pycache__
+      - tests
+    go:
+      - .git
+
 comment_overrides_file: comment_overrides.yaml
 api:
   generate_only_mapped: true

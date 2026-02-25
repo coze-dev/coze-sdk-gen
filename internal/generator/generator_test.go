@@ -35,7 +35,7 @@ func TestGeneratePythonFromSwagger(t *testing.T) {
 	}
 }
 
-func TestGeneratePythonPreservesGitDirectory(t *testing.T) {
+func TestGeneratePythonPreservesConfiguredDiffIgnorePaths(t *testing.T) {
 	out := t.TempDir()
 	gitHead := filepath.Join(out, ".git", "HEAD")
 	if err := os.MkdirAll(filepath.Dir(gitHead), 0o755); err != nil {
@@ -44,12 +44,34 @@ func TestGeneratePythonPreservesGitDirectory(t *testing.T) {
 	if err := os.WriteFile(gitHead, []byte("ref: refs/heads/main\n"), 0o644); err != nil {
 		t.Fatalf("write git head: %v", err)
 	}
+	readmePath := filepath.Join(out, "README.md")
+	if err := os.WriteFile(readmePath, []byte("README"), 0o644); err != nil {
+		t.Fatalf("write README: %v", err)
+	}
+	examplePath := filepath.Join(out, "examples", "demo.py")
+	if err := os.MkdirAll(filepath.Dir(examplePath), 0o755); err != nil {
+		t.Fatalf("mkdir examples dir: %v", err)
+	}
+	if err := os.WriteFile(examplePath, []byte("print('demo')"), 0o644); err != nil {
+		t.Fatalf("write example: %v", err)
+	}
+	testPath := filepath.Join(out, "tests", "test_demo.py")
+	if err := os.MkdirAll(filepath.Dir(testPath), 0o755); err != nil {
+		t.Fatalf("mkdir tests dir: %v", err)
+	}
+	if err := os.WriteFile(testPath, []byte("def test_demo(): pass"), 0o644); err != nil {
+		t.Fatalf("write test: %v", err)
+	}
 	staleFile := filepath.Join(out, "stale.txt")
 	if err := os.WriteFile(staleFile, []byte("stale"), 0o644); err != nil {
 		t.Fatalf("write stale file: %v", err)
 	}
 
 	cfg := testConfig(out)
+	cfg.Diff.IgnorePathsByLanguage = map[string][]string{
+		"python": {".git", "README.md", "examples", "tests"},
+		"go":     {".git"},
+	}
 	doc := mustParseSwagger(t)
 	if _, err := GeneratePython(cfg, doc); err != nil {
 		t.Fatalf("GeneratePython() error = %v", err)
@@ -57,6 +79,15 @@ func TestGeneratePythonPreservesGitDirectory(t *testing.T) {
 
 	if _, err := os.Stat(gitHead); err != nil {
 		t.Fatalf("expected .git to be preserved, stat err=%v", err)
+	}
+	if _, err := os.Stat(readmePath); err != nil {
+		t.Fatalf("expected README to be preserved, stat err=%v", err)
+	}
+	if _, err := os.Stat(examplePath); err != nil {
+		t.Fatalf("expected examples to be preserved, stat err=%v", err)
+	}
+	if _, err := os.Stat(testPath); err != nil {
+		t.Fatalf("expected tests to be preserved, stat err=%v", err)
 	}
 	if _, err := os.Stat(staleFile); !os.IsNotExist(err) {
 		t.Fatalf("expected stale file to be removed, stat err=%v", err)

@@ -15,8 +15,34 @@ type Config struct {
 	Language             string           `yaml:"-"`
 	OutputSDK            string           `yaml:"-"`
 	CommentOverridesFile string           `yaml:"comment_overrides_file"`
+	Diff                 DiffConfig       `yaml:"diff"`
 	API                  APIConfig        `yaml:"api"`
 	CommentOverrides     CommentOverrides `yaml:"-"`
+}
+
+type DiffConfig struct {
+	IgnorePathsByLanguage map[string][]string `yaml:"ignore_paths_by_language"`
+}
+
+var defaultDiffIgnorePathsByLanguage = map[string][]string{
+	"python": {
+		".git",
+		".github",
+		".gitignore",
+		".pre-commit-config.yaml",
+		".vscode",
+		"CONTRIBUTING.md",
+		"LICENSE",
+		"README.md",
+		"codecov.yml",
+		"examples",
+		"poetry.lock",
+		"__pycache__",
+		"tests",
+	},
+	"go": {
+		".git",
+	},
 }
 
 type CommentOverrides struct {
@@ -272,6 +298,27 @@ func Parse(content []byte) (*Config, error) {
 }
 
 func (c *Config) applyDefaults() {
+	normalizedByLanguage := map[string][]string{}
+	for rawLang, paths := range c.Diff.IgnorePathsByLanguage {
+		lang := normalizeLanguage(rawLang)
+		if lang == "" {
+			continue
+		}
+		normalizedByLanguage[lang] = append(normalizedByLanguage[lang], paths...)
+	}
+	c.Diff.IgnorePathsByLanguage = normalizedByLanguage
+
+	for lang, defaults := range defaultDiffIgnorePathsByLanguage {
+		paths := c.Diff.IgnorePathsByLanguage[lang]
+		if len(paths) == 0 {
+			paths = append([]string(nil), defaults...)
+		}
+		paths = normalizeDiffPaths(paths)
+		if !containsPath(paths, ".git") {
+			paths = append([]string{".git"}, paths...)
+		}
+		c.Diff.IgnorePathsByLanguage[lang] = paths
+	}
 	if c.API.FieldAliases == nil {
 		c.API.FieldAliases = map[string]map[string]string{}
 	}
@@ -340,6 +387,22 @@ func (c *Config) Validate() error {
 		lang := strings.ToLower(strings.TrimSpace(c.Language))
 		if lang != "python" && lang != "go" {
 			return fmt.Errorf("unsupported language %q, supported languages: python, go", c.Language)
+		}
+	}
+
+	for lang, paths := range c.Diff.IgnorePathsByLanguage {
+		normalizedLang := normalizeLanguage(lang)
+		if normalizedLang != "python" && normalizedLang != "go" {
+			return fmt.Errorf("diff.ignore_paths_by_language.%s is unsupported, supported languages: python, go", lang)
+		}
+		for i, path := range paths {
+			trimmed := strings.TrimSpace(path)
+			if trimmed == "" {
+				return fmt.Errorf("diff.ignore_paths_by_language.%s[%d] should not be empty", normalizedLang, i)
+			}
+			if trimmed == "." || trimmed == ".." {
+				return fmt.Errorf("diff.ignore_paths_by_language.%s[%d] is invalid: %q", normalizedLang, i, path)
+			}
 		}
 	}
 
@@ -648,6 +711,51 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+func containsPath(paths []string, target string) bool {
+	target = strings.TrimSpace(target)
+	for _, path := range paths {
+		if strings.TrimSpace(path) == target {
+			return true
+		}
+	}
+	return false
+}
+
+func normalizeDiffPaths(paths []string) []string {
+	seen := map[string]struct{}{}
+	out := make([]string, 0, len(paths))
+	for _, path := range paths {
+		trimmed := strings.TrimSpace(path)
+		if trimmed == "" {
+			continue
+		}
+		if _, ok := seen[trimmed]; ok {
+			continue
+		}
+		seen[trimmed] = struct{}{}
+		out = append(out, trimmed)
+	}
+	return out
+}
+
+func normalizeLanguage(language string) string {
+	return strings.ToLower(strings.TrimSpace(language))
+}
+
+func (c *Config) DiffIgnorePathsForLanguage(language string) []string {
+	if c == nil {
+		return []string{".git"}
+	}
+	lang := normalizeLanguage(language)
+	if paths := c.Diff.IgnorePathsByLanguage[lang]; len(paths) > 0 {
+		return append([]string(nil), paths...)
+	}
+	if defaults := defaultDiffIgnorePathsByLanguage[lang]; len(defaults) > 0 {
+		return append([]string(nil), defaults...)
+	}
+	return []string{".git"}
 }
 
 func (c *Config) IsIgnored(path string, method string) bool {
