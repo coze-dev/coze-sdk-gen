@@ -1307,8 +1307,6 @@ api:
             - id
         - schema: ChatV3MessageDetail
           name: Message
-          blank_line_before_fields:
-            - id
           exclude_unordered_fields: true
           required_fields:
             - __none__
@@ -1467,10 +1465,6 @@ api:
             input_count: "0"
         - schema: ChatV3ChatDetail
           name: Chat
-          blank_line_before_fields:
-            - required_action
-            - usage
-            - inserted_additional_messages
           exclude_unordered_fields: true
           required_fields:
             - __none__
@@ -2491,8 +2485,6 @@ api:
             - update_time
         - name: DocumentSourceInfo
           allow_missing_in_swagger: true
-          blank_line_before_fields:
-            - source_file_id
           extra_fields:
             - name: file_base64
               type: Optional[str]
@@ -3494,11 +3486,6 @@ api:
               required: true
         - name: WorkflowEvent
           allow_missing_in_swagger: true
-          blank_line_before_fields:
-            - message
-            - interrupt
-            - error
-            - unknown
           extra_fields:
             - name: id
               type: int
@@ -3618,8 +3605,6 @@ api:
           name: WorkflowRunHistory
           separate_commented_fields: true
           exclude_unordered_fields: true
-          blank_line_before_fields:
-            - node_execute_status
           field_order:
             - execute_id
             - execute_status
