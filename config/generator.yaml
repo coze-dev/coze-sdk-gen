@@ -4556,7 +4556,6 @@ api:
       sdk_methods:
         - conversations.list
       query_builder: raw
-      omit_return_type: true
       query_fields:
         - name: bot_id
           type: str

@@ -847,16 +847,14 @@ func TestRenderOperationMethodReturnAndAsyncKwargsOptions(t *testing.T) {
 		Method: "get",
 	}
 
-	noReturn := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
+	withReturn := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "demo",
 		MethodName:  "list_items",
 		Details:     details,
-		Mapping: &config.OperationMapping{
-			OmitReturnType: true,
-		},
+		Mapping:     &config.OperationMapping{},
 	}, false)
-	if strings.Contains(noReturn, "->") {
-		t.Fatalf("did not expect return annotation when omit_return_type=true:\n%s", noReturn)
+	if !strings.Contains(withReturn, "->") {
+		t.Fatalf("expected return annotation in method signature:\n%s", withReturn)
 	}
 
 	asyncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
