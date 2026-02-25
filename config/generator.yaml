@@ -1734,7 +1734,13 @@ api:
         - /v3/chat/message
     - name: connectors
       source_dir: cozepy/connectors
+      model_schemas:
+        - schema: UserConfigEnum
+          name: UserConfigEnum
+        - schema: UserConfig
+          name: UserConfig
       empty_models:
+        - BindConnectorUserConfigResp
         - InstallConnectorResp
       path_prefixes:
         - /v1/connectors
@@ -3990,6 +3996,26 @@ api:
       blank_line_after_headers: true
       response_type: UpdateConnectorBotResp
       response_cast: UpdateConnectorBotResp
+    - path: /v1/connectors/{connector_id}/user_configs
+      method: post
+      order: 649
+      sdk_methods:
+        - connectors.bind
+      body_builder: remove_none_values
+      body_fields:
+        - configs
+        - user_id
+      body_required_fields:
+        - configs
+      body_field_values:
+        configs: |-
+          [i.model_dump() for i in configs] if configs else []
+      arg_types:
+        connector_id: str
+        configs: List[UserConfig]
+        user_id: Optional[str]
+      response_type: BindConnectorUserConfigResp
+      response_cast: BindConnectorUserConfigResp
     - path: /v1/connectors/{connector_id}/install
       method: post
       order: 650
@@ -5538,8 +5564,6 @@ api:
       response_cast: User
       allow_missing_in_swagger: true
   ignore_apis:
-    - path: /v1/connectors/{connector_id}/user_configs
-      method: post
     - path: /v1/enterprises/{enterprise_id}/organizations
       method: post
     - path: /v1/commerce/benefit/benefits/get
