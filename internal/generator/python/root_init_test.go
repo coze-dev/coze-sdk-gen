@@ -31,7 +31,7 @@ class PublicMultiLine(
     pass
 `
 	got := collectPublicTopLevelClassesFromSource(content)
-	want := []string{"PublicBase", "PublicWithParent", "PublicMultiLine"}
+	want := []string{"PublicBase", "PublicWithParent", "AsyncBotsClient", "PublicMultiLine"}
 	if len(got) != len(want) {
 		t.Fatalf("class count mismatch got=%v want=%v", got, want)
 	}
@@ -60,7 +60,9 @@ func TestRenderPythonRootInit(t *testing.T) {
 	}
 
 	containsAll := []string{
-		"from .apps import SimpleApp",
+		"from .apps import (",
+		"    AppsClient,",
+		"    SimpleApp,",
 		"from .apps.collaborators import AppCollaborator",
 		"from .coze import (",
 		"    AsyncCoze,",
@@ -75,6 +77,7 @@ func TestRenderPythonRootInit(t *testing.T) {
 		"    DEFAULT_TIMEOUT,",
 		"from .log import setup_logging",
 		"from .version import VERSION",
+		"\"AppsClient\"",
 		"\"SimpleApp\"",
 		"\"AppCollaborator\"",
 		"\"AsyncCoze\"",
@@ -90,9 +93,6 @@ func TestRenderPythonRootInit(t *testing.T) {
 	}
 	if strings.Contains(content, "ShouldBeIgnored") {
 		t.Fatalf("root package __init__.py classes should not be scanned: %s", content)
-	}
-	if strings.Contains(content, "AppsClient") {
-		t.Fatalf("client classes should not be exported: %s", content)
 	}
 }
 
