@@ -23,14 +23,12 @@ When asked to sync generated Python SDK output into `coze-py` and complete the P
 ## Part B: Generate SDK and complete downstream `coze-py` PR
 
 1. Resolve `<coze-py-path>` first:
-   - If user does not provide `<coze-py-path>`, default to `~/coze-dev/coze-py`.
+   - Use a random temporary path for each run (do not reuse existing local repo paths), for example:
+     - `<coze-py-path>=/tmp/coze-py-$RANDOM-$RANDOM`
 2. Prepare `coze-py` repository:
-   - If `<coze-py-path>` does not exist, clone it:
+   - Always clone a fresh repository into `<coze-py-path>` for this run:
      - `git clone https://github.com/coze-dev/coze-py <coze-py-path>`
-   - If `<coze-py-path>` exists, sync with remote `main` before generation:
-     - `git -C <coze-py-path> fetch origin`
-     - `git -C <coze-py-path> checkout main`
-     - `git -C <coze-py-path> pull --ff-only origin main`
+   - Do not reuse old working trees across runs, to avoid cross-process interference.
 3. Ensure git user in `coze-py` (repo-level preferred, fallback to global check) is exactly:
    - `user.name = chyroc`
    - `user.email = chyroc@qq.com`
