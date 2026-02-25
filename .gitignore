@@ -27,3 +27,6 @@ go.work.sum
 exist-repo
 scripts/gen-real-py.sh
 scripts/gen-real-go.sh
+
+# macOS Finder metadata
+.DS_Store
