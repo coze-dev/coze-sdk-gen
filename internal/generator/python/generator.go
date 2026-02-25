@@ -612,10 +612,10 @@ func RenderPackageModule(
 			continue
 		}
 		mode := strings.TrimSpace(binding.Mapping.Pagination)
-		if isTokenPagination(mode) && paginationInheritResponse(binding.Mapping) {
+		if isTokenPagination(mode) {
 			needsTokenPagedResponseImport = true
 		}
-		if isNumberPagination(mode) && paginationInheritResponse(binding.Mapping) {
+		if isNumberPagination(mode) {
 			needsNumberPagedResponseImport = true
 		}
 	}
@@ -1082,13 +1082,6 @@ func isNumberPagination(mode string) bool {
 	return mode == "number" || mode == "number_has_more"
 }
 
-func paginationInheritResponse(mapping *config.OperationMapping) bool {
-	if mapping == nil || mapping.PaginationInheritResponse == nil {
-		return true
-	}
-	return *mapping.PaginationInheritResponse
-}
-
 func normalizeMapBuilder(value string) string {
 	v := strings.TrimSpace(value)
 	if v == "" {
@@ -1324,11 +1317,7 @@ func renderPagedResponseClasses(bindings []OperationBinding, overriddenClasses m
 			if nextTokenField == "" {
 				nextTokenField = "next_page_token"
 			}
-			if paginationInheritResponse(binding.Mapping) {
-				buf.WriteString(fmt.Sprintf("class %s(CozeModel, TokenPagedResponse[%s]):\n", className, itemType))
-			} else {
-				buf.WriteString(fmt.Sprintf("class %s(CozeModel):\n", className))
-			}
+			buf.WriteString(fmt.Sprintf("class %s(CozeModel, TokenPagedResponse[%s]):\n", className, itemType))
 			buf.WriteString(fmt.Sprintf("    %s: List[%s]\n", itemsField, itemType))
 			buf.WriteString(fmt.Sprintf("    %s: Optional[str] = None\n", nextTokenField))
 			buf.WriteString(fmt.Sprintf("    %s: bool\n\n", hasMoreField))
@@ -1346,11 +1335,7 @@ func renderPagedResponseClasses(bindings []OperationBinding, overriddenClasses m
 			if hasMoreField == "" {
 				hasMoreField = "has_more"
 			}
-			if paginationInheritResponse(binding.Mapping) {
-				buf.WriteString(fmt.Sprintf("class %s(CozeModel, NumberPagedResponse[%s]):\n", className, itemType))
-			} else {
-				buf.WriteString(fmt.Sprintf("class %s(CozeModel):\n", className))
-			}
+			buf.WriteString(fmt.Sprintf("class %s(CozeModel, NumberPagedResponse[%s]):\n", className, itemType))
 			buf.WriteString(fmt.Sprintf("    %s: bool\n", hasMoreField))
 			buf.WriteString(fmt.Sprintf("    %s: List[%s]\n\n", itemsField, itemType))
 			buf.WriteString("    def get_total(self) -> Optional[int]:\n")
@@ -1366,11 +1351,7 @@ func renderPagedResponseClasses(bindings []OperationBinding, overriddenClasses m
 		if totalField == "" {
 			totalField = "total"
 		}
-		if paginationInheritResponse(binding.Mapping) {
-			buf.WriteString(fmt.Sprintf("class %s(CozeModel, NumberPagedResponse[%s]):\n", className, itemType))
-		} else {
-			buf.WriteString(fmt.Sprintf("class %s(CozeModel):\n", className))
-		}
+		buf.WriteString(fmt.Sprintf("class %s(CozeModel, NumberPagedResponse[%s]):\n", className, itemType))
 		buf.WriteString(fmt.Sprintf("    %s: int\n", totalField))
 		buf.WriteString(fmt.Sprintf("    %s: List[%s]\n\n", itemsField, itemType))
 		buf.WriteString("    def get_total(self) -> Optional[int]:\n")

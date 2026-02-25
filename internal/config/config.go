@@ -203,7 +203,6 @@ type OperationMapping struct {
 	PaginationPageNumField         string            `yaml:"pagination_page_num_field"`
 	PaginationPageSizeField        string            `yaml:"pagination_page_size_field"`
 	PaginationPageTokenField       string            `yaml:"pagination_page_token_field"`
-	PaginationInheritResponse      *bool             `yaml:"pagination_inherit_response"`
 	PaginationHeadersBeforeParams  bool              `yaml:"pagination_headers_before_params"`
 	PaginationCastBeforeHeaders    bool              `yaml:"pagination_cast_before_headers"`
 	DisableHeadersArg              bool              `yaml:"disable_headers_arg"`

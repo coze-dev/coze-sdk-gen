@@ -4563,7 +4563,6 @@ api:
         - conversations.list
       query_builder: raw
       omit_return_type: true
-      pagination_inherit_response: false
       query_fields:
         - name: bot_id
           type: str
