@@ -845,7 +845,7 @@ func TestGeneratePythonMappingGeneratesSyncAndAsyncByDefault(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodReturnAndAsyncKwargsOptions(t *testing.T) {
+func TestRenderOperationMethodReturnAndAsyncKwargs(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/demo",
@@ -866,12 +866,10 @@ func TestRenderOperationMethodReturnAndAsyncKwargsOptions(t *testing.T) {
 		PackageName: "demo",
 		MethodName:  "async_call",
 		Details:     details,
-		Mapping: &config.OperationMapping{
-			AsyncIncludeKwargs: true,
-		},
+		Mapping:     &config.OperationMapping{},
 	}, true)
 	if !strings.Contains(asyncCode, "**kwargs") {
-		t.Fatalf("expected async kwargs passthrough in signature:\n%s", asyncCode)
+		t.Fatalf("expected async kwargs in signature by default:\n%s", asyncCode)
 	}
 }
 

@@ -4408,7 +4408,6 @@ api:
       sdk_methods:
         - bots._list_v1
       query_builder: raw
-      async_include_kwargs: true
       query_fields:
         - name: space_id
           type: str

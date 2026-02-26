@@ -474,7 +474,6 @@ func renderOperationMethodWithContext(
 	requestBodyType, bodyRequired := RequestBodyTypeInfo(doc, details.RequestBodySchema, details.RequestBody)
 	ignoreHeaderParams := binding.Mapping != nil && binding.Mapping.IgnoreHeaderParams
 	streamWrap := binding.Mapping != nil && binding.Mapping.StreamWrap
-	asyncIncludeKwargs := async && binding.Mapping != nil && binding.Mapping.AsyncIncludeKwargs
 	streamWrapHandler := ""
 	streamWrapFields := []string{}
 	streamWrapAsyncYield := false
@@ -702,9 +701,6 @@ func renderOperationMethodWithContext(
 	}
 	includeKwargsHeaders := true
 	if includeKwargsHeaders {
-		signatureArgs = append(signatureArgs, "**kwargs")
-	}
-	if asyncIncludeKwargs && !includeKwargsHeaders {
 		signatureArgs = append(signatureArgs, "**kwargs")
 	}
 	signatureArgs = NormalizeSignatureArgs(signatureArgs)
