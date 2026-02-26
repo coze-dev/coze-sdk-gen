@@ -519,16 +519,15 @@ func TestRenderOperationMethodStreamWrapYieldAndSyncVarDefault(t *testing.T) {
 	}
 	binding := pygen.OperationBinding{
 		PackageName: "demo",
-		MethodName:  "stream_call",
+		MethodName:  "resume",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			RequestStream:        true,
-			ResponseType:         "Stream[DemoEvent]",
-			AsyncResponseType:    "AsyncIterator[DemoEvent]",
-			StreamWrap:           true,
-			StreamWrapHandler:    "handle_demo",
-			StreamWrapFields:     []string{"event", "data"},
-			StreamWrapAsyncYield: true,
+			RequestStream:     true,
+			ResponseType:      "Stream[DemoEvent]",
+			AsyncResponseType: "AsyncIterator[DemoEvent]",
+			StreamWrap:        true,
+			StreamWrapHandler: "handle_demo",
+			StreamWrapFields:  []string{"event", "data"},
 		},
 	}
 
