@@ -5181,7 +5181,6 @@ api:
         - id
         - event
         - data
-      stream_wrap_async_yield: true
       response_type: Stream[WorkflowEvent]
       async_response_type: AsyncIterator[WorkflowEvent]
     - path: /v1/workflow/stream_resume
@@ -5212,7 +5211,6 @@ api:
         - id
         - event
         - data
-      stream_wrap_async_yield: true
       response_type: Stream[WorkflowEvent]
       async_response_type: AsyncIterator[WorkflowEvent]
     - path: /v1/workflows/{workflow_id}/run_histories/{execute_id}
