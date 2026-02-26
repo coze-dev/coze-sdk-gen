@@ -112,6 +112,15 @@ func listResponseItemType(returnType string) (string, bool) {
 	return itemType, true
 }
 
+func inferPaginationRequestArg(requestMethod string) string {
+	switch strings.ToLower(strings.TrimSpace(requestMethod)) {
+	case "get", "head", "options":
+		return "params"
+	default:
+		return "json"
+	}
+}
+
 func RequestBodyTypeInfo(doc *openapi.Document, schema *openapi.Schema, body *openapi.RequestBody) (string, bool) {
 	_ = doc
 	_ = schema

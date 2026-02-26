@@ -4184,7 +4184,6 @@ api:
           required: true
           default: "10"
       pagination: number
-      pagination_request_arg: json
       pagination_data_class: _PrivateListDocumentsData
       pagination_item_type: Document
       pagination_items_field: document_infos
@@ -4306,7 +4305,6 @@ api:
               stacklevel=2,
           )
       pagination: number
-      pagination_request_arg: json
       pagination_data_class: _PrivateListDocumentsData
       pagination_item_type: Document
       pagination_items_field: document_infos
@@ -4680,7 +4678,6 @@ api:
       order: 81
       sdk_methods:
         - audio_transcriptions.create
-      force_multiline_signature: true
       files_fields:
         - file
       arg_types:
@@ -4692,7 +4689,6 @@ api:
       sdk_methods:
         - audio_live.retrieve
       allow_missing_in_swagger: true
-      force_multiline_signature: true
       response_type: LiveInfo
     - path: /v1/audio/voiceprint_groups
       method: post
@@ -4731,7 +4727,6 @@ api:
       sdk_methods:
         - audio_voiceprint_groups.delete
       allow_missing_in_swagger: true
-      force_multiline_signature: true
       response_type: DeleteVoicePrintGroupResp
     - path: /v1/audio/voiceprint_groups
       method: get
@@ -4848,7 +4843,6 @@ api:
       sdk_methods:
         - audio_voiceprint_groups_features.delete
       allow_missing_in_swagger: true
-      force_multiline_signature: true
       response_type: DeleteVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features
       method: get
@@ -4974,7 +4968,6 @@ api:
       sdk_methods:
         - conversations_message.delete
       query_builder: raw
-      force_multiline_signature: true
       response_type: Message
     - path: /v1/conversation/message/modify
       method: post
@@ -4999,7 +4992,6 @@ api:
       sdk_methods:
         - conversations_message.retrieve
       query_builder: raw
-      force_multiline_signature: true
       response_type: Message
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
       method: post
@@ -5174,7 +5166,6 @@ api:
         - id
         - event
         - data
-      stream_wrap_async_yield: true
       response_type: Stream[WorkflowEvent]
       async_response_type: AsyncIterator[WorkflowEvent]
     - path: /v1/workflow/stream_resume
@@ -5205,7 +5196,6 @@ api:
         - id
         - event
         - data
-      stream_wrap_async_yield: true
       response_type: Stream[WorkflowEvent]
       async_response_type: AsyncIterator[WorkflowEvent]
     - path: /v1/workflows/{workflow_id}/run_histories/{execute_id}

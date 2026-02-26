@@ -190,11 +190,9 @@ type OperationMapping struct {
 	StreamWrap               bool              `yaml:"stream_wrap"`
 	StreamWrapHandler        string            `yaml:"stream_wrap_handler"`
 	StreamWrapFields         []string          `yaml:"stream_wrap_fields"`
-	StreamWrapAsyncYield     bool              `yaml:"stream_wrap_async_yield"`
 	QueryBuilder             string            `yaml:"query_builder"`
 	BodyFieldValues          map[string]string `yaml:"body_field_values"`
 	HeadersExpr              string            `yaml:"headers_expr"`
-	PaginationRequestArg     string            `yaml:"pagination_request_arg"`
 }
 
 type OperationField struct {

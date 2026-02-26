@@ -534,17 +534,14 @@ func renderOperationMethodWithContext(
 		if len(binding.Mapping.StreamWrapFields) > 0 {
 			streamWrapFields = append(streamWrapFields, binding.Mapping.StreamWrapFields...)
 		}
-		streamWrapAsyncYield = binding.Mapping.StreamWrapAsyncYield
 		headersExpr = strings.TrimSpace(binding.Mapping.HeadersExpr)
-		if override := strings.TrimSpace(binding.Mapping.PaginationRequestArg); override != "" {
-			paginationRequestArg = override
-		}
 		if len(binding.Mapping.BodyFieldValues) > 0 {
 			for k, v := range binding.Mapping.BodyFieldValues {
 				bodyFieldValues[k] = v
 			}
 		}
 	}
+	paginationRequestArg = inferPaginationRequestArg(requestMethod)
 	returnCast = inferResponseCast(binding.Mapping, returnType, returnCast)
 	if ignoreHeaderParams {
 		details.HeaderParameters = nil
@@ -566,8 +563,8 @@ func renderOperationMethodWithContext(
 			autoDelegateExtraArgs = append(autoDelegateExtraArgs, "stream="+streamArg)
 		}
 	}
-	if async && requestStream && streamWrap && !streamWrapAsyncYield && binding.MethodName == "stream" {
-		streamWrapAsyncYield = true
+	if async && requestStream && streamWrap {
+		streamWrapAsyncYield = shouldYieldAsyncWrappedStream(binding.MethodName)
 	}
 	bodyFieldNames := make([]string, 0)
 	bodyFixedValues := map[string]string{}
@@ -1355,6 +1352,15 @@ func autoDelegateTarget(methodName string, classMethodNames map[string]struct{})
 		return ""
 	}
 	return "_create"
+}
+
+func shouldYieldAsyncWrappedStream(methodName string) bool {
+	switch strings.TrimSpace(methodName) {
+	case "stream", "resume":
+		return true
+	default:
+		return false
+	}
 }
 
 func mappingFixedStreamArg(mapping *config.OperationMapping) (string, bool) {
