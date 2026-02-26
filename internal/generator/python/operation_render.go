@@ -447,7 +447,7 @@ func buildSwaggerMethodDocstring(
 }
 
 func RenderOperationMethod(doc *openapi.Document, binding OperationBinding, async bool) string {
-	return renderOperationMethodWithContext(doc, binding, async, "", "", config.CommentOverrides{})
+	return renderOperationMethodWithContext(doc, binding, async, "", "", config.CommentOverrides{}, nil)
 }
 
 func RenderOperationMethodWithComments(
@@ -455,7 +455,7 @@ func RenderOperationMethodWithComments(
 	binding OperationBinding,
 	async bool,
 ) string {
-	return renderOperationMethodWithContext(doc, binding, async, "", "", config.CommentOverrides{})
+	return renderOperationMethodWithContext(doc, binding, async, "", "", config.CommentOverrides{}, nil)
 }
 
 func renderOperationMethodWithContext(
@@ -465,6 +465,7 @@ func renderOperationMethodWithContext(
 	modulePath string,
 	className string,
 	commentOverrides config.CommentOverrides,
+	classMethodNames map[string]struct{},
 ) string {
 	details := binding.Details
 	requestMethod := strings.ToLower(strings.TrimSpace(details.Method))
@@ -573,6 +574,13 @@ func renderOperationMethodWithContext(
 		}
 		if !async && binding.Mapping.CompactSingleItemMapsSync {
 			compactSingleItemMaps = true
+		}
+	}
+	autoDelegateTo := autoDelegateTarget(binding.MethodName, classMethodNames)
+	autoDelegateExtraArgs := make([]string, 0, 1)
+	if autoDelegateTo != "" {
+		if streamArg, ok := mappingFixedStreamArg(binding.Mapping); ok {
+			autoDelegateExtraArgs = append(autoDelegateExtraArgs, "stream="+streamArg)
 		}
 	}
 	if async && requestStream && streamWrap && !streamWrapAsyncYield && binding.MethodName == "stream" {
@@ -803,6 +811,12 @@ func renderOperationMethodWithContext(
 	}
 	if methodDocstring != "" {
 		WriteMethodDocstring(&buf, 2, methodDocstring, docstringStyle)
+	}
+	if autoDelegateTo != "" {
+		callArgs := BuildAutoDelegateCallArgs(signatureArgs, autoDelegateExtraArgs)
+		delegateAsyncYield := async && binding.MethodName == "stream"
+		RenderDelegatedCall(&buf, autoDelegateTo, callArgs, async, delegateAsyncYield)
+		return buf.String()
 	}
 	if binding.Mapping != nil && binding.Mapping.BlankLineAfterDocstring {
 		buf.WriteString("\n")
@@ -1567,4 +1581,33 @@ func renderOperationMethodWithContext(
 	}
 
 	return buf.String()
+}
+
+func autoDelegateTarget(methodName string, classMethodNames map[string]struct{}) string {
+	if classMethodNames == nil {
+		return ""
+	}
+	name := strings.TrimSpace(methodName)
+	if name != "create" && name != "stream" {
+		return ""
+	}
+	if _, ok := classMethodNames["_create"]; !ok {
+		return ""
+	}
+	return "_create"
+}
+
+func mappingFixedStreamArg(mapping *config.OperationMapping) (string, bool) {
+	if mapping == nil || len(mapping.BodyFixedValues) == 0 {
+		return "", false
+	}
+	value, ok := mapping.BodyFixedValues["stream"]
+	if !ok {
+		return "", false
+	}
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return "", false
+	}
+	return trimmed, true
 }

@@ -2,6 +2,7 @@ package python
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 
 	"github.com/coze-dev/coze-sdk-gen/internal/config"
@@ -202,4 +203,118 @@ func OperationArgDefault(mapping *config.OperationMapping, rawName string, argNa
 		}
 	}
 	return "", false
+}
+
+func BuildAutoDelegateCallArgs(signatureArgs []string, extraNamedArgs []string) []string {
+	args := make([]string, 0, len(signatureArgs)+len(extraNamedArgs))
+	for _, argDecl := range signatureArgs {
+		trimmed := strings.TrimSpace(argDecl)
+		if trimmed == "" || trimmed == "*" {
+			continue
+		}
+		name := SignatureArgName(trimmed)
+		if name == "" || name == "self" {
+			continue
+		}
+		if IsKwargsSignatureArg(trimmed) {
+			args = append(args, fmt.Sprintf("**%s", name))
+			continue
+		}
+		args = append(args, fmt.Sprintf("%s=%s", name, name))
+	}
+	for _, extra := range extraNamedArgs {
+		args = upsertNamedCallArg(args, extra)
+	}
+	return args
+}
+
+func upsertNamedCallArg(args []string, named string) []string {
+	trimmed := strings.TrimSpace(named)
+	if trimmed == "" {
+		return args
+	}
+	name, ok := parseNamedCallArgName(trimmed)
+	if !ok {
+		return insertCallArgBeforeKwargs(args, trimmed)
+	}
+	for i, arg := range args {
+		argName, ok := parseNamedCallArgName(arg)
+		if !ok {
+			continue
+		}
+		if argName == name {
+			args[i] = trimmed
+			return args
+		}
+	}
+	return insertCallArgBeforeKwargs(args, trimmed)
+}
+
+func parseNamedCallArgName(arg string) (string, bool) {
+	trimmed := strings.TrimSpace(arg)
+	if trimmed == "" || strings.HasPrefix(trimmed, "**") {
+		return "", false
+	}
+	left, _, hasAssign := strings.Cut(trimmed, "=")
+	if !hasAssign {
+		return "", false
+	}
+	name := strings.TrimSpace(left)
+	return name, name != ""
+}
+
+func insertCallArgBeforeKwargs(args []string, arg string) []string {
+	for i, existing := range args {
+		if strings.HasPrefix(strings.TrimSpace(existing), "**") {
+			args = append(args, "")
+			copy(args[i+1:], args[i:])
+			args[i] = arg
+			return args
+		}
+	}
+	return append(args, arg)
+}
+
+func RenderDelegatedCall(buf *bytes.Buffer, target string, args []string, async bool, asyncYield bool) {
+	target = strings.TrimSpace(target)
+	if target == "" {
+		return
+	}
+	qualifier := fmt.Sprintf("self.%s", target)
+	if len(args) == 0 {
+		if async && asyncYield {
+			buf.WriteString(fmt.Sprintf("        async for item in await %s():\n", qualifier))
+			buf.WriteString("            yield item\n")
+			return
+		}
+		if async {
+			buf.WriteString(fmt.Sprintf("        return await %s()\n", qualifier))
+			return
+		}
+		buf.WriteString(fmt.Sprintf("        return %s()\n", qualifier))
+		return
+	}
+
+	if async && asyncYield {
+		buf.WriteString(fmt.Sprintf("        async for item in await %s(\n", qualifier))
+		for _, arg := range args {
+			buf.WriteString(fmt.Sprintf("            %s,\n", strings.TrimSpace(arg)))
+		}
+		buf.WriteString("        ):\n")
+		buf.WriteString("            yield item\n")
+		return
+	}
+	if async {
+		buf.WriteString(fmt.Sprintf("        return await %s(\n", qualifier))
+		for _, arg := range args {
+			buf.WriteString(fmt.Sprintf("            %s,\n", strings.TrimSpace(arg)))
+		}
+		buf.WriteString("        )\n")
+		return
+	}
+	buf.WriteString(fmt.Sprintf("        return %s(\n", qualifier))
+	for _, arg := range args {
+		buf.WriteString(fmt.Sprintf("            %s,\n", strings.TrimSpace(arg)))
+	}
+	buf.WriteString("        )\n")
 }

@@ -262,4 +262,101 @@ func TestOperationHelpersSignatureAndDefaults(t *testing.T) {
 	if _, ok := OperationArgDefault(nil, "x", "x", false); ok {
 		t.Fatal("OperationArgDefault(nil) expected false")
 	}
+
+	callArgs := BuildAutoDelegateCallArgs(
+		[]string{"a: str", "b: int", "**kwargs"},
+		[]string{"stream=True"},
+	)
+	expected := []string{"a=a", "b=b", "stream=True", "**kwargs"}
+	if len(callArgs) != len(expected) {
+		t.Fatalf("BuildAutoDelegateCallArgs len=%d args=%v", len(callArgs), callArgs)
+	}
+	for i := range expected {
+		if callArgs[i] != expected[i] {
+			t.Fatalf("BuildAutoDelegateCallArgs[%d]=%q want=%q", i, callArgs[i], expected[i])
+		}
+	}
+
+	buf := &bytes.Buffer{}
+	RenderDelegatedCall(buf, "_create", callArgs, true, true)
+	if got := buf.String(); !strings.Contains(got, "async for item in await self._create(") || !strings.Contains(got, "stream=True") {
+		t.Fatalf("RenderDelegatedCall(async yield)=%q", got)
+	}
+}
+
+func TestRenderOperationMethodAutoDelegatesToPrivateCreate(t *testing.T) {
+	doc := &openapi.Document{}
+	details := openapi.OperationDetails{
+		Path:   "/v3/chat",
+		Method: "post",
+	}
+	classMethods := map[string]struct{}{
+		"_create": {},
+	}
+
+	createCode := renderOperationMethodWithContext(
+		doc,
+		OperationBinding{
+			PackageName: "chat",
+			MethodName:  "create",
+			Details:     details,
+			Mapping: &config.OperationMapping{
+				BodyFields: []string{"bot_id", "user_id"},
+				BodyRequiredFields: []string{
+					"bot_id",
+					"user_id",
+				},
+				BodyFixedValues: map[string]string{"stream": "False"},
+				ArgTypes: map[string]string{
+					"bot_id":  "str",
+					"user_id": "str",
+				},
+				ResponseType: "Chat",
+			},
+		},
+		false,
+		"",
+		"",
+		config.CommentOverrides{},
+		classMethods,
+	)
+	if !strings.Contains(createCode, "return self._create(") || !strings.Contains(createCode, "stream=False") {
+		t.Fatalf("expected sync create to auto delegate to _create:\n%s", createCode)
+	}
+	if strings.Contains(createCode, "self._requester.request(") {
+		t.Fatalf("did not expect direct request code for delegated create:\n%s", createCode)
+	}
+
+	streamCode := renderOperationMethodWithContext(
+		doc,
+		OperationBinding{
+			PackageName: "chat",
+			MethodName:  "stream",
+			Details:     details,
+			Mapping: &config.OperationMapping{
+				BodyFields: []string{"bot_id", "user_id"},
+				BodyRequiredFields: []string{
+					"bot_id",
+					"user_id",
+				},
+				BodyFixedValues: map[string]string{"stream": "True"},
+				ArgTypes: map[string]string{
+					"bot_id":  "str",
+					"user_id": "str",
+				},
+				ResponseType: "AsyncIterator[ChatEvent]",
+			},
+		},
+		true,
+		"",
+		"",
+		config.CommentOverrides{},
+		classMethods,
+	)
+	if !strings.Contains(streamCode, "async for item in await self._create(") || !strings.Contains(streamCode, "stream=True") {
+		t.Fatalf("expected async stream to auto delegate to _create with yield:\n%s", streamCode)
+	}
+	if strings.Contains(streamCode, "await self._requester.arequest(") {
+		t.Fatalf("did not expect direct request code for delegated stream:\n%s", streamCode)
+	}
 }

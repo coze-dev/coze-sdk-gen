@@ -974,6 +974,11 @@ func RenderPackageModuleWithComments(
 		buf.WriteString("\n")
 	}
 	syncMethodBlocks := make([]ClassMethodBlock, 0)
+	syncExtraMethods := []string(nil)
+	if meta.Package != nil {
+		syncExtraMethods = meta.Package.SyncExtraMethods
+	}
+	syncMethodNames := collectClassMethodNames(bindings, syncExtraMethods, false)
 	if hasChildClients {
 		for _, child := range childClientsForSync {
 			attribute := NormalizePythonIdentifier(child.Attribute)
@@ -989,8 +994,16 @@ func RenderPackageModuleWithComments(
 			continue
 		}
 		syncMethodBlocks = append(syncMethodBlocks, ClassMethodBlock{
-			Name:    binding.MethodName,
-			Content: renderOperationMethodWithContext(doc, binding, false, "cozepy."+meta.ModulePath, syncClass, commentOverrides),
+			Name: binding.MethodName,
+			Content: renderOperationMethodWithContext(
+				doc,
+				binding,
+				false,
+				"cozepy."+meta.ModulePath,
+				syncClass,
+				commentOverrides,
+				syncMethodNames,
+			),
 		})
 	}
 	if meta.Package != nil && len(meta.Package.SyncExtraMethods) > 0 {
@@ -1042,6 +1055,11 @@ func RenderPackageModuleWithComments(
 		buf.WriteString("\n")
 	}
 	asyncMethodBlocks := make([]ClassMethodBlock, 0)
+	asyncExtraMethods := []string(nil)
+	if meta.Package != nil {
+		asyncExtraMethods = meta.Package.AsyncExtraMethods
+	}
+	asyncMethodNames := collectClassMethodNames(bindings, asyncExtraMethods, true)
 	if hasChildClients {
 		for _, child := range childClientsForAsync {
 			attribute := NormalizePythonIdentifier(child.Attribute)
@@ -1057,8 +1075,16 @@ func RenderPackageModuleWithComments(
 			continue
 		}
 		asyncMethodBlocks = append(asyncMethodBlocks, ClassMethodBlock{
-			Name:    binding.MethodName,
-			Content: renderOperationMethodWithContext(doc, binding, true, "cozepy."+meta.ModulePath, asyncClass, commentOverrides),
+			Name: binding.MethodName,
+			Content: renderOperationMethodWithContext(
+				doc,
+				binding,
+				true,
+				"cozepy."+meta.ModulePath,
+				asyncClass,
+				commentOverrides,
+				asyncMethodNames,
+			),
 		})
 	}
 	if meta.Package != nil && len(meta.Package.AsyncExtraMethods) > 0 {
@@ -1092,6 +1118,34 @@ func collectTypeImports(doc *openapi.Document, bindings []OperationBinding) []st
 	_ = doc
 	_ = bindings
 	return nil
+}
+
+func collectClassMethodNames(bindings []OperationBinding, extraMethods []string, async bool) map[string]struct{} {
+	names := make(map[string]struct{}, len(bindings)+len(extraMethods))
+	for _, binding := range bindings {
+		if async {
+			if !mappingGeneratesAsync(binding.Mapping) {
+				continue
+			}
+		} else {
+			if !mappingGeneratesSync(binding.Mapping) {
+				continue
+			}
+		}
+		methodName := NormalizeMethodName(binding.MethodName)
+		if strings.TrimSpace(methodName) == "" {
+			continue
+		}
+		names[methodName] = struct{}{}
+	}
+	for _, block := range extraMethods {
+		methodName := NormalizeMethodName(DetectMethodBlockName(block))
+		if strings.TrimSpace(methodName) == "" {
+			continue
+		}
+		names[methodName] = struct{}{}
+	}
+	return names
 }
 
 func isTokenPagination(mode string) bool {
