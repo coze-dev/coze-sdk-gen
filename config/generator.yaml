@@ -4123,7 +4123,7 @@ api:
         document_bases: List[DocumentBase]
         chunk_strategy: Optional[DocumentChunkStrategy]
         format_type: Optional[DocumentFormatType]
-      arg_defaults_sync:
+      arg_defaults:
         format_type: "DocumentFormatType.DOCUMENT"
       response_type: ListResponse[Document]
       data_field: document_infos

@@ -175,12 +175,9 @@ func OperationArgDefault(mapping *config.OperationMapping, rawName string, argNa
 	if mapping == nil {
 		return "", false
 	}
-	defaultMaps := make([]map[string]string, 0, 3)
+	defaultMaps := make([]map[string]string, 0, 2)
 	if async && len(mapping.ArgDefaultsAsync) > 0 {
 		defaultMaps = append(defaultMaps, mapping.ArgDefaultsAsync)
-	}
-	if !async && len(mapping.ArgDefaultsSync) > 0 {
-		defaultMaps = append(defaultMaps, mapping.ArgDefaultsSync)
 	}
 	if len(mapping.ArgDefaults) > 0 {
 		defaultMaps = append(defaultMaps, mapping.ArgDefaults)
