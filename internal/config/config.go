@@ -208,7 +208,6 @@ type OperationMapping struct {
 	ForceMultilineRequestCall      bool              `yaml:"force_multiline_request_call"`
 	ForceMultilineRequestCallAsync bool              `yaml:"force_multiline_request_call_async"`
 	PaginationRequestArg           string            `yaml:"pagination_request_arg"`
-	PaginationInitPageTokenExpr    string            `yaml:"pagination_init_page_token_expr"`
 }
 
 type OperationField struct {

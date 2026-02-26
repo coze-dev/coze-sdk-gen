@@ -896,13 +896,13 @@ func renderOperationMethodWithContext(
 		for _, field := range queryFields {
 			if field.RawName == pageTokenField {
 				tokenExpr = field.ArgName
+				if !field.Required {
+					tokenExpr = fmt.Sprintf("%s or \"\"", field.ArgName)
+				}
 			}
 			if field.RawName == pageSizeField {
 				sizeExpr = field.ArgName
 			}
-		}
-		if tokenInitExpr := strings.TrimSpace(binding.Mapping.PaginationInitPageTokenExpr); tokenInitExpr != "" {
-			tokenExpr = tokenInitExpr
 		}
 		EnsureTrailingNewlines(&buf, 2)
 		if async {
