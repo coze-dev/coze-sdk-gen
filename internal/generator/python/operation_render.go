@@ -571,7 +571,6 @@ func renderOperationMethodWithContext(
 	bodyFixedValues := map[string]string{}
 	filesFieldNames := make([]string, 0)
 	filesFieldValues := map[string]string{}
-	filesExpr := ""
 	filesBeforeBody := false
 	if binding.Mapping != nil && len(binding.Mapping.BodyFields) > 0 {
 		bodyFieldNames = append(bodyFieldNames, binding.Mapping.BodyFields...)
@@ -590,7 +589,6 @@ func renderOperationMethodWithContext(
 		}
 	}
 	if binding.Mapping != nil {
-		filesExpr = strings.TrimSpace(binding.Mapping.FilesExpr)
 		filesBeforeBody = binding.Mapping.FilesBeforeBody
 	}
 	if !shouldGenerateImplicitRequestBody(details.Method, binding.Mapping, details.RequestBodySchema) {
@@ -1112,10 +1110,6 @@ func renderOperationMethodWithContext(
 	}
 	bodyVarAssign := "body"
 	renderFilesAssignment := func() bool {
-		if filesExpr != "" {
-			buf.WriteString(fmt.Sprintf("        files = %s\n", filesExpr))
-			return true
-		}
 		if len(filesFieldNames) == 0 {
 			return false
 		}
@@ -1126,7 +1120,11 @@ func renderOperationMethodWithContext(
 			if override, ok := filesFieldValues[fieldName]; ok && strings.TrimSpace(override) != "" {
 				valueExpr = strings.TrimSpace(override)
 			}
-			buf.WriteString(fmt.Sprintf("        files = {%q: %s}\n", fieldName, valueExpr))
+			if !bodyRequiredSet[fieldName] {
+				buf.WriteString(fmt.Sprintf("        files = {%q: %s} if %s is not None else {}\n", fieldName, valueExpr, argName))
+			} else {
+				buf.WriteString(fmt.Sprintf("        files = {%q: %s}\n", fieldName, valueExpr))
+			}
 			return true
 		}
 
@@ -1235,7 +1233,6 @@ func renderOperationMethodWithContext(
 		needsBlankLine := len(queryFields) > 0 ||
 			len(bodyFieldNames) > 0 ||
 			len(bodyFixedValues) > 0 ||
-			filesExpr != "" ||
 			len(filesFieldNames) > 0 ||
 			requestBodyType != "" ||
 			strings.EqualFold(requestMethod, "delete") ||
@@ -1284,7 +1281,7 @@ func renderOperationMethodWithContext(
 	if bodyArgExpr != "" {
 		optionalArgs = append(optionalArgs, requestCallArg{Expr: fmt.Sprintf("body=%s", bodyArgExpr)})
 	}
-	if filesExpr != "" || len(filesFieldNames) > 0 {
+	if len(filesFieldNames) > 0 {
 		optionalArgs = append(optionalArgs, requestCallArg{Expr: "files=files"})
 	}
 	if dataField != "" {

@@ -161,7 +161,6 @@ type OperationMapping struct {
 	BodyBuilder              string            `yaml:"body_builder"`
 	FilesFields              []string          `yaml:"files_fields"`
 	FilesFieldValues         map[string]string `yaml:"files_field_values"`
-	FilesExpr                string            `yaml:"files_expr"`
 	FilesBeforeBody          bool              `yaml:"files_before_body"`
 	PreDocstringCode         []string          `yaml:"pre_docstring_code"`
 	PreBodyCode              []string          `yaml:"pre_body_code"`
