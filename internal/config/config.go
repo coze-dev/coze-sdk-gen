@@ -74,7 +74,6 @@ type Package struct {
 	PathPrefixes              []string      `yaml:"path_prefixes"`
 	AllowMissingInSwagger     bool          `yaml:"allow_missing_in_swagger"`
 	DisableAutoImports        bool          `yaml:"disable_auto_imports"`
-	SeparateCommentedEnum     bool          `yaml:"separate_commented_enum_members"`
 	HTTPRequestFromModel      bool          `yaml:"http_request_from_model"`
 	ClientClass               string        `yaml:"client_class"`
 	AsyncClientClass          string        `yaml:"async_client_class"`
@@ -103,7 +102,6 @@ type ModelSchema struct {
 	PrependCode            []string          `yaml:"prepend_code"`
 	Builders               []ModelBuilder    `yaml:"builders"`
 	BeforeValidators       []ModelValidator  `yaml:"before_validators"`
-	SeparateCommentedEnum  *bool             `yaml:"separate_commented_enum_members"`
 	FieldOrder             []string          `yaml:"field_order"`
 	RequiredFields         []string          `yaml:"required_fields"`
 	FieldTypes             map[string]string `yaml:"field_types"`

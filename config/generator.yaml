@@ -1069,7 +1069,6 @@ api:
         - /v1/bots/{bot_id}/collaborators
     - name: chat
       source_dir: cozepy/chat
-      separate_commented_enum_members: true
       model_schemas:
         - name: MessageRole
           allow_missing_in_swagger: true
@@ -2179,7 +2178,6 @@ api:
         - name: DocumentFormatType
           allow_missing_in_swagger: true
           enum_base: int
-          separate_commented_enum_members: true
           enum_values:
             - name: DOCUMENT
               value: 0
@@ -2214,7 +2212,6 @@ api:
         - name: DocumentStatus
           allow_missing_in_swagger: true
           enum_base: int
-          separate_commented_enum_members: true
           enum_values:
             - name: PROCESSING
               value: 0
@@ -2225,7 +2222,6 @@ api:
         - name: DocumentUpdateType
           allow_missing_in_swagger: true
           enum_base: int
-          separate_commented_enum_members: true
           enum_values:
             - name: NO_AUTO_UPDATE
               value: 0
@@ -3066,7 +3062,6 @@ api:
     - name: workflows_runs
       source_dir: cozepy/workflows/runs
       separate_commented_fields: true
-      separate_commented_enum_members: true
       client_class: WorkflowsRunsClient
       async_client_class: AsyncWorkflowsRunsClient
       model_schemas:

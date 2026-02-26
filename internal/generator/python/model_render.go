@@ -31,7 +31,6 @@ type packageModelDefinition struct {
 	ExtraCode             []string
 	AllowMissingInSwagger bool
 	ExcludeUnordered      bool
-	SeparateCommentedEnum *bool
 }
 
 func packageSchemaAliases(meta PackageMeta) map[string]string {
@@ -138,7 +137,6 @@ func resolveConfiguredModelDefinition(doc *openapi.Document, model config.ModelS
 		ExtraCode:             append([]string(nil), model.ExtraCode...),
 		AllowMissingInSwagger: model.AllowMissingInSwagger,
 		ExcludeUnordered:      model.ExcludeUnorderedFields,
-		SeparateCommentedEnum: model.SeparateCommentedEnum,
 	}
 
 	if schemaName == "" {
@@ -353,7 +351,6 @@ func renderPackageModelDefinitions(
 ) string {
 	var buf bytes.Buffer
 	modulePrefix := "cozepy." + meta.ModulePath
-	separateCommentedEnum := meta.Package != nil && meta.Package.SeparateCommentedEnum
 
 	for _, model := range models {
 		classKey := modulePrefix + "." + model.Name
@@ -362,10 +359,6 @@ func renderPackageModelDefinitions(
 				AppendIndentedCode(&buf, block, 0)
 				buf.WriteString("\n")
 			}
-		}
-		modelSeparateCommentedEnum := separateCommentedEnum
-		if model.SeparateCommentedEnum != nil {
-			modelSeparateCommentedEnum = *model.SeparateCommentedEnum
 		}
 		if model.IsEnum {
 			if model.EnumBase == "dynamic_str" {
@@ -400,7 +393,7 @@ func renderPackageModelDefinitions(
 				buf.WriteString("    pass\n\n")
 				continue
 			}
-			for i, enumValue := range enumItems {
+			for _, enumValue := range enumItems {
 				memberName := strings.TrimSpace(enumValue.Name)
 				if memberName == "" {
 					memberName = EnumMemberName(fmt.Sprintf("%v", enumValue.Value))
@@ -418,21 +411,6 @@ func renderPackageModelDefinitions(
 					buf.WriteString(fmt.Sprintf("    %s = %s  # %s\n", memberName, RenderEnumValueLiteral(enumValue.Value), inlineEnumComment))
 				} else {
 					buf.WriteString(fmt.Sprintf("    %s = %s\n", memberName, RenderEnumValueLiteral(enumValue.Value)))
-				}
-				if modelSeparateCommentedEnum && i < len(enumItems)-1 {
-					nextHasComment := false
-					nextName := strings.TrimSpace(enumItems[i+1].Name)
-					if nextName == "" {
-						nextName = EnumMemberName(fmt.Sprintf("%v", enumItems[i+1].Value))
-					}
-					nextInlineComment := strings.TrimSpace(commentOverrides.InlineEnumMemberComment[classKey+"."+nextName])
-					nextComment := LinesFromCommentOverride(commentOverrides.EnumMemberComments[classKey+"."+nextName])
-					if nextInlineComment != "" || len(nextComment) > 0 {
-						nextHasComment = true
-					}
-					if len(enumComment) > 0 || inlineEnumComment != "" || nextHasComment {
-						buf.WriteString("\n")
-					}
 				}
 			}
 			buf.WriteString("\n\n")
