@@ -512,7 +512,7 @@ func TestRenderOperationMethodStreamWrap(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodStreamWrapYieldAndSyncVarOverride(t *testing.T) {
+func TestRenderOperationMethodStreamWrapYieldAndSyncVarDefault(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/demo/stream",
@@ -531,17 +531,16 @@ func TestRenderOperationMethodStreamWrapYieldAndSyncVarOverride(t *testing.T) {
 			StreamWrapHandler:         "handle_demo",
 			StreamWrapFields:          []string{"event", "data"},
 			StreamWrapAsyncYield:      true,
-			StreamWrapSyncResponseVar: "resp",
 			ForceMultilineRequestCall: false,
 		},
 	}
 
 	syncCode := pygen.RenderOperationMethod(doc, binding, false)
-	if !strings.Contains(syncCode, "resp: IteratorHTTPResponse[str] = self._requester.request(") {
-		t.Fatalf("expected sync stream response var override:\n%s", syncCode)
+	if !strings.Contains(syncCode, "response: IteratorHTTPResponse[str] = self._requester.request(") {
+		t.Fatalf("expected sync stream response var to use default name:\n%s", syncCode)
 	}
-	if !strings.Contains(syncCode, "resp._raw_response") || !strings.Contains(syncCode, "resp.data") {
-		t.Fatalf("expected sync stream var to be reused in return:\n%s", syncCode)
+	if !strings.Contains(syncCode, "response._raw_response") || !strings.Contains(syncCode, "response.data") {
+		t.Fatalf("expected default sync stream var to be reused in return:\n%s", syncCode)
 	}
 
 	asyncCode := pygen.RenderOperationMethod(doc, binding, true)

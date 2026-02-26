@@ -5272,7 +5272,6 @@ api:
         - event
         - data
       stream_wrap_async_yield: true
-      stream_wrap_sync_response_var: resp
       stream_wrap_compact_sync_return: true
       force_multiline_request_call: true
       response_type: Stream[WorkflowEvent]
@@ -5307,7 +5306,6 @@ api:
         - event
         - data
       stream_wrap_async_yield: true
-      stream_wrap_sync_response_var: resp
       stream_wrap_compact_sync_return: true
       force_multiline_request_call: true
       response_type: Stream[WorkflowEvent]
