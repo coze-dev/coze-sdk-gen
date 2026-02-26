@@ -1,0 +1,113 @@
+components:
+    schemas:
+        ListOrganizationPeopleData:
+            properties:
+                items:
+                    description: 组织成员列表。
+                    items:
+                        $ref: '#/components/schemas/OrganizationPeople'
+                    type: array
+                total_count:
+                    description: 组织中的成员数量。
+                    format: int64
+                    type: integer
+            type: object
+        OrganizationPeople:
+            properties:
+                avatar_url:
+                    description: 用户头像的 URL 地址。
+                    type: string
+                created_at:
+                    description: 用户加入组织的时间戳，格式为 10 位的 Unix 时间戳，单位为秒。
+                    format: int64
+                    type: integer
+                is_valid:
+                    description: "标识该组织成员账号状态是否正常。 \n  \n * true：账号状态正常，可正常使用。 \n * false：该成员的火山账号已被删除，不可使用。"
+                    type: boolean
+                organization_role_type:
+                    description: "组织成员在组织中的角色类型，枚举值： \n  \n * organization_super_admin：组织超级管理员。 \n * organization_admin：组织管理员。 \n * organization_member：组织成员。 \n * organization_guest：访客。"
+                    type: string
+                people_type:
+                    description: "组织成员在企业中的身份类型，枚举值： \n  \n * employee：企业员工。 \n * guest：访客。"
+                    type: string
+                user_id:
+                    description: 扣子用户的 UID。
+                    type: string
+                user_nickname:
+                    description: 用户昵称。
+                    type: string
+                user_unique_name:
+                    description: 扣子用户名。
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 查询组织成员列表
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/organizations/{organization_id}/members:
+        get:
+            description: 查询指定组织中的成员列表。
+            operationId: get_list_organization_people
+            parameters:
+                - description: "需要查询组织成员列表的组织 ID。  \n 你可以在组织管理 > 组织设置页面查看对应的组织 ID，或通过查询组织列表 API 查询组织 ID。 \n !Image"
+                  in: path
+                  name: organization_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 分页查询时的页码。默认为 1，即返回第一页数据。
+                  in: query
+                  name: page_num
+                  required: false
+                  schema:
+                    type: integer
+                - description: 每页返回的数据条数，用于分页查询。默认值为 20，最大支持 50条。
+                  in: query
+                  name: page_size
+                  required: false
+                  schema:
+                    type: integer
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息参考OAuth JWT 授权（企业特权应用）。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/ListOrganizationPeopleData'
+                                        description: 组织成员列表，包含成员详细信息和总数。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含本次请求的日志信息，用于问题排查和技术支持。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 查询组织成员列表
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/list_organization_people
+servers:
+    - url: https://api.coze.cn

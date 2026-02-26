@@ -1,0 +1,68 @@
+info:
+    title: 语音合成
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/audio/speech:
+        post:
+            description: 将指定文本合成为音频文件。
+            operationId: post_text_to_speech
+            parameters:
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                context_texts:
+                                    description: "语音合成的辅助信息，用于控制合成语音的整体情绪（如悲伤、生气）、方言（如四川话、北京话）、语气（如撒娇、暧昧、吵架、夹子音）、语速（快慢）及音调（高低）等。 \n 默认为空。 \n * 仅当 voice_id 为豆包语音合成大模型 2.0 音色时才支持该参数，具体音色列表请参见系统音色列表。 \n * 更多关于豆包语音合成 2.0 的 context_texts 示例和效果可参考语音指令-示例库。"
+                                    type: string
+                                emotion:
+                                    description: "设置多情感音色的情感类型，仅当 voice_id 为多情感音色时才支持设置情感类型。不同音色支持的情感范围不同，可以通过系统音色列表查看各音色支持的情感。默认为空。枚举值如下： \n  \n * happy：开心。 \n * sad：悲伤。 \n * angry：愤怒。 \n * surprised：惊讶。 \n * fear：恐惧。 \n * hate：厌恶。 \n * excited：兴奋。 \n * coldness：冷漠。 \n * neutral：中性。"
+                                    type: string
+                                emotion_scale:
+                                    description: "情感值用于量化情感的强度。数值越高，情感表达越强烈，例如： “开心” 的情感值 5 比 1 更显兴奋。 \n 取值范围：1.0~5.0，默认值：4.0。"
+                                    format: double
+                                    type: number
+                                input:
+                                    description: 合成语音的文本，经由 UTF-8 编码。长度限制为 1024 字节。
+                                    type: string
+                                loudness_rate:
+                                    description: "音频输出音量的增益或衰减比例，以百分比形式表示。取值范围为 -50 ~ 100，默认值为 0，表示原始音量。 \n  \n * 负值表示衰减：-50 表示音量降低 50%（即 0.5 倍）。 \n * 正值表示增益：100表示音量提升 100%（即 2 倍）。"
+                                    type: integer
+                                response_format:
+                                    description: "音频文件的编码格式，支持设置为： \n  \n * wav：返回二进制 wav 音频。 \n * pcm：返回二进制 pcm 音频。 \n * ogg_opus：返回多段含 opus 压缩分片音频。 \n * mp3：（默认）返回二进制 mp3 音频。"
+                                    type: string
+                                sample_rate:
+                                    description: "音频采样率，单位为 Hz。 \n  \n * 8000：8k \n * 16000：16k \n * 22050：22.05k \n * 24000：（默认）24k \n * 32000：32k \n * 44100：44.1k \n * 48000：48k"
+                                    type: integer
+                                speed:
+                                    description: "语速，大模型音色的取值范围为 0.5~2，小模型音色的取值范围为 0.2~3，通常保留一位小数即可。 \n 其中 0.2 表示 0.2 倍速，3 表示 3 倍速。默认为 1，表示 1 倍速。"
+                                    format: double
+                                    type: number
+                                voice_id:
+                                    description: "音频文件使用的音色 ID。 \n 调用查看音色列表 API，可查看所有可用音色。"
+                                    type: string
+                            required:
+                                - input
+                                - voice_id
+                            type: object
+                required: true
+            responses:
+                "200":
+                    description: OK
+            summary: 语音合成
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/text_to_speech
+servers:
+    - url: https://api.coze.cn

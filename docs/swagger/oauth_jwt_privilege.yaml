@@ -1,0 +1,20 @@
+info:
+    title: OAuth JWT 授权（企业特权应用）
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /api/permission/oauth2/enterprise_id/:
+        post:
+            description: |-
+                你可以在企业的默认组织中创建 OAuth JWT 授权（企业特权应用），并根据需要授予 OAuth 应用企业管理、组织管理、空间管理的权限，从而安全、高效地管理企业资源，包括成员、账单、组织及工作空间。你可按需部署多个专项应用，例如财务管理 App 专注账单管理、员工管理 App 负责成员和组织架构维护等。
+                * 套餐版本：企业版（企业旗舰版、企业标准版）。
+                * 角色限制：组织的超级管理员、管理员。
+                * 组织限制：仅支持在默认组织中创建 OAuth JWT 授权（企业特权应用）。
+            operationId: post_oauth_jwt_privilege
+            responses:
+                "200":
+                    description: OK
+            summary: OAuth JWT 授权（企业特权应用）
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/oauth_jwt_privilege
+servers:
+    - url: https://api.coze.cn

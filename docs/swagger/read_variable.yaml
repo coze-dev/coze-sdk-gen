@@ -1,0 +1,112 @@
+components:
+    schemas:
+        GetVariableData:
+            properties:
+                items:
+                    description: 用户变量数组。
+                    items:
+                        $ref: '#/components/schemas/KVItem'
+                    type: array
+            type: object
+        KVItem:
+            properties:
+                create_time:
+                    description: "首次设置变量值的时间。如果变量值为默认值，则 create_time 的值为 0。 \n Unixtime 时间戳格式，单位为秒。"
+                    format: int64
+                    type: integer
+                keyword:
+                    description: "用户变量的名称。 \n keyword 必须为智能体或应用中已创建并开启的用户变量，不能设置为系统变量。"
+                    type: string
+                update_time:
+                    description: 更新时间，Unixtime 时间戳格式，单位为秒。
+                    format: int64
+                    type: integer
+                value:
+                    description: 用户变量的值。
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 获取用户变量的值
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/variables:
+        get:
+            description: 获取智能体或应用中设置的用户变量的值。
+            operationId: get_read_variable
+            parameters:
+                - description: "如果需要获取应用中设置的用户变量的值，填入对应的应用ID。 \n 你可以通过应用的业务编排页面 URL 中获取应用 ID，也就是 URL 中 project-ide 参数后的一串字符，例如 https://www.coze.cn/space/739174157340921/project-ide/743996105122521/workflow/744102227704147 中，应用的 ID 为 743996105122521。 \n app_id 和 bot_id 应至少填写一个，否则会报错。"
+                  in: query
+                  name: app_id
+                  required: false
+                  schema:
+                    type: string
+                - description: "如果需要获取智能体中设置的用户变量的值，填入对应的应用ID。 \n 你可以通过智能体的开发页面获取智能体 ID，开发页面 URL 中 bot 参数后的数字就是智能体 ID。例如https://www.coze.com/space/341/bot/73428668*，bot ID 为73428668*。"
+                  in: query
+                  name: bot_id
+                  required: false
+                  schema:
+                    type: string
+                - description: "智能体或应用的发布渠道 ID 列表。目前支持如下渠道： \n  \n * API：1024 \n * ChatSDK：999"
+                  in: query
+                  name: connector_id
+                  required: false
+                  schema:
+                    type: string
+                - description: 查看指定用户 ID 的变量值。用户 ID 对应执行工作流 API 中 ext 字段中的 user_id。
+                  in: query
+                  name: connector_uid
+                  required: true
+                  schema:
+                    type: string
+                - description: "变量名称，多个变量用英文逗号分隔。 \n 当 keywords 为空时，将返回用户在智能体或应用下的所有用户变量的值。如果输入的 keywords 在智能体或应用中不存在，则返回结果中不会包含相应的用户变量。"
+                  in: query
+                  name: keywords
+                  required: false
+                  schema:
+                    items:
+                        type: string
+                    type: array
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/GetVariableData'
+                                        description: 用户变量数组。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 返回详情。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 获取用户变量的值
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/read_variable
+servers:
+    - url: https://api.coze.cn

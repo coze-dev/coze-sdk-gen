@@ -1,0 +1,93 @@
+components:
+    schemas:
+        CreateVoicePrintGroupFeatureData:
+            properties:
+                id:
+                    description: 声纹的 ID。
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 创建声纹
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/audio/voiceprint_groups/{group_id}/features:
+        post:
+            description: 创建声纹。
+            operationId: post_create_voiceprint
+            parameters:
+                - description: 声纹所属的声纹组 ID。你可以通过查看声纹组列表 API 查看声纹组 ID。
+                  in: path
+                  name: group_id
+                  required: true
+                  schema:
+                    type: integer
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 文件类型。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    multipart/form-data:
+                        schema:
+                            properties:
+                                channel:
+                                    description: "声道数，当文件类型为 pcm 时需传入该参数。 \n 默认为单声道。"
+                                    type: integer
+                                desc:
+                                    description: 声纹的描述。
+                                    type: string
+                                file:
+                                    description: 上传本地预先录制好的音频文件。
+                                    format: binary
+                                    type: string
+                                name:
+                                    description: 声纹的名称。
+                                    type: string
+                                sample_rate:
+                                    description: "采样率，单位：Hz。当文件类型为 pcm 时需传入该参数。 \n 默认为 16kHz 采样率。"
+                                    type: integer
+                            required:
+                                - file
+                                - name
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/CreateVoicePrintGroupFeatureData'
+                                        description: 返回的声纹信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 本次请求返回的详细信息。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 创建声纹
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/create_voiceprint
+servers:
+    - url: https://api.coze.cn

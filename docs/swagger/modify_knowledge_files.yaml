@@ -1,0 +1,162 @@
+components:
+    schemas:
+        ChunkStrategy:
+            properties:
+                caption_type:
+                    description: "图片知识库的标注方式： \n  \n * 0：（默认）系统自动标注描述信息 \n * 1：手工标注。上传图片后需要再次调用 API 更新知识库图片描述来手动设置标注。 \n  \n 在空的知识库中首次上传图片时，需要手工设置 caption_type 参数的值，否则会报错。"
+                    type: integer
+                chunk_type:
+                    description: "分段设置。取值包括： \n  \n * 0：自动分段与清洗。采用扣子编程预置规则进行数据分段与处理。 \n * 1：自定义。此时需要通过 separator、max_tokens、remove_extra_spaces 和 remove_urls_emails 分段规则细节。"
+                    type: integer
+                max_tokens:
+                    description: "最大分段长度，取值范围为 100~2000。 \n 在 chunk_type=1 时必选。"
+                    format: int64
+                    type: integer
+                remove_extra_spaces:
+                    description: "是否自动过滤连续的空格、换行符和制表符。取值包括： \n  \n * true：自动过滤 \n * false：（默认）不自动过滤 \n  \n 在 chunk_type=1 时生效。"
+                    type: boolean
+                remove_urls_emails:
+                    description: "是否自动过滤所有 URL 和电子邮箱地址。取值包括： \n  \n * true：自动过滤 \n * false：（默认）不自动过滤 \n  \n 在 chunk_type=1 时生效。"
+                    type: boolean
+                separator:
+                    description: "分段标识符。 \n 在 chunk_type=1 时必选。"
+                    type: string
+            type: object
+        DocumentInfo:
+            properties:
+                char_count:
+                    description: 文件内容的总字符数量。
+                    type: integer
+                chunk_strategy:
+                    $ref: '#/components/schemas/ChunkStrategy'
+                    description: 分段规则。
+                create_time:
+                    description: 文件的上传时间，格式为 10 位的 Unixtime 时间戳。
+                    type: integer
+                document_id:
+                    description: 文件的 ID。
+                    type: string
+                format_type:
+                    description: "文件的格式类型。取值包括： \n  \n * 0：文档类型，例如 txt 、pdf 、在线网页等格式均属于文档类型。 \n * 1：表格类型，例如 xls 表格等格式属于表格类型。 \n * 2：照片类型，例如 png 图片等格式属于照片类型。"
+                    type: integer
+                hit_count:
+                    description: 被对话命中的次数。
+                    type: integer
+                name:
+                    description: 文件的名称。
+                    type: string
+                size:
+                    description: 文件的大小，单位为字节。
+                    type: integer
+                slice_count:
+                    description: 文件的分段数量。
+                    type: integer
+                source_type:
+                    description: "文件的上传方式。取值包括： \n  \n * 0：上传本地文件。 \n * 1：上传在线网页。"
+                    type: integer
+                status:
+                    description: "文件的处理状态。取值包括： \n  \n * 0：处理中 \n * 1：处理完毕 \n * 9：处理失败，建议重新上传"
+                    type: integer
+                tos_uri:
+                    description: 上传的本地文档的唯一标识。
+                    type: string
+                type:
+                    description: 本地文件格式，即文件后缀，例如 txt。格式支持 pdf、txt、doc、docx 类型。
+                    type: string
+                update_interval:
+                    description: 在线网页自动更新的频率。单位为小时。
+                    type: integer
+                update_time:
+                    description: 文件的最近一次修改时间，格式为 10 位的 Unixtime 时间戳。
+                    type: integer
+                update_type:
+                    description: "在线网页是否自动更新。取值包括： \n  \n * 0：不自动更新 \n * 1：自动更新"
+                    type: integer
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+        UpdateRule:
+            properties:
+                update_interval:
+                    description: 在线网页自动更新的频率。单位为小时，最小值为 24。
+                    type: integer
+                update_type:
+                    description: "在线网页是否自动更新。取值包括： \n  \n * 0：（默认）不自动更新 \n * 1：自动更新"
+                    type: integer
+            type: object
+info:
+    title: 修改知识库文件
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /open_api/knowledge/document/update:
+        post:
+            description: |-
+                调用接口修改扣子知识库文件名称和更新策略。
+                调用接口修改扣子知识库文件名称和更新策略。
+                知识库分为扣子知识库和火山知识库，该 API 仅用于创建扣子知识库，不支持火山知识库的创建，如果需要创建火山知识库，请参见创建火山知识库 API 文档。
+            operationId: post_modify_knowledge_files
+            parameters:
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+                - description: 防止丢失数字类型参数的精度。
+                  in: header
+                  name: Agw-Js-Conv
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                document_id:
+                                    description: 待修改的知识库文件 ID。
+                                    type: string
+                                document_name:
+                                    description: 知识库文件的新名称。
+                                    type: string
+                                update_rule:
+                                    $ref: '#/components/schemas/UpdateRule'
+                                    description: 在线网页的更新配置。
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: "状态码。 \n 0 代表调用成功。"
+                                        format: int64
+                                        type: integer
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    document_info:
+                                        $ref: '#/components/schemas/DocumentInfo'
+                                        description: deprecated 兼容老接口，更新内容时会返回。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 修改知识库文件
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/modify_knowledge_files
+servers:
+    - url: https://api.coze.cn

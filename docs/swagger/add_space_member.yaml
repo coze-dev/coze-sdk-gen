@@ -1,0 +1,113 @@
+components:
+    schemas:
+        OpenAddSpaceMemberData:
+            properties:
+                added_success_user_ids:
+                    description: 企业标准版或企业旗舰版成功添加的用户 ID 列表。
+                    items:
+                        type: string
+                    type: array
+                already_invited_user_ids:
+                    description: "已经发起邀请但用户还未同意加入的用户 ID 列表。 \n 仅个人版的工作空间添加用户时需要发出邀请，用户同意后才会加入工作空间。"
+                    items:
+                        type: string
+                    type: array
+                already_joined_user_ids:
+                    description: 用户在该工作空间中已经存在，不重复添加。
+                    items:
+                        type: string
+                    type: array
+                invited_success_user_ids:
+                    description: 个人版中，发起邀请且用户同意加入的用户 ID 列表。
+                    items:
+                        type: string
+                    type: array
+                not_exist_user_ids:
+                    description: 因用户 ID 不存在而导致添加失败的用户 ID 列表。
+                    items:
+                        type: string
+                    type: array
+            type: object
+        OpenSpaceMember:
+            properties:
+                role_type:
+                    description: "该用户在工作空间中的角色： \n  \n * admin：工作空间管理员。 \n * member：工作空间成员。 \n  \n 不支持设置为空间所有者。"
+                    type: string
+                user_id:
+                    description: "待邀请加入工作空间的用户的扣子用户 ID。 \n 你可以单击扣子编程左下角的头像，选择账号设置，在页面底部查看扣子用户的 UID。 \n !Image"
+                    type: string
+            required:
+                - user_id
+                - role_type
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 批量邀请用户加入空间
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/workspaces/{workspace_id}/members:
+        post:
+            description: 邀请用户加入工作空间，支持批量邀请，每次最多添加 20 个成员。
+            operationId: post_add_space_member
+            parameters:
+                - description: "需要添加用户的工作空间 ID。 \n 进入指定空间，空间页面 URL 中 w 参数后的数字就是 工作空间 ID。例如https://code.coze.cn/w/75814654762959*/projects，workspace_id 为 75814654762959*。"
+                  in: path
+                  name: workspace_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                users:
+                                    description: 待邀请加入工作空间的用户列表，单次最多添加 20 个成员。
+                                    items:
+                                        $ref: '#/components/schemas/OpenSpaceMember'
+                                    type: array
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/OpenAddSpaceMemberData'
+                                        description: 添加成员的结果信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 响应详情信息。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 批量邀请用户加入空间
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/add_space_member
+servers:
+    - url: https://api.coze.cn

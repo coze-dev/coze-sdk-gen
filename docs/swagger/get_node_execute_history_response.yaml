@@ -1,0 +1,82 @@
+components:
+    schemas:
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+        WorkflowNodeExecuteHistory:
+            properties:
+                is_finish:
+                    description: "节点是否执行完成。 \n  \n * true 表示执行已完成。 \n * false表示执行未完成。"
+                    type: boolean
+                node_output:
+                    description: 节点的执行结果输出信息。
+                    type: string
+            type: object
+info:
+    title: 查询输出节点的执行结果
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/workflows/{workflow_id}/run_histories/{execute_id}/execute_nodes/{node_execute_uuid}:
+        get:
+            description: 查询输出节点的执行结果。
+            operationId: get_get_node_execute_history_response
+            parameters:
+                - description: "要执行的 Workflow ID，需要先完成发布 Workflow 的操作。 \n 进入 Workflow 编排页，在页面 URL 中，workflow 参数后的数字就是 Workflow ID。例如： \n https://www.coze.com/work_flow?space_id=73119690542463*&workflow_id=73505836754923* , Workflow ID 为 73505836754923* 。"
+                  in: path
+                  name: workflow_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 工作流的执行 ID。调用接口执行工作流，如果选择异步执行工作流，响应信息中会返回 execute_id。
+                  in: path
+                  name: execute_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 工作流异步执行结果 API 中返回的节点执行 uuid。
+                  in: path
+                  name: node_execute_uuid
+                  required: true
+                  schema:
+                    type: string
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/WorkflowNodeExecuteHistory'
+                                        description: 节点的执行结果。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 该请求的响应信息。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 查询输出节点的执行结果
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/get_node_execute_history_response
+servers:
+    - url: https://api.coze.cn

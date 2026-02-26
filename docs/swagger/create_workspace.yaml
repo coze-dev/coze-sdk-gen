@@ -1,0 +1,86 @@
+components:
+    schemas:
+        OpenCreateSpaceRet:
+            properties:
+                id:
+                    description: 创建的工作空间的 ID。
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 创建工作空间
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/workspaces:
+        post:
+            description: 创建工作空间。
+            operationId: post_create_workspace
+            parameters:
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                coze_account_id:
+                                    description: "组织 ID，用于标识工作空间所属的组织。 \n 扣子个人版中，无需设置此参数。 \n 默认在个人账号下创建工作空间，如果需要在企业的组织下创建工作空间，你需要传入组织 ID。 \n 你可以在组织设置页面查看对应的组织 ID。"
+                                    type: string
+                                description:
+                                    description: 空间的描述信息，用于详细说明空间的用途或特点，最大长度为 2000 个字符。
+                                    type: string
+                                icon_file_id:
+                                    description: "作为空间图标的文件 ID。 \n  \n * 未指定文件 ID 时，使用扣子编程默认的工作空间图标。 \n * 如需使用自定义图标，应先通过上传文件 API 上传本地文件，从接口响应中获取文件 ID。文件 ID 作为空间图标时，有效期为永久有效。"
+                                    type: string
+                                name:
+                                    description: 自定义的空间名称，最大长度为 50 个字符。
+                                    type: string
+                                owner_uid:
+                                    description: "指定空间所有者的扣子用户的 UID。 \n * 扣子个人版中，无需设置此参数，默认当前用户为空间所有者。 \n * 扣子企业版（企业标准版、企业旗舰版）中，可以指定 coze_account_id 对应组织中的员工为空间所有者，未指定时默认 Token 的创建者为空间所有者。 \n  \n 你可以单击扣子编程左下角的头像，选择账号设置，在页面底部查看扣子用户的 UID。 \n !Image"
+                                    type: string
+                            required:
+                                - name
+                                - description
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/OpenCreateSpaceRet'
+                                        description: 工作空间的相关信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 创建工作空间
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/create_workspace
+servers:
+    - url: https://api.coze.cn

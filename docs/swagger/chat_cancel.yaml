@@ -1,0 +1,172 @@
+components:
+    schemas:
+        ChatV3ChatDetail:
+            properties:
+                bot_id:
+                    description: 该会话所属的智能体的 ID。
+                    type: string
+                completed_at:
+                    description: 对话结束的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+                    type: integer
+                conversation_id:
+                    description: 会话 ID，即会话的唯一标识。
+                    type: string
+                created_at:
+                    description: 对话创建的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+                    type: integer
+                failed_at:
+                    description: 对话失败的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+                    type: integer
+                id:
+                    description: 对话 ID，即对话的唯一标识。
+                    type: string
+                last_error:
+                    $ref: '#/components/schemas/LastError'
+                    description: "对话运行异常时，此字段中返回详细的错误信息，包括： \n  \n * Code：错误码。Integer 类型。0 表示成功，其他值表示失败。 \n * Msg：错误信息。String 类型。"
+                meta_data:
+                    additionalProperties: true
+                    description: "发起对话时的附加消息，用于传入使用方的自定义数据，查看对话详情时也会返回此附加消息。 \n 自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。"
+                    type: object
+                required_action:
+                    $ref: '#/components/schemas/RequiredAction'
+                    description: 当对话状态为 requires_action 时，此字段包含需要进一步处理的信息详情，用于继续对话。
+                section_id:
+                    description: 上下文片段 ID。每次调用清除上下文 API 都会生成一个新的 section_id。
+                    type: string
+                status:
+                    description: "对话的运行状态。取值为： \n  \n * created：对话已创建。 \n * in_progress：智能体正在处理中。 \n * completed：智能体已完成处理，本次对话结束。 \n * failed：对话失败。 \n * requires_action：对话中断，需要进一步处理。 \n * canceled：对话已取消。"
+                    type: string
+                usage:
+                    $ref: '#/components/schemas/Usage'
+                    description: 预留字段，无需关注，具体消耗的 Token 请查看火山账单。
+            type: object
+        InterruptFunction:
+            properties:
+                arguments:
+                    description: 当对话状态为 requires_action时，此字段表示需要调用的工具或函数的参数，通常为 JSON 格式的字符串，用于指定工具的具体执行参数。
+                    type: string
+                name:
+                    description: 当对话状态为 requires_action 时，此字段表示需要调用的工具或函数的名称，用于继续对话。通常与 arguments字段配合使用，指定工具的具体执行方法。
+                    type: string
+            type: object
+        InterruptPlugin:
+            properties:
+                function:
+                    $ref: '#/components/schemas/InterruptFunction'
+                    description: 当对话状态为 requires_action时，此字段表示需要调用的工具或函数的定义，包含函数名称和参数。通常用于指定工具的具体执行方法。
+                id:
+                    description: 上报运行结果的 ID。
+                    type: string
+                type:
+                    description: "工具类型，枚举值包括： \n  \n * function：待执行的方法，通常是端插件。触发端插件时会返回此枚举值。 \n * reply_message：待回复的选项。触发工作流问答节点时会返回此枚举值。"
+                    type: string
+            type: object
+        LastError:
+            properties:
+                code:
+                    description: "状态码。 \n 0 代表调用成功。"
+                    type: integer
+                msg:
+                    description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+                    type: string
+            type: object
+        RequiredAction:
+            properties:
+                submit_tool_outputs:
+                    $ref: '#/components/schemas/SubmitToolOutputs'
+                    description: 当对话状态为 requires_action时，此字段包含需要提交的工具输出信息，用于继续对话。通常包含一个工具调用列表，每个工具调用包含工具类型和参数。
+                type:
+                    description: "额外操作的类型，枚举值： \n submit_tool_outputs：需要提交工具输出以继续对话。"
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+        SubmitToolOutputs:
+            properties:
+                tool_calls:
+                    description: 当对话状态为 requires_action 时，此字段包含需要提交的工具调用列表，每个工具调用包含工具类型和参数。
+                    items:
+                        type: integer
+                    type: array
+            type: object
+        Usage:
+            properties:
+                input_count:
+                    description: 输入内容所消耗的 Token 数，包含对话上下文、系统提示词、用户当前输入等所有输入类的 Token 消耗。
+                    type: integer
+                output_count:
+                    description: 大模型输出的内容所消耗的 Token 数。
+                    type: integer
+                token_count:
+                    description: 本次 API 调用消耗的 Token 总量，包括输入和输出两部分的消耗。
+                    type: integer
+            type: object
+info:
+    title: 取消进行中的对话
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v3/chat/cancel:
+        post:
+            description: |-
+                调用此接口取消进行中的对话。
+                调用发起对话接口时，如果对话触发了复杂的工作流、图像流，或模型处理数据量大时，对话可能耗时较久。对话进行中时，用户无法在此会话中发起新的对话。此时可以调用此接口取消正在进行中的对话，取消后，对话转为已取消状态（status=canceled），你可以在会话中创建新的对话。
+            operationId: post_chat_cancel
+            parameters:
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考鉴权方式。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                chat_id:
+                                    description: 对话 ID，即 Chat ID。可以在发起对话接口 Response 中查看 id 字段，如果是流式响应，则在 Response 的 chat 事件中查看 id 字段。
+                                    type: string
+                                conversation_id:
+                                    description: 会话 ID，即 Conversation ID。可以在发起对话接口 Response 中查看 conversation_id 字段。
+                                    type: string
+                            required:
+                                - chat_id
+                                - conversation_id
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: "调用状态码。 \n  \n * 0 表示调用成功。 \n * 其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。"
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/ChatV3ChatDetail'
+                                        description: 被取消对话的详细信息。详细说明可参考 ChatV3ChatDetail。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 详细信息。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 取消进行中的对话
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/chat_cancel
+servers:
+    - url: https://api.coze.cn

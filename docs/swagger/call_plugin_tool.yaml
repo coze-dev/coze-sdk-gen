@@ -1,0 +1,68 @@
+components:
+    schemas:
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 调用插件工具
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/plugins/{plugin_id}/tools/call:
+        post:
+            description: 调用指定付费插件中的工具。
+            operationId: post_call_plugin_tool
+            parameters:
+                - description: 待执行的插件 ID。你可以调用查询插件列表 API 获取对应的插件 ID，即  entity_id 的值。
+                  in: path
+                  name: plugin_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    '---':
+                                        description: '---'
+                                        type: string
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data.result:
+                                        additionalProperties: true
+                                        description: 插件工具的返回结果，具体由插件的返回结构体定义。
+                                        type: object
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                    参数:
+                                        $ref: '#/components/schemas/类型'
+                                        description: 说明
+                                type: object
+                    description: OK
+            summary: 调用插件工具
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/call_plugin_tool
+servers:
+    - url: https://api.coze.cn

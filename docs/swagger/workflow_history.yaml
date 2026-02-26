@@ -1,0 +1,203 @@
+components:
+    schemas:
+        Interrupt:
+            properties:
+                data:
+                    description: 中断控制内容，用于在工作流中断时传递控制信息。当工作流需要用户输入或执行特定操作时，通过此字段传递相关信息。
+                    type: string
+                event_id:
+                    description: 工作流中断事件 ID，调用恢复运行工作流 API 恢复运行时应回传此字段。
+                    type: string
+                required_parameters:
+                    additionalProperties: true
+                    description: 工作流中断时需要补充的参数信息，采用键值对（key-value）结构，其中 key 为输入节点对应的参数名称，value 为该参数的定义信息（包含类型、是否必填等属性）。
+                    type: object
+                type:
+                    description: "工作流中断类型，调用恢复运行工作流 API 恢复运行时应回传此字段。 \n 枚举值： \n  \n * 6：端插件触发中断。 \n * 2：问答节点触发中断。 \n * 5：输入节点触发中断。 \n * 7：OAuth 插件触发中断。"
+                    type: integer
+            type: object
+        NodeExecuteStatus:
+            properties:
+                batch_index:
+                    description: "当前节点在批处理节点中的执行次数。 \n 第一次执行时值为 0。 \n 仅当节点为批处理节点，且未嵌套子工作流时，才会返回该参数。"
+                    format: int64
+                    type: integer
+                is_finish:
+                    description: 工作流中的节点是否已经运行结束。
+                    type: boolean
+                loop_index:
+                    description: "当前节点在循环节点中的循环次数。 \n 第一次循环时值为 0。 \n 仅当节点为循环节点，且未嵌套子工作流时，才会返回该参数。"
+                    format: int64
+                    type: integer
+                node_execute_uuid:
+                    description: 节点每次执行的 ID，用于追踪和识别工作流中特定节点的单次执行情况。
+                    type: string
+                node_id:
+                    description: 工作流中的节点 ID。
+                    type: string
+                sub_execute_id:
+                    description: 子工作流执行的 ID。
+                    type: string
+                update_time:
+                    description: 工作流上次运行的时间，采用 Unix 时间戳格式，单位为秒。
+                    format: int64
+                    type: integer
+            type: object
+        RequiredParameters:
+            properties:
+                default_value:
+                    description: 该参数配置的默认值。
+                    type: string
+                description:
+                    description: 该参数的描述信息。
+                    type: string
+                items:
+                    $ref: '#/components/schemas/OpenAPIParameter'
+                    description: 当参数类型为 array 时，该字段用于定义数组元素的子类型。
+                properties:
+                    additionalProperties: true
+                    description: 当参数类型为 object时，该字段用于定义对象类型的子参数信息，采用键值对（key-value）结构，其中 key 为子参数的名称，value 为该子参数的定义信息（包含类型、是否必填等属性）。
+                    type: object
+                required:
+                    description: "标识输入参数是否为必填项。 \n  \n * true：该参数为必填项。 \n * false：该参数为可选项。"
+                    type: boolean
+                type:
+                    description: 该参数的类型。
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+        Usage:
+            properties:
+                input_count:
+                    description: 输入内容所消耗的 Token 数，包含对话上下文、系统提示词、用户当前输入等所有输入类的 Token 消耗。
+                    type: integer
+                output_count:
+                    description: 大模型输出的内容所消耗的 Token 数。
+                    type: integer
+                token_count:
+                    description: 本次 API 调用消耗的 Token 总量，包括输入和输出两部分的消耗。
+                    type: integer
+            type: object
+        WorkflowExecuteHistory:
+            properties:
+                bot_id:
+                    description: 执行工作流时指定的 Agent ID。返回 0 表示未指定智能体 ID。
+                    type: string
+                connector_id:
+                    description: 智能体的发布渠道 ID，默认仅显示 Agent as API 渠道，渠道 ID 为 1024。
+                    type: string
+                connector_uid:
+                    description: 用户 UID，执行工作流时通过 ext 字段指定的 user_id。如果未指定，则返回 Token 申请人的扣子用户 UID。
+                    type: string
+                create_time:
+                    description: 工作流运行开始时间，Unixtime 时间戳格式，单位为秒。
+                    format: int64
+                    type: integer
+                debug_url:
+                    description: "工作流试运行调试页面。访问此页面可查看每个工作流节点的运行结果、输入输出等信息。 \n debug_url 的访问有效期为 7 天，过期后将无法访问。"
+                    type: string
+                error_code:
+                    description: 执行失败调用状态码。0 表示调用成功。其他值表示调用失败。你可以通过 error_message 字段判断详细的错误原因。
+                    type: string
+                error_message:
+                    description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+                    type: string
+                execute_id:
+                    description: 工作流执行 ID。
+                    type: string
+                execute_status:
+                    description: "执行状态。 \n  \n * Success：执行成功。 \n * Running：执行中。 \n * Fail：执行失败。"
+                    type: string
+                interrupt_data:
+                    $ref: '#/components/schemas/Interrupt'
+                    description: 中断事件的详细信息，包含中断控制内容、中断类型和事件 ID 等信息。
+                is_output_trimmed:
+                    description: "标识工作流的输出内容是否因过大而不完整。 \n  \n * true：输出内容因过大被截断。 \n * false：输出内容完整。"
+                    type: boolean
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+                node_execute_status:
+                    additionalProperties: true
+                    description: "输出节点的运行情况。字段的格式为：key:node_status,value:map[node_title]*nodeExecuteStatus{}。 \n key为节点的名称，如果节点运行了多次，则会随机生成节点名称。 \n 当输出节点的输出内容超过 1MB 时，调用本 API 会导致返回内容不完整，建议通过查询工作流节点的输出 API 逐一查询各节点的输出内容。"
+                    type: object
+                output:
+                    description: "工作流的输出，通常为 JSON 序列化字符串，也有可能是非 JSON 结构的字符串。 \n 工作流输出的内容包括： \n  \n * 输出节点的输出。 \n * 结束节点的输出。在扣子编程代码中，结束节点的输出是通过键（key）Output 来标识。 \n  \n 工作流输出的结构如下所示： \n JSON \n { \n   \"Output\": \"结束节点的输出内容\", \n   \"输出节点_1\": \"输出节点_1的输出内容\", \n   \"输出节点_2\": \"输出节点_2的输出内容\" \n }"
+                    type: string
+                run_mode:
+                    description: "工作流的运行方式： \n  \n * 0：同步运行。 \n * 1：流式运行。 \n * 2：异步运行。"
+                    type: integer
+                update_time:
+                    description: 工作流的恢复运行时间，Unixtime 时间戳格式，单位为秒。
+                    format: int64
+                    type: integer
+                usage:
+                    $ref: '#/components/schemas/Usage'
+                    description: "本次 API 调用消耗的 Token 数量。 \n 此处大模型返回的消耗 Token 仅供参考，以火山引擎账单实际为准。"
+            type: object
+info:
+    title: 查询工作流异步运行结果
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/workflows/{workflow_id}/run_histories/{execute_id}:
+        get:
+            description: 工作流异步运行后，查看执行结果。
+            operationId: get_workflow_history
+            parameters:
+                - description: "待执行的 Workflow ID，此工作流应已发布。 \n 进入 Workflow 编排页面，在页面 URL 中，workflow 参数后的数字就是 Workflow ID。例如 https://www.coze.com/work_flow?space_id=42463*&workflow_id=73505836754923*，Workflow ID 为 73505836754923*。"
+                  in: path
+                  name: workflow_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 工作流执行 ID。调用接口执行工作流，如果选择异步执行工作流，响应信息中会返回 execute_id。
+                  in: path
+                  name: execute_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        description: "异步工作流的执行结果。 \n 每次只能查询一个异步事件的执行结果，所以此数组只有一个对象。"
+                                        items:
+                                            $ref: '#/components/schemas/WorkflowExecuteHistory'
+                                        type: array
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 本次请求的执行详情。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 查询工作流异步运行结果
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/workflow_history
+servers:
+    - url: https://api.coze.cn

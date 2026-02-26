@@ -1,0 +1,92 @@
+components:
+    schemas:
+        CreateDatasetOpenApiData:
+            properties:
+                dataset_id:
+                    description: 新知识库的 ID。
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 创建知识库
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/datasets:
+        post:
+            description: |-
+                调用此接口以创建一个扣子知识库。
+                调用此 API，你可以创建一个文本知识库或图片知识库。新知识库默认为空，需要通过 API  创建知识库文件 上传文本或图片。
+                * 知识库分为扣子知识库和火山知识库，该 API 仅用于创建扣子知识库，不支持火山知识库的创建，如果需要创建火山知识库，请参见创建火山知识库 API 文档。
+                * 暂不支持通过 API 创建表格知识库。
+                * 创建知识库时如需设置知识库图标，需要提前调用 API 上传文件，将图片文件上传至扣子编程。
+            operationId: post_create_dataset
+            parameters:
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                description:
+                                    description: 知识库描述信息。
+                                    type: string
+                                file_id:
+                                    description: 知识库图标，应传入上传文件接口中获取的 file_id。
+                                    type: string
+                                format_type:
+                                    description: "知识库类型。取值包括： \n  \n * 0：文本类型 \n * 2：图片类型"
+                                    type: integer
+                                name:
+                                    description: 知识库名称，长度不超过 100 个字符。
+                                    type: string
+                                space_id:
+                                    description: "知识库所在的空间的工作空间 ID。Space ID 是空间的唯一标识。 \n 进入指定空间，空间页面 URL 中 w 参数后的数字就是 工作空间 ID。例如https://code.coze.cn/w/75814654762959*/projects，Space ID 为 75814654762959*。"
+                                    type: string
+                            required:
+                                - name
+                                - space_id
+                                - format_type
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: "状态码。 \n 0 代表调用成功。"
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/CreateDatasetOpenApiData'
+                                        description: 返回内容
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 本次请求的日志 ID。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 创建知识库
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/create_dataset
+servers:
+    - url: https://api.coze.cn

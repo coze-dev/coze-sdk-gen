@@ -1,0 +1,100 @@
+components:
+    schemas:
+        ListOrganizationData:
+            properties:
+                items:
+                    description: 企业下的组织列表，包含每个组织的详细信息。
+                    items:
+                        $ref: '#/components/schemas/OrganizationBasicInfo'
+                    type: array
+                total_count:
+                    description: 企业中的组织数量。
+                    format: int64
+                    type: integer
+            type: object
+        OrganizationBasicInfo:
+            properties:
+                is_default_organization:
+                    description: "标识当前组织是否为默认组织。 \n  \n * true ：默认组织。 \n * false：自定义组织。"
+                    type: boolean
+                organization_icon_url:
+                    description: 组织的头像 URL 地址。
+                    type: string
+                organization_id:
+                    description: 组织 ID。
+                    type: string
+                organization_name:
+                    description: 组织名称。
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 查询组织列表
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/enterprises/{enterprise_id}/organizations:
+        get:
+            description: 查询指定企业中的组织列表。
+            operationId: get_list_organization
+            parameters:
+                - description: "企业 ID，查询组织列表所属的企业。 \n 你可以在组织管理 > 组织设置页面查看企业 ID。 \n !Image"
+                  in: path
+                  name: enterprise_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 分页查询时的页码。默认为 1，即返回第一页数据。
+                  in: query
+                  name: page_num
+                  required: false
+                  schema:
+                    type: integer
+                - description: 每页返回的数据条数，用于分页查询。默认值为 20，最大值为 20。
+                  in: query
+                  name: page_size
+                  required: false
+                  schema:
+                    type: integer
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息参考OAuth JWT 授权（企业特权应用）。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/ListOrganizationData'
+                                        description: 包含符合查询条件的企业组织列表及其数量。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含本次请求的详细信息，主要用于异常报错场景下的问题排查。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 查询组织列表
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/list_organization
+servers:
+    - url: https://api.coze.cn

@@ -1,0 +1,105 @@
+components:
+    schemas:
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+        SpacePublishedBots:
+            properties:
+                bot_id:
+                    description: 智能体的唯一标识。
+                    type: string
+                bot_name:
+                    description: 智能体的名称。
+                    type: string
+                description:
+                    description: 智能体的描述。
+                    type: string
+                icon_url:
+                    description: 智能体的头像。
+                    type: string
+                publish_time:
+                    description: 智能体的最近一次发布时间，格式为 10 位的 Unixtime 时间戳。此 API 返回的智能体列表按照此字段降序排列。
+                    type: string
+            type: object
+        SpacePublishedBotsInfo:
+            properties:
+                space_bots:
+                    description: 指定空间发布到 Agent as API 渠道的智能体列表。
+                    items:
+                        $ref: '#/components/schemas/SpacePublishedBots'
+                    type: array
+                total:
+                    description: 智能体列表中的智能体总数。
+                    type: integer
+            type: object
+info:
+    title: 【Deprecated】查看已发布智能体列表
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/space/published_bots_list:
+        get:
+            description: |-
+                查看指定空间发布到 Agent as API 渠道的智能体列表。
+                * 该 API 即将下线，建议替换为新版的 API  查看智能体列表。
+                * 此接口仅支持查看已发布为 API 服务的智能体列表。对于创建后从未发布到 API 渠道的 Bot，可以在扣子平台中查看列表及配置。
+            operationId: get_published_bots_list
+            parameters:
+                - description: "智能体所在的空间的 Space ID。Space ID 是空间的唯一标识。 \n 进入指定空间，空间页面 URL 中 space 参数后的数字就是 Space ID。例如https://www.coze.cn/space/736163827687053/bot，Space ID 为736163827687053。"
+                  in: query
+                  name: space_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 分页查询时的页码。默认为 1，即从第一页数据开始返回。
+                  in: query
+                  name: page_index
+                  required: false
+                  schema:
+                    type: integer
+                - description: 分页大小。默认为 20，即每页返回 20 条数据。
+                  in: query
+                  name: page_size
+                  required: false
+                  schema:
+                    type: integer
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子平台中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: "状态码。 \n 0代表调用成功。"
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/SpacePublishedBotsInfo'
+                                        description: 智能体列表及总数信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 返回详情。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 【Deprecated】查看已发布智能体列表
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/published_bots_list
+servers:
+    - url: https://api.coze.cn

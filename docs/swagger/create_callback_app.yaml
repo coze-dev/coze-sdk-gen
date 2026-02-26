@@ -1,0 +1,94 @@
+components:
+    schemas:
+        ApiApp:
+            properties:
+                app_type:
+                    description: "回调应用的类型。枚举值如下： \n  \n * normal：普通回调应用。 \n * connector：渠道回调应用。"
+                    type: string
+                callback_url:
+                    description: 回调地址。后续该回调应用订阅的所有回调，均会在触发时向该回调地址发送回调数据。
+                    type: string
+                connector_id:
+                    description: 自定义的渠道 ID。仅渠道回调应用会返回该参数。
+                    type: string
+                id:
+                    description: 回调应用的 ID。
+                    type: string
+                name:
+                    description: 回调应用的名称。
+                    type: string
+                verify_token:
+                    description: "扣子编程会为每个回调应用自动生成一个 Token，不支持手动修改或删除。 \n 当扣子编程推送回调时，会携带 Token 签发的签名，用于验证推送的回调是否属于扣子编程推送的合法回调。开发者验证签名的具体操作请参见接收并处理回调。"
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 创建回调应用
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/api_apps:
+        post:
+            description: 本 API 用于创建回调应用，支持创建普通回调应用和渠道回调应用。订阅扣子编程回调功能时需要创建回调应用。
+            operationId: post_create_callback_app
+            parameters:
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                app_type:
+                                    description: "回调应用的类型。枚举值如下： \n  \n * normal：普通回调应用。 \n * connector：渠道回调应用。"
+                                    type: string
+                                connector_id:
+                                    description: "渠道的 ID，当 app_type 为 connector时需要传入该值。 \n 渠道 ID 的获取方式如下：在扣子编程左下角单击头像，在账号设置 > 发布渠道 > 企业自定义渠道管理页面查看渠道 ID。"
+                                    type: string
+                                name:
+                                    description: "回调应用的名称，当 app_type 为 normal时需要传入该值。最多 128 个字符。 \n 当 app_type 为 connector时无需填写，扣子编程默认使用渠道名称作为渠道回调应用的名称。"
+                                    type: string
+                            required:
+                                - app_type
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/ApiApp'
+                                        description: 返回扣子编程应用的详细信息，包括应用 ID、名称、类型、回调 URL 和验证令牌等。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含本次请求的详细日志信息，用于问题排查。如果遇到异常报错场景，且反复重试仍然报错，可以根据此日志 ID 联系扣子团队获取帮助。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 创建回调应用
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/create_callback_app
+servers:
+    - url: https://api.coze.cn

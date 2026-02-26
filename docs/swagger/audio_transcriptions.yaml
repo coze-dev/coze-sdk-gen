@@ -1,0 +1,74 @@
+components:
+    schemas:
+        AudioTranscriptionsData:
+            properties:
+                text:
+                    description: 语音文件对应的文本内容，即语音识别后转换成的文字结果。
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 语音识别
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/audio/transcriptions:
+        post:
+            description: 将音频文件转录为文本。
+            operationId: post_audio_transcriptions
+            parameters:
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    multipart/form-data:
+                        schema:
+                            properties:
+                                body:
+                                    description: 需要语音识别的音频文件的二进制数据，具体文件格式和大小限制请参考接口说明部分。
+                                    format: binary
+                                    type: string
+                            required:
+                                - body
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: "状态码。 \n 0代表调用成功。"
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/AudioTranscriptionsData'
+                                        description: 语音文件对应的文本内容，即语音识别后转换成的文字结果。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 语音识别
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/audio_transcriptions
+servers:
+    - url: https://api.coze.cn

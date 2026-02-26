@@ -1,0 +1,127 @@
+components:
+    schemas:
+        FolderSimpleInfo:
+            properties:
+                children_count:
+                    description: 当前文件夹下的子文件夹数量，仅统计下一层级文件夹数量，不包含更深层级的子文件夹。
+                    type: integer
+                creator_user_id:
+                    description: 创建该文件夹的扣子用户 UID，用于标识文件夹的创建者。
+                    type: string
+                description:
+                    description: 文件夹的描述信息，用于提供关于文件夹的额外说明或备注。
+                    type: string
+                folder_type:
+                    description: 文件夹类型，当前仅支持 development。
+                    type: string
+                id:
+                    description: 文件夹 ID。
+                    type: string
+                name:
+                    description: 文件夹的名称，用于标识和区分不同的文件夹。
+                    type: string
+                parent_folder_id:
+                    description: 当前文件夹的父文件夹 ID，用于标识文件夹的层级关系。如果未返回该字段，则表示当前文件夹为根文件夹。
+                    type: string
+                workspace_id:
+                    description: 文件夹所属的工作空间的 Space ID。Space ID 是空间的唯一标识。
+                    type: string
+            type: object
+        OpenGetSpaceFolderData:
+            properties:
+                has_more:
+                    description: "标识当前返回的文件夹列表是否还有更多数据未返回。 \n  \n * true ：还有更多未返回的文件夹。 \n * false：已返回所有数据。"
+                    type: boolean
+                items:
+                    description: 查询的父文件夹下的文件夹列表，仅展示下一层级文件夹信息，不包含更深层级的子文件夹的信息。
+                    items:
+                        $ref: '#/components/schemas/FolderSimpleInfo'
+                    type: array
+                total_count:
+                    description: 当前查询条件下第一层级的文件夹总数，不包含更深层级的子文件夹。
+                    format: int64
+                    type: integer
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 查询文件夹列表
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/folders:
+        get:
+            description: 工作空间中的用户可以查询工作空间中的文件夹列表。
+            operationId: get_workspace_list_folder
+            parameters:
+                - description: "待查询文件夹列表的工作空间 ID。 \n 进入指定空间，空间页面 URL 中 w 参数后的数字就是 工作空间 ID。例如https://code.coze.cn/w/75814654762959*/projects，工作空间 ID 为 75814654762959*。"
+                  in: query
+                  name: workspace_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 文件夹类型，参数值固定为 development。
+                  in: query
+                  name: folder_type
+                  required: true
+                  schema:
+                    type: string
+                - description: "指定要查询的文件夹的父级文件夹 ID。当需要查看某个文件夹下的子文件夹列表时，需传入该文件夹的 ID。若不传或传入 0，则表示查询工作空间根目录下的文件夹。 \n 文件夹 ID 的获取方法如下：进入指定工作空间，单击项目管理，单击目标文件夹，在 URL 中 folder_id 参数后的数字就是文件夹 ID。例如：https://code.coze.cn/w/74982048832804*/projects?folder_id=75635667770837*，folder_id 为 75635667770837*。"
+                  in: query
+                  name: parent_folder_id
+                  required: false
+                  schema:
+                    type: string
+                - description: 分页查询时的页码。默认为 1，即返回第一页数据。
+                  in: query
+                  name: page_num
+                  required: false
+                  schema:
+                    type: integer
+                - description: 每页返回的数据条数，用于分页查询。默认值为 20，最大值为 50。
+                  in: query
+                  name: page_size
+                  required: false
+                  schema:
+                    type: integer
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/OpenGetSpaceFolderData'
+                                        description: 文件夹列表的查询结果，包含文件夹的详细信息、是否还有更多数据以及文件夹的总数量。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含本次请求的详细日志信息，用于问题排查。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid联系扣子团队获取帮助。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 查询文件夹列表
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/workspace_list_folder
+servers:
+    - url: https://api.coze.cn

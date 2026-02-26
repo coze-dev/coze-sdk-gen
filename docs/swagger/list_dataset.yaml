@@ -1,0 +1,206 @@
+components:
+    schemas:
+        ChunkStrategy:
+            properties:
+                caption_type:
+                    description: "图片知识库的标注方式： \n  \n * 0：（默认）系统自动标注描述信息 \n * 1：手工标注。上传图片后需要再次调用 API 更新知识库图片描述来手动设置标注。 \n  \n 在空的知识库中首次上传图片时，需要手工设置 caption_type 参数的值，否则会报错。"
+                    type: integer
+                chunk_type:
+                    description: "分段设置。取值包括： \n  \n * 0：自动分段与清洗。采用扣子编程预置规则进行数据分段与处理。 \n * 1：自定义。此时需要通过 separator、max_tokens、remove_extra_spaces 和 remove_urls_emails 分段规则细节。"
+                    type: integer
+                max_tokens:
+                    description: "最大分段长度，取值范围为 100~2000。 \n 在 chunk_type=1 时必选。"
+                    format: int64
+                    type: integer
+                remove_extra_spaces:
+                    description: "是否自动过滤连续的空格、换行符和制表符。取值包括： \n  \n * true：自动过滤 \n * false：（默认）不自动过滤 \n  \n 在 chunk_type=1 时生效。"
+                    type: boolean
+                remove_urls_emails:
+                    description: "是否自动过滤所有 URL 和电子邮箱地址。取值包括： \n  \n * true：自动过滤 \n * false：（默认）不自动过滤 \n  \n 在 chunk_type=1 时生效。"
+                    type: boolean
+                separator:
+                    description: "分段标识符。 \n 在 chunk_type=1 时必选。"
+                    type: string
+            type: object
+        Dataset:
+            properties:
+                all_file_size:
+                    description: 知识库中已存文件的总大小。
+                    format: int64
+                    type: integer
+                avatar_url:
+                    description: 知识库创建者的头像 url。
+                    type: string
+                bot_used_count:
+                    description: 知识库已绑定的智能体数量。
+                    type: integer
+                can_edit:
+                    description: 当前用户是否为该知识库的所有者。
+                    type: boolean
+                chunk_strategy:
+                    $ref: '#/components/schemas/ChunkStrategy'
+                    description: 知识库的切片规则。
+                create_time:
+                    description: 知识库创建时间，秒级时间戳。
+                    type: integer
+                creator_id:
+                    description: 知识库创建者的扣子用户 UID。
+                    type: string
+                creator_name:
+                    description: 知识库创建者的用户名。
+                    type: string
+                dataset_id:
+                    description: 知识库 ID。
+                    type: string
+                description:
+                    description: 知识库描述信息。
+                    type: string
+                doc_count:
+                    description: 知识库中的文件数量。
+                    type: integer
+                failed_file_list:
+                    description: 处理失败的文件列表。
+                    items:
+                        type: string
+                    type: array
+                file_list:
+                    description: 知识库中的文件列表。
+                    items:
+                        type: string
+                    type: array
+                format_type:
+                    description: "知识库类型，包括： \n  \n * 0：文本类型 \n * 1：表格类型 \n * 2：图片类型"
+                    type: integer
+                hit_count:
+                    description: 知识库命中总次数。
+                    type: integer
+                icon_uri:
+                    description: 知识库图标的 uri。
+                    type: string
+                icon_url:
+                    description: 知识库图标的 URL。
+                    type: string
+                name:
+                    description: 知识库名称。
+                    type: string
+                processing_file_id_list:
+                    description: 处理中的文件 ID。
+                    items:
+                        type: string
+                    type: array
+                processing_file_list:
+                    description: 处理中的文件名。
+                    items:
+                        type: string
+                    type: array
+                slice_count:
+                    description: 知识库分段总数。
+                    type: integer
+                space_id:
+                    description: 知识库所在空间的空间 ID。
+                    type: string
+                status:
+                    description: "知识库状态，取值包括： \n  \n * 1：启用中 \n * 3：未启用"
+                    type: integer
+                update_time:
+                    description: 知识库的更新时间，秒级时间戳。
+                    type: integer
+            type: object
+        ListDatasetOpenApiData:
+            properties:
+                dataset_list:
+                    description: 知识库详情。
+                    items:
+                        $ref: '#/components/schemas/Dataset'
+                    type: array
+                total_count:
+                    description: 空间中的知识库总数量。
+                    type: integer
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 查看知识库列表
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/datasets:
+        get:
+            description: |-
+                调用此接口查看指定空间资源库下的全部知识库。
+                此接口可查看工作空间下，空间资源库中的全部知识库，包括扣子知识库和火山知识库，无论知识库是否归本人所有。
+                * 暂不支持通过 API 查看低代码应用中的知识库。
+                * 暂不支持通过该 API 查看火山知识库中的文件列表等详细信息。
+            operationId: get_list_dataset
+            parameters:
+                - description: "知识库所在的空间的 Space ID。Space ID 是空间的唯一标识。 \n 进入指定空间，空间页面 URL 中 w 参数后的数字就是 工作空间 ID。例如https://code.coze.cn/w/75814654762959*/projects，工作空间 ID 为 75814654762959*。"
+                  in: query
+                  name: space_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 知识库名称，支持模糊搜索。
+                  in: query
+                  name: name
+                  required: false
+                  schema:
+                    type: string
+                - description: 类型
+                  in: query
+                  name: format_type
+                  required: false
+                  schema:
+                    type: integer
+                - description: 查询结果分页展示时，此参数用于设置查看的页码。最小值为 1，默认为 1。
+                  in: query
+                  name: page_num
+                  required: false
+                  schema:
+                    type: integer
+                - description: 查询结果分页展示时，此参数用于设置每页返回的数据量。取值范围为 1~300，默认为 10。
+                  in: query
+                  name: page_size
+                  required: false
+                  schema:
+                    type: integer
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: "状态码。 \n 0 代表调用成功。"
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/ListDatasetOpenApiData'
+                                        description: 接口响应的业务信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 响应详情信息。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 查看知识库列表
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/list_dataset
+servers:
+    - url: https://api.coze.cn

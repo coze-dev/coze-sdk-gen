@@ -1,0 +1,107 @@
+components:
+    schemas:
+        FeatureScore:
+            properties:
+                feature_desc:
+                    description: 声纹的描述。
+                    type: string
+                feature_id:
+                    description: 与测试音频匹配的声纹的 ID。
+                    type: string
+                feature_name:
+                    description: 声纹的名称。
+                    type: string
+                score:
+                    description: 声纹匹配度。表示测试音频与声纹库中已有声纹的匹配程度，数值范围为 0~100，数值越高表示匹配度越高。
+                    format: double
+                    type: number
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+        SpeakerIdentifyData:
+            properties:
+                feature_score_list:
+                    description: 声纹匹配度列表，包含测试音频与声纹库中已有声纹的匹配信息。
+                    items:
+                        $ref: '#/components/schemas/FeatureScore'
+                    type: array
+            type: object
+info:
+    title: 声纹特征比对
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/audio/voiceprint_groups/{group_id}/speaker_identify:
+        post:
+            description: 声纹特征比对。
+            operationId: post_identify_voiceprint
+            parameters:
+                - description: 声纹所属的声纹组 ID。你可以通过查看声纹组列表 API 查看声纹组 ID。
+                  in: path
+                  name: group_id
+                  required: true
+                  schema:
+                    type: integer
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 文件类型。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    multipart/form-data:
+                        schema:
+                            properties:
+                                channel:
+                                    description: "声道数，当文件类型为 pcm 时需传入该参数。 \n 默认为单声道。"
+                                    type: integer
+                                file:
+                                    description: 上传需要进行声纹特征比对的音频文件。
+                                    format: binary
+                                    type: string
+                                sample_rate:
+                                    description: "采样率，单位：Hz。当文件类型为 pcm 时需传入该参数。 \n 默认的采样率为 16kHz。"
+                                    type: integer
+                                top_k:
+                                    description: 返回特征匹配度最高的前 k 项结果。若未指定，则默认返回全部匹配结果。
+                                    type: integer
+                            required:
+                                - file
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/SpeakerIdentifyData'
+                                        description: 声纹匹配度列表，包含测试音频与声纹库中已有声纹的匹配信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 本次请求返回的详细信息。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 声纹特征比对
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/identify_voiceprint
+servers:
+    - url: https://api.coze.cn

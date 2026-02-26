@@ -1,0 +1,18 @@
+info:
+    title: OAuth JWT 授权（渠道场景）
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /api/permission/oauth2/token:
+        post:
+            description: |-
+                扣子编程提供标准的生态对接方式和多种对接方案，支持网站、App、应用市场、手机等硬件厂商作为第三方渠道入驻。渠道入驻场景下，渠道侧需要通过 JWT 授权流程获取渠道的 OAuth Access Token。智能体发布到第三方渠道后，可以使用此渠道专属的 OAuth Access Token 调用扣子 OpenAPI，例如查看智能体信息、和智能体对话等。
+                关于发布到自定义渠道的详细说明及步骤，可参考渠道入驻概述。
+            operationId: post_oauth_jwt_channel
+            responses:
+                "200":
+                    description: OK
+            summary: OAuth JWT 授权（渠道场景）
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/oauth_jwt_channel
+servers:
+    - url: https://api.coze.cn

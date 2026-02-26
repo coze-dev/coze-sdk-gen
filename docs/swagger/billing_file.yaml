@@ -1,0 +1,116 @@
+components:
+    schemas:
+        BillBusinessData:
+            properties:
+                task_infos:
+                    description: 包含多个账单导出任务信息的列表，每个任务信息包含任务 ID、时间范围、文件 URL 等详细内容。
+                    items:
+                        $ref: '#/components/schemas/BillTaskInfo'
+                    type: array
+                total:
+                    description: 当前查询条件下的总账单任务数。
+                    type: integer
+            type: object
+        BillTaskInfo:
+            properties:
+                created_at:
+                    description: 任务的创建时间，Unix 时间戳，单位为秒。
+                    format: int64
+                    type: integer
+                ended_at:
+                    description: 账单上的截止时间。
+                    format: int64
+                    type: integer
+                expires_at:
+                    description: 任务的过期时间，默认账单将保留 7 天，超过此时间后，无法再下载账单文件。Unix 时间戳，单位为秒。
+                    format: int64
+                    type: integer
+                file_urls:
+                    description: "账单导出文件的链接列表，任务完成后，可通过这些链接下载账单文件。 \n 如果账单中的数据量过大，扣子编程会将数据拆分为多个文件，每个文件最多包含 50 万行数据。 \n 账单文件中的字段说明请参见账单推送回调事件。"
+                    items:
+                        type: string
+                    type: array
+                started_at:
+                    description: 账单上的起始时间。
+                    format: int64
+                    type: integer
+                status:
+                    description: "任务当前状态： \n  \n * init：任务初始化中。 \n * running：账单数据生成中。 \n * succeed：账单已生成，可下载导出文件。 \n * failed：任务执行失败，可结合 msg 字段查看失败原因。"
+                    type: string
+                task_id:
+                    description: 账单导出任务的唯一标识 ID，用于后续查询任务状态或获取导出文件。
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 查询账单文件
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/commerce/benefit/bill_tasks:
+        get:
+            description: 查询账单文件。
+            operationId: get_billing_file
+            parameters:
+                - description: "账单导出任务 ID 列表，最多填写 100 个任务 ID。 \n 若不填写该参数，默认查询最近 7 天内创建的账单导出任务。"
+                  in: query
+                  name: task_ids
+                  required: false
+                  schema:
+                    items:
+                        type: string
+                    type: array
+                - description: 用于设置查询结果分页展示时的页码，最小值为 1，默认值为 1。
+                  in: query
+                  name: page_num
+                  required: false
+                  schema:
+                    type: integer
+                - description: 用于设置查询结果分页展示时每页返回的数据量，取值范围为 1 ~ 200，默认值为 20。
+                  in: query
+                  name: page_size
+                  required: false
+                  schema:
+                    type: integer
+                - description: 用于验证客户端身份的访问令牌。可在扣子编程生成，具体生成步骤及相关信息，详见准备工作文档。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 用于指定解析请求正文的格式，表明请求体为 JSON 格式数据。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/BillBusinessData'
+                                        description: 接口调用成功时返回的任务详细信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 查询账单文件
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/billing_file
+servers:
+    - url: https://api.coze.cn

@@ -1,0 +1,94 @@
+components:
+    schemas:
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 更新终端用户的权益额度
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/commerce/benefit/limitations/{benefit_id}:
+        put:
+            description: |-
+                更新终端用户的权益额度。当你创建设备的权益额度后，可以调用本 API 更新相关额度。
+                * 套餐限制：扣子企业旗舰版。
+                * 角色限制：企业超级管理员和管理员可以调用该 API。
+                * 调用此 API 更新设备权益额度之前，需要确保企业下的设备已成功上报了设备信息，否则会导致权益额度对该设备无法生效，设备信息的配置方法可参考设置设备信息。
+            operationId: put_update_device_quotas
+            parameters:
+                - description: 权益 ID。你可以在创建设备的权益额度的返回参数中获取对应的权益 ID 的值。
+                  in: path
+                  name: benefit_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 用于指定解析请求正文的格式，表明请求体为 JSON 格式数据。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                active_mode:
+                                    description: "激活模式，当前仅支持设置为 absolute_time 模式，即绝对时间。 \n 该模式下，权益生效时间由 started_at 和 ended_at 两个时间确定。"
+                                    type: string
+                                ended_at:
+                                    description: 该条配额规则的生效截止时间，Unixtime 时间戳格式，单位为秒。过期后，该条配额规则会失效。
+                                    format: int64
+                                    type: integer
+                                limit:
+                                    description: 可用的资源点额度。
+                                    format: int64
+                                    type: integer
+                                started_at:
+                                    description: 该条配额规则的生效起始时间，Unixtime 时间戳格式，单位为秒。
+                                    format: int64
+                                    type: integer
+                                status:
+                                    description: "设备权益的当前状态，枚举值： \n  \n * valid：（默认值）正常使用。 \n * frozen：已冻结。"
+                                    type: string
+                                trigger_time:
+                                    description: "权益额度重置周期的频率： \n  \n * 当 trigger_unit 为 never 时，trigger_time 的值为 1，且无意义。 \n * 当 trigger_unit 为 minute、hour 或 day 时，trigger_time 表示具体的刷新频率，例如：trigger_unit=day 且 trigger_time = 1，表示每日刷新配额。"
+                                    format: int64
+                                    type: integer
+                                trigger_unit:
+                                    description: "权益可用额度的重置周期，即额度按指定时间间隔恢复或重新计算： \n  \n * never：不重置额度，适用于设置累计可用额度上限。 \n * minute：以分钟为周期重置额度。 \n * hour：以小时为周期重置额度。 \n * day：以天为周期重置额度。"
+                                    type: string
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 响应详情信息。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 更新终端用户的权益额度
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/update_device_quotas
+servers:
+    - url: https://api.coze.cn

@@ -1,0 +1,101 @@
+components:
+    schemas:
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+        UserConfig:
+            properties:
+                enums:
+                    description: 设备信息的数组，可以批量添加该渠道中的所有设备。
+                    items:
+                        $ref: '#/components/schemas/UserConfigEnum'
+                    type: array
+                key:
+                    description: 参数的键值，需要与提供给商务经理的 key 保持一致，用于标识设备配置信息的具体类型。
+                    type: string
+            required:
+                - key
+                - enums
+            type: object
+        UserConfigEnum:
+            properties:
+                label:
+                    description: 设备的显示名称，用于在用户界面中标识设备，方便用户识别和管理。
+                    type: string
+                value:
+                    description: 设备的 ID。
+                    type: string
+            required:
+                - label
+                - value
+            type: object
+info:
+    title: 绑定设备
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/connectors/{connector_id}/user_configs:
+        post:
+            description: 将设备与自定义渠道绑定。
+            operationId: post_bind_connector_config
+            parameters:
+                - description: "企业自定义渠道的渠道 ID。 \n 自定义渠道 ID 的获取方式如下：在扣子编程左下角单击头像，在账号设置 > 发布渠道 > 企业自定义渠道管理页面查看渠道 ID。自定义渠道入驻扣子编程的方式可参考渠道入驻文档。"
+                  in: path
+                  name: connector_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                configs:
+                                    description: 设备配置信息列表。
+                                    items:
+                                        $ref: '#/components/schemas/UserConfig'
+                                    type: array
+                                user_id:
+                                    description: "智能体开发者的扣子用户 UID，用于标识设备绑定的扣子用户。 \n 你可以单击扣子编程左下角的头像，选择账号设置，在页面底部查看扣子用户的 UID。"
+                                    type: string
+                            required:
+                                - configs
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 绑定设备
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/bind_connector_config
+servers:
+    - url: https://api.coze.cn

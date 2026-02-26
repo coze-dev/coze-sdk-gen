@@ -1,0 +1,151 @@
+components:
+    schemas:
+        Interrupt:
+            properties:
+                data:
+                    description: 中断控制内容，用于在工作流中断时传递控制信息。当工作流需要用户输入或执行特定操作时，通过此字段传递相关信息。
+                    type: string
+                event_id:
+                    description: 工作流中断事件 ID，调用恢复运行工作流 API 恢复运行时应回传此字段。
+                    type: string
+                required_parameters:
+                    additionalProperties: true
+                    description: 工作流中断时需要补充的参数信息，采用键值对（key-value）结构，其中 key 为输入节点对应的参数名称，value 为该参数的定义信息（包含类型、是否必填等属性）。
+                    type: object
+                type:
+                    description: "工作流中断类型，调用恢复运行工作流 API 恢复运行时应回传此字段。 \n 枚举值： \n  \n * 6：端插件触发中断。 \n * 2：问答节点触发中断。 \n * 5：输入节点触发中断。 \n * 7：OAuth 插件触发中断。"
+                    type: integer
+            type: object
+        RequiredParameters:
+            properties:
+                default_value:
+                    description: 该参数配置的默认值。
+                    type: string
+                description:
+                    description: 该参数的描述信息。
+                    type: string
+                items:
+                    $ref: '#/components/schemas/OpenAPIParameter'
+                    description: 当参数类型为 array 时，该字段用于定义数组元素的子类型。
+                properties:
+                    additionalProperties: true
+                    description: 当参数类型为 object时，该字段用于定义对象类型的子参数信息，采用键值对（key-value）结构，其中 key 为子参数的名称，value 为该子参数的定义信息（包含类型、是否必填等属性）。
+                    type: object
+                required:
+                    description: "标识输入参数是否为必填项。 \n  \n * true：该参数为必填项。 \n * false：该参数为可选项。"
+                    type: boolean
+                type:
+                    description: 该参数的类型。
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+        Usage:
+            properties:
+                input_count:
+                    description: 输入内容所消耗的 Token 数，包含对话上下文、系统提示词、用户当前输入等所有输入类的 Token 消耗。
+                    type: integer
+                output_count:
+                    description: 大模型输出的内容所消耗的 Token 数。
+                    type: integer
+                token_count:
+                    description: 本次 API 调用消耗的 Token 总量，包括输入和输出两部分的消耗。
+                    type: integer
+            type: object
+info:
+    title: 执行工作流
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/workflow/run:
+        post:
+            description: 执行已发布的工作流。
+            operationId: post_workflow_run
+            parameters:
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子平台中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                app_id:
+                                    description: "该工作流关联的扣子应用的 ID。 \n 进入应用开发界面，开发页面 URL 中的 project-ide 参数后的数字就是 AppID，例如https://www.coze.cn/space/74421656*/project-ide/744208683 ，扣子应用 ID 为744208683。 \n 仅运行扣子应用中的工作流时，才需要设置 app_id。智能体绑定的工作流、空间资源库中的工作流无需设置 app_id。"
+                                    type: string
+                                bot_id:
+                                    description: "需要关联的智能体 ID。 部分工作流执行时需要指定关联的智能体，例如存在数据库节点、变量节点等节点的工作流。 \n !Image \n 进入智能体的开发页面，开发页面 URL 中 bot 参数后的数字就是智能体t ID。例如 https://www.coze.com/space/341/bot/73428668*，智能体 ID 为 73428668*。 \n * 确保调用该接口使用的令牌开通了此智能体所在空间的权限。 \n * 确保该智能体已发布为 API 服务。"
+                                    type: string
+                                connector_id:
+                                    description: "渠道 ID，用于配置该工作流在什么渠道执行。 \n 当智能体或扣子应用发布到某个渠道后，可以通过该参数指定工作流在对应的渠道执行。 \n 扣子的渠道 ID 包括： \n  \n * 1024（默认值）：API 渠道。 \n * 999：Chat SDK。 \n * 998：WebSDK。 \n * 10000122：扣子商店。 \n * 10000113：微信客服。 \n * 10000120：微信服务号。 \n * 10000121：微信订阅号。 \n * 10000126：抖音小程序。 \n * 10000127：微信小程序。 \n * 10000011：飞书。 \n * 10000128：飞书多维表格。 \n * 10000117：掘金。 \n * 自定义渠道 ID。自定义渠道 ID 的获取方式如下：在扣子左下角单击头像，在账号设置 > 发布渠道 > 企业自定义渠道管理页面查看渠道 ID。 \n  \n 不同渠道的用户数据、会话记录等相互隔离，进行数据分析统计时，不支持跨渠道数据调用。"
+                                    type: string
+                                ext:
+                                    additionalProperties: true
+                                    description: "用于指定一些额外的字段，以 Map[String][String] 格式传入。例如某些插件会隐式用到的经纬度等字段。 \n 目前仅支持以下字段： \n  \n * latitude：String 类型，表示纬度。 \n * longitude：String 类型，表示经度。 \n * user_id：String 类型，表示用户 ID。"
+                                    type: object
+                                is_async:
+                                    description: "是否异步运行。异步运行后可通过本接口返回的 execute_id 调用查询工作流异步执行结果API 获取工作流的最终执行结果。 \n  \n * true：异步运行。 \n * false：（默认）同步运行。 \n  \n 异步运行的参数 is_async 仅限扣子个人付费版、企业版（企业标准版、企业旗舰版）使用，否则调用此接口会报错 6003 Workflow execution with is_async=true is a premium feature available only to Coze Professional users"
+                                    type: boolean
+                                parameters:
+                                    description: "工作流开始节点的输入参数及取值，以 JSON 序列化字符串形式传入。你可以在指定工作流的编排页面查看输入参数列表。 \n 如果工作流输入参数为 Image 等类型的文件，你可以传入文件 URL 或调用上传文件 API 获取 file_id 后传入 file_id。示例： \n  \n * 上传文件并传入 file_id： \n    * 单个文件示例：\"parameters\": { \"image\": \"{\\\"file_id\\\":\\\"1122334455\\\"}\" } \n    * 文件数组示例：\"parameters\": { \"image\": [ \"{\\\"file_id\\\":\\\"1122334455\\\"}\" ] }。 \n * 传入文件 URL：“parameters” :{\"input\":\"请总结图片内容\", \"image\": \"https://example.com/tos-cn-i-mdko3gqilj/example.png\" }"
+                                    type: string
+                                workflow_id:
+                                    description: "待执行的 Workflow ID，此工作流应已发布。 \n 进入 Workflow 编排页面，在页面 URL 中，workflow 参数后的数字就是 Workflow ID。例如 https://www.coze.com/work_flow?space_id=42463*&workflow_id=73505836754923*，Workflow ID 为 73505836754923*。"
+                                    type: string
+                                workflow_version:
+                                    description: 工作流的版本号，仅当运行的工作流属于资源库工作流时有效。未指定版本号时默认执行最新版本的工作流。
+                                    type: string
+                            required:
+                                - workflow_id
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: "调用状态码。 \n  \n * 0 表示调用成功。 \n * 其他值表示调用失败。你可以通过 msg 字段判断详细的错误原因。"
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        description: 工作流执行结果，通常为 JSON 序列化字符串，部分场景下可能返回非 JSON 结构的字符串。
+                                        type: string
+                                    debug_url:
+                                        description: "工作流试运行调试页面。访问此页面可查看每个工作流节点的运行结果、输入输出等信息。 \n debug_url 的访问有效期为 7 天，过期后将无法访问。"
+                                        type: string
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    execute_id:
+                                        description: 异步执行的事件 ID。
+                                        type: string
+                                    interrupt_data:
+                                        $ref: '#/components/schemas/Interrupt'
+                                        description: 中断事件的详细信息，包含中断控制内容、中断类型和事件 ID 等信息。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                    usage:
+                                        $ref: '#/components/schemas/Usage'
+                                        description: "资源使用情况，包含本次 API 调用消耗的 Token 数量等信息。 \n 此处大模型返回的消耗 Token 仅供参考，以火山引擎账单实际为准。"
+                                type: object
+                    description: OK
+            summary: 执行工作流
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/workflow_run
+servers:
+    - url: https://api.coze.cn

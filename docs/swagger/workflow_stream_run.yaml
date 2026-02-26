@@ -1,0 +1,16 @@
+info:
+    title: 执行工作流（流式响应）
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/workflow/stream_run:
+        post:
+            description: 执行已发布的工作流，响应方式为流式响应。
+            operationId: post_workflow_stream_run
+            responses:
+                "200":
+                    description: OK
+            summary: 执行工作流（流式响应）
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/workflow_stream_run
+servers:
+    - url: https://api.coze.cn

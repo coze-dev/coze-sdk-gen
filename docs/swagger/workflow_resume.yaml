@@ -1,0 +1,160 @@
+components:
+    schemas:
+        Interrupt:
+            properties:
+                data:
+                    description: 中断控制内容，用于在工作流中断时传递控制信息。当工作流需要用户输入或执行特定操作时，通过此字段传递相关信息。
+                    type: string
+                event_id:
+                    description: 工作流中断事件 ID，调用恢复运行工作流 API 恢复运行时应回传此字段。
+                    type: string
+                required_parameters:
+                    additionalProperties: true
+                    description: 工作流中断时需要补充的参数信息，采用键值对（key-value）结构，其中 key 为输入节点对应的参数名称，value 为该参数的定义信息（包含类型、是否必填等属性）。
+                    type: object
+                type:
+                    description: "工作流中断类型，调用恢复运行工作流 API 恢复运行时应回传此字段。 \n 枚举值： \n  \n * 6：端插件触发中断。 \n * 2：问答节点触发中断。 \n * 5：输入节点触发中断。 \n * 7：OAuth 插件触发中断。"
+                    type: integer
+            type: object
+        RequiredParameters:
+            properties:
+                default_value:
+                    description: 该参数配置的默认值。
+                    type: string
+                description:
+                    description: 该参数的描述信息。
+                    type: string
+                items:
+                    $ref: '#/components/schemas/OpenAPIParameter'
+                    description: 当参数类型为 array 时，该字段用于定义数组元素的子类型。
+                properties:
+                    additionalProperties: true
+                    description: 当参数类型为 object时，该字段用于定义对象类型的子参数信息，采用键值对（key-value）结构，其中 key 为子参数的名称，value 为该子参数的定义信息（包含类型、是否必填等属性）。
+                    type: object
+                required:
+                    description: "标识输入参数是否为必填项。 \n  \n * true：该参数为必填项。 \n * false：该参数为可选项。"
+                    type: boolean
+                type:
+                    description: 该参数的类型。
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+        Usage:
+            properties:
+                input_count:
+                    description: 输入内容所消耗的 Token 数，包含对话上下文、系统提示词、用户当前输入等所有输入类的 Token 消耗。
+                    type: integer
+                output_count:
+                    description: 大模型输出的内容所消耗的 Token 数。
+                    type: integer
+                token_count:
+                    description: 本次 API 调用消耗的 Token 总量，包括输入和输出两部分的消耗。
+                    type: integer
+            type: object
+info:
+    title: 恢复运行工作流（流式响应）
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/workflow/stream_resume:
+        post:
+            description: 流式恢复运行已中断的工作流。
+            operationId: post_workflow_resume
+            parameters:
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                event_id:
+                                    description: 工作流执行中断事件 ID。你可以从执行工作流（流式响应）的响应信息中获得中断事件 ID。
+                                    type: string
+                                interrupt_type:
+                                    description: "工作流执行中断的类型，用于标识导致工作流中断的具体原因，你可以从执行工作流 的响应信息中获得中断事件的中断类型。枚举值： \n  \n * 6：端插件触发中断。 \n * 2：问答节点触发中断。 \n * 5：输入节点触发中断。 \n * 7：OAuth 插件触发中断。"
+                                    type: integer
+                                resume_data:
+                                    description: "恢复执行时，用户对智能体指定问题的回复。 \n 如果是问答节点导致的中断，回复中应包含问答节点中的必选参数，否则工作流会再次中断并提问。 \n 如果要传入 Image 等类型的文件，可以调用上传文件上传文件API 获取 file_id，在调用此 API 时在 resume_data 中以序列化之后的 JSON 格式传入 file_id。例如 “resume_data” : \"{\\\"file_id\\\": \\\"1456234*\\\"}\"。"
+                                    type: string
+                                workflow_id:
+                                    description: "待执行的 Workflow ID，此工作流应已发布。 \n 进入 Workflow 编排页面，在页面 URL 中，workflow 参数后的数字就是 Workflow ID。例如 https://www.coze.com/work_flow?space_id=42463*&workflow_id=73505836754923*，Workflow ID 为 73505836754923*。"
+                                    type: string
+                            required:
+                                - workflow_id
+                                - event_id
+                                - interrupt_type
+                                - resume_data
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    content:
+                                        description: 流式输出的消息内容。
+                                        type: string
+                                    cost:
+                                        description: 预留字段，无需关注。
+                                        type: string
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 响应详情。
+                                    error_code:
+                                        description: "调用状态码。  \n  \n * 0 表示调用成功。  \n * 其他值表示调用失败。你可以通过 error_message 字段判断详细的错误原因。"
+                                        format: int64
+                                        type: integer
+                                    error_message:
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+                                        type: string
+                                    event:
+                                        description: "当前流式返回的数据包事件。包括以下类型： \n  \n * Message：工作流节点输出消息，例如输出节点、结束节点的输出消息。可以在 data 中查看具体的消息内容。 \n * Error：报错。可以在 data 中查看 error_code 和 error_message，排查问题。 \n * Done：结束。表示工作流执行结束，此时 data 中包含。 \n * Interrupt：中断。表示工作流中断，此时 data 字段中包含具体的中断信息。"
+                                        type: string
+                                    id:
+                                        description: 此消息在接口响应中的事件 ID。以 0 为开始。
+                                        type: string
+                                    interrupt_data:
+                                        $ref: '#/components/schemas/Interrupt'
+                                        description: content type为interrupt时传输，中断协议
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                    node_is_finish:
+                                        description: 当前消息是否为此节点的最后一个数据包。
+                                        type: boolean
+                                    node_seq_id:
+                                        description: 此消息在节点中的消息 ID，从 0 开始计数，例如输出节点的第 5 条消息。
+                                        type: string
+                                    node_title:
+                                        description: 输出消息的节点名称，例如输出节点、结束节点。
+                                        type: string
+                                    usage:
+                                        $ref: '#/components/schemas/Usage'
+                                        description: 资源使用情况。
+                                type: object
+                    description: OK
+            summary: 恢复运行工作流（流式响应）
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/workflow_resume
+servers:
+    - url: https://api.coze.cn

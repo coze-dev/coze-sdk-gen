@@ -1,0 +1,134 @@
+components:
+    schemas:
+        GetVoicePrintGroupFeatureListData:
+            properties:
+                items:
+                    description: 声纹列表，包含多个声纹的详细信息。
+                    items:
+                        type: integer
+                    type: array
+                total:
+                    description: 声纹数量。
+                    format: int64
+                    type: integer
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+        UserInfo:
+            properties:
+                avatar_url:
+                    description: 声纹创建者的扣子用户头像。
+                    type: string
+                id:
+                    description: 声纹创建者的扣子用户的 UID。
+                    type: string
+                name:
+                    description: 声纹创建者的扣子用户名。
+                    type: string
+                nickname:
+                    description: 声纹创建者的扣子用户昵称。
+                    type: string
+            type: object
+        VoicePrintGroupFeature:
+            properties:
+                audio_url:
+                    description: 声纹原始音频的 URL 地址，用于访问或下载该声纹对应的音频文件。
+                    type: string
+                created_at:
+                    description: 声纹的创建时间，以 Unix 时间戳格式表示，单位为秒。
+                    format: int64
+                    type: integer
+                desc:
+                    description: 声纹的描述。
+                    type: string
+                group_id:
+                    description: 声纹组的 ID。
+                    type: string
+                icon_url:
+                    description: 声纹的头像 URL。
+                    type: string
+                id:
+                    description: 声纹的 ID。
+                    type: string
+                name:
+                    description: 声纹的名称。
+                    type: string
+                updated_at:
+                    description: 声纹的更新时间，以 Unix 时间戳格式表示，单位为秒。
+                    format: int64
+                    type: integer
+                user_info:
+                    $ref: '#/components/schemas/UserInfo'
+                    description: 声纹创建者的用户信息。
+            type: object
+info:
+    title: 查询声纹列表
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/audio/voiceprint_groups/{group_id}/features:
+        get:
+            description: 查询指定声纹组中的声纹列表。
+            operationId: get_list_voiceprint
+            parameters:
+                - description: 声纹组 ID。你可以通过查看声纹组列表 API 查看声纹组 ID。
+                  in: path
+                  name: group_id
+                  required: true
+                  schema:
+                    type: integer
+                - description: 查询结果分页展示时，此参数用于设置查看的页码。最小值为 1，默认为 1。
+                  in: query
+                  name: page_num
+                  required: false
+                  schema:
+                    format: int64
+                    type: integer
+                - description: 查询结果分页展示时，此参数用于设置每页返回的数据量。取值范围为 1~200，默认为 10。
+                  in: query
+                  name: page_size
+                  required: false
+                  schema:
+                    format: int64
+                    type: integer
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/GetVoicePrintGroupFeatureListData'
+                                        description: 返回的声纹列表及相关信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 查询声纹列表
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/list_voiceprint
+servers:
+    - url: https://api.coze.cn

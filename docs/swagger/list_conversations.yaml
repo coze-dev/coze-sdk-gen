@@ -1,0 +1,124 @@
+components:
+    schemas:
+        ConversationData:
+            properties:
+                created_at:
+                    description: 会话创建的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+                    format: int64
+                    type: integer
+                id:
+                    description: Conversation ID，即会话的唯一标识。
+                    type: string
+                last_section_id:
+                    description: 会话中最新的一个上下文片段 ID。
+                    type: string
+                meta_data:
+                    additionalProperties: true
+                    description: "附加信息，通常用于封装一些业务相关的字段。查看会话信息时，扣子编程会透传此附加信息，查看消息列表时不会返回该附加信息。 \n 自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。"
+                    type: object
+                name:
+                    description: 会话的名称，用于标识和区分不同的会话。
+                    type: string
+                updated_at:
+                    description: 会话的最后更新时间，格式为 10 位的 Unix 时间戳，单位为秒。
+                    format: int64
+                    type: integer
+            type: object
+        ListConversationData:
+            properties:
+                conversations:
+                    description: 会话的详细信息。
+                    items:
+                        $ref: '#/components/schemas/ConversationData'
+                    type: array
+                has_more:
+                    description: "是否还有更多会话未在本次请求中返回。 \n  \n * true：还有更多未返回的会话。 \n * false：已返回符合筛选条件的全部会话。"
+                    type: boolean
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 查看会话列表
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/conversations:
+        get:
+            description: |-
+                查看指定智能体的会话列表。
+                * 调用此 API 之前，应确认当前使用的访问密钥拥有智能体所在工作空间的权限。
+                * 仅支持通过此 API 查看智能体在 API 或 Chat SDK 渠道产生的会话。
+                * 仅支持查询本人创建的会话。
+            operationId: get_list_conversations
+            parameters:
+                - description: "智能体 ID，获取方法如下： \n 进入智能体的 开发页面，开发页面 URL 中 bot 参数后的数字就是智能体 ID。例如https://www.coze.cn/space/341/bot/73428668*，智能体 ID 为73428668*。"
+                  in: query
+                  name: bot_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 分页查询时的页码。默认为 1，即返回第一页数据。
+                  in: query
+                  name: page_num
+                  required: false
+                  schema:
+                    type: integer
+                - description: 每一页的数据条目个数，默认为 50，最大为 50。
+                  in: query
+                  name: page_size
+                  required: false
+                  schema:
+                    type: integer
+                - description: "会话列表的排序方式： \n  \n * ASC：按创建时间升序排序，最早创建的会话排序最前。 \n * DESC：（默认）按创建时间降序排序，最近创建的会话排序最前。"
+                  in: query
+                  name: sort_order
+                  required: false
+                  schema:
+                    type: string
+                - description: "发布渠道 ID，用于筛选指定渠道的会话。仅支持查看以下渠道的会话： \n  \n * （默认）API 渠道，渠道 ID 为 1024。 \n * Chat SDK 渠道，渠道 ID 为 999。"
+                  in: query
+                  name: connector_id
+                  required: false
+                  schema:
+                    type: string
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/ListConversationData'
+                                        description: 会话列表的详细。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 响应的详细信息。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 查看会话列表
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/list_conversations
+servers:
+    - url: https://api.coze.cn

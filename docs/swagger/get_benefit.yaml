@@ -1,0 +1,137 @@
+components:
+    schemas:
+        BasicInfo:
+            properties:
+                user_level:
+                    description: "用户订阅的扣子套餐类型，枚举值： \n  \n * free：个人免费版。 \n * pro_personal：个人付费版。 \n * team：企业标准版。 \n * enterprise：企业旗舰版。"
+                    type: string
+            type: object
+        BenefitData:
+            properties:
+                basic_info:
+                    $ref: '#/components/schemas/BasicInfo'
+                    description: 用户订阅的扣子套餐类型。
+                benefit_info:
+                    description: 权益额度，包含用户当前享有的各项权益详情，如默认的权益、扩容权益及实际生效的权益等。
+                    items:
+                        $ref: '#/components/schemas/BenefitInfo'
+                    type: array
+            type: object
+        BenefitInfo:
+            properties:
+                basic:
+                    $ref: '#/components/schemas/BenefitTypeInfoItem'
+                    description: 默认的权益信息，包含权益的状态、用量及权益配额 ID。
+                benefit_type:
+                    description: "权益配额类型，枚举值： \n  \n * api_run_qps：扩容管理页面中扩容的 API QPS。 \n * call_tool_limit：通过 MCP 方式调用付费插件的次数限制。"
+                    type: string
+                effective:
+                    $ref: '#/components/schemas/BenefitTypeInfoItem'
+                    description: 当前实际生效的权益额度。
+                extra:
+                    description: 资源扩容新增的权益额度。如果未购买扩容服务，则该值为空。
+                    items:
+                        $ref: '#/components/schemas/BenefitTypeInfoItem'
+                    type: array
+                resource_id:
+                    description: "当前权益对应的资源 ID。当前仅如下 API 类型支持扩容。枚举值： \n  \n * plugin：插件相关 API 的 QPS 限制。对应的 API 包括调用插件工具、询插件详情。 \n * chat：对话相关 API 的 QPS 限制。对应的 API 包括：发起对话、查看对话详情、查看对话消息详情。 \n * workflow：工作流相关 API 的 QPS 限制。对应的 API 包括：执行工作流 、执行工作流（流式响应） 、执行对话流 、查询工作流异步执行结果 、查询输出节点的执行结果 。"
+                    type: string
+            type: object
+        BenefitTypeInfoItem:
+            properties:
+                item_info:
+                    $ref: '#/components/schemas/CommonCounter'
+                    description: 当前权益的使用量、总量、生效时间及资源使用策略。
+                status:
+                    description: "权益状态，表示当前权益的使用状态。枚举值： \n  \n * valid：正常使用。 \n * frozen：冻结使用。 \n * cancel：取消。 \n * pending：待生效。 \n * invalid：不可用。 \n * auditing：审核中。 \n * expired：已过期。"
+                    type: string
+            type: object
+        CommonCounter:
+            properties:
+                end_at:
+                    description: 权益的结束生效时间，以 Unix 时间戳格式表示，单位为秒。
+                    format: int64
+                    type: integer
+                start_at:
+                    description: 权益的开始生效时间，以 Unix 时间戳格式表示，单位为秒。
+                    format: int64
+                    type: integer
+                strategy:
+                    description: "资源使用策略，表示当前权益的资源使用方式。枚举值： \n  \n * unlimit：不限制用量。 \n * forbidden：不支持调用，该套餐不支持该权益。 \n * by_quota：按额度限制使用。"
+                    type: string
+                total:
+                    description: "* 当 strategy 为 ByQuota 时，表示当前权益的用量上限。 \n * 当 strategy 为 unlimit 或 forbidden  时，该值为 1。"
+                    format: double
+                    type: number
+                used:
+                    description: 当 strategy 为 ByQuota 时，表示当前权益的已使用量。若权益无相关用量数据则返回 0。
+                    format: double
+                    type: number
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 查询套餐权益
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/commerce/benefit/benefits/get:
+        get:
+            description: 查询当前账号的套餐权益信息。
+            operationId: get_get_benefit
+            parameters:
+                - description: "权益类型列表，多个类型用逗号分隔。支持的权益类型如下： \n  \n * api_run_qps： API 扩容的信息，你需要在 resource_id 中传入待查询的 API 类型。 \n * call_tool_limit：通过 MCP 方式调用付费插件的次数限制。 \n  \n 默认为空，即返回订阅的套餐类型，不含额外扩容的权益。"
+                  in: query
+                  name: benefit_type_list
+                  required: false
+                  schema:
+                    items:
+                        type: string
+                    type: array
+                - description: "API 类型，当 benefit_type_list 为 api_run_qps时，需要配置该参数。当前仅支持查询可扩容的 API 类型。枚举值： \n  \n * plugin：插件相关 API 的 QPS 限制。 \n * chat：对话相关的 API 的 QPS 限制。 \n * workflow：工作流相关的 API 的 QPS 限制。"
+                  in: query
+                  name: resource_id
+                  required: false
+                  schema:
+                    type: string
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/BenefitData'
+                                        description: 用户订阅的套餐类型和权益额度的详细信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 查询套餐权益
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/get_benefit
+servers:
+    - url: https://api.coze.cn

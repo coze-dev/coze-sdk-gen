@@ -1,0 +1,102 @@
+components:
+    schemas:
+        ApiAppEventOpen:
+            properties:
+                api_app_id:
+                    description: 回调应用的 ID。
+                    type: string
+                description:
+                    description: 回调应用的描述信息，用于说明回调应用的功能或用途。
+                    type: string
+                event_type:
+                    description: "回调事件类型，目前支持的事件类型包括： \n  \n * bot.published：智能体发布事件。 \n * bot.deleted：智能体删除事件。 \n * bot.unpublished：智能体下架事件。 \n * benefit.usage：账单推送回调。 \n * benefit.plugin.scale.requested：申请插件扩容事件。 \n * benefit.plugin.scale.expired：插件扩容到期事件。"
+                    type: string
+                name:
+                    description: 回调应用的名称。
+                    type: string
+            type: object
+        ListSubscribedApiAppEventOpenRespData:
+            properties:
+                has_more:
+                    description: "标识当前返回的回调应用列表是否还有更多数据未返回。 \n  \n * true ：还有更多未返回的回调应用。 \n * false：已返回所有数据。"
+                    type: boolean
+                items:
+                    description: 回调应用的信息列表，包含每个回调应用的名称、ID、事件类型和描述。
+                    items:
+                        $ref: '#/components/schemas/ApiAppEventOpen'
+                    type: array
+                next_page_token:
+                    description: 翻页标识，表示下一页的起始位置。当 has_more 为 true 时，表示还有更多数据未返回，可以通过此令牌获取下一页数据。首次请求不填或置空，后续翻页需使用上一次返回的 next_page_token。
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 查询已订阅的事件
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/api_apps/{api_app_id}/events:
+        get:
+            description: 查询回调应用中已订阅的事件。
+            operationId: get_list_subscribed_callback_message
+            parameters:
+                - description: 回调应用的 ID。你可以通过查询回调应用列表 API 获取回调应用的 ID。
+                  in: path
+                  name: api_app_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 分页查询时的翻页标识，表示下一页的起始位置。默认为 ""，即从第一页数据开始返回。如果要查询下一页，需要使用上一次返回的 next_page_token 作为这次请求的入参。
+                  in: query
+                  name: page_token
+                  required: false
+                  schema:
+                    type: string
+                - description: "每页返回的数据条数，用于分页查询。默认值：50。 \n 取值范围：1 ~ 50。"
+                  in: query
+                  name: page_size
+                  required: false
+                  schema:
+                    type: integer
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/ListSubscribedApiAppEventOpenRespData'
+                                        description: 包含回调应用的信息列表及分页信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 查询已订阅的事件
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/list_subscribed_callback_message
+servers:
+    - url: https://api.coze.cn

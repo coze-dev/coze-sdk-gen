@@ -1,0 +1,65 @@
+info:
+    title: 执行对话流
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/workflows/chat:
+        post:
+            description: 执行已发布的对话流。
+            operationId: post_workflow_chat
+            parameters:
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                content:
+                                    description: "消息的内容，仅支持纯文本。 \n 如果需要通过输入节点输入消息，可通过如下两种格式： \n  \n * JSON 格式的键值对，例如：{\"input\":\"北京今天的天气怎么样\"}。 \n * 用\\n分隔的键值对，例如：{key1:val1\\nkey2:val2\\nkey3:val3}。 \n  \n * 暂不支持在 content 中输入多模态（文本、图片、文件混合输入）、卡片等类型的内容。 \n * 如果需要传入图片、文件等多模态内容，你可以在 parameters 中传入对应的自定义参数及其值。"
+                                    type: string
+                                content_type:
+                                    description: "消息内容的类型。 \n content_type  固定为 text，表示普通文本。 \n 指定 content 时，应同时设置 content_type。"
+                                    type: string
+                                meta_data:
+                                    additionalProperties: true
+                                    description: "创建消息时的附加消息，获取消息时也会返回此附加消息。 \n 自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。"
+                                    type: object
+                                role:
+                                    description: "发送这条消息的实体。取值： \n  \n * user：代表该条消息内容是用户发送的。 \n * assistant：代表该条消息内容是模型发送的。"
+                                    type: string
+                                type:
+                                    description: "消息类型。默认为 question。 \n  \n * question：用户输入内容。 \n * answer：模型返回给用户的消息内容，支持增量返回。如果对话流绑定了输出节点，可能会存在多 answer 场景，此时可以用流式返回的结束标志来判断所有 answer 完成。 \n * function_call：智能体对话过程中调用函数（function call）的中间结果。  \n * tool_response：调用工具 （function call）后返回的结果。"
+                                    type: string
+                            required:
+                                - role
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    data:
+                                        description: "消息内容。其中，chat 事件和 message 事件的格式不同。 \n  \n * chat 事件中，data 为 Chat Object。 \n * message 事件中，data 为 Message Object。"
+                                        type: object
+                                    event:
+                                        description: 当前流式返回的数据包事件。在流式响应中，服务端不会一次性发送所有数据，而是以数据流的形式逐条发送数据给客户端，数据流中包含对话过程中触发的各种事件（event），直至处理完毕或处理中断。处理结束后，服务端会通过 conversation.message.completed 事件返回拼接后完整的模型回复信息。各个事件的说明可参考下表。
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 执行对话流
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/workflow_chat
+servers:
+    - url: https://api.coze.cn

@@ -1,0 +1,63 @@
+info:
+    title: OAuth JWT 授权（开发者）
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /api/permission/oauth2/token:
+        post:
+            description: |-
+                纯后端应用通常不包含任何用户界面元素，用户无法直接与之交互。该场景下建议使用 JWT（JSON Web Token）模式，扣子账号直接永久授予 OAuth App 权限，OAuth App 随时可以通过后端应用签发的 JWT 获取访问令牌，以后端应用的身份请求扣子 API。
+                OAuth 授权码授权、PKCE 授权、设备授权模式下，扣子编程支持多人协作场景下跨账号的 OAuth 授权，详细说明可参考OAuth 授权（多人协作场景）。
+            operationId: post_oauth_jwt
+            parameters:
+                - description: "在扣子企业旗舰版中，如果需要在指定组织下获取 Token，需要在 Path 中填写组织 ID。组织 ID 的获取方式如下： \n 组织超级管理员或管理员可以在组织设置页面查看对应的组织 ID。 \n !Image"
+                  in: path
+                  name: account_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+                - description: 使用应用的客户端私钥签署的 JWT。生成方式可参考2 签署 JWT。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                duration_seconds:
+                                    description: 申请的 AccessToken 有效期，单位为秒，默认 900 秒，即 15 分钟。最大可设置为 86399 秒，即 24 小时。
+                                    type: integer
+                                grant_type:
+                                    description: 固定为 urn:ietf:params:oauth:grant-type:jwt-bearer。
+                                    type: string
+                            required:
+                                - grant_type
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    access_token:
+                                        description: OAuth Access Token。
+                                        type: string
+                                    expires_in:
+                                        description: OAuth Access Token 的过期时间，Unixtime 时间戳格式，单位为秒。
+                                        type: integer
+                                type: object
+                    description: OK
+            summary: OAuth JWT 授权（开发者）
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/oauth_jwt
+servers:
+    - url: https://api.coze.cn

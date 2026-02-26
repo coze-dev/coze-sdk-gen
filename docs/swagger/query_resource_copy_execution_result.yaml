@@ -1,0 +1,102 @@
+components:
+    schemas:
+        OpenCopyTaskInfoData:
+            properties:
+                entity_type:
+                    description: "待复制资源的类型。枚举值： \n  \n * app：应用。 \n * bot：智能体。 \n * workflow：工作流。"
+                    type: string
+                failed_reasons:
+                    description: 当资源复制任务失败时，该字段汇总所有失败的具体原因。每个失败原因包含资源 ID、名称、类型及详细错误描述。
+                    items:
+                        $ref: '#/components/schemas/TaskFailedReason'
+                    type: array
+                source_entity_id:
+                    description: 源资源 ID。
+                    type: string
+                target_entity_id:
+                    description: 复制后的资源 ID。
+                    type: string
+                target_workspace_id:
+                    description: 资源复制后的目标工作空间 ID，表示资源被复制到的工作空间标识。
+                    type: string
+                task_id:
+                    description: 资源复制的任务 ID。
+                    type: string
+                task_status:
+                    description: "任务的状态。枚举值： \n  \n * in_progress：进行中。 \n * successful：成功。 \n * failed：失败。"
+                    type: string
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+        TaskFailedReason:
+            properties:
+                entity_id:
+                    description: 在资源复制任务失败时，标识具体失败的资源 ID。
+                    type: string
+                entity_name:
+                    description: 资源的名称。
+                    type: string
+                entity_type:
+                    description: "在资源复制任务失败时，标识具体失败资源的类型。支持的取值如下所示。 \n  \n * app：应用。 \n * bot：智能体。 \n * workflow：工作流。 \n * plugin：插件。 \n * ui：应用的用户界面。 \n * knowledge：知识库。 \n * database：数据库。 \n * variable：变量。 \n * trigger：触发器。 \n * prompt：提示词。 \n * shortcut：快捷指令。"
+                    type: string
+                failed_reason:
+                    description: 资源复制任务失败的具体原因描述，API 调用失败时可通过此字段查看详细错误信息。
+                    type: string
+            type: object
+info:
+    title: 查询资源复制的结果
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/entities/copy_tasks/{task_id}:
+        get:
+            description: 查询资源复制的结果。
+            operationId: get_query_resource_copy_execution_result
+            parameters:
+                - description: 资源复制的任务 ID。调用复制资源 API 时，如果 API 为异步执行，响应信息中会返回 task_id。
+                  in: path
+                  name: task_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    data:
+                                        $ref: '#/components/schemas/OpenCopyTaskInfoData'
+                                        description: 资源复制任务的结果数据，包含任务 ID、资源类型、任务状态、失败原因、原始资源 ID、复制后的资源 ID 以及目标工作空间 ID 等信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 本次请求的详细日志信息，用于问题排查。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 查询资源复制的结果
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/query_resource_copy_execution_result
+servers:
+    - url: https://api.coze.cn

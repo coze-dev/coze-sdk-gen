@@ -1,0 +1,84 @@
+components:
+    schemas:
+        OrganizationPeopleAddData:
+            properties:
+                organization_role_type:
+                    description: "设置用户在组织中的角色，枚举值： \n  \n * organization_super_admin：组织超级管理员。 \n * organization_admin：组织管理员。 \n * organization_member：组织成员。 \n * organization_guest：访客。"
+                    type: string
+                user_id:
+                    description: "需要添加至组织的扣子用户的 UID。 \n 你可以调用火山引擎的 ListCozeUser-成员列表 API，其中 CozeUserId 的值即为扣子用户的 UID。"
+                    type: string
+            required:
+                - user_id
+                - organization_role_type
+            type: object
+        ResponseDetail:
+            properties:
+                logid:
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+                    type: string
+            type: object
+info:
+    title: 添加组织成员
+    version: 1.0.0
+openapi: 3.0.3
+paths:
+    /v1/organizations/{organization_id}/members:
+        post:
+            description: 添加组织成员。
+            operationId: post_add_organization_people
+            parameters:
+                - description: "需要添加组织成员的组织 ID。  \n 你可以在组织管理 > 组织设置页面查看对应的组织 ID，或通过查询组织列表 API 查询组织 ID。 \n !Image"
+                  in: path
+                  name: organization_id
+                  required: true
+                  schema:
+                    type: string
+                - description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息参考OAuth JWT 授权（企业特权应用）。
+                  in: header
+                  name: Authorization
+                  required: false
+                  schema:
+                    type: string
+                - description: 解释请求正文的方式。
+                  in: header
+                  name: Content-Type
+                  required: false
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                organization_people:
+                                    description: 待添加至组织的成员列表。
+                                    items:
+                                        $ref: '#/components/schemas/OrganizationPeopleAddData'
+                                    type: array
+                            required:
+                                - organization_people
+                            type: object
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                properties:
+                                    code:
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                        format: int64
+                                        type: integer
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含本次请求的详细信息，主要用于异常报错场景下的问题排查。
+                                    msg:
+                                        description: "状态信息。API 调用失败时可通过此字段查看详细错误信息。 \n 状态码为 0 时，msg 默认为空。"
+                                        type: string
+                                type: object
+                    description: OK
+            summary: 添加组织成员
+            x-source-url: https://docs.coze.cn/api/open/docs/developer_guides/add_organization_people
+servers:
+    - url: https://api.coze.cn
