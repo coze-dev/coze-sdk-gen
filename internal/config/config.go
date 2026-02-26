@@ -174,7 +174,6 @@ type OperationMapping struct {
 	ResponseType                   string            `yaml:"response_type"`
 	AsyncResponseType              string            `yaml:"async_response_type"`
 	ResponseCast                   string            `yaml:"response_cast"`
-	StreamKeyword                  bool              `yaml:"stream_keyword"`
 	QueryFields                    []OperationField  `yaml:"query_fields"`
 	QueryFieldValues               map[string]string `yaml:"query_field_values"`
 	ArgDefaults                    map[string]string `yaml:"arg_defaults"`

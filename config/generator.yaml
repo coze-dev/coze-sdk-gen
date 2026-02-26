@@ -4601,7 +4601,6 @@ api:
       no_blank_line_after_headers: true
       force_multiline_signature: true
       http_method_override: GET
-      stream_keyword: true
       response_type: SimpleFolder
       response_cast: SimpleFolder
     - path: /v1/folders
@@ -4718,7 +4717,6 @@ api:
         uid: str
         workflow_id: str
         config: RoomConfig
-      stream_keyword: true
       response_type: CreateRoomResp
       response_cast: CreateRoomResp
     - path: /v1/audio/speech
@@ -4749,7 +4747,6 @@ api:
         response_format: AudioFormat.MP3
         speed: "1"
         sample_rate: "24000"
-      stream_keyword: true
       response_type: FileHTTPResponse
       response_cast: FileHTTPResponse
     - path: /v1/audio/transcriptions
@@ -4765,7 +4762,6 @@ api:
         file: _try_fix_file(file)
       arg_types:
         file: FileTypes
-      stream_keyword: true
       response_type: CreateTranscriptionsResp
       response_cast: CreateTranscriptionsResp
     - path: /v1/audio/live/{live_id}
@@ -4775,7 +4771,6 @@ api:
         - audio_live.retrieve
       allow_missing_in_swagger: true
       disable_request_body: true
-      stream_keyword: true
       force_multiline_signature: true
       response_type: LiveInfo
       response_cast: LiveInfo
@@ -5197,7 +5192,6 @@ api:
         - users
       arg_types:
         users: List[EnterpriseMember]
-      stream_keyword: true
       response_type: CreateEnterpriseMemberResp
       response_cast: CreateEnterpriseMemberResp
     - path: /v1/enterprises/{enterprise_id}/organizations
@@ -5227,7 +5221,6 @@ api:
         - role
       arg_types:
         role: EnterpriseMemberRole
-      stream_keyword: true
       response_type: UpdateEnterpriseMemberResp
       response_cast: UpdateEnterpriseMemberResp
     - path: /v1/enterprises/{enterprise_id}/members/{user_id}
@@ -5243,7 +5236,6 @@ api:
         - receiver_user_id
       arg_types:
         receiver_user_id: str
-      stream_keyword: true
       response_type: DeleteEnterpriseMemberResp
       response_cast: DeleteEnterpriseMemberResp
     - path: /v1/workflow/run
@@ -5486,7 +5478,6 @@ api:
         - user_ids
       arg_types:
         user_ids: List[str]
-      stream_keyword: true
       response_type: DeleteWorkspaceMemberResp
       response_cast: DeleteWorkspaceMemberResp
     - path: /v1/workspaces/{workspace_id}/members
@@ -5511,7 +5502,6 @@ api:
           ]
       arg_types:
         users: List[WorkspaceMember]
-      stream_keyword: true
       response_type: CreateWorkspaceMemberResp
       response_cast: CreateWorkspaceMemberResp
     - path: /v1/workspaces/{workspace_id}/members

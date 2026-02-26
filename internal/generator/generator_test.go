@@ -474,7 +474,7 @@ func TestRenderOperationMethodAdvancedOptions(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodStreamWrapAndKeywords(t *testing.T) {
+func TestRenderOperationMethodStreamWrap(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/demo/stream",
@@ -492,21 +492,20 @@ func TestRenderOperationMethodStreamWrapAndKeywords(t *testing.T) {
 			StreamWrap:        true,
 			StreamWrapHandler: "handle_demo",
 			StreamWrapFields:  []string{"event", "data"},
-			StreamKeyword:     true,
 		},
 	}
 
 	syncCode := pygen.RenderOperationMethod(doc, binding, false)
-	if !strings.Contains(syncCode, "response: IteratorHTTPResponse[str] = self._requester.request(\"post\", url, stream=True, cast=None, headers=headers)") {
-		t.Fatalf("expected keyword stream/cast request call:\n%s", syncCode)
+	if !strings.Contains(syncCode, "response: IteratorHTTPResponse[str] = self._requester.request(\"post\", url, True, cast=None, headers=headers)") {
+		t.Fatalf("expected stream bool request call:\n%s", syncCode)
 	}
 	if !strings.Contains(syncCode, "return Stream(") || !strings.Contains(syncCode, "handler=handle_demo") {
 		t.Fatalf("expected wrapped sync stream return:\n%s", syncCode)
 	}
 
 	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
-	if !strings.Contains(asyncCode, "resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(\"post\", url, stream=True, cast=None, headers=headers)") {
-		t.Fatalf("expected keyword async request call:\n%s", asyncCode)
+	if !strings.Contains(asyncCode, "resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(\"post\", url, True, cast=None, headers=headers)") {
+		t.Fatalf("expected async stream bool request call:\n%s", asyncCode)
 	}
 	if !strings.Contains(asyncCode, "return AsyncStream(") || !strings.Contains(asyncCode, "raw_response=resp._raw_response") {
 		t.Fatalf("expected wrapped async stream return:\n%s", asyncCode)

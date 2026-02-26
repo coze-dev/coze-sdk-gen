@@ -473,7 +473,6 @@ func renderOperationMethodWithContext(
 	returnType, returnCast := ReturnTypeInfo(doc, details.ResponseSchema)
 	requestBodyType, bodyRequired := RequestBodyTypeInfo(doc, details.RequestBodySchema, details.RequestBody)
 	ignoreHeaderParams := binding.Mapping != nil && binding.Mapping.IgnoreHeaderParams
-	streamKeyword := binding.Mapping != nil && binding.Mapping.StreamKeyword
 	streamWrap := binding.Mapping != nil && binding.Mapping.StreamWrap
 	asyncIncludeKwargs := async && binding.Mapping != nil && binding.Mapping.AsyncIncludeKwargs
 	paginationCastBeforeHeaders := binding.Mapping != nil && binding.Mapping.PaginationCastBeforeHeaders
@@ -1377,11 +1376,7 @@ func renderOperationMethodWithContext(
 	if requestStream {
 		streamLiteral = "True"
 	}
-	streamExpr := streamLiteral
-	if streamKeyword {
-		streamExpr = fmt.Sprintf("stream=%s", streamLiteral)
-	}
-	optionalArgs = append(optionalArgs, requestCallArg{Expr: streamExpr})
+	optionalArgs = append(optionalArgs, requestCallArg{Expr: streamLiteral})
 	castExprValue := fmt.Sprintf("cast=%s", castExpr)
 	optionalArgs = append(optionalArgs, requestCallArg{Expr: castExprValue})
 	if len(queryFields) > 0 {
