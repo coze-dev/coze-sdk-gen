@@ -142,6 +142,7 @@ Before starting implementation or generation, pull remote `origin/main` into loc
    - If `gh` fails due permission issues (for example missing `read:org`), use REST API fallback:
      - `PATCH /repos/{owner}/{repo}/pulls/{number}`
      - `POST /repos/{owner}/{repo}/issues/{number}/labels`
+11. After each PR merge, the report must include the PR title in addition to existing merge information.
 
 ### Rule 2: Commit Rules
 
@@ -206,7 +207,7 @@ Before starting implementation or generation, pull remote `origin/main` into loc
    - For `coze-py`, if repository policy rejects non-squash merge, prefer `--squash` and fall back to `--squash --admin` when required by policy gates.
    - If new commits trigger new checks or comments and user asks for follow-up, return to Stage 3.
 5. Final report:
-   - `coze-sdk-gen` PR URL / status / merge result
-   - Downstream `coze-py` PR URL / status / merge result
+   - `coze-sdk-gen` PR URL / title / status / merge result
+   - Downstream `coze-py` PR URL / title / status / merge result
    - `coze-sdk-gen` commit / push result
    - Task completion response must explicitly include both PR links.
