@@ -577,6 +577,10 @@ api:
           module: .collaboration_modes
           sync_class: BotsCollaborationModesClient
           async_class: AsyncBotsCollaborationModesClient
+        - attribute: collaborators
+          module: .collaborators
+          sync_class: BotsCollaboratorsClient
+          async_class: AsyncBotsCollaboratorsClient
       extra_imports:
         - module: pydantic
           names:
@@ -1052,6 +1056,17 @@ api:
         - UpdateBotCollaborationModeResp
       path_prefixes:
         - /v1/bots/{bot_id}/collaboration_mode
+    - name: bots_collaborators
+      source_dir: cozepy/bots/collaborators
+      client_class: BotsCollaboratorsClient
+      async_client_class: AsyncBotsCollaboratorsClient
+      model_schemas:
+        - schema: properties_collaborators_items
+          name: BotCollaborator
+      empty_models:
+        - AddBotCollaboratorResp
+      path_prefixes:
+        - /v1/bots/{bot_id}/collaborators
     - name: chat
       source_dir: cozepy/chat
       separate_commented_enum_members: true
@@ -4562,6 +4577,23 @@ api:
         collaboration_mode: BotCollaborationMode
       response_type: UpdateBotCollaborationModeResp
       response_cast: UpdateBotCollaborationModeResp
+    - path: /v1/bots/{bot_id}/collaborators
+      method: post
+      order: 732
+      sdk_methods:
+        - bots_collaborators.create
+      body_builder: remove_none_values
+      body_fields:
+        - collaborators
+      body_required_fields:
+        - collaborators
+      body_field_values:
+        collaborators: |-
+          [i.model_dump() for i in collaborators] if collaborators else []
+      arg_types:
+        collaborators: List[BotCollaborator]
+      response_type: AddBotCollaboratorResp
+      response_cast: AddBotCollaboratorResp
     - path: /v1/folders/{folder_id}
       method: get
       order: 74
@@ -5544,8 +5576,6 @@ api:
     - path: /v1/conversation/message/list
       method: post
     - path: /v3/chat/submit_tool_outputs
-      method: post
-    - path: /v1/bots/{bot_id}/collaborators
       method: post
     - path: /v1/bots/{bot_id}/collaborators/{user_id}
       method: delete
