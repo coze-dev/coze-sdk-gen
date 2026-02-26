@@ -238,9 +238,6 @@ func inferModelNameCandidate(schemaName string, schema *openapi.Schema) (string,
 	if trimmed == "" {
 		return "", false
 	}
-	if trimmed == "properties_data" || strings.HasSuffix(trimmed, "_properties_data") {
-		return "overview", true
-	}
 	if schemaHasAllProperties(schema, "status", "item_info") {
 		return "status_info", true
 	}

@@ -206,7 +206,7 @@ func TestResolvePackageModelDefinitionsWithoutConfiguredModels(t *testing.T) {
 		nameCount[model.Name]++
 	}
 
-	requiredNames := []string{"BenefitOverview", "BenefitInfo", "BenefitBasicInfo", "BenefitStatusInfo", "BenefitItemInfo"}
+	requiredNames := []string{"BenefitData", "BenefitInfo", "BenefitBasicInfo", "BenefitStatusInfo", "BenefitItemInfo"}
 	for _, want := range requiredNames {
 		if nameCount[want] != 1 {
 			t.Fatalf("expected %s to be generated once, got %d (all=%v)", want, nameCount[want], nameCount)
@@ -261,7 +261,7 @@ func TestInferBindingResponseModelName(t *testing.T) {
 	if !ok {
 		t.Fatal("expected inferBindingResponseModelName to succeed")
 	}
-	if got != "BenefitOverview" {
-		t.Fatalf("inferBindingResponseModelName() = %q, want %q", got, "BenefitOverview")
+	if got != "BenefitData" {
+		t.Fatalf("inferBindingResponseModelName() = %q, want %q", got, "BenefitData")
 	}
 }
