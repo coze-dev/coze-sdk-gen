@@ -4680,8 +4680,6 @@ api:
         - audio_transcriptions.create
       files_fields:
         - file
-      files_field_values:
-        file: _try_fix_file(file)
       arg_types:
         file: FileTypes
       response_type: CreateTranscriptionsResp
@@ -4781,8 +4779,6 @@ api:
         - file
       files_fields:
         - file
-      files_field_values:
-        file: _try_fix_file(file)
       arg_types:
         group_id: str
         file: FileTypes
@@ -4808,8 +4804,6 @@ api:
         - file
       files_fields:
         - file
-      files_field_values:
-        file: _try_fix_file(file)
       arg_types:
         group_id: str
         name: str
@@ -4936,8 +4930,6 @@ api:
         - file
       files_fields:
         - file
-      files_field_values:
-        file: _try_fix_file(file)
       arg_types:
         voice_name: str
         file: FileTypes

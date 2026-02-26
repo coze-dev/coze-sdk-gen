@@ -160,7 +160,6 @@ type OperationMapping struct {
 	BodyFixedValues          map[string]string `yaml:"body_fixed_values"`
 	BodyBuilder              string            `yaml:"body_builder"`
 	FilesFields              []string          `yaml:"files_fields"`
-	FilesFieldValues         map[string]string `yaml:"files_field_values"`
 	FilesExpr                string            `yaml:"files_expr"`
 	FilesBeforeBody          bool              `yaml:"files_before_body"`
 	PreDocstringCode         []string          `yaml:"pre_docstring_code"`
@@ -518,14 +517,6 @@ func (c *Config) Validate() error {
 		for j, fileField := range mapping.FilesFields {
 			if strings.TrimSpace(fileField) == "" {
 				return fmt.Errorf("api.operation_mappings[%d].files_fields[%d] should not be empty", i, j)
-			}
-		}
-		for fieldName, fieldValue := range mapping.FilesFieldValues {
-			if strings.TrimSpace(fieldName) == "" {
-				return fmt.Errorf("api.operation_mappings[%d].files_field_values has empty key", i)
-			}
-			if strings.TrimSpace(fieldValue) == "" {
-				return fmt.Errorf("api.operation_mappings[%d].files_field_values[%q] is empty", i, fieldName)
 			}
 		}
 		for j, codeBlock := range mapping.PreBodyCode {
