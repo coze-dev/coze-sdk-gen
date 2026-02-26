@@ -552,7 +552,7 @@ func TestRenderOperationMethodStreamWrapYieldAndSyncVarDefault(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodStreamWrapCompactAsyncReturn(t *testing.T) {
+func TestRenderOperationMethodStreamWrapCompactSyncReturn(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/demo/stream",
@@ -563,15 +563,14 @@ func TestRenderOperationMethodStreamWrapCompactAsyncReturn(t *testing.T) {
 		MethodName:  "stream_call",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			RequestStream:                true,
-			ResponseType:                 "Stream[DemoEvent]",
-			AsyncResponseType:            "AsyncIterator[DemoEvent]",
-			ResponseCast:                 "None",
-			StreamWrap:                   true,
-			StreamWrapHandler:            "handle_demo",
-			StreamWrapFields:             []string{"event", "data"},
-			StreamWrapCompactSyncReturn:  true,
-			StreamWrapCompactAsyncReturn: true,
+			RequestStream:               true,
+			ResponseType:                "Stream[DemoEvent]",
+			AsyncResponseType:           "AsyncIterator[DemoEvent]",
+			ResponseCast:                "None",
+			StreamWrap:                  true,
+			StreamWrapHandler:           "handle_demo",
+			StreamWrapFields:            []string{"event", "data"},
+			StreamWrapCompactSyncReturn: true,
 		},
 	}
 	syncCode := pygen.RenderOperationMethod(doc, binding, false)
@@ -580,8 +579,11 @@ func TestRenderOperationMethodStreamWrapCompactAsyncReturn(t *testing.T) {
 	}
 
 	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
-	if !strings.Contains(asyncCode, "return AsyncStream(resp.data, fields=[\"event\", \"data\"], handler=handle_demo, raw_response=resp._raw_response)") {
-		t.Fatalf("expected compact async stream return line:\n%s", asyncCode)
+	if strings.Contains(asyncCode, "return AsyncStream(resp.data, fields=[\"event\", \"data\"], handler=handle_demo, raw_response=resp._raw_response)") {
+		t.Fatalf("did not expect compact async stream return line:\n%s", asyncCode)
+	}
+	if !strings.Contains(asyncCode, "return AsyncStream(\n            resp.data,\n") {
+		t.Fatalf("expected multiline async stream return:\n%s", asyncCode)
 	}
 }
 

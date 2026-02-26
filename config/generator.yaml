@@ -5428,7 +5428,6 @@ api:
         - event
         - data
       force_multiline_request_call: true
-      stream_wrap_compact_async_return: true
       response_type: Stream[ChatEvent]
       async_response_type: AsyncIterator[ChatEvent]
       response_cast: None

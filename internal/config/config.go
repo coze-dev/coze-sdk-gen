@@ -197,7 +197,6 @@ type OperationMapping struct {
 	StreamWrapHandler              string            `yaml:"stream_wrap_handler"`
 	StreamWrapFields               []string          `yaml:"stream_wrap_fields"`
 	StreamWrapAsyncYield           bool              `yaml:"stream_wrap_async_yield"`
-	StreamWrapCompactAsyncReturn   bool              `yaml:"stream_wrap_compact_async_return"`
 	StreamWrapCompactSyncReturn    bool              `yaml:"stream_wrap_compact_sync_return"`
 	QueryBuilder                   string            `yaml:"query_builder"`
 	BodyFieldValues                map[string]string `yaml:"body_field_values"`
