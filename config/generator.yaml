@@ -27,7 +27,6 @@ api:
   generate_only_mapped: true
   packages:
     - name: api_apps
-      source_dir: cozepy/api_apps
       client_class: APIAppsClient
       async_client_class: AsyncAPIAppsClient
       model_schemas:
@@ -48,7 +47,6 @@ api:
       path_prefixes:
         - /v1/api_apps
     - name: api_apps_events
-      source_dir: cozepy/api_apps/events
       client_class: APIAppsEventsClient
       async_client_class: AsyncAPIAppsEventsClient
       http_request_from_model: true
@@ -92,7 +90,6 @@ api:
       path_prefixes:
         - /v1/api_apps
     - name: apps
-      source_dir: cozepy/apps
       child_clients:
         - attribute: collaborators
           module: .collaborators
@@ -142,7 +139,6 @@ api:
       path_prefixes:
         - /v1/apps
     - name: apps_collaborators
-      source_dir: cozepy/apps/collaborators
       client_class: AppsCollaboratorsClient
       async_client_class: AsyncAppsCollaboratorsClient
       model_schemas:
@@ -154,11 +150,9 @@ api:
       path_prefixes:
         - /v1/apps/{app_id}/collaborators
     - name: audio
-      source_dir: cozepy/audio
       path_prefixes:
         - /v1/audio
     - name: audio_rooms
-      source_dir: cozepy/audio/rooms
       client_class: RoomsClient
       async_client_class: AsyncRoomsClient
       model_schemas:
@@ -252,7 +246,6 @@ api:
       path_prefixes:
         - /v1/audio/rooms
     - name: audio_speech
-      source_dir: cozepy/audio/speech
       client_class: SpeechClient
       async_client_class: AsyncSpeechClient
       model_schemas:
@@ -287,7 +280,6 @@ api:
       path_prefixes:
         - /v1/audio/speech
     - name: audio_transcriptions
-      source_dir: cozepy/audio/transcriptions
       client_class: TranscriptionsClient
       async_client_class: AsyncTranscriptionsClient
       model_schemas:
@@ -300,7 +292,6 @@ api:
       path_prefixes:
         - /v1/audio/transcriptions
     - name: audio_live
-      source_dir: cozepy/audio/live
       allow_missing_in_swagger: true
       client_class: LiveClient
       async_client_class: AsyncLiveClient
@@ -336,7 +327,6 @@ api:
       path_prefixes:
         - /v1/audio/live
     - name: audio_voiceprint_groups
-      source_dir: cozepy/audio/voiceprint_groups
       allow_missing_in_swagger: true
       client_class: VoiceprintGroupsClient
       async_client_class: AsyncVoiceprintGroupsClient
@@ -417,7 +407,6 @@ api:
       path_prefixes:
         - /v1/audio/voiceprint_groups
     - name: audio_voiceprint_groups_features
-      source_dir: cozepy/audio/voiceprint_groups/features
       allow_missing_in_swagger: true
       client_class: VoiceprintGroupsFeaturesClient
       async_client_class: AsyncVoiceprintGroupsFeaturesClient
@@ -495,7 +484,6 @@ api:
       path_prefixes:
         - /v1/audio/voiceprint_groups
     - name: audio_voices
-      source_dir: cozepy/audio/voices
       separate_commented_fields: true
       client_class: VoicesClient
       async_client_class: AsyncVoicesClient
@@ -571,7 +559,6 @@ api:
       path_prefixes:
         - /v1/audio/voices
     - name: bots
-      source_dir: cozepy/bots
       child_clients:
         - attribute: collaboration_modes
           module: .collaboration_modes
@@ -1044,7 +1031,6 @@ api:
         - /v1/bot
         - /v1/bots
     - name: bots_collaboration_modes
-      source_dir: cozepy/bots/collaboration_modes
       client_class: BotsCollaborationModesClient
       async_client_class: AsyncBotsCollaborationModesClient
       model_schemas:
@@ -1061,7 +1047,6 @@ api:
       path_prefixes:
         - /v1/bots/{bot_id}/collaboration_mode
     - name: bots_collaborators
-      source_dir: cozepy/bots/collaborators
       client_class: BotsCollaboratorsClient
       async_client_class: AsyncBotsCollaboratorsClient
       model_schemas:
@@ -1073,7 +1058,6 @@ api:
       path_prefixes:
         - /v1/bots/{bot_id}/collaborators
     - name: bots_versions
-      source_dir: cozepy/bots/versions
       client_class: BotsVersionsClient
       async_client_class: AsyncBotsVersionsClient
       model_schemas:
@@ -1121,7 +1105,6 @@ api:
       path_prefixes:
         - /v1/bots/{bot_id}/versions
     - name: chat
-      source_dir: cozepy/chat
       model_schemas:
         - name: MessageRole
           allow_missing_in_swagger: true
@@ -1816,13 +1799,11 @@ api:
       path_prefixes:
         - /v3/chat
     - name: chat_message
-      source_dir: cozepy/chat/message
       client_class: ChatMessagesClient
       async_client_class: AsyncChatMessagesClient
       path_prefixes:
         - /v3/chat/message
     - name: bill_tasks
-      source_dir: cozepy/bill_tasks
       allow_missing_in_swagger: true
       model_schemas:
         - schema: properties_data_properties_task_infos_items
@@ -1844,14 +1825,12 @@ api:
       path_prefixes:
         - /v1/commerce/benefit/bill_tasks
     - name: benefit_limitations
-      source_dir: cozepy/benefit_limitations
       allow_missing_in_swagger: true
       empty_models:
         - CreateBenefitLimitationResp
       path_prefixes:
         - /v1/commerce/benefit/limitations
     - name: connectors
-      source_dir: cozepy/connectors
       model_schemas:
         - schema: UserConfigEnum
           name: UserConfigEnum
@@ -1863,7 +1842,6 @@ api:
       path_prefixes:
         - /v1/connectors
     - name: connectors_bots
-      source_dir: cozepy/connectors/bots
       allow_missing_in_swagger: true
       client_class: ConnectorsBotsClient
       async_client_class: AsyncConnectorsBotsClient
@@ -1883,7 +1861,6 @@ api:
       path_prefixes:
         - /v1/connectors
     - name: conversations
-      source_dir: cozepy/conversations
       http_request_from_model: true
       extra_imports:
         - module: cozepy.chat
@@ -1922,7 +1899,6 @@ api:
         - /v1/conversation
         - /v1/conversations
     - name: conversations_message
-      source_dir: cozepy/conversations/message
       blank_line_before_sync_init_code: true
       blank_line_before_async_init_code: true
       client_class: MessagesClient
@@ -2051,7 +2027,6 @@ api:
       path_prefixes:
         - /v1/conversation/message
     - name: conversations_message_feedback
-      source_dir: cozepy/conversations/message/feedback
       client_class: ConversationsMessagesFeedbackClient
       async_client_class: AsyncMessagesFeedbackClient
       model_schemas:
@@ -2068,7 +2043,6 @@ api:
       path_prefixes:
         - /v1/conversations
     - name: datasets
-      source_dir: cozepy/datasets
       http_request_from_model: true
       extra_imports:
         - module: cozepy.datasets.documents
@@ -2198,7 +2172,6 @@ api:
       path_prefixes:
         - /v1/datasets
     - name: datasets_documents
-      source_dir: cozepy/datasets/documents
       separate_commented_fields: true
       client_class: DatasetsDocumentsClient
       async_client_class: AsyncDatasetsDocumentsClient
@@ -2459,7 +2432,6 @@ api:
       path_prefixes:
         - /open_api/knowledge/document
     - name: datasets_images
-      source_dir: cozepy/datasets/images
       http_request_from_model: true
       client_class: DatasetsImagesClient
       async_client_class: AsyncDatasetsImagesClient
@@ -2553,11 +2525,9 @@ api:
       path_prefixes:
         - /v1/datasets
     - name: enterprises
-      source_dir: cozepy/enterprises
       path_prefixes:
         - /v1/enterprises
     - name: enterprises_organizations
-      source_dir: cozepy/enterprises/organizations
       client_class: EnterprisesOrganizationsClient
       async_client_class: AsyncEnterprisesOrganizationsClient
       empty_models:
@@ -2565,7 +2535,6 @@ api:
       path_prefixes:
         - /v1/enterprises
     - name: enterprises_members
-      source_dir: cozepy/enterprises/members
       client_class: EnterprisesMembersClient
       async_client_class: AsyncEnterprisesMembersClient
       model_schemas:
@@ -2593,7 +2562,6 @@ api:
       path_prefixes:
         - /v1/enterprises
     - name: files
-      source_dir: cozepy/files
       separate_commented_fields: true
       pre_model_code:
         - |
@@ -2657,7 +2625,6 @@ api:
       path_prefixes:
         - /v1/files
     - name: folders
-      source_dir: cozepy/folders
       http_request_from_model: true
       model_schemas:
         - schema: FolderType
@@ -2687,7 +2654,6 @@ api:
       path_prefixes:
         - /v1/folders
     - name: knowledge
-      source_dir: cozepy/knowledge
       pre_model_code:
         - |
           if TYPE_CHECKING:
@@ -2747,7 +2713,6 @@ api:
       path_prefixes:
         - /open_api/knowledge/document
     - name: knowledge_documents
-      source_dir: cozepy/knowledge/documents
       client_class: DocumentsClient
       async_client_class: AsyncDocumentsClient
       http_request_from_model: true
@@ -2785,7 +2750,6 @@ api:
       path_prefixes:
         - /open_api/knowledge/document
     - name: templates
-      source_dir: cozepy/templates
       model_schemas:
         - name: TemplateEntityType
           allow_missing_in_swagger: true
@@ -2806,7 +2770,6 @@ api:
         - /v1/templates
       allow_missing_in_swagger: true
     - name: users
-      source_dir: cozepy/users
       model_schemas:
         - name: User
           allow_missing_in_swagger: true
@@ -2827,7 +2790,6 @@ api:
         - /v1/users
       allow_missing_in_swagger: true
     - name: variables
-      source_dir: cozepy/variables
       model_schemas:
         - name: VariableValue
           allow_missing_in_swagger: true
@@ -2969,7 +2931,6 @@ api:
       path_prefixes:
         - /v1/variables
     - name: workflows
-      source_dir: cozepy/workflows
       separate_commented_fields: true
       model_schemas:
         - schema: OpenAPIWorkflowMode
@@ -3122,7 +3083,6 @@ api:
         - /v1/workflow
         - /v1/workflows
     - name: workflows_chat
-      source_dir: cozepy/workflows/chat
       client_class: WorkflowsChatClient
       async_client_class: AsyncWorkflowsChatClient
       sync_method_order:
@@ -3134,7 +3094,6 @@ api:
       path_prefixes:
         - /v1/workflows/chat
     - name: workflows_collaborators
-      source_dir: cozepy/workflows/collaborators
       client_class: WorkflowsCollaboratorsClient
       async_client_class: AsyncWorkflowsCollaboratorsClient
       empty_models:
@@ -3142,7 +3101,6 @@ api:
       path_prefixes:
         - /v1/workflows/{workflow_id}/collaborators
     - name: workflows_runs
-      source_dir: cozepy/workflows/runs
       separate_commented_fields: true
       client_class: WorkflowsRunsClient
       async_client_class: AsyncWorkflowsRunsClient
@@ -3280,7 +3238,6 @@ api:
       path_prefixes:
         - /v1/workflow
     - name: workflows_runs_run_histories
-      source_dir: cozepy/workflows/runs/run_histories
       client_class: WorkflowsRunsRunHistoriesClient
       async_client_class: AsyncWorkflowsRunsRunHistoriesClient
       model_schemas:
@@ -3379,7 +3336,6 @@ api:
       path_prefixes:
         - /v1/workflows
     - name: workflows_runs_run_histories_execute_nodes
-      source_dir: cozepy/workflows/runs/run_histories/execute_nodes
       client_class: WorkflowsRunsRunHistoriesExecuteNodesClient
       async_client_class: AsyncWorkflowsRunsRunHistoriesExecuteNodesClient
       model_schemas:
@@ -3397,7 +3353,6 @@ api:
       path_prefixes:
         - /v1/workflows
     - name: workflows_versions
-      source_dir: cozepy/workflows/versions
       separate_commented_fields: true
       client_class: WorkflowsVersionsClient
       async_client_class: AsyncWorkflowsVersionsClient
@@ -3451,7 +3406,6 @@ api:
       path_prefixes:
         - /v1/workflows
     - name: workspaces
-      source_dir: cozepy/workspaces
       model_schemas:
         - schema: WorkspaceRoleType
           name: WorkspaceRoleType
@@ -3580,7 +3534,6 @@ api:
       path_prefixes:
         - /v1/workspaces
     - name: workspaces_members
-      source_dir: cozepy/workspaces/members
       client_class: WorkspacesMembersClient
       async_client_class: AsyncWorkspacesMembersClient
       http_request_from_model: true
@@ -3638,7 +3591,6 @@ api:
       path_prefixes:
         - /v1/workspaces
     - name: websockets
-      source_dir: cozepy/websockets
       allow_missing_in_swagger: true
   operation_mappings:
     - path: /v3/chat

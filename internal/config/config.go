@@ -395,9 +395,6 @@ func (c *Config) Validate() error {
 		}
 		seenPackageName[pkg.Name] = struct{}{}
 
-		if pkg.SourceDir == "" {
-			return fmt.Errorf("api.packages[%d].source_dir is required", i)
-		}
 		for j, prefix := range pkg.PathPrefixes {
 			if prefix == "" || !strings.HasPrefix(prefix, "/") {
 				return fmt.Errorf("api.packages[%d].path_prefixes[%d] must start with '/'", i, j)

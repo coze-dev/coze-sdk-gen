@@ -130,3 +130,49 @@ func TestBuildPackageMetaInferredChildUsesPluralLexicon(t *testing.T) {
 		t.Fatalf("expected one messages child attribute, got %+v", parent.ChildClients)
 	}
 }
+
+func TestBuildPackageMetaInfersDirHierarchyWhenSourceDirMissing(t *testing.T) {
+	cfg := &config.Config{
+		API: config.APIConfig{
+			Packages: []config.Package{
+				{Name: "workflows"},
+				{Name: "workflows_runs"},
+				{Name: "workflows_runs_run_histories"},
+				{Name: "bill_tasks"},
+			},
+		},
+	}
+
+	metas := buildPackageMeta(cfg, nil)
+	if got := metas["workflows"].DirPath; got != "workflows" {
+		t.Fatalf("workflows DirPath=%q", got)
+	}
+	if got := metas["workflows_runs"].DirPath; got != "workflows/runs" {
+		t.Fatalf("workflows_runs DirPath=%q", got)
+	}
+	if got := metas["workflows_runs_run_histories"].DirPath; got != "workflows/runs/run_histories" {
+		t.Fatalf("workflows_runs_run_histories DirPath=%q", got)
+	}
+	if got := metas["bill_tasks"].DirPath; got != "bill_tasks" {
+		t.Fatalf("bill_tasks DirPath=%q", got)
+	}
+}
+
+func TestBuildPackageMetaUsesExplicitSourceDirWhenProvided(t *testing.T) {
+	cfg := &config.Config{
+		API: config.APIConfig{
+			Packages: []config.Package{
+				{Name: "chat"},
+				{Name: "chat_message", SourceDir: "cozepy/custom/message"},
+			},
+		},
+	}
+
+	metas := buildPackageMeta(cfg, nil)
+	if got := metas["chat_message"].DirPath; got != "custom/message" {
+		t.Fatalf("chat_message DirPath=%q", got)
+	}
+	if got := metas["chat_message"].ModulePath; got != "custom.message" {
+		t.Fatalf("chat_message ModulePath=%q", got)
+	}
+}
