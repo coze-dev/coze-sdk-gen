@@ -1821,8 +1821,8 @@ api:
       async_client_class: AsyncChatMessagesClient
       path_prefixes:
         - /v3/chat/message
-    - name: commerce_benefit
-      source_dir: cozepy/commerce_benefit
+    - name: bill_tasks
+      source_dir: cozepy/bill_tasks
       allow_missing_in_swagger: true
       model_schemas:
         - schema: properties_data_properties_task_infos_items
@@ -1842,7 +1842,7 @@ api:
       override_pagination_classes:
         - _PrivateListBenefitBillTasksData
       path_prefixes:
-        - /v1/commerce/benefit
+        - /v1/commerce/benefit/bill_tasks
     - name: connectors
       source_dir: cozepy/connectors
       model_schemas:
@@ -3778,7 +3778,7 @@ api:
       method: get
       order: 735
       sdk_methods:
-        - commerce_benefit.list_bill_tasks
+        - bill_tasks.list
       query_builder: remove_none_values
       query_fields:
         - name: task_ids
