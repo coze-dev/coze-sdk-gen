@@ -342,21 +342,6 @@ api:
 `,
 		},
 		{
-			name: "both sync and async only",
-			content: `
-language: python
-output_sdk: out
-api:
-  operation_mappings:
-    - path: /v3/chat
-      method: post
-      sdk_methods:
-        - chat.create
-      sync_only: true
-      async_only: true
-`,
-		},
-		{
 			name: "delegate args without target",
 			content: `
 language: python

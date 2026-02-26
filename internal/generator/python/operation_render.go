@@ -17,17 +17,11 @@ type ClassMethodBlock struct {
 }
 
 func mappingGeneratesSync(mapping *config.OperationMapping) bool {
-	if mapping == nil {
-		return true
-	}
-	return !mapping.AsyncOnly
+	return true
 }
 
 func mappingGeneratesAsync(mapping *config.OperationMapping) bool {
-	if mapping == nil {
-		return true
-	}
-	return !mapping.SyncOnly
+	return true
 }
 
 func applyMethodDocstringOverrides(block string, classKey string, commentOverrides config.CommentOverrides) string {

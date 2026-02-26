@@ -159,8 +159,6 @@ type OperationMapping struct {
 	DelegateCallArgs               []string          `yaml:"delegate_call_args"`
 	AsyncDelegateCallArgs          []string          `yaml:"async_delegate_call_args"`
 	DelegateAsyncYield             bool              `yaml:"delegate_async_yield"`
-	SyncOnly                       bool              `yaml:"sync_only"`
-	AsyncOnly                      bool              `yaml:"async_only"`
 	AllowMissingInSwagger          bool              `yaml:"allow_missing_in_swagger"`
 	HTTPMethodOverride             string            `yaml:"http_method_override"`
 	DisableRequestBody             bool              `yaml:"disable_request_body"`
@@ -503,9 +501,6 @@ func (c *Config) Validate() error {
 	for i, mapping := range c.API.OperationMappings {
 		if err := validateOperationRef(mapping.Path, mapping.Method, fmt.Sprintf("api.operation_mappings[%d]", i)); err != nil {
 			return err
-		}
-		if mapping.SyncOnly && mapping.AsyncOnly {
-			return fmt.Errorf("api.operation_mappings[%d] cannot set both sync_only and async_only", i)
 		}
 		if strings.TrimSpace(mapping.HTTPMethodOverride) != "" {
 			if err := validateOperationRef(mapping.Path, mapping.HTTPMethodOverride, fmt.Sprintf("api.operation_mappings[%d].http_method_override", i)); err != nil {
