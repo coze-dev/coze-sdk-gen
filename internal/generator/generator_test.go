@@ -779,36 +779,39 @@ def _create(self) -> None:
 	}
 }
 
-func TestDeduplicateBindingsKeepsSyncAsyncPairName(t *testing.T) {
+func TestDeduplicateBindingsRenamesConflicts(t *testing.T) {
 	bindings := []pygen.OperationBinding{
 		{
 			PackageName: "demo",
 			MethodName:  "create",
-			Mapping:     &config.OperationMapping{SyncOnly: true},
+			Mapping:     &config.OperationMapping{},
 		},
 		{
 			PackageName: "demo",
 			MethodName:  "create",
-			Mapping:     &config.OperationMapping{AsyncOnly: true},
+			Mapping:     &config.OperationMapping{},
 		},
 	}
 	got := pygen.DeduplicateBindings(bindings)
-	if got[0].MethodName != "create" || got[1].MethodName != "create" {
-		t.Fatalf("expected sync/async-only pair to keep same method name, got %q and %q", got[0].MethodName, got[1].MethodName)
+	if got[0].MethodName != "create" {
+		t.Fatalf("unexpected first method name: %q", got[0].MethodName)
+	}
+	if got[1].MethodName != "create_2" {
+		t.Fatalf("expected duplicate method to be renamed with suffix, got %q", got[1].MethodName)
 	}
 }
 
-func TestDeduplicateBindingsRenamesSyncConflicts(t *testing.T) {
+func TestDeduplicateBindingsRenamesConflictsByClientSide(t *testing.T) {
 	bindings := []pygen.OperationBinding{
 		{
 			PackageName: "demo",
 			MethodName:  "create",
-			Mapping:     &config.OperationMapping{SyncOnly: true},
+			Mapping:     nil,
 		},
 		{
 			PackageName: "demo",
 			MethodName:  "create",
-			Mapping:     &config.OperationMapping{SyncOnly: true},
+			Mapping:     nil,
 		},
 	}
 	got := pygen.DeduplicateBindings(bindings)
@@ -820,7 +823,7 @@ func TestDeduplicateBindingsRenamesSyncConflicts(t *testing.T) {
 	}
 }
 
-func TestGeneratePythonAsyncOnlyMapping(t *testing.T) {
+func TestGeneratePythonMappingGeneratesSyncAndAsyncByDefault(t *testing.T) {
 	out := t.TempDir()
 	cfg := testConfig(out)
 	cfg.API.GenerateOnlyMapped = true
@@ -829,7 +832,6 @@ func TestGeneratePythonAsyncOnlyMapping(t *testing.T) {
 			Path:       "/v3/chat",
 			Method:     "post",
 			SDKMethods: []string{"chat.create"},
-			AsyncOnly:  true,
 		},
 	}
 
@@ -839,11 +841,11 @@ func TestGeneratePythonAsyncOnlyMapping(t *testing.T) {
 	}
 
 	chatModule := readFile(t, filepath.Join(out, "cozepy", "chat", "__init__.py"))
-	if strings.Contains(chatModule, "class ChatClient(object):\n    def __init__") && strings.Contains(chatModule, "\n    def create(") {
-		t.Fatalf("did not expect sync create method for async_only mapping:\n%s", chatModule)
+	if !strings.Contains(chatModule, "class ChatClient(object):") || !strings.Contains(chatModule, "\n    def create(") {
+		t.Fatalf("expected sync create method for mapping:\n%s", chatModule)
 	}
 	if !strings.Contains(chatModule, "class AsyncChatClient(object):") || !strings.Contains(chatModule, "async def create(") {
-		t.Fatalf("expected async create method for async_only mapping:\n%s", chatModule)
+		t.Fatalf("expected async create method for mapping:\n%s", chatModule)
 	}
 }
 

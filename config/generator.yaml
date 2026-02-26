@@ -4110,7 +4110,6 @@ api:
       order: 652
       sdk_methods:
         - datasets_documents.create
-      sync_only: true
       body_builder: raw
       ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
@@ -4132,32 +4131,6 @@ api:
         format_type: Optional[DocumentFormatType]
       arg_defaults_sync:
         format_type: "DocumentFormatType.DOCUMENT"
-      response_type: ListResponse[Document]
-      response_cast: ListResponse[Document]
-      data_field: document_infos
-    - path: /open_api/knowledge/document/create
-      method: post
-      order: 653
-      sdk_methods:
-        - datasets_documents.create
-      async_only: true
-      body_builder: raw
-      ignore_header_params: true
-      headers_expr: '{"Agw-Js-Conv": "str"}'
-      body_fields:
-        - dataset_id
-        - document_bases
-        - chunk_strategy
-      body_required_fields:
-        - dataset_id
-        - document_bases
-      body_field_values:
-        document_bases: "[i.model_dump() for i in document_bases]"
-        chunk_strategy: "chunk_strategy.model_dump() if chunk_strategy else None"
-      arg_types:
-        dataset_id: str
-        document_bases: List[DocumentBase]
-        chunk_strategy: Optional[DocumentChunkStrategy]
       response_type: ListResponse[Document]
       response_cast: ListResponse[Document]
       data_field: document_infos
@@ -4237,41 +4210,6 @@ api:
       order: 657
       sdk_methods:
         - knowledge_documents.create
-      sync_only: true
-      body_builder: raw
-      ignore_header_params: true
-      headers_expr: '{"Agw-Js-Conv": "str"}'
-      body_fields:
-        - dataset_id
-        - document_bases
-        - chunk_strategy
-      body_required_fields:
-        - dataset_id
-        - document_bases
-      body_field_values:
-        document_bases: "[i.model_dump() for i in document_bases]"
-        chunk_strategy: "chunk_strategy.model_dump() if chunk_strategy else None"
-      arg_types:
-        dataset_id: str
-        document_bases: List[DocumentBase]
-        chunk_strategy: Optional[DocumentChunkStrategy]
-      pre_docstring_code:
-        - |
-          warnings.warn(
-              "The 'coze.knowledge.documents.create' method is deprecated and will be removed in a future version. "
-              "Please use 'coze.datasets.documents.create' instead.",
-              DeprecationWarning,
-              stacklevel=2,
-          )
-      response_type: List[Document]
-      response_cast: "[Document]"
-      data_field: document_infos
-    - path: /open_api/knowledge/document/create
-      method: post
-      order: 658
-      sdk_methods:
-        - knowledge_documents.create
-      async_only: true
       body_builder: raw
       ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
@@ -4305,38 +4243,6 @@ api:
       order: 659
       sdk_methods:
         - knowledge_documents.update
-      sync_only: true
-      allow_missing_in_swagger: true
-      body_builder: raw
-      ignore_header_params: true
-      headers_expr: '{"Agw-Js-Conv": "str"}'
-      body_fields:
-        - document_id
-        - document_name
-        - update_rule
-      body_required_fields:
-        - document_id
-      arg_types:
-        document_id: str
-        document_name: str
-        update_rule: Optional[DocumentUpdateRule]
-      pre_docstring_code:
-        - |
-          warnings.warn(
-              "The 'coze.knowledge.documents.update' method is deprecated and will be removed in a future version. "
-              "Please use 'coze.datasets.documents.update' instead.",
-              DeprecationWarning,
-              stacklevel=2,
-          )
-      force_multiline_request_call: true
-      response_type: None
-      response_cast: None
-    - path: /open_api/knowledge/document/update
-      method: post
-      order: 660
-      sdk_methods:
-        - knowledge_documents.update
-      async_only: true
       allow_missing_in_swagger: true
       body_builder: raw
       ignore_header_params: true
@@ -4367,31 +4273,6 @@ api:
       order: 661
       sdk_methods:
         - knowledge_documents.delete
-      sync_only: true
-      body_builder: raw
-      ignore_header_params: true
-      headers_expr: '{"Agw-Js-Conv": "str"}'
-      body_fields:
-        - document_ids
-      arg_types:
-        document_ids: List[str]
-      pre_docstring_code:
-        - |
-          warnings.warn(
-              "The 'coze.knowledge.documents.delete' method is deprecated and will be removed in a future version. "
-              "Please use 'coze.datasets.documents.delete' instead.",
-              DeprecationWarning,
-              stacklevel=2,
-          )
-      force_multiline_request_call: true
-      response_type: None
-      response_cast: None
-    - path: /open_api/knowledge/document/delete
-      method: post
-      order: 662
-      sdk_methods:
-        - knowledge_documents.delete
-      async_only: true
       body_builder: raw
       ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
