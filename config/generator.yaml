@@ -4838,7 +4838,8 @@ api:
         - channel
       files_fields:
         - file
-      files_expr: '{"file": _try_fix_file(file)} if file else {}'
+      files_field_values:
+        file: _try_fix_file(file)
       arg_types:
         group_id: str
         feature_id: str

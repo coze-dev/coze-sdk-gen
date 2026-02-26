@@ -37,7 +37,7 @@ func hasExplicitPayloadConfig(mapping *config.OperationMapping) bool {
 	if len(mapping.BodyFields) > 0 || len(mapping.BodyFixedValues) > 0 {
 		return true
 	}
-	if len(mapping.FilesFields) > 0 || strings.TrimSpace(mapping.FilesExpr) != "" {
+	if len(mapping.FilesFields) > 0 {
 		return true
 	}
 	return len(mapping.BodyFieldValues) > 0
