@@ -1314,12 +1314,7 @@ func renderOperationMethodWithContext(
 		callArgs = append(callArgs, item.Expr)
 	}
 	requestExpr := fmt.Sprintf("%s(%s)", requestCall, strings.Join(callArgs, ", "))
-	forceMultilineRequestCall := false
-	if binding.Mapping != nil {
-		if async && binding.Mapping.ForceMultilineRequestCallAsync {
-			forceMultilineRequestCall = true
-		}
-	}
+	forceMultilineRequestCall := async && binding.Mapping != nil && binding.Mapping.ForceMultilineRequestCallAsync
 	if binding.Mapping != nil && binding.Mapping.ResponseUnwrapListFirst {
 		buf.WriteString(fmt.Sprintf("        res = %s\n", requestExpr))
 		buf.WriteString("        data = res.data[0]\n")
