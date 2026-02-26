@@ -39,9 +39,6 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []Operati
 
 	for _, details := range allOps {
 		existingOps[strings.ToLower(details.Method)+" "+details.Path] = struct{}{}
-		if cfg.IsIgnored(details.Path, details.Method) {
-			continue
-		}
 
 		mappings := cfg.FindOperationMappings(details.Path, details.Method)
 		if cfg.API.GenerateOnlyMapped && len(mappings) == 0 {
@@ -94,9 +91,6 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []Operati
 		}
 		key := strings.ToLower(strings.TrimSpace(mapping.Method)) + " " + strings.TrimSpace(mapping.Path)
 		if _, ok := existingOps[key]; ok {
-			continue
-		}
-		if cfg.IsIgnored(mapping.Path, mapping.Method) {
 			continue
 		}
 		if len(mapping.SDKMethods) == 0 {

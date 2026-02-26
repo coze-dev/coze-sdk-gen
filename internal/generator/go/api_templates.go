@@ -503,9 +503,6 @@ func buildGoSwaggerOperationBindings(cfg *config.Config, doc *openapi.Document, 
 
 	bindings := make([]goSwaggerOperationBinding, 0)
 	for _, mapping := range cfg.API.OperationMappings {
-		if cfg.IsIgnored(mapping.Path, mapping.Method) {
-			continue
-		}
 		details, hasDetails := resolveGoOperationDetails(doc, mapping)
 		for methodIndex, sdkMethod := range mapping.SDKMethods {
 			pkg, method, ok := parseGoSDKMethod(cfg, mapping.Path, sdkMethod)

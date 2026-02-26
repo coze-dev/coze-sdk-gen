@@ -77,9 +77,6 @@ func buildGoOperationBindings(cfg *config.Config, doc *openapi.Document) []goOpe
 	seen := map[string]int{}
 
 	for _, details := range allOps {
-		if cfg.IsIgnored(details.Path, details.Method) {
-			continue
-		}
 		base := strings.TrimSpace(details.OperationID)
 		if base == "" {
 			base = pygen.DefaultMethodName(details.OperationID, details.Path, details.Method)

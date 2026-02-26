@@ -63,7 +63,6 @@ type CommentOverrides struct {
 type APIConfig struct {
 	Packages           []Package                    `yaml:"packages"`
 	OperationMappings  []OperationMapping           `yaml:"operation_mappings"`
-	IgnoreAPIs         []OperationRef               `yaml:"ignore_apis"`
 	GenerateOnlyMapped bool                         `yaml:"generate_only_mapped"`
 	FieldAliases       map[string]map[string]string `yaml:"field_aliases"`
 }
@@ -580,12 +579,6 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	for i, ref := range c.API.IgnoreAPIs {
-		if err := validateOperationRef(ref.Path, ref.Method, fmt.Sprintf("api.ignore_apis[%d]", i)); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -632,16 +625,6 @@ func (c *Config) DiffIgnorePathsForLanguage(language string) []string {
 		return append([]string(nil), defaults...)
 	}
 	return []string{".git"}
-}
-
-func (c *Config) IsIgnored(path string, method string) bool {
-	method = normalizeMethod(method)
-	for _, ref := range c.API.IgnoreAPIs {
-		if ref.Path == path && normalizeMethod(ref.Method) == method {
-			return true
-		}
-	}
-	return false
 }
 
 func (c *Config) FindOperationMappings(path string, method string) []OperationMapping {
@@ -711,9 +694,6 @@ func (c *Config) ValidateAgainstSwagger(doc *openapi.Document) ValidationReport 
 		for _, op := range c.API.OperationMappings {
 			report.MissingOperations = append(report.MissingOperations, OperationRef{Path: op.Path, Method: normalizeMethod(op.Method)})
 		}
-		for _, op := range c.API.IgnoreAPIs {
-			report.MissingOperations = append(report.MissingOperations, OperationRef{Path: op.Path, Method: normalizeMethod(op.Method)})
-		}
 		return report
 	}
 
@@ -728,16 +708,6 @@ func (c *Config) ValidateAgainstSwagger(doc *openapi.Document) ValidationReport 
 	}
 
 	for _, op := range c.API.OperationMappings {
-		method := normalizeMethod(op.Method)
-		if op.AllowMissingInSwagger {
-			continue
-		}
-		if !doc.HasOperation(method, op.Path) {
-			appendMissing(op.Path, method)
-		}
-	}
-
-	for _, op := range c.API.IgnoreAPIs {
 		method := normalizeMethod(op.Method)
 		if op.AllowMissingInSwagger {
 			continue

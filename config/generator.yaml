@@ -5544,9 +5544,6 @@ api:
       response_type: User
       response_cast: User
       allow_missing_in_swagger: true
-  ignore_apis:
-    - path: /v1/conversation/message/list
-      method: post
   field_aliases:
     chat:
       custom_variables: custom_variables
