@@ -225,7 +225,6 @@ type OperationMapping struct {
 	ForceMultilineRequestCall      bool              `yaml:"force_multiline_request_call"`
 	ForceMultilineRequestCallSync  bool              `yaml:"force_multiline_request_call_sync"`
 	ForceMultilineRequestCallAsync bool              `yaml:"force_multiline_request_call_async"`
-	RequestCallArgOrder            []string          `yaml:"request_call_arg_order"`
 	PaginationHTTPMethod           string            `yaml:"pagination_http_method"`
 	PaginationRequestArg           string            `yaml:"pagination_request_arg"`
 	PaginationInitPageTokenExpr    string            `yaml:"pagination_init_page_token_expr"`
@@ -598,13 +597,6 @@ func (c *Config) Validate() error {
 		}
 		if mapping.StreamWrap && !mapping.RequestStream {
 			return fmt.Errorf("api.operation_mappings[%d].stream_wrap requires request_stream=true", i)
-		}
-		for j, argName := range mapping.RequestCallArgOrder {
-			switch strings.TrimSpace(argName) {
-			case "stream", "cast", "params", "headers", "body", "files", "data_field":
-			default:
-				return fmt.Errorf("api.operation_mappings[%d].request_call_arg_order[%d] must be one of: stream, cast, params, headers, body, files, data_field", i, j)
-			}
 		}
 		switch strings.TrimSpace(mapping.QueryBuilder) {
 		case "", "dump_exclude_none", "remove_none_values", "raw":

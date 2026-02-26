@@ -61,6 +61,59 @@ api:
 	assertFileContains(t, filepath.Join(outDir, "cozepy", "chat", "__init__.py"), "def create")
 }
 
+func TestRunGenerateUsesDefaultRequestCallArgOrder(t *testing.T) {
+	tmp := t.TempDir()
+	outDir := filepath.Join(tmp, "out")
+	cfgPath := filepath.Join(tmp, "generator.yaml")
+	swaggerPath := filepath.Join(tmp, "swagger.yaml")
+
+	writeFile(t, swaggerPath, `
+paths:
+  /v1/demo:
+    post:
+      operationId: OpenApiDemoCreate
+`)
+	writeFile(t, cfgPath, `
+api:
+  packages:
+    - name: demo
+      source_dir: cozepy/demo
+      path_prefixes:
+        - /v1/demo
+  operation_mappings:
+    - path: /v1/demo
+      method: post
+      sdk_methods:
+        - demo.create
+      body_builder: raw
+      body_fields:
+        - name
+      body_required_fields:
+        - name
+      arg_types:
+        name: str
+      response_type: DemoResp
+      response_cast: DemoResp
+`)
+
+	var out bytes.Buffer
+	err := run([]string{
+		"--config", cfgPath,
+		"--swagger", swaggerPath,
+		"--language", "python",
+		"--output-sdk", outDir,
+	}, &out)
+	if err != nil {
+		t.Fatalf("run() error = %v", err)
+	}
+
+	assertFileContains(
+		t,
+		filepath.Join(outDir, "cozepy", "demo", "__init__.py"),
+		`"post", url, False, cast=DemoResp, headers=headers, body=body`,
+	)
+}
+
 func TestRunInvalidArgs(t *testing.T) {
 	var out bytes.Buffer
 	if err := run([]string{"--invalid-flag"}, &out); err == nil {
