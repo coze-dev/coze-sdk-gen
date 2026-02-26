@@ -284,6 +284,46 @@ func TestRenderPackageModuleMethodDocstringUsesRichTextOverrides(t *testing.T) {
 	}
 }
 
+func TestRenderPackageModuleRichTextOverrideCollapsedLinesAreSplit(t *testing.T) {
+	doc := mustParseSwagger(t)
+	meta := pygen.PackageMeta{
+		Name:       "demo",
+		ModulePath: "demo",
+		Package: &config.Package{
+			ClientClass: "DemoClient",
+		},
+	}
+	bindings := []pygen.OperationBinding{
+		{
+			PackageName: "demo",
+			MethodName:  "delete",
+			Details: openapi.OperationDetails{
+				Path:        "/v1/demo/{id}",
+				Method:      "delete",
+				Description: `{"0":{"ops":[{"insert":"placeholder"}],"zoneType":"Z"}}`,
+			},
+		},
+	}
+	commentOverrides := config.CommentOverrides{
+		RichTextMethodDocstrings: map[string]string{
+			"cozepy.demo.DemoClient.delete":      "删除扣子应用的协作者。 删除协作者时，扣子会将该协作者创建的工作流、插件等资源转移给应用的所有者。 接口限制 主账号内的所有子账号共享同一 API 的流控额度，单个 API 的流控限制为 5 QPS。 每次请求只能删除一位协作者。如需删除多位，请依次发送请求。",
+			"cozepy.demo.AsyncDemoClient.delete": "删除扣子应用的协作者。 删除协作者时，扣子会将该协作者创建的工作流、插件等资源转移给应用的所有者。 接口限制 主账号内的所有子账号共享同一 API 的流控额度，单个 API 的流控限制为 5 QPS。 每次请求只能删除一位协作者。如需删除多位，请依次发送请求。",
+		},
+		MethodDocstringStyles: map[string]string{
+			"cozepy.demo.DemoClient.delete":      "block",
+			"cozepy.demo.AsyncDemoClient.delete": "block",
+		},
+	}
+
+	code := pygen.RenderPackageModuleWithComments(doc, meta, bindings, commentOverrides)
+	if !strings.Contains(code, "删除扣子应用的协作者。\n        删除协作者时") {
+		t.Fatalf("expected collapsed rich text override to be split into lines:\n%s", code)
+	}
+	if !strings.Contains(code, "\n        接口限制\n        主账号内的所有子账号共享同一 API 的流控额度") {
+		t.Fatalf("expected 接口限制 heading on a dedicated line:\n%s", code)
+	}
+}
+
 func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{

@@ -241,6 +241,102 @@ func singleLineDescription(value string) string {
 	return strings.Join(lines, " ")
 }
 
+func normalizeRichTextOverrideDocstring(raw string) string {
+	text := strings.TrimSpace(raw)
+	if text == "" {
+		return ""
+	}
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+
+	lines := make([]string, 0, 16)
+	if strings.Contains(text, "\n") {
+		for _, rawLine := range strings.Split(text, "\n") {
+			line := strings.TrimSpace(rawLine)
+			if line == "" {
+				continue
+			}
+			lines = append(lines, splitAndNormalizeCollapsedRichTextLine(line)...)
+		}
+		return strings.Join(lines, "\n")
+	}
+
+	if !looksCollapsedRichTextDocstring(text) {
+		return text
+	}
+
+	lines = append(lines, splitAndNormalizeCollapsedRichTextLine(text)...)
+	if len(lines) == 0 {
+		return text
+	}
+	return strings.Join(lines, "\n")
+}
+
+func looksCollapsedRichTextDocstring(text string) bool {
+	if strings.Contains(text, "\n") {
+		return false
+	}
+	if len([]rune(text)) < 80 {
+		return false
+	}
+	return strings.Contains(text, "。 ") || strings.Contains(text, "！ ") || strings.Contains(text, "？ ") ||
+		strings.Contains(text, " 接口限制 ")
+}
+
+func splitCollapsedRichTextSentences(text string) []string {
+	lines := make([]string, 0, 16)
+	var current strings.Builder
+	flush := func() {
+		line := strings.TrimSpace(current.String())
+		if line != "" {
+			lines = append(lines, line)
+		}
+		current.Reset()
+	}
+	for _, r := range text {
+		current.WriteRune(r)
+		switch r {
+		case '。', '！', '？':
+			flush()
+		}
+	}
+	flush()
+	return lines
+}
+
+func splitAndNormalizeCollapsedRichTextLine(line string) []string {
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return nil
+	}
+	chunks := []string{line}
+	if looksCollapsedRichTextDocstring(line) {
+		chunks = splitCollapsedRichTextSentences(line)
+	}
+
+	out := make([]string, 0, len(chunks)+2)
+	for _, chunk := range chunks {
+		chunk = strings.TrimSpace(chunk)
+		if chunk == "" {
+			continue
+		}
+		if strings.HasPrefix(chunk, "接口限制 ") {
+			out = append(out, "接口限制")
+			chunk = strings.TrimSpace(strings.TrimPrefix(chunk, "接口限制"))
+		} else if strings.HasPrefix(chunk, "接口描述 ") {
+			out = append(out, "接口描述")
+			chunk = strings.TrimSpace(strings.TrimPrefix(chunk, "接口描述"))
+		} else if strings.HasPrefix(chunk, "限制 说明 ") {
+			out = append(out, "限制说明")
+			chunk = strings.TrimSpace(strings.TrimPrefix(chunk, "限制 说明"))
+		}
+		if chunk != "" {
+			out = append(out, chunk)
+		}
+	}
+	return out
+}
+
 func buildSwaggerMethodDocstring(
 	doc *openapi.Document,
 	binding OperationBinding,
@@ -685,7 +781,7 @@ func renderOperationMethodWithContext(
 	}
 	if methodDocstring == "" && methodKey != "" {
 		if raw, ok := commentOverrides.RichTextMethodDocstrings[methodKey]; ok {
-			methodDocstring = strings.TrimSpace(raw)
+			methodDocstring = normalizeRichTextOverrideDocstring(raw)
 			docstringFromOverride = true
 		}
 	}
@@ -697,7 +793,7 @@ func renderOperationMethodWithContext(
 	}
 	if methodDocstring != "" && methodKey != "" && swaggerDescriptionLooksLikeRichText(details.Description) {
 		if raw, ok := commentOverrides.RichTextMethodDocstrings[methodKey]; ok {
-			methodDocstring = strings.TrimSpace(raw)
+			methodDocstring = normalizeRichTextOverrideDocstring(raw)
 			docstringFromOverride = true
 		}
 	}
