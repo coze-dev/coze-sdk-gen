@@ -878,20 +878,21 @@ func TestRenderOperationMethodReturnAndAsyncKwargsOptions(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodKwargsOnlySignature(t *testing.T) {
+func TestRenderOperationMethodKwargsOnlySignatureForEmptyBodySchema(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
-		Path:   "/v1/users/me",
-		Method: "get",
+		Path:              "/v1/users/me",
+		Method:            "get",
+		RequestBody:       &openapi.RequestBody{},
+		RequestBodySchema: &openapi.Schema{Type: "object"},
 	}
 	code := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "users",
 		MethodName:  "me",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			DisableRequestBody: true,
-			ResponseType:       "User",
-			ResponseCast:       "User",
+			ResponseType: "User",
+			ResponseCast: "User",
 		},
 	}, false)
 	if !strings.Contains(code, "def me(self, **kwargs)") {

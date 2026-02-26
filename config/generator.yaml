@@ -3759,7 +3759,6 @@ api:
       order: 734
       sdk_methods:
         - benefits.retrieve
-      disable_request_body: true
       query_builder: remove_none_values
       query_fields:
         - name: benefit_type_list
@@ -3821,7 +3820,6 @@ api:
       sdk_methods:
         - api_apps.delete
       http_method_override: delete
-      disable_request_body: true
       param_aliases:
         api_app_id: app_id
       response_type: DeleteAPIAppsResp
@@ -3832,7 +3830,6 @@ api:
       sdk_methods:
         - api_apps.list
       http_method_override: get
-      disable_request_body: true
       query_fields:
         - name: app_type
           type: AppType
@@ -3904,7 +3901,6 @@ api:
       order: 52
       sdk_methods:
         - apps_collaborators.delete
-      disable_request_body: true
       response_type: RemoveAppCollaboratorResp
       response_cast: RemoveAppCollaboratorResp
     - path: /v1/conversation/create
@@ -3962,7 +3958,6 @@ api:
       order: 58
       sdk_methods:
         - conversations.clear
-      disable_request_body: true
       response_type: Section
       response_cast: Section
     - path: /v1/conversations/{conversation_id}
@@ -3983,7 +3978,6 @@ api:
       sdk_methods:
         - conversations.delete
       allow_missing_in_swagger: true
-      disable_request_body: true
       response_type: DeleteConversationResp
       response_cast: DeleteConversationResp
     - path: /v1/datasets
@@ -4067,7 +4061,6 @@ api:
         - datasets.delete
       force_multiline_request_call: true
       allow_missing_in_swagger: true
-      disable_request_body: true
       response_type: DeleteDatasetRes
       response_cast: DeleteDatasetRes
     - path: /v1/datasets/{dataset_id}/process
@@ -4206,7 +4199,6 @@ api:
       order: 656
       sdk_methods:
         - datasets_documents.list
-      disable_request_body: true
       query_builder: raw
       ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
@@ -4326,7 +4318,6 @@ api:
       order: 663
       sdk_methods:
         - knowledge_documents.list
-      disable_request_body: true
       query_builder: raw
       ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
@@ -4554,7 +4545,6 @@ api:
       order: 733
       sdk_methods:
         - bots_collaborators.delete
-      disable_request_body: true
       response_type: DeleteBotCollaboratorResp
       response_cast: DeleteBotCollaboratorResp
     - path: /v1/bots/{bot_id}/versions
@@ -4745,7 +4735,7 @@ api:
       order: 81
       sdk_methods:
         - audio_transcriptions.create
-      disable_request_body: true
+      force_multiline_signature: true
       files_fields:
         - file
       files_field_values:
@@ -4760,7 +4750,7 @@ api:
       sdk_methods:
         - audio_live.retrieve
       allow_missing_in_swagger: true
-      disable_request_body: true
+      force_multiline_signature: true
       response_type: LiveInfo
       response_cast: LiveInfo
     - path: /v1/audio/voiceprint_groups
@@ -4802,7 +4792,7 @@ api:
       sdk_methods:
         - audio_voiceprint_groups.delete
       allow_missing_in_swagger: true
-      disable_request_body: true
+      force_multiline_signature: true
       response_type: DeleteVoicePrintGroupResp
       response_cast: DeleteVoicePrintGroupResp
     - path: /v1/audio/voiceprint_groups
@@ -4928,7 +4918,7 @@ api:
       sdk_methods:
         - audio_voiceprint_groups_features.delete
       allow_missing_in_swagger: true
-      disable_request_body: true
+      force_multiline_signature: true
       response_type: DeleteVoicePrintGroupFeatureResp
       response_cast: DeleteVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features
@@ -5059,7 +5049,7 @@ api:
       sdk_methods:
         - conversations_message.delete
       query_builder: raw
-      disable_request_body: true
+      force_multiline_signature: true
       response_type: Message
       response_cast: Message
     - path: /v1/conversation/message/modify
@@ -5086,7 +5076,7 @@ api:
       sdk_methods:
         - conversations_message.retrieve
       query_builder: raw
-      disable_request_body: true
+      force_multiline_signature: true
       response_type: Message
       response_cast: Message
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
@@ -5113,7 +5103,6 @@ api:
       order: 89
       sdk_methods:
         - conversations_message_feedback.delete
-      disable_request_body: true
       response_type: DeleteConversationMessageFeedbackResp
       response_cast: DeleteConversationMessageFeedbackResp
     - path: /v1/datasets/{dataset_id}/images
@@ -5359,7 +5348,6 @@ api:
       order: 951
       sdk_methods:
         - workflows_collaborators.delete
-      disable_request_body: true
       response_type: RemoveWorkflowCollaboratorResp
       response_cast: RemoveWorkflowCollaboratorResp
     - path: /v1/workflows/chat
@@ -5522,7 +5510,6 @@ api:
       method: get
       sdk_methods:
         - users.me
-      disable_request_body: true
       response_type: User
       response_cast: User
       allow_missing_in_swagger: true
