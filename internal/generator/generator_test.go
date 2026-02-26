@@ -1113,6 +1113,58 @@ func TestRenderOperationMethodBodyCallExprOverride(t *testing.T) {
 	}
 }
 
+func TestRenderOperationMethodSingleItemMapsUseMultilineFormat(t *testing.T) {
+	doc := mustParseSwagger(t)
+	queryDetails := openapi.OperationDetails{
+		Path:   "/v1/bot/get_online_info",
+		Method: "get",
+		QueryParameters: []openapi.ParameterSpec{
+			{Name: "bot_id", In: "query", Required: true, Schema: &openapi.Schema{Type: "string"}},
+		},
+	}
+	queryCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
+		PackageName: "bots",
+		MethodName:  "_retrieve_v1",
+		Details:     queryDetails,
+		Mapping: &config.OperationMapping{
+			QueryBuilder: "raw",
+		},
+	}, false)
+	if strings.Contains(queryCode, "params = {\"bot_id\": bot_id}") {
+		t.Fatalf("expected single-item query map to be multiline:\n%s", queryCode)
+	}
+	if !strings.Contains(queryCode, "params = {\n            \"bot_id\": bot_id,\n        }") {
+		t.Fatalf("expected multiline single-item query map rendering:\n%s", queryCode)
+	}
+
+	bodyDetails := openapi.OperationDetails{
+		Path:   "/v1/conversations/{conversation_id}",
+		Method: "put",
+		PathParameters: []openapi.ParameterSpec{
+			{Name: "conversation_id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+		},
+	}
+	bodyCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
+		PackageName: "conversations",
+		MethodName:  "update",
+		Details:     bodyDetails,
+		Mapping: &config.OperationMapping{
+			BodyBuilder: "raw",
+			BodyFields:  []string{"name"},
+			ArgTypes: map[string]string{
+				"name": "str",
+			},
+			BodyRequiredFields: []string{"__none__"},
+		},
+	}, false)
+	if strings.Contains(bodyCode, "body = {\"name\": name}") {
+		t.Fatalf("expected single-item body map to be multiline:\n%s", bodyCode)
+	}
+	if !strings.Contains(bodyCode, "body = {\n            \"name\": name,\n        }") {
+		t.Fatalf("expected multiline single-item body map rendering:\n%s", bodyCode)
+	}
+}
+
 func TestRenderOperationMethodPaginationQueryBuilderAndTokenOverrides(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
