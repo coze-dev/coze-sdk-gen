@@ -488,7 +488,6 @@ func TestRenderOperationMethodStreamWrap(t *testing.T) {
 			RequestStream:     true,
 			ResponseType:      "Stream[DemoEvent]",
 			AsyncResponseType: "AsyncStream[DemoEvent]",
-			ResponseCast:      "None",
 			StreamWrap:        true,
 			StreamWrapHandler: "handle_demo",
 			StreamWrapFields:  []string{"event", "data"},
@@ -526,7 +525,6 @@ func TestRenderOperationMethodStreamWrapYieldAndSyncVarDefault(t *testing.T) {
 			RequestStream:        true,
 			ResponseType:         "Stream[DemoEvent]",
 			AsyncResponseType:    "AsyncIterator[DemoEvent]",
-			ResponseCast:         "None",
 			StreamWrap:           true,
 			StreamWrapHandler:    "handle_demo",
 			StreamWrapFields:     []string{"event", "data"},
@@ -565,7 +563,6 @@ func TestRenderOperationMethodStreamWrapCompactSyncReturn(t *testing.T) {
 			RequestStream:               true,
 			ResponseType:                "Stream[DemoEvent]",
 			AsyncResponseType:           "AsyncIterator[DemoEvent]",
-			ResponseCast:                "None",
 			StreamWrap:                  true,
 			StreamWrapHandler:           "handle_demo",
 			StreamWrapFields:            []string{"event", "data"},
@@ -892,7 +889,6 @@ func TestRenderOperationMethodKwargsOnlySignatureForEmptyBodySchema(t *testing.T
 		Details:     details,
 		Mapping: &config.OperationMapping{
 			ResponseType: "User",
-			ResponseCast: "User",
 		},
 	}, false)
 	if !strings.Contains(code, "def me(self, **kwargs)") {
@@ -1016,7 +1012,6 @@ func TestRenderOperationMethodAsyncStreamMethodDefaultsToYield(t *testing.T) {
 		},
 		ResponseType:      "Stream[ChatEvent]",
 		AsyncResponseType: "AsyncIterator[ChatEvent]",
-		ResponseCast:      "None",
 		BodyBuilder:       "remove_none_values",
 		BodyFields:        []string{"workflow_id"},
 		BodyRequiredFields: []string{
@@ -1275,7 +1270,6 @@ func TestRenderOperationMethodResponseUnwrapListFirst(t *testing.T) {
 		Details:     details,
 		Mapping: &config.OperationMapping{
 			ResponseType:            "WorkflowRunHistory",
-			ResponseCast:            "ListResponse[WorkflowRunHistory]",
 			ResponseUnwrapListFirst: true,
 		},
 	}, false)
@@ -1292,7 +1286,6 @@ func TestRenderOperationMethodResponseUnwrapListFirst(t *testing.T) {
 		Details:     details,
 		Mapping: &config.OperationMapping{
 			ResponseType:            "WorkflowRunHistory",
-			ResponseCast:            "ListResponse[WorkflowRunHistory]",
 			ResponseUnwrapListFirst: true,
 		},
 	}, true)

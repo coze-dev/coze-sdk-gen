@@ -4,6 +4,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/coze-dev/coze-sdk-gen/internal/config"
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
 )
 
@@ -59,6 +60,56 @@ func ReturnTypeInfo(doc *openapi.Document, schema *openapi.Schema) (string, stri
 	_ = doc
 	_ = schema
 	return "Dict[str, Any]", ""
+}
+
+func inferResponseCast(mapping *config.OperationMapping, returnType string, defaultCast string) string {
+	cast := strings.TrimSpace(defaultCast)
+	if mapping == nil {
+		return cast
+	}
+
+	if mappedReturnType := strings.TrimSpace(mapping.ResponseType); mappedReturnType != "" {
+		cast = mappedReturnType
+	}
+
+	if isStreamReturnType(returnType) {
+		return "None"
+	}
+
+	if mapping.ResponseUnwrapListFirst {
+		unwrapType := strings.TrimSpace(mapping.ResponseType)
+		if unwrapType != "" {
+			if strings.HasPrefix(unwrapType, "ListResponse[") {
+				return unwrapType
+			}
+			return "ListResponse[" + unwrapType + "]"
+		}
+	}
+
+	if listItemType, ok := listResponseItemType(returnType); ok {
+		return "[" + listItemType + "]"
+	}
+
+	return cast
+}
+
+func isStreamReturnType(returnType string) bool {
+	trimmed := strings.TrimSpace(returnType)
+	return strings.HasPrefix(trimmed, "Stream[") ||
+		strings.HasPrefix(trimmed, "AsyncIterator[") ||
+		strings.HasPrefix(trimmed, "AsyncStream[")
+}
+
+func listResponseItemType(returnType string) (string, bool) {
+	trimmed := strings.TrimSpace(returnType)
+	if !strings.HasPrefix(trimmed, "List[") || !strings.HasSuffix(trimmed, "]") {
+		return "", false
+	}
+	itemType := strings.TrimSpace(trimmed[5 : len(trimmed)-1])
+	if itemType == "" {
+		return "", false
+	}
+	return itemType, true
 }
 
 func RequestBodyTypeInfo(doc *openapi.Document, schema *openapi.Schema, body *openapi.RequestBody) (string, bool) {

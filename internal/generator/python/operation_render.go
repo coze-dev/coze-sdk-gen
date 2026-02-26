@@ -523,14 +523,8 @@ func renderOperationMethodWithContext(
 				returnType = mappedAsyncReturnType
 			}
 		}
-		if mappedReturnCast := strings.TrimSpace(binding.Mapping.ResponseCast); mappedReturnCast != "" {
-			returnCast = mappedReturnCast
-		} else if strings.TrimSpace(binding.Mapping.ResponseType) != "" {
-			returnCast = strings.TrimSpace(binding.Mapping.ResponseType)
-		}
 		shouldInferResponseModel := strings.TrimSpace(binding.Mapping.ResponseType) == "" &&
 			strings.TrimSpace(binding.Mapping.AsyncResponseType) == "" &&
-			strings.TrimSpace(binding.Mapping.ResponseCast) == "" &&
 			(strings.TrimSpace(returnType) == "" || strings.TrimSpace(returnType) == "Dict[str, Any]")
 		if shouldInferResponseModel {
 			if inferredModelName, ok := inferBindingResponseModelName(doc, &config.Package{Name: binding.PackageName}, binding); ok {
@@ -554,6 +548,7 @@ func renderOperationMethodWithContext(
 			}
 		}
 	}
+	returnCast = inferResponseCast(binding.Mapping, returnType, returnCast)
 	if ignoreHeaderParams {
 		details.HeaderParameters = nil
 	}

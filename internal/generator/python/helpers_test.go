@@ -107,6 +107,64 @@ func TestSchemaAndTypeHelpers(t *testing.T) {
 	}
 }
 
+func TestInferResponseCast(t *testing.T) {
+	tests := []struct {
+		name        string
+		mapping     *config.OperationMapping
+		returnType  string
+		defaultCast string
+		expected    string
+	}{
+		{
+			name: "stream return type uses none cast",
+			mapping: &config.OperationMapping{
+				ResponseType: "Stream[ChatEvent]",
+			},
+			returnType: "Stream[ChatEvent]",
+			expected:   "None",
+		},
+		{
+			name: "list return type uses list cast",
+			mapping: &config.OperationMapping{
+				ResponseType: "List[Document]",
+			},
+			returnType: "List[Document]",
+			expected:   "[Document]",
+		},
+		{
+			name: "unwrap list first uses list response cast",
+			mapping: &config.OperationMapping{
+				ResponseType:            "WorkflowRunHistory",
+				ResponseUnwrapListFirst: true,
+			},
+			returnType: "WorkflowRunHistory",
+			expected:   "ListResponse[WorkflowRunHistory]",
+		},
+		{
+			name: "fallback to response type",
+			mapping: &config.OperationMapping{
+				ResponseType: "User",
+			},
+			returnType: "User",
+			expected:   "User",
+		},
+		{
+			name:        "nil mapping keeps default cast",
+			returnType:  "Dict[str, Any]",
+			defaultCast: "DemoResp",
+			expected:    "DemoResp",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := inferResponseCast(tt.mapping, tt.returnType, tt.defaultCast); got != tt.expected {
+				t.Fatalf("inferResponseCast() = %q, want %q", got, tt.expected)
+			}
+		})
+	}
+}
+
 func TestCommentAndDocstringHelpers(t *testing.T) {
 	buf := &bytes.Buffer{}
 	AppendIndentedCode(buf, "    x = 1\n    y = 2\n", 1)

@@ -93,7 +93,6 @@ api:
       arg_types:
         name: str
       response_type: DemoResp
-      response_cast: DemoResp
 `)
 
 	var out bytes.Buffer
