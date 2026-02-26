@@ -4047,7 +4047,6 @@ api:
       body_builder: raw
       body_fields:
         - document_ids
-      headers_expr: kwargs.get("headers")
       response_type: ListResponse[DocumentProgress]
       data_field: data.data
     - path: /v1/connectors/{connector_id}/bots/{bot_id}
