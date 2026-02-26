@@ -64,8 +64,10 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []Operati
 					if mappingCopy.Order > 0 {
 						order = mappingCopy.Order + methodIndex
 					}
+					pkgCopy := pkg
 					bindings = append(bindings, OperationBinding{
 						PackageName: NormalizePackageName(pkg.Name),
+						Package:     &pkgCopy,
 						MethodName:  NormalizeMethodName(methodName),
 						Details:     details,
 						Mapping:     &mappingCopy,
@@ -80,8 +82,10 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []Operati
 		if !ok {
 			continue
 		}
+		pkgCopy := pkg
 		bindings = append(bindings, OperationBinding{
 			PackageName: NormalizePackageName(pkg.Name),
+			Package:     &pkgCopy,
 			MethodName:  DefaultMethodName(details.OperationID, details.Path, details.Method),
 			Details:     details,
 			Order:       len(bindings),
@@ -117,8 +121,10 @@ func buildOperationBindings(cfg *config.Config, doc *openapi.Document) []Operati
 			if mappingCopy.Order > 0 {
 				order = mappingCopy.Order + methodIndex
 			}
+			pkgCopy := pkg
 			bindings = append(bindings, OperationBinding{
 				PackageName: NormalizePackageName(pkg.Name),
+				Package:     &pkgCopy,
 				MethodName:  NormalizeMethodName(methodName),
 				Details:     details,
 				Mapping:     &mappingCopy,

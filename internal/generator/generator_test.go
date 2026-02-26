@@ -1260,29 +1260,69 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenInitOverrides(t *tes
 	}
 }
 
-func TestRenderOperationMethodResponseUnwrapListFirst(t *testing.T) {
-	doc := mustParseSwagger(t)
-	details := openapi.OperationDetails{
-		Path:   "/v1/workflows/{workflow_id}/run_histories/{execute_id}",
-		Method: "get",
-		PathParameters: []openapi.ParameterSpec{
-			{Name: "workflow_id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
-			{Name: "execute_id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
-		},
+func TestRenderOperationMethodResponseUnwrapListFirstInfersResponseTypeAndCast(t *testing.T) {
+	doc, err := openapi.Parse([]byte(`
+components:
+  schemas:
+    WorkflowExecuteHistory:
+      type: object
+      properties:
+        logid:
+          type: string
+paths:
+  /v1/workflows/{workflow_id}/run_histories/{execute_id}:
+    get:
+      operationId: OpenAPIGetWorkflowRunHistory
+      parameters:
+        - in: path
+          name: workflow_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: execute_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkflowExecuteHistory'
+`))
+	if err != nil {
+		t.Fatalf("openapi.Parse() error = %v", err)
+	}
+	details, ok := doc.OperationDetails("/v1/workflows/{workflow_id}/run_histories/{execute_id}", "get")
+	if !ok {
+		t.Fatal("expected workflow run history operation details")
 	}
 
 	syncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "workflows_runs_run_histories",
-		MethodName:  "retrieve",
-		Details:     details,
+		Package: &config.Package{
+			Name: "workflows_runs_run_histories",
+			ModelSchemas: []config.ModelSchema{
+				{Schema: "WorkflowExecuteHistory", Name: "WorkflowRunHistory"},
+			},
+		},
+		MethodName: "retrieve",
+		Details:    *details,
 		Mapping: &config.OperationMapping{
-			ResponseType:            "WorkflowRunHistory",
-			ResponseCast:            "ListResponse[WorkflowRunHistory]",
 			ResponseUnwrapListFirst: true,
 		},
 	}, false)
-	if !strings.Contains(syncCode, "res = self._requester.request(") {
-		t.Fatalf("expected response unwrap request assign in sync code:\n%s", syncCode)
+	if !strings.Contains(syncCode, "-> WorkflowRunHistory:") {
+		t.Fatalf("expected inferred sync return type annotation:\n%s", syncCode)
+	}
+	if !strings.Contains(syncCode, "cast=ListResponse[WorkflowRunHistory]") {
+		t.Fatalf("expected inferred list response cast in sync code:\n%s", syncCode)
 	}
 	if !strings.Contains(syncCode, "data = res.data[0]") || !strings.Contains(syncCode, "data._raw_response = res._raw_response") {
 		t.Fatalf("expected unwrap-first-list response handling in sync code:\n%s", syncCode)
@@ -1290,16 +1330,23 @@ func TestRenderOperationMethodResponseUnwrapListFirst(t *testing.T) {
 
 	asyncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
 		PackageName: "workflows_runs_run_histories",
-		MethodName:  "retrieve",
-		Details:     details,
+		Package: &config.Package{
+			Name: "workflows_runs_run_histories",
+			ModelSchemas: []config.ModelSchema{
+				{Schema: "WorkflowExecuteHistory", Name: "WorkflowRunHistory"},
+			},
+		},
+		MethodName: "retrieve",
+		Details:    *details,
 		Mapping: &config.OperationMapping{
-			ResponseType:            "WorkflowRunHistory",
-			ResponseCast:            "ListResponse[WorkflowRunHistory]",
 			ResponseUnwrapListFirst: true,
 		},
 	}, true)
-	if !strings.Contains(asyncCode, "res = await self._requester.arequest(") {
-		t.Fatalf("expected response unwrap request assign in async code:\n%s", asyncCode)
+	if !strings.Contains(asyncCode, "-> WorkflowRunHistory:") {
+		t.Fatalf("expected inferred async return type annotation:\n%s", asyncCode)
+	}
+	if !strings.Contains(asyncCode, "cast=ListResponse[WorkflowRunHistory]") {
+		t.Fatalf("expected inferred list response cast in async code:\n%s", asyncCode)
 	}
 	if !strings.Contains(asyncCode, "data = res.data[0]") || !strings.Contains(asyncCode, "data._raw_response = res._raw_response") {
 		t.Fatalf("expected unwrap-first-list response handling in async code:\n%s", asyncCode)

@@ -15,6 +15,7 @@ import (
 
 type OperationBinding struct {
 	PackageName string
+	Package     *config.Package
 	MethodName  string
 	Details     openapi.OperationDetails
 	Mapping     *config.OperationMapping

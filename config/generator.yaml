@@ -5336,8 +5336,6 @@ api:
       order: 93
       sdk_methods:
         - workflows_runs_run_histories.retrieve
-      response_type: WorkflowRunHistory
-      response_cast: ListResponse[WorkflowRunHistory]
       response_unwrap_list_first: true
     - path: /v1/workflows/{workflow_id}/run_histories/{execute_id}/execute_nodes/{node_execute_uuid}
       method: get

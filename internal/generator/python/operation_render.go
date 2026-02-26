@@ -487,6 +487,10 @@ func renderOperationMethodWithContext(
 	bodyCallExprOverride := ""
 	headersExpr := ""
 	paginationRequestArg := "params"
+	pkgForInference := binding.Package
+	if pkgForInference == nil {
+		pkgForInference = &config.Package{Name: binding.PackageName}
+	}
 	if binding.Mapping != nil && len(binding.Mapping.ParamAliases) > 0 {
 		paramAliases = binding.Mapping.ParamAliases
 	}
@@ -534,10 +538,17 @@ func renderOperationMethodWithContext(
 			strings.TrimSpace(binding.Mapping.ResponseCast) == "" &&
 			(strings.TrimSpace(returnType) == "" || strings.TrimSpace(returnType) == "Dict[str, Any]")
 		if shouldInferResponseModel {
-			if inferredModelName, ok := inferBindingResponseModelName(doc, &config.Package{Name: binding.PackageName}, binding); ok {
+			if inferredModelName, ok := inferBindingResponseModelName(doc, pkgForInference, binding); ok {
 				returnType = inferredModelName
 				returnCast = inferredModelName
 			}
+		}
+		if binding.Mapping.ResponseUnwrapListFirst &&
+			strings.TrimSpace(binding.Mapping.ResponseType) == "" &&
+			strings.TrimSpace(binding.Mapping.ResponseCast) == "" &&
+			strings.TrimSpace(returnType) != "" &&
+			strings.TrimSpace(returnType) != "Dict[str, Any]" {
+			returnCast = fmt.Sprintf("ListResponse[%s]", strings.TrimSpace(returnType))
 		}
 		streamWrapHandler = strings.TrimSpace(binding.Mapping.StreamWrapHandler)
 		if len(binding.Mapping.StreamWrapFields) > 0 {

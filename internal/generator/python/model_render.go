@@ -381,11 +381,34 @@ func inferBindingResponseModelName(doc *openapi.Document, pkg *config.Package, b
 	if !ok {
 		return "", false
 	}
+	if configuredName := configuredModelNameForSchema(pkg, schemaName); configuredName != "" {
+		return configuredName, true
+	}
 	modelName := strings.TrimSpace(inferModelNameFromSchema(pkg, schemaName, responseDataSchema))
 	if !isPythonClassName(modelName) {
 		return "", false
 	}
 	return modelName, true
+}
+
+func configuredModelNameForSchema(pkg *config.Package, schemaName string) string {
+	if pkg == nil {
+		return ""
+	}
+	target := strings.TrimSpace(schemaName)
+	if target == "" {
+		return ""
+	}
+	for _, model := range pkg.ModelSchemas {
+		if strings.TrimSpace(model.Schema) != target {
+			continue
+		}
+		name := strings.TrimSpace(model.Name)
+		if isPythonClassName(name) {
+			return name
+		}
+	}
+	return ""
 }
 
 func resolveMappingResponseDataSchema(doc *openapi.Document, binding OperationBinding) (*openapi.Schema, string, bool) {
@@ -410,6 +433,17 @@ func resolveMappingResponseDataSchema(doc *openapi.Document, binding OperationBi
 			if resolved := doc.ResolveSchema(fieldSchema); resolved != nil {
 				if name, ok := doc.SchemaName(resolved); ok {
 					return resolved, name, true
+				}
+				if strings.EqualFold(strings.TrimSpace(resolved.Type), "array") && resolved.Items != nil {
+					itemSchema := doc.ResolveSchema(resolved.Items)
+					if itemSchema != nil {
+						if name, ok := doc.SchemaName(resolved.Items); ok {
+							return itemSchema, name, true
+						}
+						if name, ok := doc.SchemaName(itemSchema); ok {
+							return itemSchema, name, true
+						}
+					}
 				}
 			}
 		}
