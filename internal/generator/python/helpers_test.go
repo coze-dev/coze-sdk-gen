@@ -308,10 +308,9 @@ func TestOperationHelpersSignatureAndDefaults(t *testing.T) {
 
 	mapping := &config.OperationMapping{
 		ArgDefaults:      map[string]string{"x": "1"},
-		ArgDefaultsSync:  map[string]string{"x": "2"},
 		ArgDefaultsAsync: map[string]string{"x": "3"},
 	}
-	if got, ok := OperationArgDefault(mapping, "x", "x", false); !ok || got != "2" {
+	if got, ok := OperationArgDefault(mapping, "x", "x", false); !ok || got != "1" {
 		t.Fatalf("OperationArgDefault(sync) got=%q ok=%v", got, ok)
 	}
 	if got, ok := OperationArgDefault(mapping, "x", "x", true); !ok || got != "3" {
