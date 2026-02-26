@@ -211,7 +211,6 @@ type OperationMapping struct {
 	BlankLineAfterDocstring        bool              `yaml:"blank_line_after_docstring"`
 	ForceMultilineSignature        bool              `yaml:"force_multiline_signature"`
 	ForceMultilineSignatureSync    bool              `yaml:"force_multiline_signature_sync"`
-	ForceMultilineSignatureAsync   bool              `yaml:"force_multiline_signature_async"`
 	ForceMultilineRequestCall      bool              `yaml:"force_multiline_request_call"`
 	ForceMultilineRequestCallAsync bool              `yaml:"force_multiline_request_call_async"`
 	PaginationRequestArg           string            `yaml:"pagination_request_arg"`

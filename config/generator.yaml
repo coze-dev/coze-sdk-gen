@@ -4422,7 +4422,6 @@ api:
       order: 68
       sdk_methods:
         - bots.publish
-      force_multiline_signature_async: true
       body_builder: raw
       pre_body_code:
         - |

@@ -748,11 +748,7 @@ func renderOperationMethodWithContext(
 		if binding.Mapping.ForceMultilineSignature {
 			compactSignature = false
 		}
-		if async {
-			if binding.Mapping.ForceMultilineSignatureAsync {
-				compactSignature = false
-			}
-		} else {
+		if !async {
 			if binding.Mapping.ForceMultilineSignatureSync {
 				compactSignature = false
 			}
