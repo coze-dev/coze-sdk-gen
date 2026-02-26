@@ -1824,6 +1824,72 @@ api:
         - _PrivateListBenefitBillTasksData
       path_prefixes:
         - /v1/commerce/benefit/bill_tasks
+    - name: benefits
+      source_dir: cozepy/benefits
+      allow_missing_in_swagger: true
+      model_schemas:
+        - name: BenefitBasicInfo
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: user_level
+              type: Optional[str]
+              required: false
+        - name: BenefitItemInfo
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: used
+              type: Optional[float]
+              required: false
+            - name: total
+              type: Optional[float]
+              required: false
+            - name: start_at
+              type: Optional[int]
+              required: false
+            - name: end_at
+              type: Optional[int]
+              required: false
+            - name: strategy
+              type: Optional[str]
+              required: false
+        - name: BenefitStatusInfo
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: status
+              type: Optional[str]
+              required: false
+            - name: item_info
+              type: Optional[BenefitItemInfo]
+              required: false
+        - name: BenefitInfo
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: basic
+              type: Optional[BenefitStatusInfo]
+              required: false
+            - name: extra
+              type: Optional[List[BenefitStatusInfo]]
+              required: false
+            - name: effective
+              type: Optional[BenefitStatusInfo]
+              required: false
+            - name: resource_id
+              type: Optional[str]
+              required: false
+            - name: benefit_type
+              type: Optional[str]
+              required: false
+        - name: BenefitOverview
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: basic_info
+              type: Optional[BenefitBasicInfo]
+              required: false
+            - name: benefit_info
+              type: Optional[List[BenefitInfo]]
+              required: false
+      path_prefixes:
+        - /v1/commerce/benefit/benefits/get
     - name: benefit_limitations
       allow_missing_in_swagger: true
       empty_models:
@@ -3753,6 +3819,24 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
+    - path: /v1/commerce/benefit/benefits/get
+      method: get
+      order: 734
+      sdk_methods:
+        - benefits.get
+      disable_request_body: true
+      query_builder: remove_none_values
+      query_fields:
+        - name: benefit_type_list
+          type: List[str]
+          required: false
+        - name: resource_id
+          type: str
+          required: false
+      query_field_values:
+        benefit_type_list: '",".join(benefit_type_list) if benefit_type_list else None'
+      response_type: BenefitOverview
+      response_cast: BenefitOverview
     - path: /v1/commerce/benefit/limitations
       method: post
       order: 736
@@ -5545,8 +5629,6 @@ api:
       response_cast: User
       allow_missing_in_swagger: true
   ignore_apis:
-    - path: /v1/commerce/benefit/benefits/get
-      method: get
     - path: /v1/conversation/message/list
       method: post
     - path: /v3/chat/submit_tool_outputs
