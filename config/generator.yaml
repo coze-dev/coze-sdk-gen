@@ -4101,7 +4101,6 @@ api:
         connector_id: str
         audit_status: Optional[AuditStatus]
         reason: Optional[str]
-      blank_line_after_headers: true
       response_type: UpdateConnectorBotResp
       response_cast: UpdateConnectorBotResp
     - path: /v1/connectors/{connector_id}/user_configs

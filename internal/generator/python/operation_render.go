@@ -1135,11 +1135,7 @@ func renderOperationMethodWithContext(
 	}
 
 	if headersExpr == "" && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
-		if binding.Mapping != nil && binding.Mapping.BlankLineAfterHeaders {
-			buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n\n")
-		} else {
-			buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n")
-		}
+		buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n")
 		headersAssigned = true
 	}
 	if binding.Mapping != nil && len(binding.Mapping.PreBodyCode) > 0 {
