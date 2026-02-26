@@ -1095,8 +1095,6 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenOverrides(t *testing
 	}
 	mapping := &config.OperationMapping{
 		QueryBuilder:                "dump_exclude_none",
-		QueryBuilderSync:            "dump_exclude_none",
-		QueryBuilderAsync:           "remove_none_values",
 		Pagination:                  "token",
 		PaginationDataClass:         "_PrivateListWorkflowVersionData",
 		PaginationItemType:          "WorkflowVersionInfo",
@@ -1131,8 +1129,8 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenOverrides(t *testing
 	if !strings.Contains(asyncCode, "amake_request(\n                \"get\",") {
 		t.Fatalf("expected custom pagination http method in async request:\n%s", asyncCode)
 	}
-	if !strings.Contains(asyncCode, "params=remove_none_values(") {
-		t.Fatalf("expected async query builder override:\n%s", asyncCode)
+	if !strings.Contains(asyncCode, "params=dump_exclude_none(") {
+		t.Fatalf("expected async query builder to follow query_builder:\n%s", asyncCode)
 	}
 	if !strings.Contains(asyncCode, "page_token=page_token or \"\"") {
 		t.Fatalf("expected custom pagination token init expr in async code:\n%s", asyncCode)

@@ -823,16 +823,8 @@ func RenderPackageModuleWithComments(
 			}
 			queryBuilder := "dump_exclude_none"
 			bodyBuilder := "dump_exclude_none"
-			queryBuilderSync := ""
-			queryBuilderAsync := ""
 			if binding.Mapping != nil {
 				queryBuilder = normalizeMapBuilder(binding.Mapping.QueryBuilder)
-				if override := strings.TrimSpace(binding.Mapping.QueryBuilderSync); override != "" {
-					queryBuilderSync = normalizeMapBuilder(override)
-				}
-				if override := strings.TrimSpace(binding.Mapping.QueryBuilderAsync); override != "" {
-					queryBuilderAsync = normalizeMapBuilder(override)
-				}
 				bodyBuilder = normalizeMapBuilder(binding.Mapping.BodyBuilder)
 			}
 			hasQueryFields := len(binding.Details.QueryParameters) > 0
@@ -840,29 +832,12 @@ func RenderPackageModuleWithComments(
 				hasQueryFields = true
 			}
 			hasBodyMap := binding.Mapping != nil && (len(binding.Mapping.BodyFields) > 0 || len(binding.Mapping.BodyFixedValues) > 0)
-			if hasQueryFields {
-				builders := make([]string, 0, 2)
-				if mappingGeneratesSync(binding.Mapping) {
-					if queryBuilderSync != "" {
-						builders = append(builders, queryBuilderSync)
-					} else {
-						builders = append(builders, queryBuilder)
-					}
+			if hasQueryFields && (mappingGeneratesSync(binding.Mapping) || mappingGeneratesAsync(binding.Mapping)) {
+				if queryBuilder == "dump_exclude_none" {
+					needDumpExcludeNone = true
 				}
-				if mappingGeneratesAsync(binding.Mapping) {
-					if queryBuilderAsync != "" {
-						builders = append(builders, queryBuilderAsync)
-					} else {
-						builders = append(builders, queryBuilder)
-					}
-				}
-				for _, builder := range builders {
-					if builder == "dump_exclude_none" {
-						needDumpExcludeNone = true
-					}
-					if builder == "remove_none_values" {
-						needRemoveNoneValues = true
-					}
+				if queryBuilder == "remove_none_values" {
+					needRemoveNoneValues = true
 				}
 			}
 			if hasBodyMap && (mappingGeneratesSync(binding.Mapping) || mappingGeneratesAsync(binding.Mapping)) {

@@ -5307,8 +5307,6 @@ api:
       sdk_methods:
         - workflows_versions.list
       query_builder: dump_exclude_none
-      query_builder_sync: dump_exclude_none
-      query_builder_async: remove_none_values
       query_fields:
         - name: publish_status
           type: PublishStatus

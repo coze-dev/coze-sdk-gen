@@ -479,15 +479,6 @@ func renderOperationMethodWithContext(
 		dataField = strings.TrimSpace(binding.Mapping.DataField)
 		requestStream = binding.Mapping.RequestStream
 		queryBuilder = normalizeMapBuilder(binding.Mapping.QueryBuilder)
-		if async {
-			if override := strings.TrimSpace(binding.Mapping.QueryBuilderAsync); override != "" {
-				queryBuilder = normalizeMapBuilder(override)
-			}
-		} else {
-			if override := strings.TrimSpace(binding.Mapping.QueryBuilderSync); override != "" {
-				queryBuilder = normalizeMapBuilder(override)
-			}
-		}
 		bodyBuilder = normalizeMapBuilder(binding.Mapping.BodyBuilder)
 		bodyAnnotation = strings.TrimSpace(binding.Mapping.BodyAnnotation)
 		compactSingleItemMaps = binding.Mapping.CompactSingleItemMaps
