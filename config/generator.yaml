@@ -4482,7 +4482,6 @@ api:
       order: 67
       sdk_methods:
         - bots.update
-      force_multiline_request_call_sync: true
       body_fields:
         - bot_id
         - name

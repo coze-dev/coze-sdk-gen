@@ -1443,9 +1443,6 @@ func renderOperationMethodWithContext(
 		if async && binding.Mapping.ForceMultilineRequestCallAsync {
 			forceMultilineRequestCall = true
 		}
-		if !async && binding.Mapping.ForceMultilineRequestCallSync {
-			forceMultilineRequestCall = true
-		}
 	}
 	if binding.Mapping != nil && binding.Mapping.ResponseUnwrapListFirst {
 		buf.WriteString(fmt.Sprintf("        res = %s\n", requestExpr))
