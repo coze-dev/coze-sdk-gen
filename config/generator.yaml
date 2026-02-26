@@ -1824,6 +1824,9 @@ api:
         - _PrivateListBenefitBillTasksData
       path_prefixes:
         - /v1/commerce/benefit/bill_tasks
+    - name: benefits
+      source_dir: cozepy/benefits
+      allow_missing_in_swagger: true
     - name: benefit_limitations
       allow_missing_in_swagger: true
       empty_models:
@@ -3753,6 +3756,22 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
+    - path: /v1/commerce/benefit/benefits/get
+      method: get
+      order: 734
+      sdk_methods:
+        - benefits.retrieve
+      disable_request_body: true
+      query_builder: remove_none_values
+      query_fields:
+        - name: benefit_type_list
+          type: List[str]
+          required: false
+        - name: resource_id
+          type: str
+          required: false
+      query_field_values:
+        benefit_type_list: '",".join(benefit_type_list) if benefit_type_list else None'
     - path: /v1/commerce/benefit/limitations
       method: post
       order: 736
@@ -5541,8 +5560,6 @@ api:
       response_cast: User
       allow_missing_in_swagger: true
   ignore_apis:
-    - path: /v1/commerce/benefit/benefits/get
-      method: get
     - path: /v1/conversation/message/list
       method: post
     - path: /v3/chat/submit_tool_outputs
