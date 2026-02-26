@@ -1004,7 +1004,7 @@ func TestRenderOperationMethodAsyncStreamMethodDefaultsToYield(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodPaginationOrderOptions(t *testing.T) {
+func TestRenderOperationMethodPaginationRequestOrder(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/apps",
@@ -1028,25 +1028,9 @@ func TestRenderOperationMethodPaginationOrderOptions(t *testing.T) {
 	}, false)
 	idxHeaders := strings.Index(codeHeadersFirst, "headers=headers")
 	idxParams := strings.Index(codeHeadersFirst, "params=")
-	if idxHeaders == -1 || idxParams == -1 || idxHeaders > idxParams {
-		t.Fatalf("expected headers before params in pagination request:\n%s", codeHeadersFirst)
-	}
-
-	codeCastBeforeHeaders := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
-		PackageName: "apps",
-		MethodName:  "list",
-		Details:     details,
-		Mapping: &config.OperationMapping{
-			Pagination:                  "number",
-			PaginationDataClass:         "_PrivateListAppsData",
-			PaginationItemType:          "App",
-			PaginationCastBeforeHeaders: true,
-		},
-	}, false)
-	idxCast := strings.Index(codeCastBeforeHeaders, "cast=_PrivateListAppsData")
-	idxHeaders = strings.Index(codeCastBeforeHeaders, "headers=headers")
-	if idxCast == -1 || idxHeaders == -1 || idxCast > idxHeaders {
-		t.Fatalf("expected cast before headers in pagination request:\n%s", codeCastBeforeHeaders)
+	idxCast := strings.Index(codeHeadersFirst, "cast=_PrivateListAppsData")
+	if idxHeaders == -1 || idxParams == -1 || idxCast == -1 || idxHeaders > idxParams || idxParams > idxCast {
+		t.Fatalf("expected pagination request to keep fixed order headers -> params -> cast:\n%s", codeHeadersFirst)
 	}
 }
 
