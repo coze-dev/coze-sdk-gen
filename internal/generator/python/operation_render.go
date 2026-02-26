@@ -894,11 +894,6 @@ func renderOperationMethodWithContext(
 	}
 	includePaginationHeaders := true
 	paginationRequestMethod := strings.ToUpper(requestMethod)
-	if binding.Mapping != nil {
-		if override := strings.TrimSpace(binding.Mapping.PaginationHTTPMethod); override != "" {
-			paginationRequestMethod = override
-		}
-	}
 
 	if isTokenPagination(paginationMode) && binding.Mapping != nil {
 		dataClass := strings.TrimSpace(binding.Mapping.PaginationDataClass)

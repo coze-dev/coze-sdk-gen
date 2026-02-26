@@ -1164,7 +1164,7 @@ func TestRenderOperationMethodSingleItemMapsUseMultilineFormat(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodPaginationQueryBuilderAndTokenOverrides(t *testing.T) {
+func TestRenderOperationMethodPaginationQueryBuilderAndTokenInitOverrides(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/workflows/{workflow_id}/versions",
@@ -1186,7 +1186,6 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenOverrides(t *testing
 		PaginationPageTokenField:    "page_token",
 		PaginationPageSizeField:     "page_size",
 		PaginationInitPageTokenExpr: "page_token or \"\"",
-		PaginationHTTPMethod:        "get",
 	}
 
 	syncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
@@ -1195,8 +1194,8 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenOverrides(t *testing
 		Details:     details,
 		Mapping:     mapping,
 	}, false)
-	if !strings.Contains(syncCode, "make_request(\n                \"get\",") {
-		t.Fatalf("expected custom pagination http method in sync request:\n%s", syncCode)
+	if !strings.Contains(syncCode, "make_request(\n                \"GET\",") {
+		t.Fatalf("expected pagination request to use operation http method in sync request:\n%s", syncCode)
 	}
 	if !strings.Contains(syncCode, "params=dump_exclude_none(") {
 		t.Fatalf("expected sync query builder override:\n%s", syncCode)
@@ -1214,8 +1213,8 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenOverrides(t *testing
 		Details:     details,
 		Mapping:     mapping,
 	}, true)
-	if !strings.Contains(asyncCode, "amake_request(\n                \"get\",") {
-		t.Fatalf("expected custom pagination http method in async request:\n%s", asyncCode)
+	if !strings.Contains(asyncCode, "amake_request(\n                \"GET\",") {
+		t.Fatalf("expected pagination request to use operation http method in async request:\n%s", asyncCode)
 	}
 	if !strings.Contains(asyncCode, "params=dump_exclude_none(") {
 		t.Fatalf("expected async query builder to follow query_builder:\n%s", asyncCode)
