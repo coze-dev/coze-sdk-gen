@@ -2441,6 +2441,14 @@ api:
       source_dir: cozepy/enterprises
       path_prefixes:
         - /v1/enterprises
+    - name: enterprises_organizations
+      source_dir: cozepy/enterprises/organizations
+      client_class: EnterprisesOrganizationsClient
+      async_client_class: AsyncEnterprisesOrganizationsClient
+      empty_models:
+        - CreateEnterpriseOrganizationResp
+      path_prefixes:
+        - /v1/enterprises
     - name: enterprises_members
       source_dir: cozepy/enterprises/members
       client_class: EnterprisesMembersClient
@@ -5134,6 +5142,21 @@ api:
       stream_keyword: true
       response_type: CreateEnterpriseMemberResp
       response_cast: CreateEnterpriseMemberResp
+    - path: /v1/enterprises/{enterprise_id}/organizations
+      method: post
+      order: 86
+      sdk_methods:
+        - enterprises_organizations.create
+      body_builder: dump_exclude_none
+      body_fields:
+        - name
+        - super_admin_user_id
+        - description
+      body_required_fields:
+        - name
+        - super_admin_user_id
+      response_type: CreateEnterpriseOrganizationResp
+      response_cast: CreateEnterpriseOrganizationResp
     - path: /v1/enterprises/{enterprise_id}/members/{user_id}
       method: put
       order: 88
@@ -5478,8 +5501,6 @@ api:
       response_cast: User
       allow_missing_in_swagger: true
   ignore_apis:
-    - path: /v1/enterprises/{enterprise_id}/organizations
-      method: post
     - path: /v1/commerce/benefit/benefits/get
       method: get
     - path: /v1/commerce/benefit/bill_tasks
