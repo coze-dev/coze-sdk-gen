@@ -569,7 +569,6 @@ func renderOperationMethodWithContext(
 	bodyFieldNames := make([]string, 0)
 	bodyFixedValues := map[string]string{}
 	filesFieldNames := make([]string, 0)
-	filesBeforeBody := false
 	if binding.Mapping != nil && len(binding.Mapping.BodyFields) > 0 {
 		bodyFieldNames = append(bodyFieldNames, binding.Mapping.BodyFields...)
 	}
@@ -580,9 +579,6 @@ func renderOperationMethodWithContext(
 	}
 	if binding.Mapping != nil && len(binding.Mapping.FilesFields) > 0 {
 		filesFieldNames = append(filesFieldNames, binding.Mapping.FilesFields...)
-	}
-	if binding.Mapping != nil {
-		filesBeforeBody = binding.Mapping.FilesBeforeBody
 	}
 	if !shouldGenerateImplicitRequestBody(details.Method, binding.Mapping, details.RequestBodySchema) {
 		requestBodyType = ""
@@ -1128,10 +1124,6 @@ func renderOperationMethodWithContext(
 		return true
 	}
 
-	if filesBeforeBody {
-		renderFilesAssignment()
-	}
-
 	if len(bodyFieldNames) > 0 {
 		if bodyBuilder == "raw" {
 			buf.WriteString(fmt.Sprintf("        %s = {\n", bodyVarAssign))
@@ -1213,9 +1205,7 @@ func renderOperationMethodWithContext(
 			buf.WriteString("            request_body = body.model_dump(exclude_none=True) if hasattr(body, \"model_dump\") else body\n")
 		}
 	}
-	if !filesBeforeBody {
-		renderFilesAssignment()
-	}
+	renderFilesAssignment()
 	if headersExpr == "" && !headersAssigned && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
 		needsBlankLine := len(queryFields) > 0 ||
 			len(bodyFieldNames) > 0 ||

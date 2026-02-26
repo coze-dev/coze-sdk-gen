@@ -4785,7 +4785,6 @@ api:
         top_k: int
         sample_rate: int
         channel: int
-      files_before_body: true
       response_type: SpeakerIdentifyResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features
       method: post
@@ -4811,7 +4810,6 @@ api:
         desc: str
         sample_rate: int
         channel: int
-      files_before_body: true
       response_type: CreateVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features/{feature_id}
       method: put
@@ -4835,7 +4833,6 @@ api:
         file: Optional[FileTypes]
         sample_rate: int
         channel: int
-      files_before_body: true
       response_type: UpdateVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features/{feature_id}
       method: delete
