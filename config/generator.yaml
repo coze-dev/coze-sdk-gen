@@ -3687,7 +3687,6 @@ api:
       order: 3
       sdk_methods:
         - chat.retrieve
-      force_multiline_signature: true
       http_method_override: post
       query_builder: raw
       query_fields:
@@ -3704,7 +3703,6 @@ api:
       order: 4
       sdk_methods:
         - chat_message.list
-      force_multiline_signature: true
       query_builder: raw
       query_fields:
         - name: conversation_id
@@ -4067,7 +4065,6 @@ api:
       order: 64
       sdk_methods:
         - datasets.delete
-      force_multiline_signature: true
       force_multiline_request_call: true
       allow_missing_in_swagger: true
       disable_request_body: true
@@ -4596,7 +4593,6 @@ api:
       sdk_methods:
         - folders.retrieve
       no_blank_line_after_headers: true
-      force_multiline_signature: true
       http_method_override: GET
       response_type: SimpleFolder
       response_cast: SimpleFolder
@@ -4750,7 +4746,6 @@ api:
       order: 81
       sdk_methods:
         - audio_transcriptions.create
-      force_multiline_signature: true
       disable_request_body: true
       files_fields:
         - file
@@ -4767,7 +4762,6 @@ api:
         - audio_live.retrieve
       allow_missing_in_swagger: true
       disable_request_body: true
-      force_multiline_signature: true
       response_type: LiveInfo
       response_cast: LiveInfo
     - path: /v1/audio/voiceprint_groups
@@ -4785,7 +4779,6 @@ api:
       arg_types:
         name: str
         desc: str
-      force_multiline_signature: true
       response_type: CreateVoicePrintGroupResp
       response_cast: CreateVoicePrintGroupResp
     - path: /v1/audio/voiceprint_groups/{group_id}
@@ -4802,7 +4795,6 @@ api:
         group_id: str
         name: str
         desc: str
-      force_multiline_signature: true
       response_type: UpdateVoicePrintGroupResp
       response_cast: UpdateVoicePrintGroupResp
     - path: /v1/audio/voiceprint_groups/{group_id}
@@ -4812,7 +4804,6 @@ api:
         - audio_voiceprint_groups.delete
       allow_missing_in_swagger: true
       disable_request_body: true
-      force_multiline_signature: true
       response_type: DeleteVoicePrintGroupResp
       response_cast: DeleteVoicePrintGroupResp
     - path: /v1/audio/voiceprint_groups
@@ -4875,7 +4866,6 @@ api:
         sample_rate: int
         channel: int
       files_before_body: true
-      force_multiline_signature: true
       response_type: SpeakerIdentifyResp
       response_cast: SpeakerIdentifyResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features
@@ -4905,7 +4895,6 @@ api:
         sample_rate: int
         channel: int
       files_before_body: true
-      force_multiline_signature: true
       response_type: CreateVoicePrintGroupFeatureResp
       response_cast: CreateVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features/{feature_id}
@@ -4932,7 +4921,6 @@ api:
         sample_rate: int
         channel: int
       files_before_body: true
-      force_multiline_signature: true
       response_type: UpdateVoicePrintGroupFeatureResp
       response_cast: UpdateVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features/{feature_id}
@@ -4942,7 +4930,6 @@ api:
         - audio_voiceprint_groups_features.delete
       allow_missing_in_swagger: true
       disable_request_body: true
-      force_multiline_signature: true
       response_type: DeleteVoicePrintGroupFeatureResp
       response_cast: DeleteVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features
@@ -5074,7 +5061,6 @@ api:
         - conversations_message.delete
       query_builder: raw
       disable_request_body: true
-      force_multiline_signature: true
       response_type: Message
       response_cast: Message
     - path: /v1/conversation/message/modify
@@ -5102,7 +5088,6 @@ api:
         - conversations_message.retrieve
       query_builder: raw
       disable_request_body: true
-      force_multiline_signature: true
       response_type: Message
       response_cast: Message
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
