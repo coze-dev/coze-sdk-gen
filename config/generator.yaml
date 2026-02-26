@@ -3688,7 +3688,6 @@ api:
       sdk_methods:
         - chat.retrieve
       force_multiline_signature: true
-      http_method_override: post
       query_builder: raw
       query_fields:
         - name: conversation_id
@@ -3822,7 +3821,6 @@ api:
       order: 30
       sdk_methods:
         - api_apps.delete
-      http_method_override: delete
       disable_request_body: true
       param_aliases:
         api_app_id: app_id
@@ -3833,7 +3831,6 @@ api:
       order: 40
       sdk_methods:
         - api_apps.list
-      http_method_override: get
       disable_request_body: true
       query_fields:
         - name: app_type
@@ -4600,7 +4597,6 @@ api:
         - folders.retrieve
       no_blank_line_after_headers: true
       force_multiline_signature: true
-      http_method_override: GET
       response_type: SimpleFolder
       response_cast: SimpleFolder
     - path: /v1/folders

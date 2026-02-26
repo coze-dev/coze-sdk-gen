@@ -516,10 +516,7 @@ func buildGoSwaggerOperationBindings(cfg *config.Config, doc *openapi.Document, 
 			if goMethod == "" {
 				continue
 			}
-			httpMethod := strings.TrimSpace(mapping.HTTPMethodOverride)
-			if httpMethod == "" {
-				httpMethod = strings.TrimSpace(mapping.Method)
-			}
+			httpMethod := strings.TrimSpace(mapping.Method)
 			if httpMethod == "" {
 				httpMethod = http.MethodGet
 			}

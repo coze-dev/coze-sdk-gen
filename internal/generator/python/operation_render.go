@@ -226,10 +226,6 @@ func shouldSuppressSwaggerMethodDocstring(binding OperationBinding) bool {
 	if pagination == "token" || pagination == "number" {
 		return true
 	}
-	if methodOverride := strings.TrimSpace(binding.Mapping.HTTPMethodOverride); methodOverride != "" &&
-		strings.ToLower(methodOverride) != strings.ToLower(binding.Details.Method) {
-		return true
-	}
 	return false
 }
 
@@ -496,9 +492,6 @@ func renderOperationMethodWithContext(
 		argTypes = binding.Mapping.ArgTypes
 	}
 	if binding.Mapping != nil {
-		if methodOverride := strings.TrimSpace(binding.Mapping.HTTPMethodOverride); methodOverride != "" {
-			requestMethod = methodOverride
-		}
 		paginationMode = strings.TrimSpace(binding.Mapping.Pagination)
 		if isTokenPagination(paginationMode) || isNumberPagination(paginationMode) {
 			itemType := strings.TrimSpace(binding.Mapping.PaginationItemType)

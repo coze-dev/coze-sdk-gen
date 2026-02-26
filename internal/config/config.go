@@ -156,7 +156,6 @@ type OperationMapping struct {
 	Order                          int               `yaml:"order"`
 	SDKMethods                     []string          `yaml:"sdk_methods"`
 	AllowMissingInSwagger          bool              `yaml:"allow_missing_in_swagger"`
-	HTTPMethodOverride             string            `yaml:"http_method_override"`
 	DisableRequestBody             bool              `yaml:"disable_request_body"`
 	BodyFields                     []string          `yaml:"body_fields"`
 	BodyFixedValues                map[string]string `yaml:"body_fixed_values"`
@@ -491,11 +490,6 @@ func (c *Config) Validate() error {
 	for i, mapping := range c.API.OperationMappings {
 		if err := validateOperationRef(mapping.Path, mapping.Method, fmt.Sprintf("api.operation_mappings[%d]", i)); err != nil {
 			return err
-		}
-		if strings.TrimSpace(mapping.HTTPMethodOverride) != "" {
-			if err := validateOperationRef(mapping.Path, mapping.HTTPMethodOverride, fmt.Sprintf("api.operation_mappings[%d].http_method_override", i)); err != nil {
-				return err
-			}
 		}
 		if len(mapping.SDKMethods) == 0 {
 			return fmt.Errorf("api.operation_mappings[%d].sdk_methods should not be empty", i)
