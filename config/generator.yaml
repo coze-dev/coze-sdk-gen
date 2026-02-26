@@ -4678,7 +4678,6 @@ api:
       order: 81
       sdk_methods:
         - audio_transcriptions.create
-      force_multiline_signature: true
       files_fields:
         - file
       files_field_values:
@@ -4692,7 +4691,6 @@ api:
       sdk_methods:
         - audio_live.retrieve
       allow_missing_in_swagger: true
-      force_multiline_signature: true
       response_type: LiveInfo
     - path: /v1/audio/voiceprint_groups
       method: post
@@ -4731,7 +4729,6 @@ api:
       sdk_methods:
         - audio_voiceprint_groups.delete
       allow_missing_in_swagger: true
-      force_multiline_signature: true
       response_type: DeleteVoicePrintGroupResp
     - path: /v1/audio/voiceprint_groups
       method: get
@@ -4853,7 +4850,6 @@ api:
       sdk_methods:
         - audio_voiceprint_groups_features.delete
       allow_missing_in_swagger: true
-      force_multiline_signature: true
       response_type: DeleteVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features
       method: get
@@ -4981,7 +4977,6 @@ api:
       sdk_methods:
         - conversations_message.delete
       query_builder: raw
-      force_multiline_signature: true
       response_type: Message
     - path: /v1/conversation/message/modify
       method: post
@@ -5006,7 +5001,6 @@ api:
       sdk_methods:
         - conversations_message.retrieve
       query_builder: raw
-      force_multiline_signature: true
       response_type: Message
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
       method: post
