@@ -5466,16 +5466,6 @@ api:
       pagination_item_type: WorkspaceMember
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
-    - path: /v1/files/upload
-      method: post
-      order: 970
-      sdk_methods:
-        - go.files.upload
-    - path: /v1/files/retrieve
-      method: get
-      order: 971
-      sdk_methods:
-        - go.files.retrieve
     - path: /v1/templates/{template_id}/duplicate
       method: post
       sdk_methods:

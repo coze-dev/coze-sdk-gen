@@ -8,100 +8,95 @@ import (
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
 )
 
-func TestListGoAPIModuleRenderersUsesSwaggerSpecs(t *testing.T) {
-	renderers := listGoAPIModuleRenderers()
-	if len(renderers) != len(goSwaggerAPIModuleSpecs) {
-		t.Fatalf("expected %d swagger renderers, got %d", len(goSwaggerAPIModuleSpecs), len(renderers))
-	}
-
-	expected := make(map[string]struct{}, len(goSwaggerAPIModuleSpecs))
-	for _, spec := range goSwaggerAPIModuleSpecs {
-		expected[spec.FileName] = struct{}{}
-	}
-	for _, renderer := range renderers {
-		if _, ok := expected[renderer.FileName]; !ok {
-			t.Fatalf("unexpected renderer file %q", renderer.FileName)
-		}
-	}
-}
-
-func TestBuildGoSwaggerOperationBindingsSupportsGoPrefixedMethods(t *testing.T) {
+func TestRenderGoAppsModuleUsesMappedPath(t *testing.T) {
 	cfg := &config.Config{
 		API: config.APIConfig{
 			OperationMappings: []config.OperationMapping{
 				{
-					Path:       "/v1/files/upload",
-					Method:     "post",
-					Order:      10,
-					SDKMethods: []string{"go.files.upload"},
-				},
-				{
-					Path:       "/v1/files/retrieve",
+					Path:       "/v9/custom/apps",
 					Method:     "get",
-					Order:      20,
-					SDKMethods: []string{"go.files.retrieve"},
+					SDKMethods: []string{"apps.list"},
 				},
 			},
 		},
 	}
+
+	content, err := renderGoAppsModule(cfg, nil)
+	if err != nil {
+		t.Fatalf("renderGoAppsModule() error = %v", err)
+	}
+	if !strings.Contains(content, "URL:    \"/v9/custom/apps\",") {
+		t.Fatalf("expected mapped path in rendered content, got:\n%s", content)
+	}
+}
+
+func TestRenderGoUsersModuleFallsBackToSwaggerPath(t *testing.T) {
 	doc := mustParseOpenAPIDoc(t, `
 openapi: 3.0.0
 paths:
-  /v1/files/upload:
-    post:
-      summary: upload file
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-      responses:
-        '200':
-          description: ok
-  /v1/files/retrieve:
+  /v1/users/me:
     get:
-      summary: retrieve file
       responses:
         '200':
           description: ok
 `)
 
-	bindings := buildGoSwaggerOperationBindings(cfg, doc, "files")
-	if len(bindings) != 2 {
-		t.Fatalf("expected 2 bindings, got %d", len(bindings))
+	content, err := renderGoUsersModule(&config.Config{}, doc)
+	if err != nil {
+		t.Fatalf("renderGoUsersModule() error = %v", err)
 	}
-	if bindings[0].MethodName != "Upload" || !bindings[0].IsFile || bindings[0].Path != "/v1/files/upload" {
-		t.Fatalf("unexpected first binding: %+v", bindings[0])
-	}
-	if bindings[1].MethodName != "Retrieve" || bindings[1].IsFile || bindings[1].Path != "/v1/files/retrieve" {
-		t.Fatalf("unexpected second binding: %+v", bindings[1])
+	if !strings.Contains(content, "URL:    \"/v1/users/me\",") {
+		t.Fatalf("expected swagger fallback path in rendered content, got:\n%s", content)
 	}
 }
 
-func TestRenderGoSwaggerModuleRendersGenericOperationMethod(t *testing.T) {
-	content := renderGoSwaggerModule(goSwaggerModuleSpec{
-		FileName:        "apps.go",
-		PackageName:     "apps",
-		TypeName:        "apps",
-		ConstructorName: "newApps",
-	}, []goSwaggerOperationBinding{
-		{
-			MethodName: "List",
-			HTTPMethod: "GET",
-			Path:       "/v1/apps",
-			Summary:    "List apps",
+func TestRenderGoTemplatesModuleConvertsCurlyPath(t *testing.T) {
+	cfg := &config.Config{
+		API: config.APIConfig{
+			OperationMappings: []config.OperationMapping{
+				{
+					Path:       "/v2/templates/{template_id}/duplicate",
+					Method:     "post",
+					SDKMethods: []string{"templates.duplicate"},
+				},
+			},
 		},
-	})
+	}
 
-	if !strings.Contains(content, "func (r *apps) List(ctx context.Context, req *SwaggerOperationRequest) (*SwaggerOperationResponse, error)") {
-		t.Fatalf("expected generic swagger method signature, got:\n%s", content)
+	content, err := renderGoTemplatesModule(cfg, nil)
+	if err != nil {
+		t.Fatalf("renderGoTemplatesModule() error = %v", err)
 	}
-	if !strings.Contains(content, "URL:    buildSwaggerOperationURL(\"/v1/apps\", req.PathParams, req.QueryParams),") {
-		t.Fatalf("expected swagger URL helper usage, got:\n%s", content)
+	if !strings.Contains(content, "URL:    \"/v2/templates/:template_id/duplicate\",") {
+		t.Fatalf("expected curly path to be converted, got:\n%s", content)
 	}
-	if !strings.Contains(content, "func newApps(core *core) *apps {") {
-		t.Fatalf("expected constructor in rendered module, got:\n%s", content)
+}
+
+func TestListGoAPIModuleRenderersIncludesInlineRenderers(t *testing.T) {
+	renderers := listGoAPIModuleRenderers()
+	if len(renderers) < len(goInlineAPIModuleRenderers) {
+		t.Fatalf("expected at least %d renderers, got %d", len(goInlineAPIModuleRenderers), len(renderers))
+	}
+
+	expected := map[string]struct{}{
+		"apps.go":                {},
+		"audio_live.go":          {},
+		"audio_speech.go":        {},
+		"audio_transcription.go": {},
+		"chats_messages.go":      {},
+		"files.go":               {},
+		"templates.go":           {},
+		"users.go":               {},
+		"workflows_chat.go":      {},
+	}
+	seen := map[string]struct{}{}
+	for _, r := range renderers {
+		seen[r.FileName] = struct{}{}
+	}
+	for fileName := range expected {
+		if _, ok := seen[fileName]; !ok {
+			t.Fatalf("expected renderer for %s", fileName)
+		}
 	}
 }
 

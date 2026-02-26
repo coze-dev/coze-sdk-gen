@@ -40,67 +40,27 @@ type goSwaggerOperationBinding struct {
 	Order      int
 }
 
-var goSwaggerAPIModuleSpecs = []goSwaggerModuleSpec{
-	{
-		FileName:        "apps.go",
-		PackageName:     "apps",
-		TypeName:        "apps",
-		ConstructorName: "newApps",
-	},
-	{
-		FileName:        "audio_live.go",
-		PackageName:     "audio_live",
-		TypeName:        "audioLive",
-		ConstructorName: "newAudioLive",
-	},
-	{
-		FileName:        "audio_speech.go",
-		PackageName:     "audio_speech",
-		TypeName:        "audioSpeech",
-		ConstructorName: "newAudioSpeech",
-	},
-	{
-		FileName:        "audio_transcription.go",
-		PackageName:     "audio_transcriptions",
-		TypeName:        "audioTranscriptions",
-		ConstructorName: "newAudioTranscriptions",
-	},
-	{
-		FileName:        "chats_messages.go",
-		PackageName:     "chat_message",
-		TypeName:        "chatMessages",
-		ConstructorName: "newChatMessages",
-	},
-	{
-		FileName:        "files.go",
-		PackageName:     "files",
-		TypeName:        "files",
-		ConstructorName: "newFiles",
-	},
-	{
-		FileName:        "templates.go",
-		PackageName:     "templates",
-		TypeName:        "templates",
-		ConstructorName: "newTemplates",
-	},
-	{
-		FileName:        "users.go",
-		PackageName:     "users",
-		TypeName:        "users",
-		ConstructorName: "newUsers",
-	},
-	{
-		FileName:        "workflows_chat.go",
-		PackageName:     "workflows_chat",
-		TypeName:        "workflowsChat",
-		ConstructorName: "newWorkflowsChat",
-	},
+var goInlineAPIModuleRenderers = []goAPIModuleRenderer{
+	{FileName: "apps.go", Render: renderGoAppsModule},
+	{FileName: "audio_live.go", Render: renderGoAudioLiveModule},
+	{FileName: "audio_speech.go", Render: renderGoAudioSpeechModule},
+	{FileName: "audio_transcription.go", Render: renderGoAudioTranscriptionsModule},
+	{FileName: "chats_messages.go", Render: renderGoChatsMessagesModule},
+	{FileName: "files.go", Render: renderGoFilesModule},
+	{FileName: "templates.go", Render: renderGoTemplatesModule},
+	{FileName: "users.go", Render: renderGoUsersModule},
+	{FileName: "workflows_chat.go", Render: renderGoWorkflowsChatModule},
 }
+
+var goSwaggerAPIModuleSpecs = []goSwaggerModuleSpec{}
 
 var goGeneratedAPIModuleFiles = buildGoGeneratedAPIModuleFiles()
 
 func buildGoGeneratedAPIModuleFiles() map[string]struct{} {
-	files := make(map[string]struct{}, len(goSwaggerAPIModuleSpecs))
+	files := make(map[string]struct{}, len(goInlineAPIModuleRenderers)+len(goSwaggerAPIModuleSpecs))
+	for _, renderer := range goInlineAPIModuleRenderers {
+		files[renderer.FileName] = struct{}{}
+	}
 	for _, spec := range goSwaggerAPIModuleSpecs {
 		files[spec.FileName] = struct{}{}
 	}
@@ -108,7 +68,9 @@ func buildGoGeneratedAPIModuleFiles() map[string]struct{} {
 }
 
 func listGoAPIModuleRenderers() []goAPIModuleRenderer {
-	renderers := make([]goAPIModuleRenderer, 0, len(goSwaggerAPIModuleSpecs))
+	renderers := make([]goAPIModuleRenderer, 0, len(goInlineAPIModuleRenderers)+len(goSwaggerAPIModuleSpecs))
+	renderers = append(renderers, goInlineAPIModuleRenderers...)
+
 	specs := append([]goSwaggerModuleSpec(nil), goSwaggerAPIModuleSpecs...)
 	sort.Slice(specs, func(i, j int) bool {
 		return specs[i].FileName < specs[j].FileName

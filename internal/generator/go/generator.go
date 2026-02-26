@@ -148,7 +148,6 @@ func writeGoRuntimeScaffolding(outputDir string, writer *fileWriter) error {
 		"logger.go":                        "logger.go.tpl",
 		"pagination.go":                    "pagination.go.tpl",
 		"request.go":                       "request.go.tpl",
-		"swagger_operation.go":             "swagger_operation.go.tpl",
 		"stores.go":                        "stores.go.tpl",
 		"stream_reader.go":                 "stream_reader.go.tpl",
 		"user_agent.go":                    "user_agent.go.tpl",
