@@ -4022,7 +4022,6 @@ api:
       order: 62
       sdk_methods:
         - datasets.list
-      blank_line_after_docstring: true
       query_builder: raw
       query_fields:
         - name: space_id
