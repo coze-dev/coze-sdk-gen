@@ -3634,7 +3634,6 @@ api:
         meta_data: Dict[str, str]
         parameters: Dict[str, Any]
       response_type: Chat
-      response_cast: Chat
     - path: /v3/chat
       method: post
       order: 2
@@ -3697,7 +3696,6 @@ api:
           type: str
           required: true
       response_type: Chat
-      response_cast: Chat
     - path: /v3/chat/message/list
       method: get
       order: 4
@@ -3712,7 +3710,6 @@ api:
           type: str
           required: true
       response_type: ListResponse[Message]
-      response_cast: ListResponse[Message]
     - path: /v3/chat/cancel
       method: post
       order: 7
@@ -3726,7 +3723,6 @@ api:
         - conversation_id
         - chat_id
       response_type: Chat
-      response_cast: Chat
     - path: /v1/commerce/benefit/bill_tasks
       method: get
       order: 735
@@ -3786,7 +3782,6 @@ api:
       arg_types:
         benefit_info: Dict[str, Any]
       response_type: CreateBenefitLimitationResp
-      response_cast: CreateBenefitLimitationResp
     - path: /v1/api_apps
       method: post
       order: 10
@@ -3801,7 +3796,6 @@ api:
       arg_types:
         app_type: AppType
       response_type: APIApp
-      response_cast: APIApp
     - path: /v1/api_apps/{api_app_id}
       method: put
       order: 20
@@ -3814,7 +3808,6 @@ api:
       param_aliases:
         api_app_id: app_id
       response_type: UpdateAPIAppsResp
-      response_cast: UpdateAPIAppsResp
     - path: /v1/api_apps/{api_app_id}
       method: put
       order: 30
@@ -3825,7 +3818,6 @@ api:
       param_aliases:
         api_app_id: app_id
       response_type: DeleteAPIAppsResp
-      response_cast: DeleteAPIAppsResp
     - path: /v1/api_apps
       method: post
       order: 40
@@ -3898,7 +3890,6 @@ api:
       arg_types:
         collaborators: List[AppCollaborator]
       response_type: AddAppCollaboratorResp
-      response_cast: AddAppCollaboratorResp
     - path: /v1/apps/{app_id}/collaborators/{user_id}
       method: delete
       order: 52
@@ -3906,7 +3897,6 @@ api:
         - apps_collaborators.delete
       disable_request_body: true
       response_type: RemoveAppCollaboratorResp
-      response_cast: RemoveAppCollaboratorResp
     - path: /v1/conversation/create
       method: post
       order: 55
@@ -3923,7 +3913,6 @@ api:
         messages: List[Message]
         meta_data: Dict[str, str]
       response_type: Conversation
-      response_cast: Conversation
     - path: /v1/conversation/retrieve
       method: get
       order: 57
@@ -3931,7 +3920,6 @@ api:
         - conversations.retrieve
       query_builder: raw
       response_type: Conversation
-      response_cast: Conversation
     - path: /v1/conversations
       method: get
       order: 56
@@ -3964,7 +3952,6 @@ api:
         - conversations.clear
       disable_request_body: true
       response_type: Section
-      response_cast: Section
     - path: /v1/conversations/{conversation_id}
       method: put
       order: 59
@@ -3976,7 +3963,6 @@ api:
       body_required_fields:
         - __none__
       response_type: Conversation
-      response_cast: Conversation
     - path: /v1/conversations/{conversation_id}
       method: delete
       order: 60
@@ -3985,7 +3971,6 @@ api:
       allow_missing_in_swagger: true
       disable_request_body: true
       response_type: DeleteConversationResp
-      response_cast: DeleteConversationResp
     - path: /v1/datasets
       method: post
       order: 61
@@ -4013,7 +3998,6 @@ api:
         description: str
         file_id: str
       response_type: CreateDatasetResp
-      response_cast: CreateDatasetResp
     - path: /v1/datasets
       method: get
       order: 62
@@ -4059,7 +4043,6 @@ api:
       param_aliases:
         file_id: icon_file_id
       response_type: UpdateDatasetRes
-      response_cast: UpdateDatasetRes
     - path: /v1/datasets/{dataset_id}
       method: delete
       order: 64
@@ -4069,7 +4052,6 @@ api:
       allow_missing_in_swagger: true
       disable_request_body: true
       response_type: DeleteDatasetRes
-      response_cast: DeleteDatasetRes
     - path: /v1/datasets/{dataset_id}/process
       method: post
       order: 65
@@ -4081,7 +4063,6 @@ api:
         - document_ids
       ignore_header_params: true
       response_type: ListResponse[DocumentProgress]
-      response_cast: ListResponse[DocumentProgress]
       data_field: data.data
     - path: /v1/connectors/{connector_id}/bots/{bot_id}
       method: put
@@ -4099,7 +4080,6 @@ api:
         audit_status: Optional[AuditStatus]
         reason: Optional[str]
       response_type: UpdateConnectorBotResp
-      response_cast: UpdateConnectorBotResp
     - path: /v1/connectors/{connector_id}/user_configs
       method: post
       order: 649
@@ -4119,7 +4099,6 @@ api:
         configs: List[UserConfig]
         user_id: Optional[str]
       response_type: BindConnectorUserConfigResp
-      response_cast: BindConnectorUserConfigResp
     - path: /v1/connectors/{connector_id}/install
       method: post
       order: 650
@@ -4134,7 +4113,6 @@ api:
         connector_id: str
         workspace_id: str
       response_type: InstallConnectorResp
-      response_cast: InstallConnectorResp
     - path: /open_api/knowledge/document/create
       method: post
       order: 652
@@ -4162,7 +4140,6 @@ api:
       arg_defaults_sync:
         format_type: "DocumentFormatType.DOCUMENT"
       response_type: ListResponse[Document]
-      response_cast: ListResponse[Document]
       data_field: document_infos
     - path: /open_api/knowledge/document/update
       method: post
@@ -4185,7 +4162,6 @@ api:
         update_rule: Optional[DocumentUpdateRule]
       force_multiline_request_call: true
       response_type: UpdateDocumentRes
-      response_cast: UpdateDocumentRes
     - path: /open_api/knowledge/document/delete
       method: post
       order: 655
@@ -4200,7 +4176,6 @@ api:
         document_ids: List[str]
       force_multiline_request_call: true
       response_type: DeleteDocumentRes
-      response_cast: DeleteDocumentRes
     - path: /open_api/knowledge/document/list
       method: post
       order: 656
@@ -4297,7 +4272,6 @@ api:
           )
       force_multiline_request_call: true
       response_type: None
-      response_cast: None
     - path: /open_api/knowledge/document/delete
       method: post
       order: 661
@@ -4320,7 +4294,6 @@ api:
           )
       force_multiline_request_call: true
       response_type: None
-      response_cast: None
     - path: /open_api/knowledge/document/list
       method: post
       order: 663
@@ -4387,7 +4360,6 @@ api:
         plugin_id_list: PluginIDList
         workflow_id_list: WorkflowIDList
       response_type: Bot
-      response_cast: Bot
     - path: /v1/bot/update
       method: post
       order: 67
@@ -4410,7 +4382,6 @@ api:
         suggest_reply_info: BotSuggestReplyInfo
         model_info_config: BotModelInfo
       response_type: UpdateBotResp
-      response_cast: UpdateBotResp
     - path: /v1/bot/publish
       method: post
       order: 68
@@ -4427,7 +4398,6 @@ api:
       body_required_fields:
         - bot_id
       response_type: Bot
-      response_cast: Bot
     - path: /v1/bots/{bot_id}/unpublish
       method: post
       order: 69
@@ -4439,7 +4409,6 @@ api:
         - connector_id
         - unpublish_reason
       response_type: UnpublishBotResp
-      response_cast: UnpublishBotResp
     - path: /v1/bot/get_online_info
       method: get
       order: 70
@@ -4447,7 +4416,6 @@ api:
         - bots._retrieve_v1
       query_builder: raw
       response_type: Bot
-      response_cast: Bot
     - path: /v1/bots/{bot_id}
       method: get
       order: 71
@@ -4455,7 +4423,6 @@ api:
         - bots._retrieve_v2
       query_builder: remove_none_values
       response_type: Bot
-      response_cast: Bot
     - path: /v1/space/published_bots_list
       method: get
       order: 72
@@ -4531,7 +4498,6 @@ api:
       arg_types:
         collaboration_mode: BotCollaborationMode
       response_type: UpdateBotCollaborationModeResp
-      response_cast: UpdateBotCollaborationModeResp
     - path: /v1/bots/{bot_id}/collaborators
       method: post
       order: 732
@@ -4548,7 +4514,6 @@ api:
       arg_types:
         collaborators: List[BotCollaborator]
       response_type: AddBotCollaboratorResp
-      response_cast: AddBotCollaboratorResp
     - path: /v1/bots/{bot_id}/collaborators/{user_id}
       method: delete
       order: 733
@@ -4556,7 +4521,6 @@ api:
         - bots_collaborators.delete
       disable_request_body: true
       response_type: DeleteBotCollaboratorResp
-      response_cast: DeleteBotCollaboratorResp
     - path: /v1/bots/{bot_id}/versions
       method: get
       order: 734
@@ -4593,7 +4557,6 @@ api:
         - folders.retrieve
       http_method_override: GET
       response_type: SimpleFolder
-      response_cast: SimpleFolder
     - path: /v1/folders
       method: get
       order: 75
@@ -4643,7 +4606,6 @@ api:
       arg_types:
         event_types: List[str]
       response_type: CreateAPIAppsEventsResp
-      response_cast: CreateAPIAppsEventsResp
     - path: /v1/api_apps/{api_app_id}/events
       method: delete
       order: 77
@@ -4658,7 +4620,6 @@ api:
       arg_types:
         event_types: List[str]
       response_type: DeleteAPIAppsEventsResp
-      response_cast: DeleteAPIAppsEventsResp
     - path: /v1/api_apps/{api_app_id}/events
       method: get
       order: 78
@@ -4708,7 +4669,6 @@ api:
         workflow_id: str
         config: RoomConfig
       response_type: CreateRoomResp
-      response_cast: CreateRoomResp
     - path: /v1/audio/speech
       method: post
       order: 80
@@ -4738,7 +4698,6 @@ api:
         speed: "1"
         sample_rate: "24000"
       response_type: FileHTTPResponse
-      response_cast: FileHTTPResponse
     - path: /v1/audio/transcriptions
       method: post
       order: 81
@@ -4752,7 +4711,6 @@ api:
       arg_types:
         file: FileTypes
       response_type: CreateTranscriptionsResp
-      response_cast: CreateTranscriptionsResp
     - path: /v1/audio/live/{live_id}
       method: get
       order: 830
@@ -4761,7 +4719,6 @@ api:
       allow_missing_in_swagger: true
       disable_request_body: true
       response_type: LiveInfo
-      response_cast: LiveInfo
     - path: /v1/audio/voiceprint_groups
       method: post
       order: 831
@@ -4778,7 +4735,6 @@ api:
         name: str
         desc: str
       response_type: CreateVoicePrintGroupResp
-      response_cast: CreateVoicePrintGroupResp
     - path: /v1/audio/voiceprint_groups/{group_id}
       method: put
       order: 832
@@ -4794,7 +4750,6 @@ api:
         name: str
         desc: str
       response_type: UpdateVoicePrintGroupResp
-      response_cast: UpdateVoicePrintGroupResp
     - path: /v1/audio/voiceprint_groups/{group_id}
       method: delete
       order: 833
@@ -4803,7 +4758,6 @@ api:
       allow_missing_in_swagger: true
       disable_request_body: true
       response_type: DeleteVoicePrintGroupResp
-      response_cast: DeleteVoicePrintGroupResp
     - path: /v1/audio/voiceprint_groups
       method: get
       order: 834
@@ -4865,7 +4819,6 @@ api:
         channel: int
       files_before_body: true
       response_type: SpeakerIdentifyResp
-      response_cast: SpeakerIdentifyResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features
       method: post
       order: 836
@@ -4894,7 +4847,6 @@ api:
         channel: int
       files_before_body: true
       response_type: CreateVoicePrintGroupFeatureResp
-      response_cast: CreateVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features/{feature_id}
       method: put
       order: 837
@@ -4920,7 +4872,6 @@ api:
         channel: int
       files_before_body: true
       response_type: UpdateVoicePrintGroupFeatureResp
-      response_cast: UpdateVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features/{feature_id}
       method: delete
       order: 838
@@ -4929,7 +4880,6 @@ api:
       allow_missing_in_swagger: true
       disable_request_body: true
       response_type: DeleteVoicePrintGroupFeatureResp
-      response_cast: DeleteVoicePrintGroupFeatureResp
     - path: /v1/audio/voiceprint_groups/{group_id}/features
       method: get
       order: 839
@@ -5028,7 +4978,6 @@ api:
         space_id: str
         description: str
       response_type: Voice
-      response_cast: Voice
     - path: /v1/conversation/message/create
       method: post
       order: 84
@@ -5051,7 +5000,6 @@ api:
         content_type: MessageContentType
         meta_data: Dict[str, str]
       response_type: Message
-      response_cast: Message
     - path: /v1/conversation/message/delete
       method: post
       order: 85
@@ -5060,7 +5008,6 @@ api:
       query_builder: raw
       disable_request_body: true
       response_type: Message
-      response_cast: Message
     - path: /v1/conversation/message/modify
       method: post
       order: 86
@@ -5077,7 +5024,6 @@ api:
         content_type: MessageContentType
         meta_data: Dict[str, str]
       response_type: Message
-      response_cast: Message
       data_field: message
     - path: /v1/conversation/message/retrieve
       method: get
@@ -5087,7 +5033,6 @@ api:
       query_builder: raw
       disable_request_body: true
       response_type: Message
-      response_cast: Message
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
       method: post
       order: 88
@@ -5106,7 +5051,6 @@ api:
         reason_types: List[str]
         comment: str
       response_type: CreateConversationMessageFeedbackResp
-      response_cast: CreateConversationMessageFeedbackResp
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
       method: delete
       order: 89
@@ -5114,7 +5058,6 @@ api:
         - conversations_message_feedback.delete
       disable_request_body: true
       response_type: DeleteConversationMessageFeedbackResp
-      response_cast: DeleteConversationMessageFeedbackResp
     - path: /v1/datasets/{dataset_id}/images
       method: get
       order: 90
@@ -5157,7 +5100,6 @@ api:
       arg_types:
         caption: str
       response_type: UpdateImageRes
-      response_cast: UpdateImageRes
     - path: /v1/enterprises/{enterprise_id}/members
       method: post
       order: 87
@@ -5171,7 +5113,6 @@ api:
       arg_types:
         users: List[EnterpriseMember]
       response_type: CreateEnterpriseMemberResp
-      response_cast: CreateEnterpriseMemberResp
     - path: /v1/enterprises/{enterprise_id}/organizations
       method: post
       order: 86
@@ -5186,7 +5127,6 @@ api:
         - name
         - super_admin_user_id
       response_type: CreateEnterpriseOrganizationResp
-      response_cast: CreateEnterpriseOrganizationResp
     - path: /v1/enterprises/{enterprise_id}/members/{user_id}
       method: put
       order: 88
@@ -5200,7 +5140,6 @@ api:
       arg_types:
         role: EnterpriseMemberRole
       response_type: UpdateEnterpriseMemberResp
-      response_cast: UpdateEnterpriseMemberResp
     - path: /v1/enterprises/{enterprise_id}/members/{user_id}
       method: delete
       order: 89
@@ -5215,7 +5154,6 @@ api:
       arg_types:
         receiver_user_id: str
       response_type: DeleteEnterpriseMemberResp
-      response_cast: DeleteEnterpriseMemberResp
     - path: /v1/workflow/run
       method: post
       order: 90
@@ -5242,7 +5180,6 @@ api:
       arg_defaults:
         is_async: "False"
       response_type: WorkflowRunResult
-      response_cast: WorkflowRunResult
     - path: /v1/workflow/stream_run
       method: post
       order: 91
@@ -5324,7 +5261,6 @@ api:
       sdk_methods:
         - workflows_runs_run_histories_execute_nodes.retrieve
       response_type: WorkflowNodeExecuteHistory
-      response_cast: WorkflowNodeExecuteHistory
     - path: /v1/workflows/{workflow_id}/versions
       method: get
       order: 95
@@ -5357,7 +5293,6 @@ api:
         - workflows_collaborators.delete
       disable_request_body: true
       response_type: RemoveWorkflowCollaboratorResp
-      response_cast: RemoveWorkflowCollaboratorResp
     - path: /v1/workflows/chat
       method: post
       order: 96
@@ -5451,7 +5386,6 @@ api:
       arg_types:
         user_ids: List[str]
       response_type: DeleteWorkspaceMemberResp
-      response_cast: DeleteWorkspaceMemberResp
     - path: /v1/workspaces/{workspace_id}/members
       method: post
       order: 98
@@ -5475,7 +5409,6 @@ api:
       arg_types:
         users: List[WorkspaceMember]
       response_type: CreateWorkspaceMemberResp
-      response_cast: CreateWorkspaceMemberResp
     - path: /v1/workspaces/{workspace_id}/members
       method: get
       order: 99
@@ -5511,7 +5444,6 @@ api:
         workspace_id: str
         name: str
       response_type: TemplateDuplicateResp
-      response_cast: TemplateDuplicateResp
       allow_missing_in_swagger: true
     - path: /v1/users/me
       method: get
@@ -5519,7 +5451,6 @@ api:
         - users.me
       disable_request_body: true
       response_type: User
-      response_cast: User
       allow_missing_in_swagger: true
   field_aliases:
     chat:
