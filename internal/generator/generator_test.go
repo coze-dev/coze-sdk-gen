@@ -488,7 +488,6 @@ func TestRenderOperationMethodStreamWrap(t *testing.T) {
 			RequestStream:     true,
 			ResponseType:      "Stream[DemoEvent]",
 			AsyncResponseType: "AsyncStream[DemoEvent]",
-			ResponseCast:      "None",
 			StreamWrap:        true,
 			StreamWrapHandler: "handle_demo",
 			StreamWrapFields:  []string{"event", "data"},
@@ -523,15 +522,13 @@ func TestRenderOperationMethodStreamWrapYieldAndSyncVarDefault(t *testing.T) {
 		MethodName:  "stream_call",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			RequestStream:             true,
-			ResponseType:              "Stream[DemoEvent]",
-			AsyncResponseType:         "AsyncIterator[DemoEvent]",
-			ResponseCast:              "None",
-			StreamWrap:                true,
-			StreamWrapHandler:         "handle_demo",
-			StreamWrapFields:          []string{"event", "data"},
-			StreamWrapAsyncYield:      true,
-			ForceMultilineRequestCall: false,
+			RequestStream:        true,
+			ResponseType:         "Stream[DemoEvent]",
+			AsyncResponseType:    "AsyncIterator[DemoEvent]",
+			StreamWrap:           true,
+			StreamWrapHandler:    "handle_demo",
+			StreamWrapFields:     []string{"event", "data"},
+			StreamWrapAsyncYield: true,
 		},
 	}
 
@@ -566,7 +563,6 @@ func TestRenderOperationMethodStreamWrapSyncReturnMultiline(t *testing.T) {
 			RequestStream:     true,
 			ResponseType:      "Stream[DemoEvent]",
 			AsyncResponseType: "AsyncIterator[DemoEvent]",
-			ResponseCast:      "None",
 			StreamWrap:        true,
 			StreamWrapHandler: "handle_demo",
 			StreamWrapFields:  []string{"event", "data"},
@@ -851,7 +847,7 @@ func TestGeneratePythonMappingGeneratesSyncAndAsyncByDefault(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodReturnAndAsyncKwargsOptions(t *testing.T) {
+func TestRenderOperationMethodReturnAndAsyncKwargs(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/demo",
@@ -872,12 +868,10 @@ func TestRenderOperationMethodReturnAndAsyncKwargsOptions(t *testing.T) {
 		PackageName: "demo",
 		MethodName:  "async_call",
 		Details:     details,
-		Mapping: &config.OperationMapping{
-			AsyncIncludeKwargs: true,
-		},
+		Mapping:     &config.OperationMapping{},
 	}, true)
 	if !strings.Contains(asyncCode, "**kwargs") {
-		t.Fatalf("expected async kwargs passthrough in signature:\n%s", asyncCode)
+		t.Fatalf("expected async kwargs in signature by default:\n%s", asyncCode)
 	}
 }
 
@@ -895,7 +889,6 @@ func TestRenderOperationMethodKwargsOnlySignatureForEmptyBodySchema(t *testing.T
 		Details:     details,
 		Mapping: &config.OperationMapping{
 			ResponseType: "User",
-			ResponseCast: "User",
 		},
 	}, false)
 	if !strings.Contains(code, "def me(self, **kwargs)") {
@@ -1019,7 +1012,6 @@ func TestRenderOperationMethodAsyncStreamMethodDefaultsToYield(t *testing.T) {
 		},
 		ResponseType:      "Stream[ChatEvent]",
 		AsyncResponseType: "AsyncIterator[ChatEvent]",
-		ResponseCast:      "None",
 		BodyBuilder:       "remove_none_values",
 		BodyFields:        []string{"workflow_id"},
 		BodyRequiredFields: []string{
@@ -1278,7 +1270,6 @@ func TestRenderOperationMethodResponseUnwrapListFirst(t *testing.T) {
 		Details:     details,
 		Mapping: &config.OperationMapping{
 			ResponseType:            "WorkflowRunHistory",
-			ResponseCast:            "ListResponse[WorkflowRunHistory]",
 			ResponseUnwrapListFirst: true,
 		},
 	}, false)
@@ -1295,7 +1286,6 @@ func TestRenderOperationMethodResponseUnwrapListFirst(t *testing.T) {
 		Details:     details,
 		Mapping: &config.OperationMapping{
 			ResponseType:            "WorkflowRunHistory",
-			ResponseCast:            "ListResponse[WorkflowRunHistory]",
 			ResponseUnwrapListFirst: true,
 		},
 	}, true)

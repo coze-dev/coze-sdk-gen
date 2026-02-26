@@ -474,7 +474,6 @@ func renderOperationMethodWithContext(
 	requestBodyType, bodyRequired := RequestBodyTypeInfo(doc, details.RequestBodySchema, details.RequestBody)
 	ignoreHeaderParams := binding.Mapping != nil && binding.Mapping.IgnoreHeaderParams
 	streamWrap := binding.Mapping != nil && binding.Mapping.StreamWrap
-	asyncIncludeKwargs := async && binding.Mapping != nil && binding.Mapping.AsyncIncludeKwargs
 	streamWrapHandler := ""
 	streamWrapFields := []string{}
 	streamWrapAsyncYield := false
@@ -522,14 +521,8 @@ func renderOperationMethodWithContext(
 				returnType = mappedAsyncReturnType
 			}
 		}
-		if mappedReturnCast := strings.TrimSpace(binding.Mapping.ResponseCast); mappedReturnCast != "" {
-			returnCast = mappedReturnCast
-		} else if strings.TrimSpace(binding.Mapping.ResponseType) != "" {
-			returnCast = strings.TrimSpace(binding.Mapping.ResponseType)
-		}
 		shouldInferResponseModel := strings.TrimSpace(binding.Mapping.ResponseType) == "" &&
 			strings.TrimSpace(binding.Mapping.AsyncResponseType) == "" &&
-			strings.TrimSpace(binding.Mapping.ResponseCast) == "" &&
 			(strings.TrimSpace(returnType) == "" || strings.TrimSpace(returnType) == "Dict[str, Any]")
 		if shouldInferResponseModel {
 			if inferredModelName, ok := inferBindingResponseModelName(doc, &config.Package{Name: binding.PackageName}, binding); ok {
@@ -552,6 +545,7 @@ func renderOperationMethodWithContext(
 			}
 		}
 	}
+	returnCast = inferResponseCast(binding.Mapping, returnType, returnCast)
 	if ignoreHeaderParams {
 		details.HeaderParameters = nil
 	}
@@ -705,9 +699,6 @@ func renderOperationMethodWithContext(
 	}
 	includeKwargsHeaders := true
 	if includeKwargsHeaders {
-		signatureArgs = append(signatureArgs, "**kwargs")
-	}
-	if asyncIncludeKwargs && !includeKwargsHeaders {
 		signatureArgs = append(signatureArgs, "**kwargs")
 	}
 	signatureArgs = NormalizeSignatureArgs(signatureArgs)
@@ -1312,12 +1303,7 @@ func renderOperationMethodWithContext(
 		callArgs = append(callArgs, item.Expr)
 	}
 	requestExpr := fmt.Sprintf("%s(%s)", requestCall, strings.Join(callArgs, ", "))
-	forceMultilineRequestCall := binding.Mapping != nil && binding.Mapping.ForceMultilineRequestCall
-	if binding.Mapping != nil {
-		if async && binding.Mapping.ForceMultilineRequestCallAsync {
-			forceMultilineRequestCall = true
-		}
-	}
+	forceMultilineRequestCall := async && binding.Mapping != nil && binding.Mapping.ForceMultilineRequestCallAsync
 	if binding.Mapping != nil && binding.Mapping.ResponseUnwrapListFirst {
 		buf.WriteString(fmt.Sprintf("        res = %s\n", requestExpr))
 		buf.WriteString("        data = res.data[0]\n")

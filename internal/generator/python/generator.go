@@ -1338,12 +1338,14 @@ func packageNeedsListResponseImport(bindings []OperationBinding) bool {
 		candidates := []string{
 			binding.Mapping.ResponseType,
 			binding.Mapping.AsyncResponseType,
-			binding.Mapping.ResponseCast,
 		}
 		for _, candidate := range candidates {
 			if strings.Contains(strings.TrimSpace(candidate), "ListResponse[") {
 				return true
 			}
+		}
+		if binding.Mapping.ResponseUnwrapListFirst {
+			return true
 		}
 	}
 	return false

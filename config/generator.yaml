@@ -3680,7 +3680,6 @@ api:
         - data
       response_type: Stream[ChatEvent]
       async_response_type: AsyncIterator[ChatEvent]
-      response_cast: None
     - path: /v3/chat/retrieve
       method: get
       order: 3
@@ -3800,7 +3799,6 @@ api:
       order: 20
       sdk_methods:
         - api_apps.update
-      force_multiline_request_call: true
       body_fields:
         - name
         - callback_url
@@ -3969,7 +3967,6 @@ api:
       order: 61
       sdk_methods:
         - datasets.create
-      force_multiline_request_call: true
       body_builder: raw
       allow_missing_in_swagger: true
       body_fields:
@@ -4027,7 +4024,6 @@ api:
       order: 63
       sdk_methods:
         - datasets.update
-      force_multiline_request_call: true
       body_builder: raw
       body_fields:
         - name
@@ -4041,7 +4037,6 @@ api:
       order: 64
       sdk_methods:
         - datasets.delete
-      force_multiline_request_call: true
       allow_missing_in_swagger: true
       response_type: DeleteDatasetRes
     - path: /v1/datasets/{dataset_id}/process
@@ -4049,7 +4044,6 @@ api:
       order: 65
       sdk_methods:
         - datasets.process
-      force_multiline_request_call: true
       body_builder: raw
       body_fields:
         - document_ids
@@ -4152,7 +4146,6 @@ api:
         document_id: str
         document_name: str
         update_rule: Optional[DocumentUpdateRule]
-      force_multiline_request_call: true
       response_type: UpdateDocumentRes
     - path: /open_api/knowledge/document/delete
       method: post
@@ -4166,7 +4159,6 @@ api:
         - document_ids
       arg_types:
         document_ids: List[str]
-      force_multiline_request_call: true
       response_type: DeleteDocumentRes
     - path: /open_api/knowledge/document/list
       method: post
@@ -4232,7 +4224,6 @@ api:
               stacklevel=2,
           )
       response_type: List[Document]
-      response_cast: "[Document]"
       data_field: document_infos
     - path: /open_api/knowledge/document/update
       method: post
@@ -4261,7 +4252,6 @@ api:
               DeprecationWarning,
               stacklevel=2,
           )
-      force_multiline_request_call: true
       response_type: None
     - path: /open_api/knowledge/document/delete
       method: post
@@ -4283,7 +4273,6 @@ api:
               DeprecationWarning,
               stacklevel=2,
           )
-      force_multiline_request_call: true
       response_type: None
     - path: /open_api/knowledge/document/list
       method: post
@@ -4419,7 +4408,6 @@ api:
       sdk_methods:
         - bots._list_v1
       query_builder: raw
-      async_include_kwargs: true
       query_fields:
         - name: space_id
           type: str
@@ -5196,10 +5184,8 @@ api:
         - event
         - data
       stream_wrap_async_yield: true
-      force_multiline_request_call: true
       response_type: Stream[WorkflowEvent]
       async_response_type: AsyncIterator[WorkflowEvent]
-      response_cast: None
     - path: /v1/workflow/stream_resume
       method: post
       order: 92
@@ -5229,17 +5215,14 @@ api:
         - event
         - data
       stream_wrap_async_yield: true
-      force_multiline_request_call: true
       response_type: Stream[WorkflowEvent]
       async_response_type: AsyncIterator[WorkflowEvent]
-      response_cast: None
     - path: /v1/workflows/{workflow_id}/run_histories/{execute_id}
       method: get
       order: 93
       sdk_methods:
         - workflows_runs_run_histories.retrieve
       response_type: WorkflowRunHistory
-      response_cast: ListResponse[WorkflowRunHistory]
       response_unwrap_list_first: true
     - path: /v1/workflows/{workflow_id}/run_histories/{execute_id}/execute_nodes/{node_execute_uuid}
       method: get
@@ -5313,7 +5296,6 @@ api:
         - data
       response_type: Stream[ChatEvent]
       async_response_type: AsyncIterator[ChatEvent]
-      response_cast: None
     - path: /v1/workflows/chat
       method: post
       order: 97
@@ -5347,10 +5329,8 @@ api:
       stream_wrap_fields:
         - event
         - data
-      force_multiline_request_call: true
       response_type: Stream[ChatEvent]
       async_response_type: AsyncIterator[ChatEvent]
-      response_cast: None
     - path: /v1/workspaces
       method: get
       order: 969

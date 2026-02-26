@@ -170,7 +170,6 @@ type OperationMapping struct {
 	ArgTypes                       map[string]string `yaml:"arg_types"`
 	ResponseType                   string            `yaml:"response_type"`
 	AsyncResponseType              string            `yaml:"async_response_type"`
-	ResponseCast                   string            `yaml:"response_cast"`
 	QueryFields                    []OperationField  `yaml:"query_fields"`
 	QueryFieldValues               map[string]string `yaml:"query_field_values"`
 	ArgDefaults                    map[string]string `yaml:"arg_defaults"`
@@ -186,7 +185,6 @@ type OperationMapping struct {
 	PaginationPageNumField         string            `yaml:"pagination_page_num_field"`
 	PaginationPageSizeField        string            `yaml:"pagination_page_size_field"`
 	PaginationPageTokenField       string            `yaml:"pagination_page_token_field"`
-	AsyncIncludeKwargs             bool              `yaml:"async_include_kwargs"`
 	IgnoreHeaderParams             bool              `yaml:"ignore_header_params"`
 	DataField                      string            `yaml:"data_field"`
 	ResponseUnwrapListFirst        bool              `yaml:"response_unwrap_list_first"`
@@ -199,7 +197,6 @@ type OperationMapping struct {
 	BodyFieldValues                map[string]string `yaml:"body_field_values"`
 	HeadersExpr                    string            `yaml:"headers_expr"`
 	ForceMultilineSignatureSync    bool              `yaml:"force_multiline_signature_sync"`
-	ForceMultilineRequestCall      bool              `yaml:"force_multiline_request_call"`
 	ForceMultilineRequestCallAsync bool              `yaml:"force_multiline_request_call_async"`
 	PaginationRequestArg           string            `yaml:"pagination_request_arg"`
 }
