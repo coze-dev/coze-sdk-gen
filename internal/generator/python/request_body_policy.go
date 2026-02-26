@@ -21,9 +21,6 @@ func shouldGenerateImplicitRequestBody(defaultMethod string, mapping *config.Ope
 	if isSafeWithoutBodyMethod(requestMethod) {
 		return false
 	}
-	if mapping != nil && len(mapping.QueryFields) > 0 {
-		return false
-	}
 	if hasExplicitPayloadConfig(mapping) {
 		return false
 	}

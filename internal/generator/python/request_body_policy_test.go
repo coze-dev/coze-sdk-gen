@@ -82,7 +82,7 @@ func TestShouldGenerateImplicitRequestBody(t *testing.T) {
 		}
 	})
 
-	t.Run("query-only mapping suppresses implicit body", func(t *testing.T) {
+	t.Run("query-only mapping still allows implicit body on post", func(t *testing.T) {
 		schema := &openapi.Schema{
 			Type: "object",
 			Properties: map[string]*openapi.Schema{
@@ -95,8 +95,8 @@ func TestShouldGenerateImplicitRequestBody(t *testing.T) {
 				{Name: "cursor", Type: "str", Required: false},
 			},
 		}
-		if shouldGenerateImplicitRequestBody("post", mapping, schema) {
-			t.Fatal("expected false for query-only mapping")
+		if !shouldGenerateImplicitRequestBody("post", mapping, schema) {
+			t.Fatal("expected true for post query-only mapping with non-empty schema")
 		}
 	})
 }
