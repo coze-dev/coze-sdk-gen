@@ -572,6 +572,11 @@ api:
         - /v1/audio/voices
     - name: bots
       source_dir: cozepy/bots
+      child_clients:
+        - attribute: collaboration_modes
+          module: .collaboration_modes
+          sync_class: BotsCollaborationModesClient
+          async_class: AsyncBotsCollaborationModesClient
       extra_imports:
         - module: pydantic
           names:
@@ -581,14 +586,6 @@ api:
         - schema: PublishStatus
           name: PublishStatus
           enum_base: dynamic_str
-        - name: BotCollaborationMode
-          allow_missing_in_swagger: true
-          enum_base: dynamic_str
-          enum_values:
-            - name: SINGLE
-              value: single
-            - name: COLLABORATION
-              value: collaboration
         - schema: PromptInfo
           name: BotPromptInfo
           required_fields:
@@ -923,7 +920,6 @@ api:
       empty_models:
         - UpdateBotResp
         - UnpublishBotResp
-        - SwitchBotCollaborationModeResp
       top_level_code:
         - |
           class _PrivateListBotsDataV1(CozeModel, NumberPagedResponse[SimpleBot]):
@@ -1039,6 +1035,23 @@ api:
       path_prefixes:
         - /v1/bot
         - /v1/bots
+    - name: bots_collaboration_modes
+      source_dir: cozepy/bots/collaboration_modes
+      client_class: BotsCollaborationModesClient
+      async_client_class: AsyncBotsCollaborationModesClient
+      model_schemas:
+        - name: BotCollaborationMode
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: SINGLE
+              value: single
+            - name: COLLABORATION
+              value: collaboration
+      empty_models:
+        - UpdateBotCollaborationModeResp
+      path_prefixes:
+        - /v1/bots/{bot_id}/collaboration_mode
     - name: chat
       source_dir: cozepy/chat
       separate_commented_enum_members: true
@@ -4539,7 +4552,7 @@ api:
       method: post
       order: 731
       sdk_methods:
-        - bots.switch_collaboration_mode
+        - bots_collaboration_modes.update
       body_builder: raw
       body_fields:
         - collaboration_mode
@@ -4547,8 +4560,8 @@ api:
         - collaboration_mode
       arg_types:
         collaboration_mode: BotCollaborationMode
-      response_type: SwitchBotCollaborationModeResp
-      response_cast: SwitchBotCollaborationModeResp
+      response_type: UpdateBotCollaborationModeResp
+      response_cast: UpdateBotCollaborationModeResp
     - path: /v1/folders/{folder_id}
       method: get
       order: 74
