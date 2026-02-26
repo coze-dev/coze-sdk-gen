@@ -3918,7 +3918,6 @@ api:
         - bot_id
         - name
         - connector_id
-      body_annotation: Dict[str, Any]
       arg_types:
         messages: List[Message]
         meta_data: Dict[str, str]

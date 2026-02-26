@@ -563,13 +563,11 @@ func renderOperationMethodWithContext(
 	requestStream := false
 	queryBuilder := "dump_exclude_none"
 	bodyBuilder := "dump_exclude_none"
-	bodyAnnotation := ""
 	if binding.Mapping != nil {
 		dataField = strings.TrimSpace(binding.Mapping.DataField)
 		requestStream = binding.Mapping.RequestStream
 		queryBuilder = normalizeMapBuilder(binding.Mapping.QueryBuilder)
 		bodyBuilder = normalizeMapBuilder(binding.Mapping.BodyBuilder)
-		bodyAnnotation = strings.TrimSpace(binding.Mapping.BodyAnnotation)
 	}
 	autoDelegateTo := autoDelegateTarget(binding.MethodName, classMethodNames)
 	autoDelegateExtraArgs := make([]string, 0, 1)
@@ -1137,9 +1135,6 @@ func renderOperationMethodWithContext(
 		}
 	}
 	bodyVarAssign := "body"
-	if bodyAnnotation != "" {
-		bodyVarAssign = fmt.Sprintf("body: %s", bodyAnnotation)
-	}
 	renderFilesAssignment := func() bool {
 		if filesExpr != "" {
 			buf.WriteString(fmt.Sprintf("        files = %s\n", filesExpr))
