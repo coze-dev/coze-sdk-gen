@@ -1624,18 +1624,35 @@ api:
           def submit_tool_outputs(
               self, *, conversation_id: str, chat_id: str, tool_outputs: List[ToolOutput], stream: bool
           ) -> Union[Chat, Stream[ChatEvent]]:
-              if stream:
-                  return self._submit_tool_outputs_stream(
-                      conversation_id=conversation_id,
-                      chat_id=chat_id,
-                      tool_outputs=tool_outputs,
+              url = f"{self._base_url}/v3/chat/submit_tool_outputs"
+              params = {
+                  "conversation_id": conversation_id,
+                  "chat_id": chat_id,
+              }
+              body = {
+                  "tool_outputs": [i.model_dump() for i in tool_outputs],
+                  "stream": stream,
+              }
+
+              if not stream:
+                  return self._requester.request(
+                      "post",
+                      url,
+                      False,
+                      Chat,
+                      params=params,
+                      body=body,
                   )
 
-              return self._submit_tool_outputs(
-                  conversation_id=conversation_id,
-                  chat_id=chat_id,
-                  tool_outputs=tool_outputs,
+              resp: IteratorHTTPResponse[str] = self._requester.request(
+                  "post",
+                  url,
+                  True,
+                  None,
+                  params=params,
+                  body=body,
               )
+              return Stream(resp._raw_response, resp.data, fields=["event", "data"], handler=_chat_stream_handler)
       async_extra_methods:
         - |
           @overload
@@ -1728,10 +1745,43 @@ api:
                   resp.data, fields=["event", "data"], handler=_chat_stream_handler, raw_response=resp._raw_response
               )
         - |
+          @overload
+          async def _submit_tool_outputs(
+              self, *, conversation_id: str, chat_id: str, stream: Literal[True], tool_outputs: List[ToolOutput]
+          ) -> AsyncStream[ChatEvent]: ...
+
+          @overload
+          async def _submit_tool_outputs(
+              self, *, conversation_id: str, chat_id: str, stream: Literal[False], tool_outputs: List[ToolOutput]
+          ) -> Chat: ...
+
+          async def _submit_tool_outputs(
+              self, *, conversation_id: str, chat_id: str, stream: Literal[True, False], tool_outputs: List[ToolOutput]
+          ) -> Union[Chat, AsyncStream[ChatEvent]]:
+              url = f"{self._base_url}/v3/chat/submit_tool_outputs"
+              params = {
+                  "conversation_id": conversation_id,
+                  "chat_id": chat_id,
+              }
+              body = {
+                  "tool_outputs": [i.model_dump() for i in tool_outputs],
+                  "stream": stream,
+              }
+
+              if not stream:
+                  return await self._requester.arequest("post", url, False, Chat, params=params, body=body)
+
+              resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(
+                  "post", url, True, None, params=params, body=body
+              )
+              return AsyncStream(
+                  resp.data, fields=["event", "data"], handler=_chat_stream_handler, raw_response=resp._raw_response
+              )
+        - |
           async def submit_tool_outputs(self, *, conversation_id: str, chat_id: str, tool_outputs: List[ToolOutput]) -> Chat:
 
               return await self._submit_tool_outputs(
-                  conversation_id=conversation_id, chat_id=chat_id, tool_outputs=tool_outputs
+                  conversation_id=conversation_id, chat_id=chat_id, stream=False, tool_outputs=tool_outputs
               )
         - |
           async def submit_tool_outputs_stream(
@@ -1742,8 +1792,8 @@ api:
               tool_outputs: List[ToolOutput],
           ) -> AsyncIterator[ChatEvent]:
 
-              async for item in await self._submit_tool_outputs_stream(
-                  conversation_id=conversation_id, chat_id=chat_id, tool_outputs=tool_outputs
+              async for item in await self._submit_tool_outputs(
+                  conversation_id=conversation_id, chat_id=chat_id, stream=True, tool_outputs=tool_outputs
               ):
                   yield item
       path_prefixes:
@@ -3679,65 +3729,6 @@ api:
         - chat_id
       response_type: Chat
       response_cast: Chat
-    - path: /v3/chat/submit_tool_outputs
-      method: post
-      order: 8
-      sdk_methods:
-        - chat._submit_tool_outputs
-      query_builder: raw
-      query_fields:
-        - name: conversation_id
-          type: str
-          required: true
-        - name: chat_id
-          type: str
-          required: true
-      body_builder: raw
-      body_fields:
-        - tool_outputs
-      body_required_fields:
-        - tool_outputs
-      body_field_values:
-        tool_outputs: "[i.model_dump() for i in tool_outputs]"
-      body_fixed_values:
-        stream: "False"
-      arg_types:
-        tool_outputs: List[ToolOutput]
-      response_type: Chat
-      response_cast: Chat
-    - path: /v3/chat/submit_tool_outputs
-      method: post
-      order: 9
-      sdk_methods:
-        - chat._submit_tool_outputs_stream
-      query_builder: raw
-      query_fields:
-        - name: conversation_id
-          type: str
-          required: true
-        - name: chat_id
-          type: str
-          required: true
-      body_builder: raw
-      body_fields:
-        - tool_outputs
-      body_required_fields:
-        - tool_outputs
-      body_field_values:
-        tool_outputs: "[i.model_dump() for i in tool_outputs]"
-      body_fixed_values:
-        stream: "True"
-      arg_types:
-        tool_outputs: List[ToolOutput]
-      request_stream: true
-      stream_wrap: true
-      stream_wrap_handler: _chat_stream_handler
-      stream_wrap_fields:
-        - event
-        - data
-      response_type: Stream[ChatEvent]
-      async_response_type: AsyncIterator[ChatEvent]
-      response_cast: None
     - path: /v1/commerce/benefit/bill_tasks
       method: get
       order: 735
