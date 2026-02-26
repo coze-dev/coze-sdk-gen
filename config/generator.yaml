@@ -3772,8 +3772,6 @@ api:
           required: false
       query_field_values:
         benefit_type_list: '",".join(benefit_type_list) if benefit_type_list else None'
-      response_type: BenefitOverview
-      response_cast: BenefitOverview
     - path: /v1/commerce/benefit/limitations
       method: post
       order: 736

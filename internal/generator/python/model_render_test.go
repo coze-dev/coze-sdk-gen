@@ -193,9 +193,7 @@ func TestResolvePackageModelDefinitionsWithoutConfiguredModels(t *testing.T) {
 			Details: openapi.OperationDetails{
 				ResponseSchema: &openapi.Schema{Ref: "#/components/schemas/properties_data"},
 			},
-			Mapping: &config.OperationMapping{
-				ResponseType: "BenefitOverview",
-			},
+			Mapping: &config.OperationMapping{},
 		},
 	}
 
@@ -223,5 +221,47 @@ func TestResolvePackageModelDefinitionsWithoutConfiguredModels(t *testing.T) {
 	}
 	if got := aliases["properties_data_properties_benefit_info_items_properties_effective_properties_item_info"]; got != "BenefitItemInfo" {
 		t.Fatalf("unexpected alias for effective.item_info schema: %q", got)
+	}
+}
+
+func TestInferBindingResponseModelName(t *testing.T) {
+	doc := &openapi.Document{
+		Components: openapi.Components{
+			Schemas: map[string]*openapi.Schema{
+				"OpenApiResp": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"data": {Ref: "#/components/schemas/properties_data"},
+					},
+				},
+				"properties_data": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"basic_info": {Ref: "#/components/schemas/properties_data_properties_basic_info"},
+					},
+				},
+				"properties_data_properties_basic_info": {
+					Type: "object",
+					Properties: map[string]*openapi.Schema{
+						"user_level": {Type: "string"},
+					},
+				},
+			},
+		},
+	}
+
+	binding := OperationBinding{
+		PackageName: "benefits",
+		Details: openapi.OperationDetails{
+			ResponseSchema: &openapi.Schema{Ref: "#/components/schemas/OpenApiResp"},
+		},
+		Mapping: &config.OperationMapping{},
+	}
+	got, ok := inferBindingResponseModelName(doc, &config.Package{Name: "benefits"}, binding)
+	if !ok {
+		t.Fatal("expected inferBindingResponseModelName to succeed")
+	}
+	if got != "BenefitOverview" {
+		t.Fatalf("inferBindingResponseModelName() = %q, want %q", got, "BenefitOverview")
 	}
 }

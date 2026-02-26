@@ -532,6 +532,18 @@ func renderOperationMethodWithContext(
 		} else if strings.TrimSpace(binding.Mapping.ResponseType) != "" {
 			returnCast = strings.TrimSpace(binding.Mapping.ResponseType)
 		}
+		shouldInferResponseModel := strings.TrimSpace(binding.Mapping.ResponseType) == "" &&
+			strings.TrimSpace(binding.Mapping.AsyncResponseType) == "" &&
+			strings.TrimSpace(binding.Mapping.ResponseCast) == "" &&
+			(strings.TrimSpace(returnType) == "" || strings.TrimSpace(returnType) == "Dict[str, Any]")
+		if shouldInferResponseModel {
+			if inferredModelName, ok := inferBindingResponseModelName(doc, &config.Package{Name: binding.PackageName}, binding); ok {
+				returnType = inferredModelName
+				returnCast = inferredModelName
+			}
+		}
+		delegateTo = strings.TrimSpace(binding.Mapping.DelegateTo)
+		delegateAsyncYield = binding.Mapping.DelegateAsyncYield
 		streamWrapHandler = strings.TrimSpace(binding.Mapping.StreamWrapHandler)
 		if len(binding.Mapping.StreamWrapFields) > 0 {
 			streamWrapFields = append(streamWrapFields, binding.Mapping.StreamWrapFields...)

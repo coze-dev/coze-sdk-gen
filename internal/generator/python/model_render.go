@@ -238,6 +238,9 @@ func inferModelNameCandidate(schemaName string, schema *openapi.Schema) (string,
 	if trimmed == "" {
 		return "", false
 	}
+	if trimmed == "properties_data" || strings.HasSuffix(trimmed, "_properties_data") {
+		return "overview", true
+	}
 	if schemaHasAllProperties(schema, "status", "item_info") {
 		return "status_info", true
 	}
@@ -339,7 +342,11 @@ func inferOperationRootModels(doc *openapi.Document, pkg *config.Package, bindin
 		}
 		modelName := strings.TrimSpace(binding.Mapping.ResponseType)
 		if !isPythonClassName(modelName) {
-			continue
+			inferredName, ok := inferBindingResponseModelName(doc, pkg, binding)
+			if !ok {
+				continue
+			}
+			modelName = inferredName
 		}
 		if _, exists := emptyModelSet[modelName]; exists {
 			continue
@@ -370,6 +377,18 @@ func inferOperationRootModels(doc *openapi.Document, pkg *config.Package, bindin
 		})
 	}
 	return out
+}
+
+func inferBindingResponseModelName(doc *openapi.Document, pkg *config.Package, binding OperationBinding) (string, bool) {
+	responseDataSchema, schemaName, ok := resolveMappingResponseDataSchema(doc, binding)
+	if !ok {
+		return "", false
+	}
+	modelName := strings.TrimSpace(inferModelNameFromSchema(pkg, schemaName, responseDataSchema))
+	if !isPythonClassName(modelName) {
+		return "", false
+	}
+	return modelName, true
 }
 
 func resolveMappingResponseDataSchema(doc *openapi.Document, binding OperationBinding) (*openapi.Schema, string, bool) {
