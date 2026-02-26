@@ -584,11 +584,22 @@ func TestRenderOperationMethodStreamWrapSyncReturnMultiline(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodHeadersExpr(t *testing.T) {
+func TestRenderOperationMethodInfersFixedHeaders(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
-		Path:   "/v1/demo",
+		Path:   "/open_api/knowledge/document/create",
 		Method: "post",
+		HeaderParameters: []openapi.ParameterSpec{
+			{
+				Name:     "Agw-Js-Conv",
+				In:       "header",
+				Required: true,
+				Schema: &openapi.Schema{
+					Type: "string",
+					Enum: []interface{}{"str"},
+				},
+			},
+		},
 		RequestBodySchema: &openapi.Schema{
 			Type: "object",
 			Properties: map[string]*openapi.Schema{
@@ -604,19 +615,21 @@ func TestRenderOperationMethodHeadersExpr(t *testing.T) {
 			BodyBuilder:        "raw",
 			BodyFields:         []string{"name"},
 			IgnoreHeaderParams: true,
-			HeadersExpr:        "{\"Agw-Js-Conv\": \"str\"}",
 		},
 	}
 
 	code := pygen.RenderOperationMethod(doc, binding, false)
 	if !strings.Contains(code, "headers = {\"Agw-Js-Conv\": \"str\"}") {
-		t.Fatalf("expected fixed headers assignment via headers_expr:\n%s", code)
+		t.Fatalf("expected fixed headers assignment inferred from required header enum:\n%s", code)
 	}
 	if !strings.Contains(code, "headers=headers") {
 		t.Fatalf("expected request call to include headers arg:\n%s", code)
 	}
 	if strings.Contains(code, "headers: Optional[Dict[str, str]]") {
 		t.Fatalf("did not expect explicit headers signature arg:\n%s", code)
+	}
+	if strings.Contains(code, "kwargs.get(\"headers\")") {
+		t.Fatalf("did not expect kwargs headers merge for fixed inferred header:\n%s", code)
 	}
 }
 

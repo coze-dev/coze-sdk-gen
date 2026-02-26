@@ -482,7 +482,7 @@ func renderOperationMethodWithContext(
 	bodyFieldValues := map[string]string{}
 	paramAliases := map[string]string{}
 	argTypes := map[string]string{}
-	headersExpr := ""
+	fixedHeaders := []fixedHeaderAssignment{}
 	paginationRequestArg := "params"
 	if binding.Mapping != nil && len(binding.Mapping.ParamAliases) > 0 {
 		paramAliases = binding.Mapping.ParamAliases
@@ -534,7 +534,6 @@ func renderOperationMethodWithContext(
 		if len(binding.Mapping.StreamWrapFields) > 0 {
 			streamWrapFields = append(streamWrapFields, binding.Mapping.StreamWrapFields...)
 		}
-		headersExpr = strings.TrimSpace(binding.Mapping.HeadersExpr)
 		if len(binding.Mapping.BodyFieldValues) > 0 {
 			for k, v := range binding.Mapping.BodyFieldValues {
 				bodyFieldValues[k] = v
@@ -544,17 +543,22 @@ func renderOperationMethodWithContext(
 	paginationRequestArg = inferPaginationRequestArg(requestMethod)
 	returnCast = inferResponseCast(binding.Mapping, returnType, returnCast)
 	if ignoreHeaderParams {
+		if shouldInferFixedHeadersForPath(details.Path) {
+			fixedHeaders = inferFixedHeadersFromParameters(details.HeaderParameters)
+		}
 		details.HeaderParameters = nil
 	}
 	dataField := ""
 	requestStream := false
 	queryBuilder := "dump_exclude_none"
 	bodyBuilder := "dump_exclude_none"
+	preBodyAssignsHeaders := false
 	if binding.Mapping != nil {
 		dataField = strings.TrimSpace(binding.Mapping.DataField)
 		requestStream = binding.Mapping.RequestStream
 		queryBuilder = normalizeMapBuilder(binding.Mapping.QueryBuilder)
 		bodyBuilder = normalizeMapBuilder(binding.Mapping.BodyBuilder)
+		preBodyAssignsHeaders = preBodyCodeAssignsHeaders(binding.Mapping.PreBodyCode)
 	}
 	autoDelegateTo := autoDelegateTarget(binding.MethodName, classMethodNames)
 	autoDelegateExtraArgs := make([]string, 0, 1)
@@ -817,8 +821,10 @@ func renderOperationMethodWithContext(
 		}
 	}
 
-	if headersExpr == "" && includeKwargsHeaders && (isTokenPagination(paginationMode) || isNumberPagination(paginationMode) || len(details.HeaderParameters) > 0) {
-		buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n\n")
+	if includeKwargsHeaders && (isTokenPagination(paginationMode) || isNumberPagination(paginationMode) || len(details.HeaderParameters) > 0) {
+		if !(len(fixedHeaders) > 0 || (preBodyAssignsHeaders && len(details.HeaderParameters) == 0)) {
+			buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n\n")
+		}
 	}
 
 	if len(details.HeaderParameters) > 0 {
@@ -834,8 +840,16 @@ func renderOperationMethodWithContext(
 		}
 		buf.WriteString("        headers = header_values\n")
 	}
-	if headersExpr != "" {
-		buf.WriteString(fmt.Sprintf("        headers = %s\n", headersExpr))
+	if len(fixedHeaders) > 0 {
+		if len(fixedHeaders) == 1 {
+			buf.WriteString(fmt.Sprintf("        headers = {%q: %s}\n", fixedHeaders[0].Name, fixedHeaders[0].ValueLiteral))
+		} else {
+			buf.WriteString("        headers = {\n")
+			for _, assignment := range fixedHeaders {
+				buf.WriteString(fmt.Sprintf("            %q: %s,\n", assignment.Name, assignment.ValueLiteral))
+			}
+			buf.WriteString("        }\n")
+		}
 		headersAssigned = true
 		if isTokenPagination(paginationMode) || isNumberPagination(paginationMode) {
 			buf.WriteString("\n")
@@ -845,7 +859,7 @@ func renderOperationMethodWithContext(
 		for _, block := range binding.Mapping.PreBodyCode {
 			AppendIndentedCode(&buf, block, 2)
 		}
-		if headersExpr == "" {
+		if len(fixedHeaders) == 0 {
 			buf.WriteString("\n")
 		}
 	}
@@ -1100,7 +1114,7 @@ func renderOperationMethodWithContext(
 		return buf.String()
 	}
 
-	if headersExpr == "" && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
+	if len(fixedHeaders) == 0 && !preBodyAssignsHeaders && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
 		buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n")
 		headersAssigned = true
 	}
@@ -1230,7 +1244,7 @@ func renderOperationMethodWithContext(
 	if !filesBeforeBody {
 		renderFilesAssignment()
 	}
-	if headersExpr == "" && !headersAssigned && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
+	if len(fixedHeaders) == 0 && !preBodyAssignsHeaders && !headersAssigned && includeKwargsHeaders && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) && len(details.HeaderParameters) == 0 {
 		needsBlankLine := len(queryFields) > 0 ||
 			len(bodyFieldNames) > 0 ||
 			len(bodyFixedValues) > 0 ||

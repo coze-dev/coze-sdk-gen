@@ -186,6 +186,80 @@ func TestInferPaginationRequestArg(t *testing.T) {
 	}
 }
 
+func TestInferFixedHeadersFromParameters(t *testing.T) {
+	params := []openapi.ParameterSpec{
+		{
+			Name:     "Agw-Js-Conv",
+			In:       "header",
+			Required: true,
+			Schema: &openapi.Schema{
+				Type: "string",
+				Enum: []interface{}{"str"},
+			},
+		},
+		{
+			Name:     "X-Trace-ID",
+			In:       "header",
+			Required: true,
+			Schema: &openapi.Schema{
+				Type: "string",
+			},
+		},
+		{
+			Name:     "X-Optional",
+			In:       "header",
+			Required: false,
+			Schema: &openapi.Schema{
+				Type: "string",
+				Enum: []interface{}{"x"},
+			},
+		},
+		{
+			Name:     "X-NonString",
+			In:       "header",
+			Required: true,
+			Schema: &openapi.Schema{
+				Type: "integer",
+				Enum: []interface{}{1},
+			},
+		},
+	}
+	got := inferFixedHeadersFromParameters(params)
+	if len(got) != 1 {
+		t.Fatalf("inferFixedHeadersFromParameters len=%d got=%v", len(got), got)
+	}
+	if got[0].Name != "Agw-Js-Conv" || got[0].ValueLiteral != "\"str\"" {
+		t.Fatalf("inferFixedHeadersFromParameters got=%v", got)
+	}
+}
+
+func TestPreBodyCodeAssignsHeaders(t *testing.T) {
+	if !preBodyCodeAssignsHeaders([]string{
+		"headers = {\"Agw-Js-Conv\": \"str\"}",
+	}) {
+		t.Fatal("preBodyCodeAssignsHeaders should detect headers assignment")
+	}
+	if !preBodyCodeAssignsHeaders([]string{
+		"# comment\nheaders: Optional[dict] = kwargs.get(\"headers\")",
+	}) {
+		t.Fatal("preBodyCodeAssignsHeaders should detect annotated headers assignment")
+	}
+	if preBodyCodeAssignsHeaders([]string{
+		"body = {\"id\": id}",
+	}) {
+		t.Fatal("preBodyCodeAssignsHeaders should ignore unrelated assignments")
+	}
+}
+
+func TestShouldInferFixedHeadersForPath(t *testing.T) {
+	if !shouldInferFixedHeadersForPath("/open_api/knowledge/document/list") {
+		t.Fatal("shouldInferFixedHeadersForPath should match knowledge document paths")
+	}
+	if shouldInferFixedHeadersForPath("/v1/datasets/{dataset_id}/process") {
+		t.Fatal("shouldInferFixedHeadersForPath should not match unrelated paths")
+	}
+}
+
 func TestCommentAndDocstringHelpers(t *testing.T) {
 	buf := &bytes.Buffer{}
 	AppendIndentedCode(buf, "    x = 1\n    y = 2\n", 1)

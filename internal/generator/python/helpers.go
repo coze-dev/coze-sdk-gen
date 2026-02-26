@@ -1,6 +1,8 @@
 package python
 
 import (
+	"fmt"
+	"sort"
 	"strings"
 	"unicode"
 
@@ -119,6 +121,57 @@ func inferPaginationRequestArg(requestMethod string) string {
 	default:
 		return "json"
 	}
+}
+
+type fixedHeaderAssignment struct {
+	Name         string
+	ValueLiteral string
+}
+
+func inferFixedHeadersFromParameters(parameters []openapi.ParameterSpec) []fixedHeaderAssignment {
+	if len(parameters) == 0 {
+		return nil
+	}
+	assignments := make([]fixedHeaderAssignment, 0, len(parameters))
+	for _, param := range parameters {
+		if !param.Required {
+			continue
+		}
+		if strings.TrimSpace(param.Name) == "" || param.Schema == nil || len(param.Schema.Enum) != 1 {
+			continue
+		}
+		value, ok := param.Schema.Enum[0].(string)
+		if !ok || strings.TrimSpace(value) == "" {
+			continue
+		}
+		assignments = append(assignments, fixedHeaderAssignment{
+			Name:         param.Name,
+			ValueLiteral: fmt.Sprintf("%q", value),
+		})
+	}
+	sort.Slice(assignments, func(i, j int) bool {
+		return assignments[i].Name < assignments[j].Name
+	})
+	return assignments
+}
+
+func shouldInferFixedHeadersForPath(path string) bool {
+	return strings.HasPrefix(strings.TrimSpace(path), "/open_api/knowledge/document/")
+}
+
+func preBodyCodeAssignsHeaders(codeBlocks []string) bool {
+	for _, block := range codeBlocks {
+		for _, rawLine := range strings.Split(block, "\n") {
+			line := strings.TrimSpace(rawLine)
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			if strings.HasPrefix(line, "headers =") || strings.HasPrefix(line, "headers:") {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func RequestBodyTypeInfo(doc *openapi.Document, schema *openapi.Schema, body *openapi.RequestBody) (string, bool) {

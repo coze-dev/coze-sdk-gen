@@ -4106,7 +4106,6 @@ api:
         - datasets_documents.create
       body_builder: raw
       ignore_header_params: true
-      headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - dataset_id
         - document_bases
@@ -4135,7 +4134,8 @@ api:
       allow_missing_in_swagger: true
       body_builder: raw
       ignore_header_params: true
-      headers_expr: '{"Agw-Js-Conv": "str"}'
+      pre_body_code:
+        - 'headers = {"Agw-Js-Conv": "str"}'
       body_fields:
         - document_id
         - document_name
@@ -4154,7 +4154,6 @@ api:
         - datasets_documents.delete
       body_builder: raw
       ignore_header_params: true
-      headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - document_ids
       arg_types:
@@ -4167,7 +4166,6 @@ api:
         - datasets_documents.list
       query_builder: raw
       ignore_header_params: true
-      headers_expr: '{"Agw-Js-Conv": "str"}'
       param_aliases:
         page: page_num
         size: page_size
@@ -4199,7 +4197,6 @@ api:
         - knowledge_documents.create
       body_builder: raw
       ignore_header_params: true
-      headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - dataset_id
         - document_bases
@@ -4232,7 +4229,8 @@ api:
       allow_missing_in_swagger: true
       body_builder: raw
       ignore_header_params: true
-      headers_expr: '{"Agw-Js-Conv": "str"}'
+      pre_body_code:
+        - 'headers = {"Agw-Js-Conv": "str"}'
       body_fields:
         - document_id
         - document_name
@@ -4259,7 +4257,6 @@ api:
         - knowledge_documents.delete
       body_builder: raw
       ignore_header_params: true
-      headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - document_ids
       arg_types:
@@ -4280,7 +4277,6 @@ api:
         - knowledge_documents.list
       query_builder: raw
       ignore_header_params: true
-      headers_expr: '{"Agw-Js-Conv": "str"}'
       param_aliases:
         page: page_num
         size: page_size

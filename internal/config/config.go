@@ -194,7 +194,6 @@ type OperationMapping struct {
 	StreamWrapFields         []string          `yaml:"stream_wrap_fields"`
 	QueryBuilder             string            `yaml:"query_builder"`
 	BodyFieldValues          map[string]string `yaml:"body_field_values"`
-	HeadersExpr              string            `yaml:"headers_expr"`
 }
 
 type OperationField struct {
