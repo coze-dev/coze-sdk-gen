@@ -1,0 +1,180 @@
+openapi: 3.0.3
+info:
+    title: 查看知识库文件列表
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/list_knowledge_files
+servers:
+    - url: https://api.coze.cn
+paths:
+    /open_api/knowledge/document/list:
+        post:
+            operationId: CozePostlist_knowledge_files
+            summary: 查看知识库文件列表
+            description: |-
+                调用接口查看指定扣子知识库的文件列表，即文档、表格或图像列表。
+                仅支持通过本 API 查看扣子知识库中的文件列表，不支持查看火山知识库中的文件列表。查看火山知识库中的文件列表请参见查看火山知识库的文件列表。
+
+                调用接口查看指定扣子知识库的内容列表，即文件、表格或图像列表。
+            tags:
+                - developer_guides
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 请求正文的方式。
+                  schema:
+                    type: string
+                - name: Agw-Js-Conv
+                  in: header
+                  description: 防止丢失数字类型参数的精度。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                dataset_id:
+                                    type: string
+                                    description: 待查看文件的扣子知识库 ID。 仅支持扣子知识库，不支持火山知识库。 在扣子编程中打开指定知识库页面，页面 URL 中 knowledge 参数后的数字就是知识库 ID。例如 https://www.coze.cn/space/736142423532160/knowledge/738509371792341，知识库 ID 为 738509371792341。
+                                page:
+                                    type: integer
+                                    format: int32
+                                    description: 分页查询时的页码。默认为 1，即从第一页数据开始返回。
+                                size:
+                                    type: integer
+                                    format: int32
+                                    description: 分页大小。默认为 10，即每页返回 10 条数据。
+                            required:
+                                - dataset_id
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 状态码。 0 代表调用成功。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 返回详情，包含本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid及错误码联系扣子团队获取帮助。
+                                    document_infos:
+                                        type: array
+                                        description: 知识库文件列表。详细说明可参考 DocumentInfo object。
+                                        items:
+                                            $ref: '#/components/schemas/DocumentInfo'
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+                                    total:
+                                        type: integer
+                                        format: int32
+                                        description: 指定知识库中的文件总数。
+            x-coze-original-method: POST
+            x-coze-permission: listDocument
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/list_knowledge_files
+components:
+    schemas:
+        ChunkStrategy:
+            type: object
+            properties:
+                caption_type:
+                    type: integer
+                    format: int32
+                    description: 图片知识库的标注方式： 0：（默认）系统自动标注描述信息 1：手工标注。上传图片后需要再次调用 API 更新知识库图片描述来手动设置标注。 在空的知识库中首次上传图片时，需要手工设置 caption_type 参数的值，否则会报错。
+                chunk_type:
+                    type: integer
+                    format: int32
+                    description: 分段设置。取值包括： 0：自动分段与清洗。采用扣子编程预置规则进行数据分段与处理。 1：自定义。此时需要通过 separator、max_tokens、remove_extra_spaces 和 remove_urls_emails 分段规则细节。
+                max_tokens:
+                    type: integer
+                    format: int64
+                    description: 最大分段长度，取值范围为 100~2000。 在 chunk_type=1 时必选。
+                remove_extra_spaces:
+                    type: boolean
+                    description: 是否自动过滤连续的空格、换行符和制表符。取值包括： true：自动过滤 false：（默认）不自动过滤 在 chunk_type=1 时生效。
+                remove_urls_emails:
+                    type: boolean
+                    description: 是否自动过滤所有 URL 和电子邮箱地址。取值包括： true：自动过滤 false：（默认）不自动过滤 在 chunk_type=1 时生效。
+                separator:
+                    type: string
+                    description: 分段标识符。 在 chunk_type=1 时必选。
+        DocumentInfo:
+            type: object
+            properties:
+                char_count:
+                    type: integer
+                    format: int32
+                    description: 文件内容的总字符数量。
+                chunk_strategy:
+                    $ref: '#/components/schemas/ChunkStrategy'
+                    description: 分段规则。
+                create_time:
+                    type: integer
+                    format: int32
+                    description: 文件的上传时间，格式为 10 位的 Unixtime 时间戳。
+                document_id:
+                    type: string
+                    description: 文件的 ID。
+                format_type:
+                    type: integer
+                    format: int32
+                    description: 文件的格式类型。取值包括： 0：文档类型，例如 txt 、pdf 、在线网页等格式均属于文档类型。 1：表格类型，例如 xls 表格等格式属于表格类型。 2：照片类型，例如 png 图片等格式属于照片类型。
+                hit_count:
+                    type: integer
+                    format: int32
+                    description: 被对话命中的次数。
+                name:
+                    type: string
+                    description: 文件的名称。
+                size:
+                    type: integer
+                    format: int32
+                    description: 文件的大小，单位为字节。
+                slice_count:
+                    type: integer
+                    format: int32
+                    description: 文件的分段数量。
+                source_type:
+                    type: integer
+                    format: int32
+                    description: 文件的上传方式。取值包括： 0：上传本地文件。 1：上传在线网页。
+                status:
+                    type: integer
+                    format: int32
+                    description: 文件的处理状态。取值包括： 0：处理中 1：处理完毕 9：处理失败，建议重新上传
+                tos_uri:
+                    type: string
+                    description: 上传的本地文档的唯一标识。
+                type:
+                    type: string
+                    description: 本地文件格式，即文件后缀，例如 txt。格式支持 pdf、txt、doc、docx 类型。
+                update_interval:
+                    type: integer
+                    format: int32
+                    description: 在线网页自动更新的频率。单位为小时。
+                update_time:
+                    type: integer
+                    format: int32
+                    description: 文件的最近一次修改时间，格式为 10 位的 Unixtime 时间戳。
+                update_type:
+                    type: integer
+                    format: int32
+                    description: 在线网页是否自动更新。取值包括： 0：不自动更新 1：自动更新
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

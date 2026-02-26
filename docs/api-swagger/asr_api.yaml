@@ -1,0 +1,26 @@
+openapi: 3.0.3
+info:
+    title: 双向流式语音识别
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/asr_api
+servers:
+    - url: wss://ws.coze.cn
+paths:
+    /v1/audio/transcriptions:
+        get:
+            operationId: CozeGetasr_api
+            summary: 双向流式语音识别
+            description: |-
+                扣子编程提供流式语音识别 WebSocket OpenAPI，可以将指定的音频判断转为文字，支持识别中英文双语种。
+                双向流式语音识别场景下的各类事件详细信息可参考双向流式语音识别事件。
+
+                将指定的音频判断转为文字，支持识别中英文双语种。
+            tags:
+                - developer_guides
+            responses:
+                "200":
+                    description: Success
+            x-coze-original-method: WebSocket
+            x-coze-transport: websocket
+            x-coze-permission: createTranscription
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/asr_api

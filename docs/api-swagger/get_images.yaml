@@ -1,0 +1,144 @@
+openapi: 3.0.3
+info:
+    title: 查看知识库图片列表
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/get_images
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/datasets/:dataset_id/images:
+        get:
+            operationId: CozeGetget_images
+            summary: 查看知识库图片列表
+            description: |-
+                调用此接口查看图片类知识库中图片的详细信息。
+                查看图片时，支持通过图片的标注进行筛选。
+
+                调用此接口查看图片类知识库中图片的详细信息。
+            tags:
+                - developer_guides
+            parameters:
+                - name: dataset_id
+                  in: path
+                  description: 知识库 ID。 在扣子编程中打开指定知识库页面，页面 URL 中 knowledge 参数后的数字就是知识库 ID。例如 https://www.coze.cn/space/736142423532160/knowledge/738509371792341，知识库 ID 为 738509371792341。
+                  required: true
+                  schema:
+                    type: string
+                - name: page_num
+                  in: query
+                  description: 查询结果分页展示时，此参数用于设置查看的页码。最小值为 1，默认为 1。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: page_size
+                  in: query
+                  description: 查询结果分页展示时，此参数用于设置每页返回的数据量。取值范围为 1~299，默认为 10。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: keyword
+                  in: query
+                  description: 对图片描述进行搜索时，搜索的关键字。
+                  schema:
+                    type: string
+                - name: has_caption
+                  in: query
+                  description: 图片是否已设置了描述信息。
+                  schema:
+                    type: boolean
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 状态码。 0 代表调用成功。
+                                    data:
+                                        $ref: '#/components/schemas/ListPhotoOpenApiData'
+                                        description: 返回内容
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid及错误码联系扣子团队获取帮助。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: GET
+            x-coze-permission: listPhoto
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/get_images
+components:
+    schemas:
+        ListPhotoOpenApiData:
+            type: object
+            properties:
+                photo_infos:
+                    type: array
+                    description: 图片的详细信息。
+                    items:
+                        $ref: '#/components/schemas/PhotoInfo'
+                total_count:
+                    type: integer
+                    format: int32
+                    description: 符合查询条件的图片总数量。
+        PhotoInfo:
+            type: object
+            properties:
+                caption:
+                    type: string
+                    description: 图片描述信息。
+                create_time:
+                    type: integer
+                    format: int32
+                    description: 图片的上传时间，格式为 10 位的 Unixtime 时间戳。
+                creator_id:
+                    type: string
+                    description: 创建人的扣子 UID。
+                document_id:
+                    type: string
+                    description: 图片的 ID。
+                name:
+                    type: string
+                    description: 图片名。
+                size:
+                    type: integer
+                    format: int32
+                    description: 图片大小，单位为字节。
+                source_type:
+                    type: integer
+                    format: int32
+                    description: 上传方式。取值包括： 0：上传本地文件。 1：上传在线网页。 5：上传 file_id。
+                status:
+                    type: integer
+                    format: int32
+                    description: 文件的状态。取值包括： 0：处理中 1：处理完毕 9：处理失败，建议重新上传
+                type:
+                    type: string
+                    description: 文件格式，即文件后缀，例如 jpg、png。
+                update_time:
+                    type: integer
+                    format: int32
+                    description: 更新时间，格式为 10 位的 Unixtime 时间戳。
+                url:
+                    type: string
+                    description: 图片链接。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

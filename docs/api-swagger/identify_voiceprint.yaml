@@ -1,0 +1,113 @@
+openapi: 3.0.3
+info:
+    title: 声纹特征比对
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/identify_voiceprint
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/audio/voiceprint_groups/:group_id/speaker_identify:
+        post:
+            operationId: CozePostidentify_voiceprint
+            summary: 声纹特征比对
+            description: 声纹特征比对。
+            tags:
+                - developer_guides
+            parameters:
+                - name: group_id
+                  in: path
+                  description: 声纹所属的声纹组 ID。你可以通过查看声纹组列表 API 查看声纹组 ID。
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 文件类型。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                channel:
+                                    type: integer
+                                    format: int32
+                                    description: 声道数，当文件类型为 pcm 时需传入该参数。 默认为单声道。
+                                file:
+                                    $ref: '#/components/schemas/File'
+                                    description: 上传需要进行声纹特征比对的音频文件。
+                                sample_rate:
+                                    type: integer
+                                    format: int32
+                                    description: 采样率，单位：Hz。当文件类型为 pcm 时需传入该参数。 默认的采样率为 16kHz。
+                                top_k:
+                                    $ref: '#/components/schemas/Interger'
+                                    description: 返回特征匹配度最高的前 k 项结果。若未指定，则默认返回全部匹配结果。
+                            required:
+                                - file
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/SpeakerIdentifyData'
+                                        description: 声纹匹配度列表，包含测试音频与声纹库中已有声纹的匹配信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 本次请求返回的详细信息。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: identifyInVoiceprintGroup
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/identify_voiceprint
+components:
+    schemas:
+        FeatureScore:
+            type: object
+            properties:
+                feature_desc:
+                    type: string
+                    description: 声纹的描述。
+                feature_id:
+                    type: string
+                    description: 与测试音频匹配的声纹的 ID。
+                feature_name:
+                    type: string
+                    description: 声纹的名称。
+                score:
+                    type: number
+                    format: double
+                    description: 声纹匹配度。表示测试音频与声纹库中已有声纹的匹配程度，数值范围为 0~100，数值越高表示匹配度越高。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+        SpeakerIdentifyData:
+            type: object
+            properties:
+                feature_score_list:
+                    type: array
+                    description: 声纹匹配度列表，包含测试音频与声纹库中已有声纹的匹配信息。
+                    items:
+                        $ref: '#/components/schemas/FeatureScore'

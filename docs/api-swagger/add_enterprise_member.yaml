@@ -1,0 +1,89 @@
+openapi: 3.0.3
+info:
+    title: 添加企业成员
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/add_enterprise_member
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/enterprises/:enterprise_id/members:
+        post:
+            operationId: CozePostadd_enterprise_member
+            summary: 添加企业成员
+            description: |-
+                添加员工到企业。
+                在火山引擎创建用户后，默认会自动将用户添加至企业，若未成功添加，你可以调用本 API 将用户添加至企业。火山引擎创建用户的具体方法请参见成员管理。
+
+                添加企业成员。
+            tags:
+                - developer_guides
+            parameters:
+                - name: enterprise_id
+                  in: path
+                  description: 企业 ID，用于标识用户所属的企业。 你可以在组织管理 > 组织设置页面查看企业 ID。 !Image
+                  required: true
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                users:
+                                    type: array
+                                    description: 待邀请加入企业的用户列表，单次最多添加 1个成员。每个成员包含用户 ID 和角色信息。
+                                    items:
+                                        $ref: '#/components/schemas/OpenEnterpriseMember'
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: Enterprise.batchAddPeople
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/add_enterprise_member
+components:
+    schemas:
+        OpenEnterpriseMember:
+            type: object
+            properties:
+                role:
+                    type: string
+                    description: 成员在企业中的角色，枚举值： enterprise_admin：企业管理员。 enterprise_member：企业普通成员。
+                user_id:
+                    type: string
+                    description: 需要添加至企业的扣子用户 UID。 你可以调用火山引擎的 ListCozeUser-成员列表 API，查看 CozeUserId 的值即为扣子用户 UID。
+            required:
+                - role
+                - user_id
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

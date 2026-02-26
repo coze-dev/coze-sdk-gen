@@ -1,0 +1,25 @@
+openapi: 3.0.3
+info:
+    title: 发起对话
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/chat_v3
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v3/chat:
+        post:
+            operationId: CozePostchat_v3
+            summary: 发起对话
+            description: |-
+                调用此接口发起一次对话，支持添加上下文和流式响应。
+                会话、对话和消息的概念说明，可参考基础概念。
+
+                调用此接口发起一次对话，支持添加上下文和流式响应。
+            tags:
+                - developer_guides
+            responses:
+                "200":
+                    description: Success
+            x-coze-original-method: POST
+            x-coze-permission: chat
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/chat_v3

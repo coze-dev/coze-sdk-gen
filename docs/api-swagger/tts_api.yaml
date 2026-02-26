@@ -1,0 +1,26 @@
+openapi: 3.0.3
+info:
+    title: 双向流式语音合成
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/tts_api
+servers:
+    - url: wss://ws.coze.cn
+paths:
+    /v1/audio/speech:
+        get:
+            operationId: CozeGettts_api
+            summary: 双向流式语音合成
+            description: |-
+                扣子编程提供流式语音合成 WebSocket OpenAPI，可以将文字信息转为指定音色的语音片段。
+                双向流式语音合成场景下的各类事件详细信息可参考双向流式语音合成事件。
+
+                将文字信息转为指定音色的语音片段。
+            tags:
+                - developer_guides
+            responses:
+                "200":
+                    description: Success
+            x-coze-original-method: WebSocket
+            x-coze-transport: websocket
+            x-coze-permission: createSpeech
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/tts_api

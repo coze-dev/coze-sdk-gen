@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+    title: 批量移除空间中的用户
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/remove_space_member
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/workspaces/:workspace_id/members:
+        delete:
+            operationId: CozeDeleteremove_space_member
+            summary: 批量移除空间中的用户
+            description: |-
+                批量移除工作空间中的用户。每次最多移除 5 个成员。
+
+                批量移除空间中的用户。
+            tags:
+                - developer_guides
+            parameters:
+                - name: workspace_id
+                  in: path
+                  description: 需要移除用户的空间 ID。 进入指定空间，空间页面 URL 中 w 参数后的数字就是 工作空间 ID。例如https://code.coze.cn/w/75814654762959/projects，workspace_id 为 75814654762959。
+                  required: true
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                user_ids:
+                                    type: array
+                                    description: 要移除的成员，单次最多移除 5 个成员。
+                                    items:
+                                        type: string
+                            required:
+                                - user_ids
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/OpenRemoveSpaceMemberData'
+                                        description: 移除空间成员的结果信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 响应详情信息。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: DELETE
+            x-coze-permission: removeMember
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/remove_space_member
+components:
+    schemas:
+        OpenRemoveSpaceMemberData:
+            type: object
+            properties:
+                not_in_workspace_user_ids:
+                    type: array
+                    description: 不在当前空间中的用户 ID 列表，这些用户不会被处理。
+                    items:
+                        type: string
+                owner_not_support_remove_user_ids:
+                    type: array
+                    description: 移除失败，该用户为空间所有者。
+                    items:
+                        type: string
+                removed_success_user_ids:
+                    type: array
+                    description: 成功移除的成员列表。
+                    items:
+                        type: string
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

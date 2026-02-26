@@ -1,0 +1,144 @@
+openapi: 3.0.3
+info:
+    title: 查询工作流列表
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/get_workflow_list
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/workflows:
+        get:
+            operationId: CozeGetget_workflow_list
+            summary: 查询工作流列表
+            description: |-
+                查询指定工作空间中的工作流列表及其基本信息。
+                你可以查询某个工作空间中的所有工作流或对话流、某个应用关联的工作流或对话流。
+
+                查询指定工作空间中的工作流列表及其基本信息。
+            tags:
+                - developer_guides
+            parameters:
+                - name: workspace_id
+                  in: query
+                  description: 工作空间 ID，用于指定要查询的工作空间。 进入指定空间，空间页面 URL 中 w 参数后的数字就是 工作空间 ID。例如https://code.coze.cn/w/75814654762959/projects，工作空间 ID 为 75814654762959。
+                  required: true
+                  schema:
+                    type: string
+                - name: page_num
+                  in: query
+                  description: 查询结果分页展示时，此参数用于设置查看的页码。最小值为 1。
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+                - name: page_size
+                  in: query
+                  description: 查询结果分页展示时，此参数用于设置每页返回的数据量。取值范围为 1 ~ 30，默认为 10。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: workflow_mode
+                  in: query
+                  description: 工作流类型，默认为空，即查询所有工作流类型。枚举值： workflow：工作流。 chatflow：对话流。
+                  schema:
+                    type: string
+                - name: app_id
+                  in: query
+                  description: 扣子应用 ID，用于查询指定应用关联的工作流。默认为空，即不指定应用。 进入应用开发界面，开发页面 URL 中的 project-ide 参数后的数字就是 AppID，例如https://www.coze.cn/space/74421656/project-ide/744208683 ，扣子应用 ID 为744208683。
+                  schema:
+                    type: string
+                - name: publish_status
+                  in: query
+                  description: 工作流的发布状态，用于筛选不同发布状态的版本。枚举值： all ：所有状态。 published_online ：（默认值）已发布的正式版。 unpublished_draft ：草稿状态。
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/OpenAPIWorkflowList'
+                                        description: 工作流列表及其详细信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: GET
+            x-coze-permission: listWorkflow
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/get_workflow_list
+components:
+    schemas:
+        OpenAPIUserInfo:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 工作流创建者的扣子用户 UID。
+                name:
+                    type: string
+                    description: 工作流创建者的扣子用户名。
+        OpenAPIWorkflowBasic:
+            type: object
+            properties:
+                app_id:
+                    type: string
+                    description: 工作流关联的应用 ID。若工作流未关联任何应用，则该字段值为 0。
+                created_at:
+                    type: string
+                    description: 工作流的创建时间，以 Unix 时间戳表示，单位为秒。
+                creator:
+                    $ref: '#/components/schemas/OpenAPIUserInfo'
+                    description: 工作流创建者的信息，包含创建者的用户 ID 和用户名。
+                description:
+                    type: string
+                    description: 工作流的描述。
+                icon_url:
+                    type: string
+                    description: 工作流图标的 URL 地址。
+                updated_at:
+                    type: string
+                    description: 工作流的最后更新时间，以 Unix 时间戳表示，单位为秒。
+                workflow_id:
+                    type: string
+                    description: 工作流 ID。
+                workflow_name:
+                    type: string
+                    description: 工作流名称。
+        OpenAPIWorkflowList:
+            type: object
+            properties:
+                has_more:
+                    type: boolean
+                    description: 标识当前返回的工作流列表是否还有更多数据未返回。 true ：还有更多未返回的回调应用。 false：已返回所有数据。
+                items:
+                    type: array
+                    description: 工作流的基础信息。
+                    items:
+                        $ref: '#/components/schemas/OpenAPIWorkflowBasic'
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

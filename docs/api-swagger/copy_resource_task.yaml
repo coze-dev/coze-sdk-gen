@@ -1,0 +1,83 @@
+openapi: 3.0.3
+info:
+    title: 复制资源
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/copy_resource_task
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/entities/copy_tasks:
+        post:
+            operationId: CozePostcopy_resource_task
+            summary: 复制资源
+            description: 复制智能体、应用和工作流。
+            tags:
+                - developer_guides
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                entity_id:
+                                    type: string
+                                    description: 待复制资源的 ID，需要和 entity_type 配套使用。 例如，当 entity_type 为 bot时，此字段应填写智能体的 ID。
+                                entity_type:
+                                    type: string
+                                    description: 待复制资源的类型。枚举值： app：应用。 bot：智能体。 workflow：工作流。
+                                to_workspace_id:
+                                    type: string
+                                    description: 目标工作空间 ID。默认为空，即同工作空间复制。 如果是跨工作空间复制，需要指定资源复制到哪个工作空间。只能填写本企业或团队下的工作空间。 进入指定空间，空间页面 URL 中 w 参数后的数字就是 工作空间 ID。例如https://code.coze.cn/w/75814654762959/projects，工作空间 ID 为 75814654762959。
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/OpenDuplicateDraftEntityData'
+                                        description: 资源复制的返回结果。 如果任务是异步执行的，则返回 task_id 用于查询任务状态。 如果任务直接完成，则返回 copied_entity_id表示复制后的实体 ID。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 本次请求的详细日志信息，用于问题排查。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: Bot.duplicate
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/copy_resource_task
+components:
+    schemas:
+        OpenDuplicateDraftEntityData:
+            type: object
+            properties:
+                copied_entity_id:
+                    type: string
+                    description: 同工作空间复制智能体时，API 会直接返回复制后的智能体 ID。
+                task_id:
+                    type: string
+                    description: 当资源复制任务为异步执行时，API 返回的任务 ID，你可以根据该 task_id，通过查询资源复制的结果 API 查询执行结果。 以下场景中 API 为异步执行： 同工作空间复制应用、工作流。 跨工作空间复制智能体、应用、工作流。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

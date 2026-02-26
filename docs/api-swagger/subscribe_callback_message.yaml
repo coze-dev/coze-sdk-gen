@@ -1,0 +1,76 @@
+openapi: 3.0.3
+info:
+    title: 订阅回调事件
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/subscribe_callback_message
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/api_apps/:api_app_id/events:
+        post:
+            operationId: CozePostsubscribe_callback_message
+            summary: 订阅回调事件
+            description: 订阅回调事件。
+            tags:
+                - developer_guides
+            parameters:
+                - name: api_app_id
+                  in: path
+                  description: 回调应用的 ID。你可以通过查询回调应用列表 API 获取回调应用的 ID。
+                  required: true
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                event_types:
+                                    type: array
+                                    description: 待订阅的回调事件列表，目前支持的事件类型包括： bot.published：智能体发布事件。 bot.deleted：智能体删除事件。 bot.unpublished：智能体下架事件。 benefit.usage：账单推送回调。 benefit.plugin.scale.requested：申请插件扩容事件。 benefit.plugin.scale.expired：插件扩容到期事件。
+                                    items:
+                                        type: string
+                            required:
+                                - event_types
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息，主要用于问题排查。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: subscribeApiAppEvent
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/subscribe_callback_message
+components:
+    schemas:
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

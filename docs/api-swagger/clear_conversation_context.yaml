@@ -1,0 +1,74 @@
+openapi: 3.0.3
+info:
+    title: 清除上下文
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/clear_conversation_context
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/conversations/:conversation_id/clear:
+        post:
+            operationId: CozePostclear_conversation_context
+            summary: 清除上下文
+            description: 清除指定会话中的上下文。
+            tags:
+                - developer_guides
+            parameters:
+                - name: conversation_id
+                  in: path
+                  description: 待清除上下文的会话 ID。你可以在发起对话接口的 Response 中通过 conversation_id 字段获取会话 ID。
+                  required: true
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/Section'
+                                        description: 上下文段落（section）的详细信息。 Section 是一个独立的上下文段落，用于分隔不同的对话阶段或主题。Section 中包括上下文消息，当用户清除上下文时，系统会创建一个新的 Section，从而确保新的对话不受历史消息的影响。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 返回的详情信息，包含本次请求的日志 ID。如果遇到异常报错场景，可以根据此日志 ID 联系技术支持获取帮助。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: editConversation
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/clear_conversation_context
+components:
+    schemas:
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+        Section:
+            type: object
+            properties:
+                conversation_id:
+                    type: string
+                    description: Conversation ID，即会话的唯一标识。
+                id:
+                    type: string
+                    description: 新的 Session ID，即清除上下文后新创建的上下文段落（section）的 ID。 每个上下文段落对应一批独立的上下文消息。每次清除上下文时，系统会新建一个上下文段落用于存储新的上下文消息。

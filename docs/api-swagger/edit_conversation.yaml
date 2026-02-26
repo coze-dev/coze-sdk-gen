@@ -1,0 +1,111 @@
+openapi: 3.0.3
+info:
+    title: 更新会话名称
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/edit_conversation
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/conversations/:conversation_id:
+        put:
+            operationId: CozePutedit_conversation
+            summary: 更新会话名称
+            description: |-
+                会话创建者可以更新指定会话的会话名，以便更好地识别和管理会话。
+                在创建会话时，扣子编程会默认将用户发送的第一个消息内容作为会话名称。用户也可以根据会话的实际内容或主题对会话名称进行更新，从而更直观地区分不同的会话，提升管理效率。
+
+                更新指定会话的会话名称。
+            tags:
+                - developer_guides
+            parameters:
+                - name: conversation_id
+                  in: path
+                  description: 待更新的会话 ID。你可以在发起对话接口的 Response 中通过 conversation_id 字段获取会话 ID。
+                  required: true
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                name:
+                                    type: string
+                                    description: 更新后的会话名称，最多支持 100 个字符。
+                            required:
+                                - name
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/ConversationData'
+                                        description: 包含会话详细信息的对象。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: PUT
+            x-coze-permission: editConversation
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/edit_conversation
+components:
+    schemas:
+        ConversationData:
+            type: object
+            properties:
+                connector_id:
+                    type: string
+                    description: 该会话在哪个渠道创建。目前支持如下渠道： API：1024 ChatSDK：999 自定义渠道：自定义渠道 ID。自定义渠道 ID 的获取方式如下：在扣子编程左下角单击头像，在账号设置 > 发布渠道 > 企业自定义渠道管理页面查看渠道 ID。
+                created_at:
+                    type: integer
+                    format: int64
+                    description: 会话创建的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+                creator_id:
+                    type: string
+                    description: 会话创建者的扣子 UID，用于标识创建该会话的用户。
+                id:
+                    type: string
+                    description: Conversation ID，即会话的唯一标识。
+                last_section_id:
+                    type: string
+                    description: 会话中最新的一个上下文片段 ID。
+                meta_data:
+                    type: object
+                    description: 附加信息，通常用于封装一些业务相关的字段。查看会话信息时，扣子编程会透传此附加信息，查看消息列表时不会返回该附加信息。 自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。
+                    additionalProperties: true
+                name:
+                    type: string
+                    description: 会话的名称，用于标识和区分不同的会话。
+                updated_at:
+                    type: integer
+                    format: int64
+                    description: 会话的最后更新时间，格式为 10 位的 Unix 时间戳，单位为秒。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

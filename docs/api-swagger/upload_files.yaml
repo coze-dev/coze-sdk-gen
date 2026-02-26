@@ -1,0 +1,79 @@
+openapi: 3.0.3
+info:
+    title: 上传文件
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/upload_files
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/files/upload:
+        post:
+            operationId: CozePostupload_files
+            summary: 上传文件
+            description: 调用接口上传文件到扣子编程。
+            tags:
+                - developer_guides
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                Data:
+                                    $ref: '#/components/schemas/File'
+                                    description: 待上传文件的二进制数据。 开发者需要在前端应用中实现文件选择功能，获取用户选择的文件后，将文件的二进制内容直接设置为 HTTP 请求体。
+                            required:
+                                - Data
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/File'
+                                        description: 已上传的文件信息。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: uploadFile
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/upload_files
+components:
+    schemas:
+        File:
+            type: object
+            properties:
+                bytes:
+                    type: integer
+                    format: int64
+                    description: 文件的总字节数。
+                created_at:
+                    type: integer
+                    format: int64
+                    description: 文件的上传时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+                file_name:
+                    type: string
+                    description: 文件名称。
+                id:
+                    type: string
+                    description: 已上传的文件 ID。

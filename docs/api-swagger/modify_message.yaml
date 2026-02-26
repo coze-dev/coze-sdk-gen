@@ -1,0 +1,134 @@
+openapi: 3.0.3
+info:
+    title: 修改消息
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/modify_message
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/conversation/message/modify:
+        post:
+            operationId: CozePostmodify_message
+            summary: 修改消息
+            description: 修改一条消息，支持修改消息内容、附加内容和消息类型。
+            tags:
+                - developer_guides
+            parameters:
+                - name: conversation_id
+                  in: query
+                  description: Conversation ID，即会话的唯一标识。可以在发起对话接口 Response 中查看 conversation_id 字段。
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+                - name: message_id
+                  in: query
+                  description: Message ID，即消息的唯一标识。
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                content:
+                                    type: string
+                                    description: 消息的内容，支持纯文本、多模态（文本、图片、文件混合输入）、卡片等多种类型的内容。 meta_data 和 content 不能同时为空。
+                                content_type:
+                                    type: string
+                                    description: 消息内容的类型。取值包括： text：文本 object_string：多模态内容，即文本和文件的组合、文本和图片的组合 传入 content 时，应同时指定 content_type。
+                                meta_data:
+                                    type: object
+                                    description: 创建消息时的附加消息，获取消息时也会返回此附加消息。 自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。 meta_data 和 content 不能同时为空。
+                                    additionalProperties: true
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 响应详情。
+                                    message:
+                                        $ref: '#/components/schemas/OpenMessageApi'
+                                        description: 修改后的消息详细信息。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: modifyMessage
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/modify_message
+components:
+    schemas:
+        OpenMessageApi:
+            type: object
+            properties:
+                bot_id:
+                    type: string
+                    description: 编写此消息的智能体 ID。此参数仅在对话产生的消息中返回。
+                chat_id:
+                    type: string
+                    description: Chat ID。此参数仅在对话产生的消息中返回。 不同的对话中，系统会生成新的chat_id。同一个用户在第一次对话和第二次对话时，chat_id不一样。
+                content:
+                    type: string
+                    description: 消息的内容，支持纯文本、多模态（文本、图片、文件混合输入）、卡片等多种类型的内容。
+                content_type:
+                    type: string
+                    description: 消息内容的类型，取值包括： text：文本。 object_string：多模态内容，即文本和文件的组合、文本和图片的组合。 card：卡片。此枚举值仅在接口响应中出现，不支持作为入参。
+                conversation_id:
+                    type: string
+                    description: 此消息所在的会话 ID。
+                created_at:
+                    type: integer
+                    format: int64
+                    description: 消息的创建时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+                id:
+                    type: string
+                    description: Message ID，即消息的唯一标识。
+                meta_data:
+                    type: object
+                    description: 创建消息时的附加信息，以键值对形式存储，获取消息时会原样返回。可用于存储与业务相关的自定义数据。
+                    additionalProperties: true
+                reasoning_content:
+                    type: string
+                    description: 模型的思维链（CoT），展示模型如何将复杂问题逐步分解为多个简单步骤并推导出最终答案。仅当模型支持深度思考、且智能体开启了深度思考时返回该字段，当前支持深度思考的模型请参考模型能力差异。
+                role:
+                    type: string
+                    description: 发送这条消息的实体。取值： user：代表该条消息内容是用户发送的。 assistant：代表该条消息内容是 Bot 发送的。
+                section_id:
+                    type: string
+                    description: 上下文片段 ID。每次清除上下文都会生成一个新的 section_id。
+                type:
+                    type: string
+                    description: 消息类型。 question：用户输入内容。 answer：智能体返回给用户的消息内容，支持增量返回。如果工作流绑定了 messge 节点，可能会存在多 answer 场景，此时可以用流式返回的结束标志来判断所有 answer 完成。 function_call：智能体对话过程中调用函数（function call）的中间结果。 tool_response：调用工具 （function call）后返回的结果。 follow_up：如果在 Bot 上配置打开了用户问题建议开关，则会返回推荐问题相关的回复内容。 verbose：多 answer 场景下，服务端会返回一个 verbose 包，对应的 content 为 JSON 格式，content.msg_type =generate_answer_finish 代表全部 answer 回复完成。 仅发起对话（v3）接口支持将此参数作为入参，且： 如果 autoSaveHistory=true，type 支持设置为 question 或 answer。 如果 autoSaveHistory=false，type 支持设置为 question、answer、function_call、tool_output、tool_response。 其中，type=question 只能和 role=user 对应，即仅用户角色可以且只能发起 question 类型的消息。详细说明可参考消息 type 说明。
+                updated_at:
+                    type: integer
+                    format: int64
+                    description: 消息的更新时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

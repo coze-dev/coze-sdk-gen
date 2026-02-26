@@ -1,0 +1,421 @@
+openapi: 3.0.3
+info:
+    title: 获取已发布智能体的配置（即将下线）
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/get_metadata
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/bot/get_online_info:
+        get:
+            operationId: CozeGetget_metadata
+            summary: 获取已发布智能体的配置（即将下线）
+            description: |-
+                获取指定智能体的配置信息，此智能体必须已发布到 Agent as API 渠道中。
+                此接口仅支持查看已发布为 API 服务的智能体。对于创建后从未发布到 API 渠道的智能体，可以在扣子平台中查看列表及配置。
+                该 API 即将下线，建议替换为查看智能体配置 API。
+
+                获取指定智能体的配置信息，此智能体必须已发布到 Agent as API 渠道中。
+            tags:
+                - developer_guides
+            parameters:
+                - name: bot_id
+                  in: query
+                  description: 要查看的智能体 ID。 进入智能体的 开发页面，开发页面 URL 中 bot 参数后的数字就是智能体 ID。例如https://www.coze.cn/space/341/bot/73428668，bot ID 为73428668。 确保该智能体的所属空间已经生成了访问令牌。
+                  required: true
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子平台中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。 0 表示调用成功。 其他值表示调用失败。你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/BotInfo'
+                                        description: 响应的业务信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 响应详情信息。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: GET
+            x-coze-permission: getMetadata
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/get_metadata
+components:
+    schemas:
+        ApiInfo:
+            type: object
+            properties:
+                api_id:
+                    type: string
+                    description: 插件工具的 ID。
+                description:
+                    type: string
+                    description: 插件工具的描述。
+                name:
+                    type: string
+                    description: 插件工具的名称。
+        BackgroundImageDetail:
+            type: object
+            properties:
+                canvas_position:
+                    $ref: '#/components/schemas/CanvasPosition'
+                    description: 背景图片在原始图片中的位置坐标及尺寸参数，即背景图片在画布中的实际显示区域范围。包括图片顶部 / 左侧的偏移量、宽度和高度。
+                gradient_position:
+                    $ref: '#/components/schemas/GradientPosition'
+                    description: 设置背景图渐变效果。通过指定渐变的左右边界位置，控制渐变的起始和结束点，从而实现背景图的渐变效果。
+                image_url:
+                    type: string
+                    description: 背景图片的 URL 地址。
+                theme_color:
+                    type: string
+                    description: 背景图片的主题颜色，通常用于与图片搭配的其他元素的颜色。格式为十六进制颜色代码。
+        BackgroundImageInfo:
+            type: object
+            properties:
+                mobile_background_image:
+                    $ref: '#/components/schemas/BackgroundImageDetail'
+                    description: 移动端背景图。
+                web_background_image:
+                    $ref: '#/components/schemas/BackgroundImageDetail'
+                    description: Web 端背景图。
+        BotInfo:
+            type: object
+            properties:
+                background_image_info:
+                    $ref: '#/components/schemas/BackgroundImageInfo'
+                    description: 智能体背景的图片配置信息，包含 Web 端和移动端的背景图 URL、主题颜色、裁剪位置及渐变效果等。
+                bot_id:
+                    type: string
+                    description: 智能体的唯一标识。
+                bot_mode:
+                    type: integer
+                    format: int32
+                    description: 智能体模式，取值： 0：单 Agent 模式 1：多 Agent 模式
+                create_time:
+                    type: integer
+                    format: int64
+                    description: 创建时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+                default_user_input_type:
+                    type: string
+                    description: 默认的用户输入方式。枚举值如下： text：打字输入。 voice：语音输入。 call：语音通话。
+                description:
+                    type: string
+                    description: 智能体的描述信息。
+                folder_id:
+                    type: string
+                    description: 智能体所属的文件夹 ID。
+                icon_url:
+                    type: string
+                    description: 智能体的头像地址，用于展示智能体的图标。
+                knowledge:
+                    $ref: '#/components/schemas/CommonKnowledge'
+                    description: 智能体绑定的知识库。
+                media_config:
+                    $ref: '#/components/schemas/MediaConfig'
+                    description: 智能体的语音通话配置，是否关闭语音通话功能。
+                model_info:
+                    $ref: '#/components/schemas/ModelInfo'
+                    description: 智能体绑定的模型配置信息，包括模型 ID、名称、生成参数等。
+                name:
+                    type: string
+                    description: 智能体的名称。
+                onboarding_info:
+                    $ref: '#/components/schemas/OnboardingInfoV2'
+                    description: 智能体的开场白配置。
+                owner_user_id:
+                    type: string
+                    description: 智能体创建者的扣子用户 ID。
+                plugin_info_list:
+                    type: array
+                    description: 智能体配置的插件列表，包含插件的名称、图标、描述及工具信息。
+                    items:
+                        $ref: '#/components/schemas/PluginInfo'
+                prompt_info:
+                    $ref: '#/components/schemas/PromptInfo'
+                    description: 智能体的提示词配置。
+                shortcut_commands:
+                    type: array
+                    description: 智能体配置的快捷指令。
+                    items:
+                        $ref: '#/components/schemas/ShortcutCommandInfo'
+                update_time:
+                    type: integer
+                    format: int64
+                    description: 更新时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+                variables:
+                    type: array
+                    description: 智能体配置的变量列表。
+                    items:
+                        $ref: '#/components/schemas/Variable'
+                version:
+                    type: string
+                    description: 智能体最新版本的版本号。
+                voice_info_list:
+                    type: array
+                    description: 智能体配置的音色。
+                    items:
+                        $ref: '#/components/schemas/Voice'
+                workflow_info_list:
+                    type: array
+                    description: 智能体配置的工作流列表，包含工作流的 ID、名称、图标及描述信息。
+                    items:
+                        $ref: '#/components/schemas/WorkflowInfo'
+        CanvasPosition:
+            type: object
+            properties:
+                height:
+                    type: number
+                    format: double
+                    description: 裁剪区域的高度，单位为像素（px）。此值决定了裁剪区域的垂直范围，必须为正数。
+                left:
+                    type: number
+                    format: double
+                    description: 裁剪区域左侧起始坐标，距原始图片左侧的像素值（px）。值越大，裁剪区域越向右移动。
+                top:
+                    type: number
+                    format: double
+                    description: 裁剪区域顶部起始坐标，距原始图片顶部的像素值（px）。值越大，裁剪区域越向下移动。 top 和 left 的值不能超过画布的实际尺寸
+                width:
+                    type: number
+                    format: double
+                    description: 裁剪区域的宽度，单位为像素（px）。此值决定了裁剪区域的水平范围，必须为正数。
+        CommonKnowledge:
+            type: object
+            properties:
+                knowledge_infos:
+                    type: array
+                    description: 智能体绑定的知识库信息。
+                    items:
+                        $ref: '#/components/schemas/KnowledgeInfo'
+        GradientPosition:
+            type: object
+            properties:
+                left:
+                    type: number
+                    format: double
+                    description: 渐变效果的左侧边界位置，单位为像素（px）。此值表示渐变从画布左侧开始的位置，值越小，渐变起始点越靠近画布左侧。
+                right:
+                    type: number
+                    format: double
+                    description: 渐变效果的右侧边界位置，单位为像素（px）。此值表示渐变在画布右侧结束的位置，值越大，渐变结束点越靠近画布右侧。
+        KnowledgeInfo:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 知识库 ID。
+                name:
+                    type: string
+                    description: 知识库名称。
+        MediaConfig:
+            type: object
+            properties:
+                is_voice_call_closed:
+                    type: boolean
+                    description: 是否关闭智能体的语音通话功能。 true：关闭语音通话。 false：开启语音通话（默认）。
+        ModelInfo:
+            type: object
+            properties:
+                api_mode:
+                    type: string
+                    description: 模型调用方式
+                context_round:
+                    type: integer
+                    format: int32
+                    description: 携带上下文轮数。
+                frequency_penalty:
+                    type: number
+                    format: double
+                    description: 重复语句惩罚。用于控制模型输出重复语句的频率。 当该值为正时，会阻止模型频繁使用相同的词汇和短语，从而增加输出内容的多样性。
+                max_tokens:
+                    type: integer
+                    format: int32
+                    description: 模型输出的 Tokens 长度上限。
+                model_id:
+                    type: string
+                    description: 智能体绑定的模型的 ID。
+                model_name:
+                    type: string
+                    description: 智能体绑定的模型名称。
+                parameters:
+                    type: object
+                    description: 模型深度思考相关配置。开发者可以设置开启或关闭深度思考，从而灵活控制模型在交互过程中的 Token 消耗。 thinking_type 的值可以设置为： enabled：（默认值）开启深度思考。智能体在与用户对话时会先输出一段思维链内容，通过逐步拆解问题、梳理逻辑，提升最终输出答案的准确性。但该模式会因额外的推理步骤消耗更多 Token。 开启深度思考后： 模型不支持 Function Call，即工具调用。 智能体不能使用插件、触发器、变量、数据库、文件盒子、不能添加工作流和对话流。 不支持使用插件和工作流相关的快捷指令。 disabled：关闭深度思考。智能体将直接生成最终答案，不再经过额外的思维链推理过程，可有效降低 Token 消耗，提升响应速度。 auto：当前仅豆包·1.6·自动深度思考·多模态模型支持该参数。启用自动模式后，模型会根据对话内容的复杂度，自动判断是否启用深度思考 当前仅如下模型支持深度思考开关配置： 豆包·1.6·自动深度思考·多模态模型 豆包·1.6·极致速度·多模态模型 豆包·1.5·Pro·视觉深度思考 豆包·GUI·Agent模型
+                    additionalProperties: true
+                presence_penalty:
+                    type: number
+                    format: double
+                    description: 重复主题惩罚。用于控制模型输出相同主题的频率。 当该值为正时，会阻止模型频繁讨论相同的主题，从而增加输出内容的多样性。
+                response_format:
+                    type: string
+                    description: 输出格式。枚举值： text：文本。 markdown：Markdown 格式。 json：json 格式。
+                temperature:
+                    type: number
+                    format: double
+                    description: 生成随机性。
+                top_k:
+                    type: integer
+                    format: int32
+                    description: 生成文本时，采样候选集的大小。该参数控制模型在生成每个词时考虑的候选词数量，值越小生成的文本越保守和确定，值越大生成的文本越多样和随机。
+                top_p:
+                    type: number
+                    format: double
+                    description: Top P 采样参数，用于控制生成文本时的多样性。取值范围为 0 到 1，值越小生成的文本越保守和确定，值越大生成的文本越多样和随机。
+        OnboardingInfoV2:
+            type: object
+            properties:
+                prologue:
+                    type: string
+                    description: 智能体配置的开场白内容。 开场白中如果设置了用户名称变量{{user_name}}，API 场景中需要业务方自行处理，例如展示开场白时将此变量替换为业务侧的用户名称。
+                suggested_questions:
+                    type: array
+                    description: 智能体配置的推荐问题列表。未开启用户问题建议时，不返回此字段。
+                    items:
+                        type: string
+        PluginInfo:
+            type: object
+            properties:
+                api_info_list:
+                    type: array
+                    description: 插件的工具列表信息。
+                    items:
+                        $ref: '#/components/schemas/ApiInfo'
+                description:
+                    type: string
+                    description: 插件的描述信息，用于说明插件的功能或用途。
+                icon_url:
+                    type: string
+                    description: 插件的头像地址，用于展示插件的图标。
+                name:
+                    type: string
+                    description: 插件名称。
+                plugin_id:
+                    type: string
+                    description: 插件唯一标识。
+        PrefixPromptInfo:
+            type: object
+            properties:
+                dynamic_prompt:
+                    type: string
+                    description: 非缓存提示词，动态变化的个性化信息，仅针对当前请求生效。
+                prefix_prompt:
+                    type: string
+                    description: 缓存提示词，大量重复出现的固定规则、模板框架或背景信息，用于指引大模型输出格式与风格。扣子会将其缓存并复用，大模型无需重新解析这部分固定信息。
+        PromptInfo:
+            type: object
+            properties:
+                prefix_prompt_info:
+                    $ref: '#/components/schemas/PrefixPromptInfo'
+                    description: 通过 cache_type 或 parameters.caching.type开启前缀缓存后，你需要通过该参数设置缓存提示词（prefix_prompt）和 非缓存提示词（dynamic_prompt）。不支持通过 prompt 参数设置提示词。
+                prompt:
+                    type: string
+                    description: 智能体的人设与回复逻辑。长度为 0~ 20,000 个字符。默认为空。 开启前缀缓存后，不支持通过 prompt 参数设置提示词，需要通过 prefix_prompt_info 参数设置提示词。
+                prompt_mode:
+                    type: string
+                    description: 提示词模式，用于指定智能体的人设与回复逻辑的配置方式。枚举值： standard（默认值）：标准模式。未开启前缀缓存时使用该模式。 prefix：前缀缓存模式，提示词会分为缓存提示词和非缓存提示词两部分。开启前缀缓存后需要设置为该模式。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+        ShortcutCommandInfo:
+            type: object
+            properties:
+                agent_id:
+                    type: string
+                    description: 对于多 Agent 类型的智能体，此参数返回快捷指令指定回答的节点 ID。
+                command:
+                    type: string
+                    description: 快捷指令的指令名称。
+                description:
+                    type: string
+                    description: 快捷指令的描述。
+                icon_url:
+                    type: string
+                    description: 快捷指令的图标地址。
+                id:
+                    type: string
+                    description: 快捷指令的唯一标识。
+                name:
+                    type: string
+                    description: 快捷指令的按钮名称。
+                query_template:
+                    type: string
+                    description: 快捷指令的指令内容。
+                tool:
+                    $ref: '#/components/schemas/ShortcutCommandToolInfo'
+                    description: 快捷指令使用的工具信息。
+        ShortcutCommandToolInfo:
+            type: object
+            properties:
+                name:
+                    type: string
+                    description: 快捷指令的工具名称。
+                type:
+                    type: string
+                    description: 工具类型。取值为： workflow：工作流。 plugin：插件。
+        Variable:
+            type: object
+            properties:
+                channel:
+                    type: string
+                    description: 变量的类型。当前只支持展示用户自定义变量（custom）。
+                default_value:
+                    type: string
+                    description: 变量的默认值。
+                description:
+                    type: string
+                    description: 变量描述。
+                enable:
+                    type: boolean
+                    description: 是否启用该变量。 true：启用该变量。 false：未启用该变量。
+                keyword:
+                    type: string
+                    description: 变量名。
+                prompt_enable:
+                    type: boolean
+                    description: 是否允许该变量被 Prompt 访问。 true：变量支持在 Prompt 中访问。 false：变量不支持在 Prompt 中访问，仅能在工作流中访问。
+        Voice:
+            type: object
+            properties:
+                language_code:
+                    type: string
+                    description: 此音色的语种代号。获取方法请参见查看音色列表。
+                voice_id:
+                    type: string
+                    description: 音色的 ID。获取方法请参见查看音色列表。
+        WorkflowInfo:
+            type: object
+            properties:
+                description:
+                    type: string
+                    description: 工作流的描述。
+                icon_url:
+                    type: string
+                    description: 工作流的头像地址，用于展示工作流的图标。
+                id:
+                    type: string
+                    description: 工作流的 ID。
+                name:
+                    type: string
+                    description: 工作流的名称。

@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+    title: 创建声纹
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/create_voiceprint
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/audio/voiceprint_groups/:group_id/features:
+        post:
+            operationId: CozePostcreate_voiceprint
+            summary: 创建声纹
+            description: 创建声纹。
+            tags:
+                - developer_guides
+            parameters:
+                - name: group_id
+                  in: path
+                  description: 声纹所属的声纹组 ID。你可以通过查看声纹组列表 API 查看声纹组 ID。
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 文件类型。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                channel:
+                                    type: integer
+                                    format: int32
+                                    description: 声道数，当文件类型为 pcm 时需传入该参数。 默认为单声道。
+                                desc:
+                                    type: string
+                                    description: 声纹的描述。
+                                file:
+                                    $ref: '#/components/schemas/File'
+                                    description: 上传本地预先录制好的音频文件。
+                                name:
+                                    type: string
+                                    description: 声纹的名称。
+                                sample_rate:
+                                    type: integer
+                                    format: int32
+                                    description: 采样率，单位：Hz。当文件类型为 pcm 时需传入该参数。 默认为 16kHz 采样率。
+                            required:
+                                - file
+                                - name
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/CreateVoicePrintGroupFeatureData'
+                                        description: 返回的声纹信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 本次请求返回的详细信息。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: createVoiceprintFeature
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/create_voiceprint
+components:
+    schemas:
+        CreateVoicePrintGroupFeatureData:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 声纹的 ID。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

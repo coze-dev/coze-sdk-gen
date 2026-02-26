@@ -1,0 +1,142 @@
+openapi: 3.0.3
+info:
+    title: 查询套餐权益
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/get_benefit
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/commerce/benefit/benefits/get:
+        get:
+            operationId: CozeGetget_benefit
+            summary: 查询套餐权益
+            description: |-
+                查询当前账号的套餐权益信息。
+
+                查询套餐权益。
+            tags:
+                - developer_guides
+            parameters:
+                - name: benefit_type_list
+                  in: query
+                  description: 权益类型列表，多个类型用逗号分隔。支持的权益类型如下： api_run_qps： API 扩容的信息，你需要在 resource_id 中传入待查询的 API 类型。 call_tool_limit：通过 MCP 方式调用付费插件的次数限制。 默认为空，即返回订阅的套餐类型，不含额外扩容的权益。
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                - name: resource_id
+                  in: query
+                  description: API 类型，当 benefit_type_list 为 api_run_qps时，需要配置该参数。当前仅支持查询可扩容的 API 类型。枚举值： plugin：插件相关 API 的 QPS 限制。 chat：对话相关的 API 的 QPS 限制。 workflow：工作流相关的 API 的 QPS 限制。
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/BenefitData'
+                                        description: 用户订阅的套餐类型和权益额度的详细信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: GET
+            x-coze-permission: getBenefit
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/get_benefit
+components:
+    schemas:
+        BasicInfo:
+            type: object
+            properties:
+                user_level:
+                    type: string
+                    description: 用户订阅的扣子套餐类型，枚举值： free：个人免费版。 pro_personal：个人付费版。 team：企业标准版。 enterprise：企业旗舰版。
+        BenefitData:
+            type: object
+            properties:
+                basic_info:
+                    $ref: '#/components/schemas/BasicInfo'
+                    description: 用户订阅的扣子套餐类型。
+                benefit_info:
+                    type: array
+                    description: 权益额度，包含用户当前享有的各项权益详情，如默认的权益、扩容权益及实际生效的权益等。
+                    items:
+                        $ref: '#/components/schemas/BenefitInfo'
+        BenefitInfo:
+            type: object
+            properties:
+                basic:
+                    $ref: '#/components/schemas/BenefitTypeInfoItem'
+                    description: 默认的权益信息，包含权益的状态、用量及权益配额 ID。
+                benefit_type:
+                    type: string
+                    description: 权益配额类型，枚举值： api_run_qps：扩容管理页面中扩容的 API QPS。 call_tool_limit：通过 MCP 方式调用付费插件的次数限制。
+                effective:
+                    $ref: '#/components/schemas/BenefitTypeInfoItem'
+                    description: 当前实际生效的权益额度。
+                extra:
+                    type: array
+                    description: 资源扩容新增的权益额度。如果未购买扩容服务，则该值为空。
+                    items:
+                        $ref: '#/components/schemas/BenefitTypeInfoItem'
+                resource_id:
+                    type: string
+                    description: 当前权益对应的资源 ID。当前仅如下 API 类型支持扩容。枚举值： plugin：插件相关 API 的 QPS 限制。对应的 API 包括调用插件工具、询插件详情。 chat：对话相关 API 的 QPS 限制。对应的 API 包括：发起对话、查看对话详情、查看对话消息详情。 workflow：工作流相关 API 的 QPS 限制。对应的 API 包括：执行工作流 、执行工作流（流式响应） 、执行对话流 、查询工作流异步执行结果 、查询输出节点的执行结果 。
+        BenefitTypeInfoItem:
+            type: object
+            properties:
+                item_info:
+                    $ref: '#/components/schemas/CommonCounter'
+                    description: 当前权益的使用量、总量、生效时间及资源使用策略。
+                status:
+                    type: string
+                    description: 权益状态，表示当前权益的使用状态。枚举值： valid：正常使用。 frozen：冻结使用。 cancel：取消。 pending：待生效。 invalid：不可用。 auditing：审核中。 expired：已过期。
+        CommonCounter:
+            type: object
+            properties:
+                end_at:
+                    type: integer
+                    format: int64
+                    description: 权益的结束生效时间，以 Unix 时间戳格式表示，单位为秒。
+                start_at:
+                    type: integer
+                    format: int64
+                    description: 权益的开始生效时间，以 Unix 时间戳格式表示，单位为秒。
+                strategy:
+                    type: string
+                    description: 资源使用策略，表示当前权益的资源使用方式。枚举值： unlimit：不限制用量。 forbidden：不支持调用，该套餐不支持该权益。 by_quota：按额度限制使用。
+                total:
+                    type: number
+                    format: double
+                    description: 当 strategy 为 ByQuota 时，表示当前权益的用量上限。 当 strategy 为 unlimit 或 forbidden 时，该值为 1。
+                used:
+                    type: number
+                    format: double
+                    description: 当 strategy 为 ByQuota 时，表示当前权益的已使用量。若权益无相关用量数据则返回 0。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

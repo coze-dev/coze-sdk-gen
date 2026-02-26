@@ -1,0 +1,126 @@
+openapi: 3.0.3
+info:
+    title: 查看智能体版本列表
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/list_bot_versions
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/bots/:bot_id/versions:
+        get:
+            operationId: CozeGetlist_bot_versions
+            summary: 查看智能体版本列表
+            description: 查看智能体版本列表。
+            tags:
+                - developer_guides
+            parameters:
+                - name: bot_id
+                  in: path
+                  description: 待查询的智能体 ID。 进入智能体的开发页面，开发页面 URL 中 bot 参数后的数字就是智能体 ID。例如https://www.coze.com/space/341/bot/73428668，bot ID 为73428668。
+                  required: true
+                  schema:
+                    type: string
+                - name: page_num
+                  in: query
+                  description: 分页查询时的页码。默认为 1，即返回第一页数据。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: page_size
+                  in: query
+                  description: 分页查询时每页返回的数据条数。默认值为 10，取值范围为 1~30。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: publish_status
+                  in: query
+                  description: 智能体的发布状态，根据智能体的发布状态筛选对应版本。默认值为 published_online。枚举值： published_online：已发布的线上版本。 unpublished_draft：草稿版本。
+                  schema:
+                    type: string
+                - name: connector_id
+                  in: query
+                  description: 渠道 ID，仅在智能体发布状态为 published_online 时需要设置。用于筛选指定渠道下已发布的智能体版本。默认为空，表示获取所有发布渠道下的版本列表。 扣子编程的渠道 ID 包括： 1024：API 渠道。 999：Chat SDK。 10000122：扣子商店。 10000113：微信客服。 10000120：微信服务号。 10000121：微信订阅号。 10000126：抖音小程序。 10000127：微信小程序。 10000011：飞书。 10000128：飞书多维表格。 10000117：掘金。 自定义渠道 ID。自定义渠道 ID 的获取方式如下：在扣子编程左下角单击头像，在账号设置 > 发布渠道 > 企业自定义渠道管理页面查看渠道 ID。
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/ListBotVersionsData'
+                                        description: 包含智能体版本列表数据的对象，用于返回智能体的所有版本信息及其分页状态。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: GET
+            x-coze-permission: Bot.listVersion
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/list_bot_versions
+components:
+    schemas:
+        ListBotVersionsData:
+            type: object
+            properties:
+                has_more:
+                    type: boolean
+                    description: 标识当前返回结果是否还有更多数据未加载。 true ：当前返回的版本列表未包含所有符合条件的数据。 false：表示已返回所有符合条件的数据。
+                items:
+                    type: array
+                    description: 智能体版本列表数据，包含该智能体的所有版本的详细信息。
+                    items:
+                        $ref: '#/components/schemas/OpenBotVersionInfo'
+        OpenBotVersionInfo:
+            type: object
+            properties:
+                changelog:
+                    type: string
+                    description: 该版本发布时，用户输入的更新内容或修改说明。
+                created_at:
+                    type: integer
+                    format: int64
+                    description: 该版本的创建时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+                creator:
+                    $ref: '#/components/schemas/OpenCreatorInfo'
+                    description: 版本的创建者信息，包含创建者的用户 ID 和用户名。
+                publish_status:
+                    type: string
+                    description: 该版本的发布状态。枚举值： published_online：已发布的线上版本。 unpublished_draft：草稿版本。
+                version:
+                    type: string
+                    description: 智能体的版本号。
+        OpenCreatorInfo:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 版本创建者的扣子用户 ID。
+                name:
+                    type: string
+                    description: 版本创建者的扣子用户名。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

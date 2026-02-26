@@ -1,0 +1,134 @@
+openapi: 3.0.3
+info:
+    title: 创建会话
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/create_conversation
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/conversation/create:
+        post:
+            operationId: CozePostcreate_conversation
+            summary: 创建会话
+            description: 创建一个会话。
+            tags:
+                - developer_guides
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                bot_id:
+                                    type: string
+                                    description: 会话对应的智能体 ID。 创建会话时指定智能体 ID，后续才能通过 查看会话列表 查看指定智能体 ID 对应的会话列表。 智能体 ID，获取方法如下： 进入智能体的 开发页面，开发页面 URL 中 bot 参数后的数字就是智能体 ID。例如https://www.coze.cn/space/341/bot/73428668，智能体 ID 为73428668。
+                                connector_id:
+                                    type: string
+                                    description: 该会话在哪个渠道创建。目前支持如下渠道： API：（默认）1024 ChatSDK：999 自定义渠道：自定义渠道 ID。自定义渠道 ID 的获取方式如下：在扣子编程左下角单击头像，在账号设置 > 发布渠道 > 企业自定义渠道管理页面查看渠道 ID。
+                                messages:
+                                    type: array
+                                    description: 会话中的消息内容。详细说明可参考 EnterMessage object。
+                                    items:
+                                        $ref: '#/components/schemas/EnterMessage'
+                                meta_data:
+                                    type: object
+                                    description: 附加信息，通常用于封装一些业务相关的字段。查看会话信息时，扣子编程会透传此附加信息，查看消息列表时不会返回该附加信息。 自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。
+                                    additionalProperties: true
+                                name:
+                                    type: string
+                                    description: 会话的名称。默认为空。为了方便区分不同会话，建议设置会话名称。最多支持 100 个字符。
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/ConversationData'
+                                        description: 会话的基础信息，包含会话的唯一标识、名称、创建时间等详细信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: createConversation
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/create_conversation
+components:
+    schemas:
+        ConversationData:
+            type: object
+            properties:
+                connector_id:
+                    type: string
+                    description: 该会话在哪个渠道创建。目前支持如下渠道： API：1024 ChatSDK：999 自定义渠道：自定义渠道 ID。自定义渠道 ID 的获取方式如下：在扣子编程左下角单击头像，在账号设置 > 发布渠道 > 企业自定义渠道管理页面查看渠道 ID。
+                created_at:
+                    type: integer
+                    format: int64
+                    description: 会话创建的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+                creator_id:
+                    type: string
+                    description: 会话创建者的扣子 UID，用于标识创建该会话的用户。
+                id:
+                    type: string
+                    description: Conversation ID，即会话的唯一标识。
+                last_section_id:
+                    type: string
+                    description: 会话中最新的一个上下文片段 ID。
+                meta_data:
+                    type: object
+                    description: 附加信息，通常用于封装一些业务相关的字段。查看会话信息时，扣子编程会透传此附加信息，查看消息列表时不会返回该附加信息。 自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。
+                    additionalProperties: true
+                name:
+                    type: string
+                    description: 会话的名称，用于标识和区分不同的会话。
+                updated_at:
+                    type: integer
+                    format: int64
+                    description: 会话的最后更新时间，格式为 10 位的 Unix 时间戳，单位为秒。
+        EnterMessage:
+            type: object
+            properties:
+                content:
+                    type: string
+                    description: 消息的内容，支持纯文本、多模态（文本、图片、文件混合输入）、卡片等多种类型的内容。 content_type 为 object_string 时，content 为 object_string object 数组序列化之后的 JSON String，详细说明可参考 object_string object。 当 content_type = text 时，content 为普通文本，例如 "content" :"Hello!"。
+                content_type:
+                    type: string
+                    description: 消息内容的类型，支持设置为： text：文本。 object_string：多模态内容，即文本和文件的组合、文本和图片的组合。 card：卡片。此枚举值仅在接口响应中出现，不支持作为入参。 content 不为空时，此参数为必选。
+                meta_data:
+                    type: object
+                    description: 创建消息时的附加消息，获取消息时也会返回此附加消息。 自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。 content 不为空时，此参数为必选。
+                    additionalProperties: true
+                role:
+                    type: string
+                    description: 发送这条消息的实体。取值： user：代表该条消息内容是用户发送的。 assistant：代表该条消息内容是 Bot 发送的。
+                type:
+                    type: string
+                    description: 消息类型。默认为 question。 question：用户输入内容。 answer：Bot 返回给用户的消息内容，支持增量返回。如果工作流绑定了输出节点，可能会存在多 answer 场景，此时可以用流式返回的结束标志来判断所有 answer 完成。 function_call：Bot 对话过程中调用函数（function call）的中间结果。 tool_response：调用工具 （function call）后返回的结果。 follow_up：如果在 Bot 上配置打开了用户问题建议开关，则会返回推荐问题相关的回复内容。不支持在请求中作为入参。 verbose：多 answer 场景下，服务端会返回一个 verbose 包，对应的 content 为 JSON 格式，content.msg_type =generate_answer_finish 代表全部 answer 回复完成。不支持在请求中作为入参。 仅发起会话（v3）接口支持将此参数作为入参，且： 如果 autoSaveHistory=true，type 支持设置为 question 或 answer。 如果 autoSaveHistory=false，type 支持设置为 question、answer、function_call、tool_output/tool_response。 其中，type=question 只能和 role=user 对应，即仅用户角色可以且只能发起 question 类型的消息。详细说明可参考消息 type 说明。
+            required:
+                - role
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

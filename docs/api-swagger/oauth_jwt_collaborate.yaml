@@ -1,0 +1,40 @@
+openapi: 3.0.3
+info:
+    title: OAuth JWT 授权（跨账号授权场景）
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/oauth_jwt_collaborate
+servers:
+    - url: https://api.coze.cn
+paths:
+    /api/permission/oauth2/%2A%2Aaccount/%7Baccount_id%7D%2A%2A/token:
+        post:
+            operationId: CozePostoauth_jwt_collaborate
+            summary: OAuth JWT 授权（跨账号授权场景）
+            description: |-
+                在多人协作的纯后端应用场景下，当你需要通过 OAuth JWT Flow 访问其他账号下的资源时，可参考本文完成 OAuth JWT 授权。授权完成后，OAuth 应用将被永久授予指定工作空间下所有资源的访问权限，并随时可以通过后端应用签发的 JWT 获取访问令牌，以后端应用的身份请求扣子 API。
+                在 OAuth 授权码授权、PKCE 授权、设备授权模式下，扣子编程也支持多人协作场景下跨账号的 OAuth 授权。详细说明可参考OAuth 授权（多人协作场景）。
+            tags:
+                - developer_guides
+            responses:
+                "200":
+                    description: Success
+            x-coze-original-method: POST
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/oauth_jwt_collaborate
+components:
+    schemas:
+        HeaderPayload:
+            type: object
+            properties:
+                alg:
+                    type: string
+                    description: 签名使用的加密算法。固定为 RS256，即非对称加密算法，一种基于 RSA（非对称加密算法）+ SHA256（安全哈希函数）的签名算法，该算法使用私钥进行签名，公钥进行验证。
+                kid:
+                    type: string
+                    description: OAuth 应用的公钥指纹，可以在OAuth 应用页面找到这个应用，在操作列单击编辑图标，进入配置页面查看公钥指纹。
+                typ:
+                    type: string
+                    description: 固定为 JWT。
+            required:
+                - alg
+                - kid
+                - typ
