@@ -8,8 +8,7 @@ import (
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
 )
 
-func TestRenderGoInlineTemplateModuleUsesMappedPath(t *testing.T) {
-	module := mustInlineTemplate(t, "apps.go")
+func TestRenderGoAppsModuleUsesMappedPath(t *testing.T) {
 	cfg := &config.Config{
 		API: config.APIConfig{
 			OperationMappings: []config.OperationMapping{
@@ -22,17 +21,16 @@ func TestRenderGoInlineTemplateModuleUsesMappedPath(t *testing.T) {
 		},
 	}
 
-	content, err := renderGoInlineTemplateModule(cfg, nil, module)
+	content, err := renderGoAppsModule(cfg, nil)
 	if err != nil {
-		t.Fatalf("renderGoInlineTemplateModule() error = %v", err)
+		t.Fatalf("renderGoAppsModule() error = %v", err)
 	}
 	if !strings.Contains(content, "URL:    \"/v9/custom/apps\",") {
 		t.Fatalf("expected mapped path in rendered content, got:\n%s", content)
 	}
 }
 
-func TestRenderGoInlineTemplateModuleFallsBackToSwaggerPath(t *testing.T) {
-	module := mustInlineTemplate(t, "users.go")
+func TestRenderGoUsersModuleFallsBackToSwaggerPath(t *testing.T) {
 	doc := mustParseOpenAPIDoc(t, `
 openapi: 3.0.0
 paths:
@@ -43,17 +41,16 @@ paths:
           description: ok
 `)
 
-	content, err := renderGoInlineTemplateModule(&config.Config{}, doc, module)
+	content, err := renderGoUsersModule(&config.Config{}, doc)
 	if err != nil {
-		t.Fatalf("renderGoInlineTemplateModule() error = %v", err)
+		t.Fatalf("renderGoUsersModule() error = %v", err)
 	}
 	if !strings.Contains(content, "URL:    \"/v1/users/me\",") {
 		t.Fatalf("expected swagger fallback path in rendered content, got:\n%s", content)
 	}
 }
 
-func TestRenderGoInlineTemplateModuleConvertsCurlyPath(t *testing.T) {
-	module := mustInlineTemplate(t, "templates.go")
+func TestRenderGoTemplatesModuleConvertsCurlyPath(t *testing.T) {
 	cfg := &config.Config{
 		API: config.APIConfig{
 			OperationMappings: []config.OperationMapping{
@@ -66,24 +63,41 @@ func TestRenderGoInlineTemplateModuleConvertsCurlyPath(t *testing.T) {
 		},
 	}
 
-	content, err := renderGoInlineTemplateModule(cfg, nil, module)
+	content, err := renderGoTemplatesModule(cfg, nil)
 	if err != nil {
-		t.Fatalf("renderGoInlineTemplateModule() error = %v", err)
+		t.Fatalf("renderGoTemplatesModule() error = %v", err)
 	}
 	if !strings.Contains(content, "URL:    \"/v2/templates/:template_id/duplicate\",") {
 		t.Fatalf("expected curly path to be converted, got:\n%s", content)
 	}
 }
 
-func mustInlineTemplate(t *testing.T, fileName string) goInlineAPIModuleTemplate {
-	t.Helper()
-	for _, module := range goInlineAPIModuleTemplates {
-		if module.FileName == fileName {
-			return module
+func TestListGoAPIModuleRenderersIncludesInlineRenderers(t *testing.T) {
+	renderers := listGoAPIModuleRenderers()
+	if len(renderers) < len(goInlineAPIModuleRenderers) {
+		t.Fatalf("expected at least %d renderers, got %d", len(goInlineAPIModuleRenderers), len(renderers))
+	}
+
+	expected := map[string]struct{}{
+		"apps.go":                {},
+		"audio_live.go":          {},
+		"audio_speech.go":        {},
+		"audio_transcription.go": {},
+		"chats_messages.go":      {},
+		"files.go":               {},
+		"templates.go":           {},
+		"users.go":               {},
+		"workflows_chat.go":      {},
+	}
+	seen := map[string]struct{}{}
+	for _, r := range renderers {
+		seen[r.FileName] = struct{}{}
+	}
+	for fileName := range expected {
+		if _, ok := seen[fileName]; !ok {
+			t.Fatalf("expected renderer for %s", fileName)
 		}
 	}
-	t.Fatalf("inline template %q not found", fileName)
-	return goInlineAPIModuleTemplate{}
 }
 
 func mustParseOpenAPIDoc(t *testing.T, content string) *openapi.Document {
