@@ -732,13 +732,6 @@ func renderOperationMethodWithContext(
 		nonKwargsSignatureArgCount++
 	}
 	compactSignature := nonKwargsSignatureArgCount <= 2
-	if binding.Mapping != nil {
-		if !async {
-			if binding.Mapping.ForceMultilineSignatureSync {
-				compactSignature = false
-			}
-		}
-	}
 	if compactSignature {
 		if len(signatureArgs) == 0 {
 			buf.WriteString(fmt.Sprintf("    %s %s(self)%s:\n", methodKeyword, binding.MethodName, returnAnnotation))

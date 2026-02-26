@@ -199,7 +199,6 @@ type OperationMapping struct {
 	QueryBuilder                   string            `yaml:"query_builder"`
 	BodyFieldValues                map[string]string `yaml:"body_field_values"`
 	HeadersExpr                    string            `yaml:"headers_expr"`
-	ForceMultilineSignatureSync    bool              `yaml:"force_multiline_signature_sync"`
 	ForceMultilineRequestCallAsync bool              `yaml:"force_multiline_request_call_async"`
 	PaginationRequestArg           string            `yaml:"pagination_request_arg"`
 }
