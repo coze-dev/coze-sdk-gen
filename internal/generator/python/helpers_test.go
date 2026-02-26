@@ -328,14 +328,21 @@ func TestOperationHelpersSignatureAndDefaults(t *testing.T) {
 	}
 
 	mapping := &config.OperationMapping{
-		ArgDefaults:     map[string]string{"x": "1"},
+		ArgDefaults:     map[string]string{"x": "1", "page_size": "10"},
 		ArgDefaultsSync: map[string]string{"x": "2"},
+		PageSizeDefault: "100",
 	}
 	if got, ok := OperationArgDefault(mapping, "x", "x", false); !ok || got != "2" {
 		t.Fatalf("OperationArgDefault(sync) got=%q ok=%v", got, ok)
 	}
 	if got, ok := OperationArgDefault(mapping, "x", "x", true); !ok || got != "1" {
 		t.Fatalf("OperationArgDefault(async) got=%q ok=%v", got, ok)
+	}
+	if got, ok := OperationArgDefault(mapping, "page_size", "page_size", false); !ok || got != "10" {
+		t.Fatalf("OperationArgDefault(sync page_size) got=%q ok=%v", got, ok)
+	}
+	if got, ok := OperationArgDefault(mapping, "page_size", "page_size", true); !ok || got != "100" {
+		t.Fatalf("OperationArgDefault(async page_size) got=%q ok=%v", got, ok)
 	}
 	if _, ok := OperationArgDefault(nil, "x", "x", false); ok {
 		t.Fatal("OperationArgDefault(nil) expected false")

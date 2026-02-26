@@ -174,6 +174,7 @@ type OperationMapping struct {
 	QueryFieldValues         map[string]string `yaml:"query_field_values"`
 	ArgDefaults              map[string]string `yaml:"arg_defaults"`
 	ArgDefaultsSync          map[string]string `yaml:"arg_defaults_sync"`
+	PageSizeDefault          string            `yaml:"page_size_default"`
 	Pagination               string            `yaml:"pagination"`
 	PaginationDataClass      string            `yaml:"pagination_data_class"`
 	PaginationItemType       string            `yaml:"pagination_item_type"`

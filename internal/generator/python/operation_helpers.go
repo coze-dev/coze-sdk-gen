@@ -175,6 +175,14 @@ func OperationArgDefault(mapping *config.OperationMapping, rawName string, argNa
 	if mapping == nil {
 		return "", false
 	}
+	if async {
+		pageSizeDefault := strings.TrimSpace(mapping.PageSizeDefault)
+		rawNameTrimmed := strings.TrimSpace(rawName)
+		argNameTrimmed := strings.TrimSpace(argName)
+		if pageSizeDefault != "" && (argNameTrimmed == "page_size" || rawNameTrimmed == "page_size") {
+			return pageSizeDefault, true
+		}
+	}
 	defaultMaps := make([]map[string]string, 0, 2)
 	if !async && len(mapping.ArgDefaultsSync) > 0 {
 		defaultMaps = append(defaultMaps, mapping.ArgDefaultsSync)

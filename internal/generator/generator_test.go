@@ -1277,7 +1277,7 @@ func TestLinesFromCommentOverrideKeepsLeadingSpaces(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodArgDefaultsUseUnifiedDefault(t *testing.T) {
+func TestRenderOperationMethodPageSizeDefaultAsyncOverride(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/demo",
@@ -1291,6 +1291,7 @@ func TestRenderOperationMethodArgDefaultsUseUnifiedDefault(t *testing.T) {
 			QueryFields: []config.OperationField{
 				{Name: "page_size", Type: "int", Required: true, Default: "10"},
 			},
+			PageSizeDefault: "100",
 		},
 	}
 
@@ -1300,8 +1301,8 @@ func TestRenderOperationMethodArgDefaultsUseUnifiedDefault(t *testing.T) {
 	}
 
 	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
-	if !strings.Contains(asyncCode, "page_size: int = 10") {
-		t.Fatalf("expected async default page_size=10:\n%s", asyncCode)
+	if !strings.Contains(asyncCode, "page_size: int = 100") {
+		t.Fatalf("expected async default page_size=100:\n%s", asyncCode)
 	}
 }
 
