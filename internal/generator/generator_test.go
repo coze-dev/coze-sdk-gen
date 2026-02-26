@@ -1197,7 +1197,7 @@ func TestRenderOperationMethodSingleItemMapsUseMultilineFormat(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodPaginationQueryBuilderAndTokenInitOverrides(t *testing.T) {
+func TestRenderOperationMethodPaginationQueryBuilderUsesDefaultTokenInit(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/workflows/{workflow_id}/versions",
@@ -1212,13 +1212,12 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenInitOverrides(t *tes
 		},
 	}
 	mapping := &config.OperationMapping{
-		QueryBuilder:                "dump_exclude_none",
-		Pagination:                  "token",
-		PaginationDataClass:         "_PrivateListWorkflowVersionData",
-		PaginationItemType:          "WorkflowVersionInfo",
-		PaginationPageTokenField:    "page_token",
-		PaginationPageSizeField:     "page_size",
-		PaginationInitPageTokenExpr: "page_token or \"\"",
+		QueryBuilder:             "dump_exclude_none",
+		Pagination:               "token",
+		PaginationDataClass:      "_PrivateListWorkflowVersionData",
+		PaginationItemType:       "WorkflowVersionInfo",
+		PaginationPageTokenField: "page_token",
+		PaginationPageSizeField:  "page_size",
 	}
 
 	syncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
@@ -1236,8 +1235,8 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenInitOverrides(t *tes
 	if strings.Contains(syncCode, "params = dump_exclude_none(") {
 		t.Fatalf("expected sync token pagination params to be inlined:\n%s", syncCode)
 	}
-	if !strings.Contains(syncCode, "page_token=page_token or \"\"") {
-		t.Fatalf("expected custom pagination token init expr in sync code:\n%s", syncCode)
+	if !strings.Contains(syncCode, "page_token=page_token or \"\",") {
+		t.Fatalf("expected default pagination token init expr in sync code:\n%s", syncCode)
 	}
 
 	asyncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
@@ -1255,8 +1254,8 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenInitOverrides(t *tes
 	if strings.Contains(asyncCode, "params = dump_exclude_none(") {
 		t.Fatalf("expected async token pagination params to be inlined:\n%s", asyncCode)
 	}
-	if !strings.Contains(asyncCode, "page_token=page_token or \"\"") {
-		t.Fatalf("expected custom pagination token init expr in async code:\n%s", asyncCode)
+	if !strings.Contains(asyncCode, "page_token=page_token or \"\",") {
+		t.Fatalf("expected default pagination token init expr in async code:\n%s", asyncCode)
 	}
 }
 
