@@ -123,7 +123,9 @@ Before starting implementation or generation, pull remote `origin/main` into loc
 1. PRs must be traceable: when creating/updating a PR, title, description, related change scope, and validation info must be complete and auditable.
 2. The agent must not auto-merge PRs.
    - Merge actions are allowed only after explicit user merge instructions.
-   - When a user explicitly instructs to merge a PR, merge it directly; do not require pre-approval and do not block on fetching approval first.
+   - When a user explicitly instructs to merge a PR in `coze-py` or `coze-go`, use exactly: `gh pr merge <id> --squash --admin`.
+   - For `coze-py` and `coze-go`, do not use other merge methods or options.
+   - Do not require pre-approval and do not block on fetching approval first.
 3. Human review has priority: continuously read and handle human review comments.
 4. Bot handling rule: ignore bot comments/statuses (for example `CodeRabbit`) as review-decision input.
 5. After feedback is addressed, you must push and keep updating the same PR.
@@ -208,10 +210,9 @@ Before starting implementation or generation, pull remote `origin/main` into loc
    - Rerun Python SDK generation and checks.
    - Update the same `coze-py` PR with regenerated output and push.
 4. Handle downstream merge by user instruction:
-   - When user explicitly instructs to merge downstream `coze-py` PR, merge it directly.
+   - When user explicitly instructs to merge downstream `coze-py` or `coze-go` PR, use exactly: `gh pr merge <id> --squash --admin`.
+   - For `coze-py` and `coze-go`, do not use other merge methods or options.
    - Do not require prior approve state and do not block waiting for approve status before merge.
-   - If normal merge is blocked by base branch policy (for example `REVIEW_REQUIRED`), and user still explicitly asks to merge, use admin squash merge: `gh pr merge --squash --admin`.
-   - For `coze-py`, if repository policy rejects non-squash merge, prefer `--squash` and fall back to `--squash --admin` when required by policy gates.
    - If new commits trigger new checks or comments and user asks for follow-up, return to Stage 3.
 5. Final report:
    - `coze-sdk-gen` PR URL / title / status / merge result
