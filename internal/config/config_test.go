@@ -30,6 +30,21 @@ func TestValidateRuntimeLanguage(t *testing.T) {
 	}
 }
 
+func TestValidateAllowsPackageWithoutSourceDir(t *testing.T) {
+	_, err := Parse([]byte(`
+language: python
+output_sdk: out
+api:
+  packages:
+    - name: chat
+      path_prefixes:
+        - /v3/chat
+`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+}
+
 func TestValidateAgainstSwagger(t *testing.T) {
 	cfg, err := Load(filepath.Join("testdata", "generator.yaml"))
 	if err != nil {

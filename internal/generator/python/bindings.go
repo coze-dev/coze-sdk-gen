@@ -208,10 +208,15 @@ func groupBindingsByPackage(bindings []OperationBinding) map[string][]OperationB
 
 func buildPackageMeta(cfg *config.Config, packages map[string][]OperationBinding) map[string]PackageMeta {
 	metas := map[string]PackageMeta{}
+	inferredDirs := inferPackageDirsFromNames(cfg.API.Packages)
 	for _, pkg := range cfg.API.Packages {
 		pkgCopy := pkg
 		name := NormalizePackageName(pkg.Name)
-		dir := NormalizePackageDir(pkg.SourceDir, name)
+		fallbackDir := name
+		if inferred, ok := inferredDirs[name]; ok && strings.TrimSpace(inferred) != "" {
+			fallbackDir = inferred
+		}
+		dir := NormalizePackageDir(pkg.SourceDir, fallbackDir)
 		metas[name] = PackageMeta{
 			Name:       name,
 			ModulePath: strings.ReplaceAll(dir, "/", "."),
@@ -231,6 +236,61 @@ func buildPackageMeta(cfg *config.Config, packages map[string][]OperationBinding
 	}
 	mergeAutoInferredChildClients(metas, packages)
 	return metas
+}
+
+func inferPackageDirsFromNames(packages []config.Package) map[string]string {
+	names := make(map[string]struct{}, len(packages))
+	for _, pkg := range packages {
+		name := NormalizePackageName(pkg.Name)
+		if name == "" {
+			continue
+		}
+		names[name] = struct{}{}
+	}
+	cache := make(map[string]string, len(names))
+	for name := range names {
+		cache[name] = inferPackageDirByName(name, names, cache)
+	}
+	return cache
+}
+
+func inferPackageDirByName(name string, names map[string]struct{}, cache map[string]string) string {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return ""
+	}
+	if cached, ok := cache[name]; ok && strings.TrimSpace(cached) != "" {
+		return cached
+	}
+	bestParent := ""
+	for candidate := range names {
+		if candidate == name {
+			continue
+		}
+		prefix := candidate + "_"
+		if !strings.HasPrefix(name, prefix) {
+			continue
+		}
+		if len(candidate) > len(bestParent) {
+			bestParent = candidate
+		}
+	}
+	if bestParent == "" {
+		cache[name] = name
+		return name
+	}
+	leaf := strings.TrimPrefix(name, bestParent+"_")
+	parentDir := inferPackageDirByName(bestParent, names, cache)
+	if parentDir == "" {
+		cache[name] = leaf
+		return leaf
+	}
+	if leaf == "" {
+		cache[name] = parentDir
+		return parentDir
+	}
+	cache[name] = parentDir + "/" + leaf
+	return cache[name]
 }
 
 func mergeAutoInferredChildClients(metas map[string]PackageMeta, packageBindings map[string][]OperationBinding) {
