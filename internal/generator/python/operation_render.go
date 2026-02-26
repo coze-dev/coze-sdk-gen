@@ -542,8 +542,6 @@ func renderOperationMethodWithContext(
 				returnCast = inferredModelName
 			}
 		}
-		delegateTo = strings.TrimSpace(binding.Mapping.DelegateTo)
-		delegateAsyncYield = binding.Mapping.DelegateAsyncYield
 		streamWrapHandler = strings.TrimSpace(binding.Mapping.StreamWrapHandler)
 		if len(binding.Mapping.StreamWrapFields) > 0 {
 			streamWrapFields = append(streamWrapFields, binding.Mapping.StreamWrapFields...)
