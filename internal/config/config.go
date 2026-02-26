@@ -198,7 +198,6 @@ type OperationMapping struct {
 	HeadersExpr                    string            `yaml:"headers_expr"`
 	ForceMultilineSignatureSync    bool              `yaml:"force_multiline_signature_sync"`
 	ForceMultilineRequestCallAsync bool              `yaml:"force_multiline_request_call_async"`
-	PaginationRequestArg           string            `yaml:"pagination_request_arg"`
 }
 
 type OperationField struct {
