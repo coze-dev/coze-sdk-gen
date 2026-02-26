@@ -214,7 +214,6 @@ type OperationMapping struct {
 	ForceMultilineSignatureAsync   bool              `yaml:"force_multiline_signature_async"`
 	ForceMultilineRequestCall      bool              `yaml:"force_multiline_request_call"`
 	ForceMultilineRequestCallAsync bool              `yaml:"force_multiline_request_call_async"`
-	PaginationHTTPMethod           string            `yaml:"pagination_http_method"`
 	PaginationRequestArg           string            `yaml:"pagination_request_arg"`
 	PaginationInitPageTokenExpr    string            `yaml:"pagination_init_page_token_expr"`
 }

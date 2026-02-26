@@ -5164,7 +5164,6 @@ api:
       pagination_total_field: total_count
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
-      pagination_http_method: get
     - path: /v1/datasets/{dataset_id}/images/{document_id}
       method: put
       order: 91
