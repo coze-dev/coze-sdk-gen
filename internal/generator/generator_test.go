@@ -523,15 +523,14 @@ func TestRenderOperationMethodStreamWrapYieldAndSyncVarDefault(t *testing.T) {
 		MethodName:  "stream_call",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			RequestStream:             true,
-			ResponseType:              "Stream[DemoEvent]",
-			AsyncResponseType:         "AsyncIterator[DemoEvent]",
-			ResponseCast:              "None",
-			StreamWrap:                true,
-			StreamWrapHandler:         "handle_demo",
-			StreamWrapFields:          []string{"event", "data"},
-			StreamWrapAsyncYield:      true,
-			ForceMultilineRequestCall: false,
+			RequestStream:        true,
+			ResponseType:         "Stream[DemoEvent]",
+			AsyncResponseType:    "AsyncIterator[DemoEvent]",
+			ResponseCast:         "None",
+			StreamWrap:           true,
+			StreamWrapHandler:    "handle_demo",
+			StreamWrapFields:     []string{"event", "data"},
+			StreamWrapAsyncYield: true,
 		},
 	}
 
