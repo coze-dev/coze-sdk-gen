@@ -145,6 +145,10 @@ Before starting implementation or generation, pull remote `origin/main` into loc
      - `PATCH /repos/{owner}/{repo}/pulls/{number}`
      - `POST /repos/{owner}/{repo}/issues/{number}/labels`
 11. After each PR merge, the report must include the PR title in addition to existing merge information.
+12. Zero-diff downstream rule:
+   - If regenerated `coze-py` has 0 file diff, do not close/abandon the downstream PR due to zero diff.
+   - Keep traceability and follow the normal downstream merge flow when user explicitly instructs merge.
+   - If a new downstream PR is required but there is no file diff, use a traceability PR (for example an empty commit), then handle it as a normal PR.
 
 ### Rule 2: Commit Rules
 
