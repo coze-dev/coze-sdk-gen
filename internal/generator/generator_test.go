@@ -1330,11 +1330,10 @@ func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
 		MethodName:  "create",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			BodyBuilder:      "remove_none_values",
-			BodyFields:       []string{"name"},
-			FilesFields:      []string{"file"},
-			FilesFieldValues: map[string]string{"file": "_try_fix_file(file)"},
-			FilesBeforeBody:  true,
+			BodyBuilder:     "remove_none_values",
+			BodyFields:      []string{"name"},
+			FilesFields:     []string{"file"},
+			FilesBeforeBody: true,
 			ArgTypes: map[string]string{
 				"group_id": "str",
 				"name":     "str",
@@ -1349,6 +1348,47 @@ func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
 	bodyIdx := strings.Index(code, "body = remove_none_values(")
 	if headersIdx < 0 || filesIdx < 0 || bodyIdx < 0 || !(headersIdx < filesIdx && filesIdx < bodyIdx) {
 		t.Fatalf("expected files assignment before body assignment:\n%s", code)
+	}
+}
+
+func TestRenderOperationMethodOptionalSingleFileFieldValues(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo/{group_id}/features/{feature_id}",
+		Method: "put",
+		PathParameters: []openapi.ParameterSpec{
+			{Name: "group_id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+			{Name: "feature_id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+		},
+		RequestBodySchema: &openapi.Schema{
+			Type: "object",
+			Properties: map[string]*openapi.Schema{
+				"name": {Type: "string"},
+				"file": {Type: "string"},
+			},
+			Required: []string{"name"},
+		},
+	}
+	binding := pygen.OperationBinding{
+		PackageName: "demo",
+		MethodName:  "update",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			BodyBuilder: "remove_none_values",
+			BodyFields:  []string{"name"},
+			FilesFields: []string{"file"},
+			ArgTypes: map[string]string{
+				"group_id":   "str",
+				"feature_id": "str",
+				"name":       "str",
+				"file":       "Optional[FileTypes]",
+			},
+		},
+	}
+
+	code := pygen.RenderOperationMethod(doc, binding, false)
+	if !strings.Contains(code, "files = {\"file\": _try_fix_file(file)} if file else {}") {
+		t.Fatalf("expected optional single file mapping to emit conditional files assignment:\n%s", code)
 	}
 }
 
