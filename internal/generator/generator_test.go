@@ -1093,8 +1093,7 @@ func TestRenderOperationMethodPreBodyCode(t *testing.T) {
 		MethodName:  "publish",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			BodyFields:     []string{"bot_id", "connector_ids"},
-			BodyAnnotation: "Dict[str, Any]",
+			BodyFields: []string{"bot_id", "connector_ids"},
 			ArgTypes: map[string]string{
 				"bot_id":        "str",
 				"connector_ids": "List[str]",
@@ -1107,11 +1106,11 @@ func TestRenderOperationMethodPreBodyCode(t *testing.T) {
 	if !strings.Contains(code, "if not connector_ids:") || !strings.Contains(code, "connector_ids = [\"1024\"]") {
 		t.Fatalf("expected pre body code block in method:\n%s", code)
 	}
-	if strings.Index(code, "if not connector_ids:") > strings.Index(code, "body: Dict[str, Any] =") {
+	if strings.Index(code, "if not connector_ids:") > strings.Index(code, "body =") {
 		t.Fatalf("expected pre body code to appear before body assignment:\n%s", code)
 	}
-	if !strings.Contains(code, "body: Dict[str, Any] =") {
-		t.Fatalf("expected body annotation in assignment:\n%s", code)
+	if strings.Contains(code, "body:") {
+		t.Fatalf("expected body assignment without explicit annotation:\n%s", code)
 	}
 }
 
