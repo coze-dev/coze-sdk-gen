@@ -1821,6 +1821,28 @@ api:
       async_client_class: AsyncChatMessagesClient
       path_prefixes:
         - /v3/chat/message
+    - name: bill_tasks
+      source_dir: cozepy/bill_tasks
+      allow_missing_in_swagger: true
+      model_schemas:
+        - schema: properties_data_properties_task_infos_items
+          name: BenefitBillTask
+        - name: _PrivateListBenefitBillTasksData
+          allow_missing_in_swagger: true
+          base_classes:
+            - CozeModel
+            - NumberPagedResponse[BenefitBillTask]
+          extra_fields:
+            - name: task_infos
+              type: List[BenefitBillTask]
+              required: true
+            - name: total
+              type: int
+              required: true
+      override_pagination_classes:
+        - _PrivateListBenefitBillTasksData
+      path_prefixes:
+        - /v1/commerce/benefit/bill_tasks
     - name: connectors
       source_dir: cozepy/connectors
       model_schemas:
@@ -3752,6 +3774,33 @@ api:
         - chat_id
       response_type: Chat
       response_cast: Chat
+    - path: /v1/commerce/benefit/bill_tasks
+      method: get
+      order: 735
+      sdk_methods:
+        - bill_tasks.list
+      query_builder: remove_none_values
+      query_fields:
+        - name: task_ids
+          type: List[str]
+          required: false
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
+        - name: page_size
+          type: int
+          required: true
+          default: "20"
+      query_field_values:
+        task_ids: '",".join(task_ids) if task_ids else None'
+      pagination: number
+      pagination_data_class: _PrivateListBenefitBillTasksData
+      pagination_item_type: BenefitBillTask
+      pagination_items_field: task_infos
+      pagination_total_field: total
+      pagination_page_num_field: page_num
+      pagination_page_size_field: page_size
     - path: /v1/api_apps
       method: post
       order: 10
@@ -5639,8 +5688,6 @@ api:
       allow_missing_in_swagger: true
   ignore_apis:
     - path: /v1/commerce/benefit/benefits/get
-      method: get
-    - path: /v1/commerce/benefit/bill_tasks
       method: get
     - path: /v1/commerce/benefit/limitations
       method: post
