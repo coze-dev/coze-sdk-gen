@@ -1314,7 +1314,7 @@ func renderOperationMethodWithContext(
 		callArgs = append(callArgs, item.Expr)
 	}
 	requestExpr := fmt.Sprintf("%s(%s)", requestCall, strings.Join(callArgs, ", "))
-	forceMultilineRequestCall := binding.Mapping != nil && binding.Mapping.ForceMultilineRequestCall
+	forceMultilineRequestCall := false
 	if binding.Mapping != nil {
 		if async && binding.Mapping.ForceMultilineRequestCallAsync {
 			forceMultilineRequestCall = true

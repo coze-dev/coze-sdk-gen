@@ -200,7 +200,6 @@ type OperationMapping struct {
 	BodyFieldValues                map[string]string `yaml:"body_field_values"`
 	HeadersExpr                    string            `yaml:"headers_expr"`
 	ForceMultilineSignatureSync    bool              `yaml:"force_multiline_signature_sync"`
-	ForceMultilineRequestCall      bool              `yaml:"force_multiline_request_call"`
 	ForceMultilineRequestCallAsync bool              `yaml:"force_multiline_request_call_async"`
 	PaginationRequestArg           string            `yaml:"pagination_request_arg"`
 }
