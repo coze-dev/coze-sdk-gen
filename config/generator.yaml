@@ -572,6 +572,11 @@ api:
         - /v1/audio/voices
     - name: bots
       source_dir: cozepy/bots
+      child_clients:
+        - attribute: collaboration_modes
+          module: .collaboration_modes
+          sync_class: BotsCollaborationModesClient
+          async_class: AsyncBotsCollaborationModesClient
       extra_imports:
         - module: pydantic
           names:
@@ -1030,6 +1035,23 @@ api:
       path_prefixes:
         - /v1/bot
         - /v1/bots
+    - name: bots_collaboration_modes
+      source_dir: cozepy/bots/collaboration_modes
+      client_class: BotsCollaborationModesClient
+      async_client_class: AsyncBotsCollaborationModesClient
+      model_schemas:
+        - name: BotCollaborationMode
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: SINGLE
+              value: single
+            - name: COLLABORATION
+              value: collaboration
+      empty_models:
+        - UpdateBotCollaborationModeResp
+      path_prefixes:
+        - /v1/bots/{bot_id}/collaboration_mode
     - name: chat
       source_dir: cozepy/chat
       separate_commented_enum_members: true
@@ -4526,6 +4548,20 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page_index
       pagination_page_size_field: page_size
+    - path: /v1/bots/{bot_id}/collaboration_mode
+      method: post
+      order: 731
+      sdk_methods:
+        - bots_collaboration_modes.update
+      body_builder: raw
+      body_fields:
+        - collaboration_mode
+      body_required_fields:
+        - collaboration_mode
+      arg_types:
+        collaboration_mode: BotCollaborationMode
+      response_type: UpdateBotCollaborationModeResp
+      response_cast: UpdateBotCollaborationModeResp
     - path: /v1/folders/{folder_id}
       method: get
       order: 74
@@ -5508,8 +5544,6 @@ api:
     - path: /v1/conversation/message/list
       method: post
     - path: /v3/chat/submit_tool_outputs
-      method: post
-    - path: /v1/bots/{bot_id}/collaboration_mode
       method: post
     - path: /v1/bots/{bot_id}/collaborators
       method: post
