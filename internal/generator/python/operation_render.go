@@ -741,9 +741,6 @@ func renderOperationMethodWithContext(
 	}
 	compactSignature := nonKwargsSignatureArgCount <= 2
 	if binding.Mapping != nil {
-		if binding.Mapping.ForceMultilineSignature {
-			compactSignature = false
-		}
 		if !async {
 			if binding.Mapping.ForceMultilineSignatureSync {
 				compactSignature = false
