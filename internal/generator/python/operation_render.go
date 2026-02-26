@@ -819,9 +819,6 @@ func renderOperationMethodWithContext(
 		RenderDelegatedCall(&buf, autoDelegateTo, callArgs, async, delegateAsyncYield)
 		return buf.String()
 	}
-	if binding.Mapping != nil && binding.Mapping.BlankLineAfterDocstring {
-		buf.WriteString("\n")
-	}
 
 	urlPath := details.Path
 	for rawName, pyName := range pathParamNameMap {

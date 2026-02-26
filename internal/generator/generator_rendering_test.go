@@ -324,6 +324,30 @@ func TestRenderPackageModuleRichTextOverrideCollapsedLinesAreSplit(t *testing.T)
 	}
 }
 
+func TestRenderOperationMethodDocstringNoExtraBlankLineBeforeURL(t *testing.T) {
+	doc := mustParseSwagger(t)
+	binding := pygen.OperationBinding{
+		PackageName: "demo",
+		MethodName:  "retrieve",
+		Details: openapi.OperationDetails{
+			Path:        "/v1/demo/{id}",
+			Method:      "get",
+			Description: "Retrieve a demo resource.",
+			PathParameters: []openapi.ParameterSpec{
+				{Name: "id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+			},
+		},
+	}
+
+	code := pygen.RenderOperationMethod(doc, binding, false)
+	if !strings.Contains(code, "Retrieve a demo resource.") {
+		t.Fatalf("expected method docstring to be rendered:\n%s", code)
+	}
+	if strings.Contains(code, "\"\"\"\n\n        url =") {
+		t.Fatalf("did not expect extra blank line between docstring and url:\n%s", code)
+	}
+}
+
 func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{

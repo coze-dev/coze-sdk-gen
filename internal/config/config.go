@@ -208,7 +208,6 @@ type OperationMapping struct {
 	HeadersExpr                    string            `yaml:"headers_expr"`
 	BlankLineAfterHeaders          bool              `yaml:"blank_line_after_headers"`
 	NoBlankLineAfterHeaders        bool              `yaml:"no_blank_line_after_headers"`
-	BlankLineAfterDocstring        bool              `yaml:"blank_line_after_docstring"`
 	ForceMultilineSignature        bool              `yaml:"force_multiline_signature"`
 	ForceMultilineSignatureSync    bool              `yaml:"force_multiline_signature_sync"`
 	ForceMultilineSignatureAsync   bool              `yaml:"force_multiline_signature_async"`
