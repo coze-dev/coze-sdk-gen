@@ -1396,9 +1396,7 @@ func renderOperationMethodWithContext(
 		"url",
 	}
 	type requestCallArg struct {
-		Key  string
 		Expr string
-		Pos  bool
 	}
 	optionalArgs := make([]requestCallArg, 0, 8)
 	streamLiteral := "False"
@@ -1409,15 +1407,15 @@ func renderOperationMethodWithContext(
 	if streamKeyword {
 		streamExpr = fmt.Sprintf("stream=%s", streamLiteral)
 	}
-	optionalArgs = append(optionalArgs, requestCallArg{Key: "stream", Expr: streamExpr, Pos: !streamKeyword})
+	optionalArgs = append(optionalArgs, requestCallArg{Expr: streamExpr})
 	castExprValue := fmt.Sprintf("cast=%s", castExpr)
-	optionalArgs = append(optionalArgs, requestCallArg{Key: "cast", Expr: castExprValue, Pos: false})
+	optionalArgs = append(optionalArgs, requestCallArg{Expr: castExprValue})
 	if len(queryFields) > 0 {
-		optionalArgs = append(optionalArgs, requestCallArg{Key: "params", Expr: "params=params"})
+		optionalArgs = append(optionalArgs, requestCallArg{Expr: "params=params"})
 	}
 	hasHeadersArg := true
 	if hasHeadersArg {
-		optionalArgs = append(optionalArgs, requestCallArg{Key: "headers", Expr: "headers=headers"})
+		optionalArgs = append(optionalArgs, requestCallArg{Expr: "headers=headers"})
 	}
 	if bodyArgExpr != "" {
 		bodyExpr := bodyArgExpr
@@ -1428,65 +1426,16 @@ func renderOperationMethodWithContext(
 				bodyExpr = bodyCallExprOverride
 			}
 		}
-		optionalArgs = append(optionalArgs, requestCallArg{Key: "body", Expr: fmt.Sprintf("body=%s", bodyExpr)})
+		optionalArgs = append(optionalArgs, requestCallArg{Expr: fmt.Sprintf("body=%s", bodyExpr)})
 	}
 	if filesExpr != "" || len(filesFieldNames) > 0 {
-		optionalArgs = append(optionalArgs, requestCallArg{Key: "files", Expr: "files=files"})
+		optionalArgs = append(optionalArgs, requestCallArg{Expr: "files=files"})
 	}
 	if dataField != "" {
-		optionalArgs = append(optionalArgs, requestCallArg{Key: "data_field", Expr: fmt.Sprintf("data_field=%q", dataField)})
+		optionalArgs = append(optionalArgs, requestCallArg{Expr: fmt.Sprintf("data_field=%q", dataField)})
 	}
-	if binding.Mapping != nil && len(binding.Mapping.RequestCallArgOrder) > 0 {
-		argByKey := map[string]requestCallArg{}
-		defaultOrder := make([]string, 0, len(optionalArgs))
-		for _, item := range optionalArgs {
-			if _, exists := argByKey[item.Key]; exists {
-				continue
-			}
-			argByKey[item.Key] = item
-			defaultOrder = append(defaultOrder, item.Key)
-		}
-		orderedKeys := make([]string, 0, len(optionalArgs))
-		seen := map[string]struct{}{}
-		for _, rawKey := range binding.Mapping.RequestCallArgOrder {
-			key := strings.TrimSpace(rawKey)
-			if key == "" {
-				continue
-			}
-			if _, exists := argByKey[key]; !exists {
-				continue
-			}
-			if _, exists := seen[key]; exists {
-				continue
-			}
-			orderedKeys = append(orderedKeys, key)
-			seen[key] = struct{}{}
-		}
-		for _, key := range defaultOrder {
-			if _, exists := seen[key]; exists {
-				continue
-			}
-			orderedKeys = append(orderedKeys, key)
-			seen[key] = struct{}{}
-		}
-		orderedItems := make([]requestCallArg, 0, len(orderedKeys))
-		for _, key := range orderedKeys {
-			orderedItems = append(orderedItems, argByKey[key])
-		}
-		for _, item := range orderedItems {
-			if item.Pos {
-				callArgs = append(callArgs, item.Expr)
-			}
-		}
-		for _, item := range orderedItems {
-			if !item.Pos {
-				callArgs = append(callArgs, item.Expr)
-			}
-		}
-	} else {
-		for _, item := range optionalArgs {
-			callArgs = append(callArgs, item.Expr)
-		}
+	for _, item := range optionalArgs {
+		callArgs = append(callArgs, item.Expr)
 	}
 	requestExpr := fmt.Sprintf("%s(%s)", requestCall, strings.Join(callArgs, ", "))
 	forceMultilineRequestCall := binding.Mapping != nil && binding.Mapping.ForceMultilineRequestCall

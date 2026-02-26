@@ -5136,10 +5136,6 @@ api:
         feedback_type: FeedbackType
         reason_types: List[str]
         comment: str
-      request_call_arg_order:
-        - body
-        - cast
-        - headers
       response_type: CreateConversationMessageFeedbackResp
       response_cast: CreateConversationMessageFeedbackResp
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
@@ -5192,10 +5188,6 @@ api:
         - caption
       arg_types:
         caption: str
-      request_call_arg_order:
-        - cast
-        - headers
-        - body
       response_type: UpdateImageRes
       response_cast: UpdateImageRes
     - path: /v1/enterprises/{enterprise_id}/members
@@ -5468,11 +5460,6 @@ api:
       stream_wrap_fields:
         - event
         - data
-      request_call_arg_order:
-        - stream
-        - cast
-        - headers
-        - body
       no_blank_line_after_headers: true
       force_multiline_request_call: true
       stream_wrap_compact_async_return: true
