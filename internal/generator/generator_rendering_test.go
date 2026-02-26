@@ -348,7 +348,7 @@ func TestRenderOperationMethodDocstringNoExtraBlankLineBeforeURL(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
+func TestRenderOperationMethodHeadersDoNotForceBlankLine(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/demo/{id}",
@@ -369,9 +369,8 @@ func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
 		MethodName:  "update",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			BodyBuilder:           "raw",
-			BodyFields:            []string{"name"},
-			BlankLineAfterHeaders: true,
+			BodyBuilder: "raw",
+			BodyFields:  []string{"name"},
 			ArgTypes: map[string]string{
 				"id":   "str",
 				"name": "str",
@@ -380,8 +379,8 @@ func TestRenderOperationMethodBlankLineAfterHeaders(t *testing.T) {
 	}
 
 	code := pygen.RenderOperationMethod(doc, binding, false)
-	if !strings.Contains(code, "headers: Optional[dict] = kwargs.get(\"headers\")\n\n        body = {") {
-		t.Fatalf("expected blank line between headers assignment and body when blank_line_after_headers=true:\n%s", code)
+	if strings.Contains(code, "headers: Optional[dict] = kwargs.get(\"headers\")\n\n        body = {") {
+		t.Fatalf("did not expect forced blank line between headers assignment and body:\n%s", code)
 	}
 }
 

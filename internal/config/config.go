@@ -206,7 +206,6 @@ type OperationMapping struct {
 	BodyCallExpr                   string            `yaml:"body_call_expr"`
 	BodyFieldValues                map[string]string `yaml:"body_field_values"`
 	HeadersExpr                    string            `yaml:"headers_expr"`
-	BlankLineAfterHeaders          bool              `yaml:"blank_line_after_headers"`
 	NoBlankLineAfterHeaders        bool              `yaml:"no_blank_line_after_headers"`
 	ForceMultilineSignature        bool              `yaml:"force_multiline_signature"`
 	ForceMultilineSignatureSync    bool              `yaml:"force_multiline_signature_sync"`
