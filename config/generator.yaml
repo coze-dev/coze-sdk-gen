@@ -1828,66 +1828,25 @@ api:
       source_dir: cozepy/benefits
       allow_missing_in_swagger: true
       model_schemas:
-        - name: BenefitBasicInfo
-          allow_missing_in_swagger: true
-          extra_fields:
-            - name: user_level
-              type: Optional[str]
-              required: false
-        - name: BenefitItemInfo
-          allow_missing_in_swagger: true
-          extra_fields:
-            - name: used
-              type: Optional[float]
-              required: false
-            - name: total
-              type: Optional[float]
-              required: false
-            - name: start_at
-              type: Optional[int]
-              required: false
-            - name: end_at
-              type: Optional[int]
-              required: false
-            - name: strategy
-              type: Optional[str]
-              required: false
-        - name: BenefitStatusInfo
-          allow_missing_in_swagger: true
-          extra_fields:
-            - name: status
-              type: Optional[str]
-              required: false
-            - name: item_info
-              type: Optional[BenefitItemInfo]
-              required: false
-        - name: BenefitInfo
-          allow_missing_in_swagger: true
-          extra_fields:
-            - name: basic
-              type: Optional[BenefitStatusInfo]
-              required: false
-            - name: extra
-              type: Optional[List[BenefitStatusInfo]]
-              required: false
-            - name: effective
-              type: Optional[BenefitStatusInfo]
-              required: false
-            - name: resource_id
-              type: Optional[str]
-              required: false
-            - name: benefit_type
-              type: Optional[str]
-              required: false
-        - name: BenefitOverview
-          allow_missing_in_swagger: true
-          extra_fields:
-            - name: basic_info
-              type: Optional[BenefitBasicInfo]
-              required: false
-            - name: benefit_info
-              type: Optional[List[BenefitInfo]]
-              required: false
+        - schema: properties_data_properties_basic_info
+          name: BenefitBasicInfo
+        - schema: properties_data_properties_benefit_info_items_properties_basic_properties_item_info
+          name: BenefitItemInfo
+        - schema: properties_data_properties_benefit_info_items_properties_basic
+          name: BenefitStatusInfo
+          field_types:
+            item_info: Optional[BenefitItemInfo]
+        - schema: properties_data_properties_benefit_info_items
+          name: BenefitInfo
+          field_types:
+            basic: Optional[BenefitStatusInfo]
+            extra: Optional[List[BenefitStatusInfo]]
+            effective: Optional[BenefitStatusInfo]
+        - schema: properties_data
+          name: BenefitOverview
+          field_types:
+            basic_info: Optional[BenefitBasicInfo]
+            benefit_info: Optional[List[BenefitInfo]]
       path_prefixes:
         - /v1/commerce/benefit/benefits/get
     - name: benefit_limitations
