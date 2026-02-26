@@ -1065,6 +1065,7 @@ api:
           name: BotCollaborator
       empty_models:
         - AddBotCollaboratorResp
+        - DeleteBotCollaboratorResp
       path_prefixes:
         - /v1/bots/{bot_id}/collaborators
     - name: chat
@@ -4589,6 +4590,14 @@ api:
         collaborators: List[BotCollaborator]
       response_type: AddBotCollaboratorResp
       response_cast: AddBotCollaboratorResp
+    - path: /v1/bots/{bot_id}/collaborators/{user_id}
+      method: delete
+      order: 733
+      sdk_methods:
+        - bots_collaborators.delete
+      disable_request_body: true
+      response_type: DeleteBotCollaboratorResp
+      response_cast: DeleteBotCollaboratorResp
     - path: /v1/folders/{folder_id}
       method: get
       order: 74
@@ -5572,8 +5581,6 @@ api:
       method: post
     - path: /v3/chat/submit_tool_outputs
       method: post
-    - path: /v1/bots/{bot_id}/collaborators/{user_id}
-      method: delete
     - path: /v1/bots/{bot_id}/versions
       method: get
   field_aliases:
