@@ -1106,11 +1106,7 @@ func renderOperationMethodWithContext(
 			fieldName := filesFieldNames[0]
 			argName := OperationArgName(fieldName, paramAliases)
 			valueExpr := fmt.Sprintf("_try_fix_file(%s)", argName)
-			if !bodyRequiredSet[fieldName] {
-				buf.WriteString(fmt.Sprintf("        files = {%q: %s} if %s else {}\n", fieldName, valueExpr, argName))
-				return true
-			}
-			buf.WriteString(fmt.Sprintf("        files = {%q: %s}\n", fieldName, valueExpr))
+			buf.WriteString(fmt.Sprintf("        files = {%q: %s} if %s else {}\n", fieldName, valueExpr, argName))
 			return true
 		}
 
