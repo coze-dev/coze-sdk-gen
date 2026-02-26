@@ -136,7 +136,6 @@ func writeGoRuntimeScaffolding(outputDir string, writer *fileWriter) error {
 	}
 
 	goAssets := map[string]string{
-		"audio.go":                         "audio.go.tpl",
 		"auth.go":                          "auth.go.tpl",
 		"auth_token.go":                    "auth_token.go.tpl",
 		"base_model.go":                    "base_model.go.tpl",

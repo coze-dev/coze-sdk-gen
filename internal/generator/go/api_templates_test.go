@@ -100,6 +100,88 @@ func TestListGoAPIModuleRenderersIncludesInlineRenderers(t *testing.T) {
 	}
 }
 
+func TestRenderGoAudioModuleUsesSwaggerAndConfig(t *testing.T) {
+	cfg := &config.Config{
+		API: config.APIConfig{
+			Packages: []config.Package{
+				{Name: "audio_rooms"},
+				{
+					Name: "audio_speech",
+					ModelSchemas: []config.ModelSchema{
+						{
+							Name: "AudioFormat",
+							EnumValues: []config.ModelEnumValue{
+								{Name: "PCM", Value: "pcm"},
+							},
+						},
+						{
+							Name: "LanguageCode",
+							EnumValues: []config.ModelEnumValue{
+								{Name: "ZH", Value: "zh"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	doc := mustParseOpenAPIDoc(t, `
+openapi: 3.0.0
+paths:
+  /v1/audio/speech:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                response_format:
+                  type: string
+                  enum: [mp3, wav]
+      responses:
+        '200':
+          description: ok
+  /v1/audio/voices/clone:
+    post:
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                audio_format:
+                  type: string
+                  enum: [m4a]
+      responses:
+        '200':
+          description: ok
+`)
+
+	content, err := renderGoAudioModule(cfg, doc)
+	if err != nil {
+		t.Fatalf("renderGoAudioModule() error = %v", err)
+	}
+	for _, expected := range []string{
+		"AudioFormatPCM AudioFormat = \"pcm\"",
+		"AudioFormatMP3 AudioFormat = \"mp3\"",
+		"AudioFormatWAV AudioFormat = \"wav\"",
+		"AudioFormatM4A AudioFormat = \"m4a\"",
+		"LanguageCodeZH LanguageCode = \"zh\"",
+		"Rooms *audioRooms",
+		"Speech *audioSpeech",
+		"Rooms: newAudioRooms(core)",
+		"Speech: newAudioSpeech(core)",
+	} {
+		if !strings.Contains(content, expected) {
+			t.Fatalf("rendered audio module missing %q:\n%s", expected, content)
+		}
+	}
+	if strings.Contains(content, "Voices *audioVoices") {
+		t.Fatalf("did not expect voices child when package is not configured:\n%s", content)
+	}
+}
+
 func mustParseOpenAPIDoc(t *testing.T, content string) *openapi.Document {
 	t.Helper()
 	doc, err := openapi.Parse([]byte(content))
