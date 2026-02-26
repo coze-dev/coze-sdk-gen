@@ -148,11 +148,13 @@ Before starting implementation or generation, pull remote `origin/main` into loc
 
 1. Use small, complete commits (one complete objective per commit).
 2. Commit messages must be in English and follow conventional prefixes (`feat`, `fix`, `refactor`, etc.).
-3. Commit scope format is mandatory and must follow this mapping:
-   - Python SDK changes only: `<type>(py): ...`
-   - Go SDK changes only: `<type>(go): ...`
-   - Generic codegen changes (not specifically py/go): `<type>(codegen): ...`
-   - Changes that impact both py and go simultaneously: `<type>: ...` (no scope)
+3. Commit scope limitation applies only to the `coze-sdk-gen` repository:
+   - In `coze-sdk-gen`, commit scope format is mandatory and must follow this mapping:
+     - Python SDK changes only: `<type>(py): ...`
+     - Go SDK changes only: `<type>(go): ...`
+     - Generic codegen changes (not specifically py/go): `<type>(codegen): ...`
+     - Changes that impact both py and go simultaneously: `<type>: ...` (no scope)
+   - In `coze-py` and `coze-go`, scope is not required.
 4. For non-trivial API interface changes (new API, new field, API modification, field modification), `feat` is required. Pure API ordering changes or comment-only changes are excluded.
 5. Local gates before commit must pass: formatting, lint, test, build.
 6. Validate git user for both `coze-py` and `coze-sdk-gen` (must be repository-level config):
