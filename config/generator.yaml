@@ -3598,9 +3598,6 @@ api:
       order: 1
       sdk_methods:
         - chat.create
-      delegate_to: _create
-      delegate_call_args:
-        - stream=False
       query_builder: raw
       query_fields:
         - name: conversation_id
@@ -3640,10 +3637,6 @@ api:
       order: 2
       sdk_methods:
         - chat.stream
-      delegate_to: _create
-      delegate_call_args:
-        - stream=True
-      delegate_async_yield: true
       query_builder: raw
       query_fields:
         - name: conversation_id
@@ -5390,8 +5383,8 @@ api:
       order: 96
       sdk_methods:
         - workflows_chat.stream
-      delegate_to: _create
-      delegate_async_yield: true
+      request_stream: true
+      body_builder: remove_none_values
       body_fields:
         - workflow_id
         - additional_messages
@@ -5402,6 +5395,9 @@ api:
         - ext
       body_required_fields:
         - workflow_id
+      body_field_values:
+        additional_messages: |-
+          [i.model_dump() for i in additional_messages] if additional_messages else []
       arg_types:
         workflow_id: str
         additional_messages: List[Message]
@@ -5410,8 +5406,14 @@ api:
         bot_id: str
         conversation_id: str
         ext: Dict[str, str]
+      stream_wrap: true
+      stream_wrap_handler: _chat_stream_handler
+      stream_wrap_fields:
+        - event
+        - data
       response_type: Stream[ChatEvent]
       async_response_type: AsyncIterator[ChatEvent]
+      response_cast: None
     - path: /v1/workflows/chat
       method: post
       order: 97

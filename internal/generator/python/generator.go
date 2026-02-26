@@ -818,9 +818,6 @@ func RenderPackageModuleWithComments(
 		needDumpExcludeNone := false
 		needRemoveNoneValues := false
 		for _, binding := range bindings {
-			if binding.Mapping != nil && strings.TrimSpace(binding.Mapping.DelegateTo) != "" {
-				continue
-			}
 			queryBuilder := "dump_exclude_none"
 			bodyBuilder := "dump_exclude_none"
 			if binding.Mapping != nil {
