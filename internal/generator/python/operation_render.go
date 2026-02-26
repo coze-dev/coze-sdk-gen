@@ -480,7 +480,6 @@ func renderOperationMethodWithContext(
 	streamWrapAsyncYield := false
 	// Keep a stable sync stream response variable name after removing mapping override.
 	streamWrapSyncResponseVar := "response"
-	streamWrapCompactSyncReturn := false
 	bodyFieldValues := map[string]string{}
 	paramAliases := map[string]string{}
 	argTypes := map[string]string{}
@@ -543,7 +542,6 @@ func renderOperationMethodWithContext(
 			streamWrapFields = append(streamWrapFields, binding.Mapping.StreamWrapFields...)
 		}
 		streamWrapAsyncYield = binding.Mapping.StreamWrapAsyncYield
-		streamWrapCompactSyncReturn = binding.Mapping.StreamWrapCompactSyncReturn
 		headersExpr = strings.TrimSpace(binding.Mapping.HeadersExpr)
 		if override := strings.TrimSpace(binding.Mapping.PaginationRequestArg); override != "" {
 			paginationRequestArg = override
@@ -1380,30 +1378,16 @@ func renderOperationMethodWithContext(
 			} else {
 				buf.WriteString(fmt.Sprintf("        %s: IteratorHTTPResponse[str] = %s\n", streamWrapSyncResponseVar, requestExpr))
 			}
-			if streamWrapCompactSyncReturn {
-				streamArgs := []string{
-					fmt.Sprintf("%s._raw_response", streamWrapSyncResponseVar),
-					fmt.Sprintf("%s.data", streamWrapSyncResponseVar),
-				}
-				if len(fieldLiterals) > 0 {
-					streamArgs = append(streamArgs, fmt.Sprintf("fields=[%s]", strings.Join(fieldLiterals, ", ")))
-				}
-				if streamWrapHandler != "" {
-					streamArgs = append(streamArgs, fmt.Sprintf("handler=%s", streamWrapHandler))
-				}
-				buf.WriteString(fmt.Sprintf("        return Stream(%s)\n", strings.Join(streamArgs, ", ")))
-			} else {
-				buf.WriteString("        return Stream(\n")
-				buf.WriteString(fmt.Sprintf("            %s._raw_response,\n", streamWrapSyncResponseVar))
-				buf.WriteString(fmt.Sprintf("            %s.data,\n", streamWrapSyncResponseVar))
-				if len(fieldLiterals) > 0 {
-					buf.WriteString(fmt.Sprintf("            fields=[%s],\n", strings.Join(fieldLiterals, ", ")))
-				}
-				if streamWrapHandler != "" {
-					buf.WriteString(fmt.Sprintf("            handler=%s,\n", streamWrapHandler))
-				}
-				buf.WriteString("        )\n")
+			buf.WriteString("        return Stream(\n")
+			buf.WriteString(fmt.Sprintf("            %s._raw_response,\n", streamWrapSyncResponseVar))
+			buf.WriteString(fmt.Sprintf("            %s.data,\n", streamWrapSyncResponseVar))
+			if len(fieldLiterals) > 0 {
+				buf.WriteString(fmt.Sprintf("            fields=[%s],\n", strings.Join(fieldLiterals, ", ")))
 			}
+			if streamWrapHandler != "" {
+				buf.WriteString(fmt.Sprintf("            handler=%s,\n", streamWrapHandler))
+			}
+			buf.WriteString("        )\n")
 		}
 	} else {
 		if forceMultilineRequestCall {

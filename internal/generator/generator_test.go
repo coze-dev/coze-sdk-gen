@@ -552,7 +552,7 @@ func TestRenderOperationMethodStreamWrapYieldAndSyncVarDefault(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodStreamWrapCompactSyncReturn(t *testing.T) {
+func TestRenderOperationMethodStreamWrapSyncReturnMultiline(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/demo/stream",
@@ -563,19 +563,21 @@ func TestRenderOperationMethodStreamWrapCompactSyncReturn(t *testing.T) {
 		MethodName:  "stream_call",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			RequestStream:               true,
-			ResponseType:                "Stream[DemoEvent]",
-			AsyncResponseType:           "AsyncIterator[DemoEvent]",
-			ResponseCast:                "None",
-			StreamWrap:                  true,
-			StreamWrapHandler:           "handle_demo",
-			StreamWrapFields:            []string{"event", "data"},
-			StreamWrapCompactSyncReturn: true,
+			RequestStream:     true,
+			ResponseType:      "Stream[DemoEvent]",
+			AsyncResponseType: "AsyncIterator[DemoEvent]",
+			ResponseCast:      "None",
+			StreamWrap:        true,
+			StreamWrapHandler: "handle_demo",
+			StreamWrapFields:  []string{"event", "data"},
 		},
 	}
 	syncCode := pygen.RenderOperationMethod(doc, binding, false)
-	if !strings.Contains(syncCode, "return Stream(response._raw_response, response.data, fields=[\"event\", \"data\"], handler=handle_demo)") {
-		t.Fatalf("expected compact sync stream return line:\n%s", syncCode)
+	if strings.Contains(syncCode, "return Stream(response._raw_response, response.data, fields=[\"event\", \"data\"], handler=handle_demo)") {
+		t.Fatalf("did not expect compact sync stream return line:\n%s", syncCode)
+	}
+	if !strings.Contains(syncCode, "return Stream(\n            response._raw_response,\n            response.data,\n") {
+		t.Fatalf("expected multiline sync stream return:\n%s", syncCode)
 	}
 
 	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
