@@ -581,6 +581,14 @@ api:
         - schema: PublishStatus
           name: PublishStatus
           enum_base: dynamic_str
+        - name: BotCollaborationMode
+          allow_missing_in_swagger: true
+          enum_base: dynamic_str
+          enum_values:
+            - name: SINGLE
+              value: single
+            - name: COLLABORATION
+              value: collaboration
         - schema: PromptInfo
           name: BotPromptInfo
           required_fields:
@@ -915,6 +923,7 @@ api:
       empty_models:
         - UpdateBotResp
         - UnpublishBotResp
+        - SwitchBotCollaborationModeResp
       top_level_code:
         - |
           class _PrivateListBotsDataV1(CozeModel, NumberPagedResponse[SimpleBot]):
@@ -4526,6 +4535,20 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page_index
       pagination_page_size_field: page_size
+    - path: /v1/bots/{bot_id}/collaboration_mode
+      method: post
+      order: 731
+      sdk_methods:
+        - bots.switch_collaboration_mode
+      body_builder: raw
+      body_fields:
+        - collaboration_mode
+      body_required_fields:
+        - collaboration_mode
+      arg_types:
+        collaboration_mode: BotCollaborationMode
+      response_type: SwitchBotCollaborationModeResp
+      response_cast: SwitchBotCollaborationModeResp
     - path: /v1/folders/{folder_id}
       method: get
       order: 74
@@ -5510,8 +5533,6 @@ api:
     - path: /v1/conversation/message/list
       method: post
     - path: /v3/chat/submit_tool_outputs
-      method: post
-    - path: /v1/bots/{bot_id}/collaboration_mode
       method: post
     - path: /v1/bots/{bot_id}/collaborators
       method: post
