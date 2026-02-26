@@ -196,7 +196,6 @@ type OperationMapping struct {
 	QueryBuilder                   string            `yaml:"query_builder"`
 	BodyFieldValues                map[string]string `yaml:"body_field_values"`
 	HeadersExpr                    string            `yaml:"headers_expr"`
-	PaginationRequestArg           string            `yaml:"pagination_request_arg"`
 }
 
 type OperationField struct {

@@ -536,15 +536,13 @@ func renderOperationMethodWithContext(
 		}
 		streamWrapAsyncYield = binding.Mapping.StreamWrapAsyncYield
 		headersExpr = strings.TrimSpace(binding.Mapping.HeadersExpr)
-		if override := strings.TrimSpace(binding.Mapping.PaginationRequestArg); override != "" {
-			paginationRequestArg = override
-		}
 		if len(binding.Mapping.BodyFieldValues) > 0 {
 			for k, v := range binding.Mapping.BodyFieldValues {
 				bodyFieldValues[k] = v
 			}
 		}
 	}
+	paginationRequestArg = inferPaginationRequestArg(requestMethod)
 	returnCast = inferResponseCast(binding.Mapping, returnType, returnCast)
 	if ignoreHeaderParams {
 		details.HeaderParameters = nil

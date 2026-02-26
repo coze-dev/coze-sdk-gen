@@ -165,6 +165,27 @@ func TestInferResponseCast(t *testing.T) {
 	}
 }
 
+func TestInferPaginationRequestArg(t *testing.T) {
+	tests := []struct {
+		method string
+		want   string
+	}{
+		{method: "get", want: "params"},
+		{method: "head", want: "params"},
+		{method: "options", want: "params"},
+		{method: "post", want: "json"},
+		{method: "put", want: "json"},
+		{method: "delete", want: "json"},
+		{method: "", want: "json"},
+	}
+
+	for _, tt := range tests {
+		if got := inferPaginationRequestArg(tt.method); got != tt.want {
+			t.Fatalf("inferPaginationRequestArg(%q) = %q, want %q", tt.method, got, tt.want)
+		}
+	}
+}
+
 func TestCommentAndDocstringHelpers(t *testing.T) {
 	buf := &bytes.Buffer{}
 	AppendIndentedCode(buf, "    x = 1\n    y = 2\n", 1)

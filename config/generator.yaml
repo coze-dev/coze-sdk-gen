@@ -4184,7 +4184,6 @@ api:
           required: true
           default: "10"
       pagination: number
-      pagination_request_arg: json
       pagination_data_class: _PrivateListDocumentsData
       pagination_item_type: Document
       pagination_items_field: document_infos
@@ -4306,7 +4305,6 @@ api:
               stacklevel=2,
           )
       pagination: number
-      pagination_request_arg: json
       pagination_data_class: _PrivateListDocumentsData
       pagination_item_type: Document
       pagination_items_field: document_infos
