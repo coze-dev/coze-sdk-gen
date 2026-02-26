@@ -9,7 +9,7 @@ This file follows common `AGENTS.md` / `CLAUDE.md` best practices:
 - Define objective, inputs, outputs, and acceptance criteria first.
 - Explicitly define allowed vs. disallowed behavior (especially no direct copy from baseline SDKs).
 - Constrain workflow before implementation details.
-- Require verifiable checks for every change (`lint` / `test` / `build` / `diff`).
+- Require verifiable checks for every change (`lint` / `test` / `build`, and `diffgo` for Go baseline alignment).
 - Priority order: this file > temporary verbal preference > default behavior.
 
 # Inputs and Baseline Repositories
@@ -76,15 +76,15 @@ Constraint: alignment in the current phase is limited to APIs/fields already imp
 # Prohibited Behaviors
 
 - No direct copy/overwrite from baseline SDK code (except whitelist files).
-- No commits without verifying diff and quality gates.
+- No commits without verifying required checks and quality gates.
 - No masking real generation issues by only expanding ignore rules.
-- No regression that breaks existing zero-diff baseline.
+- No regression that breaks existing Go zero-diff baseline.
 
 # Common Commands (Examples)
 
 - Generate Python: `./scripts/genpy.sh`
 - Generate Go: `./scripts/gengo.sh`
-- Run diff: `./scripts/diff.sh`
+- Run Go diff: `./scripts/diffgo.sh`
 - Format: `./scripts/fmt.sh`
 - Lint: `./scripts/lint.sh`
 - Test: `./scripts/test.sh`
@@ -93,7 +93,7 @@ Constraint: alignment in the current phase is limited to APIs/fields already imp
 # Pre-Delivery Checklist
 
 - [ ] Baseline repositories are prepared (or updated)
-- [ ] Python generated vs baseline diff file count = 0
+- [ ] Python generation checks pass (`./scripts/genpy.sh --output-sdk <coze-py-path> --ci-check`)
 - [ ] Go generated vs baseline diff file count = 0
 - [ ] `lint` / `test` / `build` all pass
 - [ ] Coverage >= 80%
@@ -179,7 +179,7 @@ Before starting implementation or generation, pull remote `origin/main` into loc
    - If codegen or Python checks fail (including environment issues), fix and rerun until all pass.
    - Keep failure reporting concise; avoid unnecessary low-level environment details.
 2. Prepare change summary from facts:
-   - Read actual `coze-py` diff (file/function-level changes).
+   - Read actual `coze-py` changes (file/function-level changes).
    - Read related `coze-sdk-gen` commits (`git log` + `git show`) and map generator/config changes to SDK output changes.
    - PR title/description must include: behavior changes, generator changes, and validation results.
 3. Commit and push in `coze-py`, then create or update PR:

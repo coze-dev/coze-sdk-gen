@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_PATH="${CONFIG_PATH:-$ROOT_DIR/config/generator.yaml}"
-DIFF_LANGUAGE="${DIFF_LANGUAGE:-python}"
+DIFF_LANGUAGE="go"
 
 mapfile -t DIFF_EXCLUDES < <(
   python3 - "$CONFIG_PATH" "$DIFF_LANGUAGE" <<'PY'
@@ -35,5 +35,5 @@ DIFF_CMD=(diff -ru)
 for exclude in "${DIFF_EXCLUDES[@]}"; do
   DIFF_CMD+=(--exclude="$exclude")
 done
-DIFF_CMD+=("$ROOT_DIR/exist-repo/coze-py" "$ROOT_DIR/exist-repo/coze-py-generated")
+DIFF_CMD+=("$ROOT_DIR/exist-repo/coze-go" "$ROOT_DIR/exist-repo/coze-go-generated")
 "${DIFF_CMD[@]}"

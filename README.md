@@ -38,16 +38,18 @@ Run with CI-parity checks (build, lint/type-check, tests):
 ./scripts/genpy.sh --output-sdk /path/to/coze-py --ci-check
 ```
 
+Python workflow does not require a baseline `diff` step; use `--ci-check` as the validation gate.
+
 Run Go generator:
 
 ```bash
 ./scripts/gengo.sh
 ```
 
-2. Compare generated SDK with baseline SDK:
+2. Compare generated Go SDK with baseline SDK:
 
 ```bash
-./scripts/diff.sh
+./scripts/diffgo.sh
 ```
 
 ## CLI
