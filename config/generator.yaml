@@ -1843,6 +1843,13 @@ api:
         - _PrivateListBenefitBillTasksData
       path_prefixes:
         - /v1/commerce/benefit/bill_tasks
+    - name: benefit_limitations
+      source_dir: cozepy/benefit_limitations
+      allow_missing_in_swagger: true
+      empty_models:
+        - CreateBenefitLimitationResp
+      path_prefixes:
+        - /v1/commerce/benefit/limitations
     - name: connectors
       source_dir: cozepy/connectors
       model_schemas:
@@ -3801,6 +3808,23 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
+    - path: /v1/commerce/benefit/limitations
+      method: post
+      order: 736
+      sdk_methods:
+        - benefit_limitations.create
+      body_builder: remove_none_values
+      body_fields:
+        - entity_type
+        - entity_id
+        - benefit_info
+      body_required_fields:
+        - entity_type
+        - benefit_info
+      arg_types:
+        benefit_info: Dict[str, Any]
+      response_type: CreateBenefitLimitationResp
+      response_cast: CreateBenefitLimitationResp
     - path: /v1/api_apps
       method: post
       order: 10
@@ -5689,8 +5713,6 @@ api:
   ignore_apis:
     - path: /v1/commerce/benefit/benefits/get
       method: get
-    - path: /v1/commerce/benefit/limitations
-      method: post
     - path: /v1/conversation/message/list
       method: post
     - path: /v3/chat/submit_tool_outputs
