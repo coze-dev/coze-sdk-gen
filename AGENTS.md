@@ -125,6 +125,8 @@ Before starting implementation or generation, pull remote `origin/main` into loc
    - Merge actions are allowed only after explicit user merge instructions.
    - When a user explicitly instructs to merge a PR in `coze-py` or `coze-go`, use exactly: `gh pr merge <id> --squash --admin`.
    - For `coze-py` and `coze-go`, do not use other merge methods or options.
+   - Exception: if a downstream `coze-py` PR is a no-op sync with zero SDK file diff, close the PR instead of merging.
+   - This no-op close rule overrides explicit downstream merge instructions.
    - Do not require pre-approval and do not block on fetching approval first.
 3. Human review has priority: continuously read and handle human review comments.
 4. Bot handling rule: ignore bot comments/statuses (for example `CodeRabbit`) as review-decision input.
@@ -212,6 +214,7 @@ Before starting implementation or generation, pull remote `origin/main` into loc
 4. Handle downstream merge by user instruction:
    - When user explicitly instructs to merge downstream `coze-py` or `coze-go` PR, use exactly: `gh pr merge <id> --squash --admin`.
    - For `coze-py` and `coze-go`, do not use other merge methods or options.
+   - If downstream `coze-py` regeneration yields zero SDK file diff, close that PR instead of merging, even when user asks to merge.
    - Do not require prior approve state and do not block waiting for approve status before merge.
    - If new commits trigger new checks or comments and user asks for follow-up, return to Stage 3.
 5. Final report:
