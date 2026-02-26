@@ -561,20 +561,12 @@ func renderOperationMethodWithContext(
 	queryBuilder := "dump_exclude_none"
 	bodyBuilder := "dump_exclude_none"
 	bodyAnnotation := ""
-	compactSingleItemMaps := false
 	if binding.Mapping != nil {
 		dataField = strings.TrimSpace(binding.Mapping.DataField)
 		requestStream = binding.Mapping.RequestStream
 		queryBuilder = normalizeMapBuilder(binding.Mapping.QueryBuilder)
 		bodyBuilder = normalizeMapBuilder(binding.Mapping.BodyBuilder)
 		bodyAnnotation = strings.TrimSpace(binding.Mapping.BodyAnnotation)
-		compactSingleItemMaps = binding.Mapping.CompactSingleItemMaps
-		if async && binding.Mapping.CompactSingleItemMapsAsync {
-			compactSingleItemMaps = true
-		}
-		if !async && binding.Mapping.CompactSingleItemMapsSync {
-			compactSingleItemMaps = true
-		}
 	}
 	autoDelegateTo := autoDelegateTarget(binding.MethodName, classMethodNames)
 	autoDelegateExtraArgs := make([]string, 0, 1)
@@ -833,47 +825,29 @@ func renderOperationMethodWithContext(
 
 	if len(queryFields) > 0 && !isTokenPagination(paginationMode) && !isNumberPagination(paginationMode) {
 		if queryBuilder == "raw" {
-			if compactSingleItemMaps && len(queryFields) == 1 {
-				field := queryFields[0]
+			buf.WriteString("        params = {\n")
+			itemIndent := "            "
+			for _, field := range queryFields {
 				valueExpr := field.ValueExpr
 				if strings.TrimSpace(valueExpr) == "" {
 					valueExpr = field.ArgName
 				}
-				buf.WriteString(fmt.Sprintf("        params = {%q: %s}\n", field.RawName, valueExpr))
-			} else {
-				buf.WriteString("        params = {\n")
-				itemIndent := "            "
-				for _, field := range queryFields {
-					valueExpr := field.ValueExpr
-					if strings.TrimSpace(valueExpr) == "" {
-						valueExpr = field.ArgName
-					}
-					buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
-				}
-				buf.WriteString("        }\n")
+				buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
 			}
+			buf.WriteString("        }\n")
 		} else {
-			if compactSingleItemMaps && len(queryFields) == 1 {
-				field := queryFields[0]
+			buf.WriteString(fmt.Sprintf("        params = %s(\n", queryBuilder))
+			buf.WriteString("            {\n")
+			itemIndent := "                "
+			for _, field := range queryFields {
 				valueExpr := field.ValueExpr
 				if strings.TrimSpace(valueExpr) == "" {
 					valueExpr = field.ArgName
 				}
-				buf.WriteString(fmt.Sprintf("        params = %s({%q: %s})\n", queryBuilder, field.RawName, valueExpr))
-			} else {
-				buf.WriteString(fmt.Sprintf("        params = %s(\n", queryBuilder))
-				buf.WriteString("            {\n")
-				itemIndent := "                "
-				for _, field := range queryFields {
-					valueExpr := field.ValueExpr
-					if strings.TrimSpace(valueExpr) == "" {
-						valueExpr = field.ArgName
-					}
-					buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
-				}
-				buf.WriteString("            }\n")
-				buf.WriteString("        )\n")
+				buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
 			}
+			buf.WriteString("            }\n")
+			buf.WriteString("        )\n")
 		}
 	}
 
@@ -1267,32 +1241,7 @@ func renderOperationMethodWithContext(
 	}
 
 	if len(bodyFieldNames) > 0 {
-		totalBodyItems := len(bodyFieldNames) + len(bodyFixedValues)
-		if compactSingleItemMaps && totalBodyItems == 1 {
-			fieldName := ""
-			valueExpr := ""
-			if len(bodyFieldNames) == 1 {
-				fieldName = bodyFieldNames[0]
-				argName := OperationArgName(fieldName, paramAliases)
-				valueExpr = argName
-				if override, ok := bodyFieldValues[fieldName]; ok && strings.TrimSpace(override) != "" {
-					valueExpr = strings.TrimSpace(override)
-				}
-			} else {
-				fixedKeys := make([]string, 0, len(bodyFixedValues))
-				for k := range bodyFixedValues {
-					fixedKeys = append(fixedKeys, k)
-				}
-				sort.Strings(fixedKeys)
-				fieldName = fixedKeys[0]
-				valueExpr = bodyFixedValues[fieldName]
-			}
-			if bodyBuilder == "raw" {
-				buf.WriteString(fmt.Sprintf("        %s = {%q: %s}\n", bodyVarAssign, fieldName, valueExpr))
-			} else {
-				buf.WriteString(fmt.Sprintf("        %s = %s({%q: %s})\n", bodyVarAssign, bodyBuilder, fieldName, valueExpr))
-			}
-		} else if bodyBuilder == "raw" {
+		if bodyBuilder == "raw" {
 			buf.WriteString(fmt.Sprintf("        %s = {\n", bodyVarAssign))
 			itemIndent := "            "
 			for _, bodyField := range bodyFieldNames {
@@ -1336,19 +1285,7 @@ func renderOperationMethodWithContext(
 			buf.WriteString("        )\n")
 		}
 	} else if len(bodyFixedValues) > 0 {
-		if compactSingleItemMaps && len(bodyFixedValues) == 1 {
-			fixedKeys := make([]string, 0, len(bodyFixedValues))
-			for k := range bodyFixedValues {
-				fixedKeys = append(fixedKeys, k)
-			}
-			sort.Strings(fixedKeys)
-			fieldName := fixedKeys[0]
-			if bodyBuilder == "raw" {
-				buf.WriteString(fmt.Sprintf("        %s = {%q: %s}\n", bodyVarAssign, fieldName, bodyFixedValues[fieldName]))
-			} else {
-				buf.WriteString(fmt.Sprintf("        %s = %s({%q: %s})\n", bodyVarAssign, bodyBuilder, fieldName, bodyFixedValues[fieldName]))
-			}
-		} else if bodyBuilder == "raw" {
+		if bodyBuilder == "raw" {
 			buf.WriteString(fmt.Sprintf("        %s = {\n", bodyVarAssign))
 			itemIndent := "            "
 			fixedKeys := make([]string, 0, len(bodyFixedValues))

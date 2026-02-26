@@ -207,9 +207,6 @@ type OperationMapping struct {
 	BodyCallExpr                   string            `yaml:"body_call_expr"`
 	BodyFieldValues                map[string]string `yaml:"body_field_values"`
 	HeadersExpr                    string            `yaml:"headers_expr"`
-	CompactSingleItemMaps          bool              `yaml:"compact_single_item_maps"`
-	CompactSingleItemMapsSync      bool              `yaml:"compact_single_item_maps_sync"`
-	CompactSingleItemMapsAsync     bool              `yaml:"compact_single_item_maps_async"`
 	BlankLineAfterHeaders          bool              `yaml:"blank_line_after_headers"`
 	NoBlankLineAfterHeaders        bool              `yaml:"no_blank_line_after_headers"`
 	BlankLineAfterDocstring        bool              `yaml:"blank_line_after_docstring"`
