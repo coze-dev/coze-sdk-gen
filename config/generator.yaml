@@ -1065,7 +1065,7 @@ api:
           name: BotCollaborator
       empty_models:
         - AddBotCollaboratorResp
-        - RemoveBotCollaboratorResp
+        - DeleteBotCollaboratorResp
       path_prefixes:
         - /v1/bots/{bot_id}/collaborators
     - name: chat
@@ -4601,8 +4601,8 @@ api:
       sdk_methods:
         - bots_collaborators.delete
       disable_request_body: true
-      response_type: RemoveBotCollaboratorResp
-      response_cast: RemoveBotCollaboratorResp
+      response_type: DeleteBotCollaboratorResp
+      response_cast: DeleteBotCollaboratorResp
     - path: /v1/folders/{folder_id}
       method: get
       order: 74
