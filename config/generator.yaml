@@ -4591,7 +4591,6 @@ api:
       order: 74
       sdk_methods:
         - folders.retrieve
-      no_blank_line_after_headers: true
       http_method_override: GET
       response_type: SimpleFolder
       response_cast: SimpleFolder
@@ -5431,7 +5430,6 @@ api:
       stream_wrap_fields:
         - event
         - data
-      no_blank_line_after_headers: true
       force_multiline_request_call: true
       stream_wrap_compact_async_return: true
       response_type: Stream[ChatEvent]
