@@ -524,17 +524,16 @@ func TestRenderOperationMethodStreamWrapYieldAndSyncVarOverride(t *testing.T) {
 		MethodName:  "stream_call",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			RequestStream:                 true,
-			ResponseType:                  "Stream[DemoEvent]",
-			AsyncResponseType:             "AsyncIterator[DemoEvent]",
-			ResponseCast:                  "None",
-			StreamWrap:                    true,
-			StreamWrapHandler:             "handle_demo",
-			StreamWrapFields:              []string{"event", "data"},
-			StreamWrapAsyncYield:          true,
-			StreamWrapSyncResponseVar:     "resp",
-			ForceMultilineRequestCall:     false,
-			ForceMultilineRequestCallSync: false,
+			RequestStream:             true,
+			ResponseType:              "Stream[DemoEvent]",
+			AsyncResponseType:         "AsyncIterator[DemoEvent]",
+			ResponseCast:              "None",
+			StreamWrap:                true,
+			StreamWrapHandler:         "handle_demo",
+			StreamWrapFields:          []string{"event", "data"},
+			StreamWrapAsyncYield:      true,
+			StreamWrapSyncResponseVar: "resp",
+			ForceMultilineRequestCall: false,
 		},
 	}
 
@@ -585,6 +584,40 @@ func TestRenderOperationMethodStreamWrapCompactAsyncReturn(t *testing.T) {
 	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
 	if !strings.Contains(asyncCode, "return AsyncStream(resp.data, fields=[\"event\", \"data\"], handler=handle_demo, raw_response=resp._raw_response)") {
 		t.Fatalf("expected compact async stream return line:\n%s", asyncCode)
+	}
+}
+
+func TestRenderOperationMethodForceMultilineRequestCallAsyncOnly(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo",
+		Method: "post",
+		RequestBodySchema: &openapi.Schema{
+			Type: "object",
+			Properties: map[string]*openapi.Schema{
+				"name": {Type: "string"},
+			},
+		},
+	}
+	binding := pygen.OperationBinding{
+		PackageName: "demo",
+		MethodName:  "create",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			BodyFields:                     []string{"name"},
+			BodyRequiredFields:             []string{"name"},
+			ForceMultilineRequestCallAsync: true,
+		},
+	}
+
+	syncCode := pygen.RenderOperationMethod(doc, binding, false)
+	if strings.Contains(syncCode, "return self._requester.request(\n") {
+		t.Fatalf("sync request call should not be forced multiline by async-only option:\n%s", syncCode)
+	}
+
+	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
+	if !strings.Contains(asyncCode, "return await self._requester.arequest(\n") {
+		t.Fatalf("async request call should be multiline when async-only option is enabled:\n%s", asyncCode)
 	}
 }
 
