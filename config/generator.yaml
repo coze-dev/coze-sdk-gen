@@ -4762,8 +4762,6 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
-      arg_defaults_async:
-        page_size: "100"
       response_type: NumberPaged[VoicePrintGroup]
       async_response_type: AsyncNumberPaged[VoicePrintGroup]
     - path: /v1/audio/voiceprint_groups/{group_id}/speaker_identify
@@ -4874,8 +4872,6 @@ api:
       pagination_total_field: total
       pagination_page_num_field: page_num
       pagination_page_size_field: page_size
-      arg_defaults_async:
-        page_size: "100"
       response_type: NumberPaged[VoicePrintGroupFeature]
       async_response_type: AsyncNumberPaged[VoicePrintGroupFeature]
     - path: /v1/audio/voices

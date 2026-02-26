@@ -174,7 +174,6 @@ type OperationMapping struct {
 	QueryFieldValues         map[string]string `yaml:"query_field_values"`
 	ArgDefaults              map[string]string `yaml:"arg_defaults"`
 	ArgDefaultsSync          map[string]string `yaml:"arg_defaults_sync"`
-	ArgDefaultsAsync         map[string]string `yaml:"arg_defaults_async"`
 	Pagination               string            `yaml:"pagination"`
 	PaginationDataClass      string            `yaml:"pagination_data_class"`
 	PaginationItemType       string            `yaml:"pagination_item_type"`
@@ -192,9 +191,11 @@ type OperationMapping struct {
 	StreamWrap               bool              `yaml:"stream_wrap"`
 	StreamWrapHandler        string            `yaml:"stream_wrap_handler"`
 	StreamWrapFields         []string          `yaml:"stream_wrap_fields"`
+	StreamWrapAsyncYield     bool              `yaml:"stream_wrap_async_yield"`
 	QueryBuilder             string            `yaml:"query_builder"`
 	BodyFieldValues          map[string]string `yaml:"body_field_values"`
 	HeadersExpr              string            `yaml:"headers_expr"`
+	PaginationRequestArg     string            `yaml:"pagination_request_arg"`
 }
 
 type OperationField struct {
