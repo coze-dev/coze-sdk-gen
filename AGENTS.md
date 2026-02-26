@@ -202,6 +202,8 @@ Before starting implementation or generation, pull remote `origin/main` into loc
 4. Handle downstream merge by user instruction:
    - When user explicitly instructs to merge downstream `coze-py` PR, merge it directly.
    - Do not require prior approve state and do not block waiting for approve status before merge.
+   - If normal merge is blocked by base branch policy (for example `REVIEW_REQUIRED`), and user still explicitly asks to merge, use admin squash merge: `gh pr merge --squash --admin`.
+   - For `coze-py`, if repository policy rejects non-squash merge, prefer `--squash` and fall back to `--squash --admin` when required by policy gates.
    - If new commits trigger new checks or comments and user asks for follow-up, return to Stage 3.
 5. Final report:
    - `coze-sdk-gen` PR URL / status / merge result
