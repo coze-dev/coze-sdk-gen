@@ -22,9 +22,6 @@ api:
       method: post
       sdk_methods:
         - workflows.chat
-  ignore_apis:
-    - path: /v1/workspaces/{workspace_id}
-      method: get
   field_aliases:
     chat:
       bot_id: bot_id

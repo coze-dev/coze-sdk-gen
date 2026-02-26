@@ -351,9 +351,11 @@ api:
 language: python
 output_sdk: out
 api:
-  ignore_apis:
+  operation_mappings:
     - path: /v3/chat
       method: bad
+      sdk_methods:
+        - chat.bad
 `,
 		},
 		{
@@ -468,13 +470,6 @@ func TestConfigHelpers(t *testing.T) {
 	cfg, err := Load(filepath.Join("testdata", "generator.yaml"))
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
-	}
-
-	if !cfg.IsIgnored("/v1/workspaces/{workspace_id}", "get") {
-		t.Fatal("expected operation to be ignored")
-	}
-	if cfg.IsIgnored("/v1/workspaces/{workspace_id}", "post") {
-		t.Fatal("did not expect post to be ignored")
 	}
 
 	mappings := cfg.FindOperationMappings("/v3/chat", "POST")
