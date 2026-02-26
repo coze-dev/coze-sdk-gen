@@ -5552,8 +5552,6 @@ api:
   ignore_apis:
     - path: /v1/conversation/message/list
       method: post
-    - path: /v3/chat/submit_tool_outputs
-      method: post
   field_aliases:
     chat:
       custom_variables: custom_variables
