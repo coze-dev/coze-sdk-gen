@@ -1251,13 +1251,9 @@ func packageNeedsAnyDict(doc *openapi.Document, bindings []OperationBinding, mod
 			}
 		}
 
-		if binding.Details.RequestBodySchema != nil {
-			disableRequestBody := mapping != nil && mapping.DisableRequestBody
-			hasBodyFields := mapping != nil && len(mapping.BodyFields) > 0
-			if !disableRequestBody && !hasBodyFields {
-				needAny = true
-				needDict = true
-			}
+		if shouldGenerateImplicitRequestBody(binding.Details.Method, mapping, binding.Details.RequestBodySchema) {
+			needAny = true
+			needDict = true
 		}
 
 		if mapping != nil {

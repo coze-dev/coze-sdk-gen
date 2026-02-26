@@ -605,11 +605,9 @@ func renderOperationMethodWithContext(
 		filesExpr = strings.TrimSpace(binding.Mapping.FilesExpr)
 		filesBeforeBody = binding.Mapping.FilesBeforeBody
 	}
-	if binding.Mapping != nil && binding.Mapping.DisableRequestBody {
+	if !shouldGenerateImplicitRequestBody(details.Method, binding.Mapping, details.RequestBodySchema) {
 		requestBodyType = ""
 		bodyRequired = false
-		bodyFieldNames = nil
-		bodyFixedValues = map[string]string{}
 	}
 	queryFields := buildRenderQueryFields(doc, details, binding.Mapping, paramAliases, argTypes)
 	signatureQueryFields := OrderSignatureQueryFields(queryFields, binding.Mapping, async)

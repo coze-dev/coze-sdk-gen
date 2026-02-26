@@ -156,7 +156,6 @@ type OperationMapping struct {
 	SDKMethods                     []string          `yaml:"sdk_methods"`
 	AllowMissingInSwagger          bool              `yaml:"allow_missing_in_swagger"`
 	HTTPMethodOverride             string            `yaml:"http_method_override"`
-	DisableRequestBody             bool              `yaml:"disable_request_body"`
 	BodyFields                     []string          `yaml:"body_fields"`
 	BodyFixedValues                map[string]string `yaml:"body_fixed_values"`
 	BodyBuilder                    string            `yaml:"body_builder"`
