@@ -1354,6 +1354,37 @@ func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
 	}
 }
 
+func TestRenderOperationMethodOptionalSingleFileFieldUsesConditionalFilesDict(t *testing.T) {
+	doc := mustParseSwagger(t)
+	details := openapi.OperationDetails{
+		Path:   "/v1/demo/upload",
+		Method: "post",
+		RequestBodySchema: &openapi.Schema{
+			Type: "object",
+			Properties: map[string]*openapi.Schema{
+				"file": {Type: "string"},
+			},
+		},
+	}
+	binding := pygen.OperationBinding{
+		PackageName: "demo",
+		MethodName:  "upload",
+		Details:     details,
+		Mapping: &config.OperationMapping{
+			FilesFields:      []string{"file"},
+			FilesFieldValues: map[string]string{"file": "_try_fix_file(file)"},
+			ArgTypes: map[string]string{
+				"file": "Optional[FileTypes]",
+			},
+		},
+	}
+
+	code := pygen.RenderOperationMethod(doc, binding, false)
+	if !strings.Contains(code, "files = {\"file\": _try_fix_file(file)} if file else {}") {
+		t.Fatalf("expected optional single files field to render conditional files dict:\n%s", code)
+	}
+}
+
 func TestRenderOperationMethodPreDocstringCode(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
