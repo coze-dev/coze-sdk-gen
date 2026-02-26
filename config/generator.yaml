@@ -4413,7 +4413,6 @@ api:
       order: 68
       sdk_methods:
         - bots.publish
-      blank_line_before_return: true
       force_multiline_signature_async: true
       body_builder: raw
       pre_body_code:
@@ -4720,7 +4719,6 @@ api:
       arg_types:
         name: str
         desc: str
-      blank_line_before_return: true
       force_multiline_signature: true
       response_type: CreateVoicePrintGroupResp
       response_cast: CreateVoicePrintGroupResp
@@ -4738,7 +4736,6 @@ api:
         group_id: str
         name: str
         desc: str
-      blank_line_before_return: true
       force_multiline_signature: true
       response_type: UpdateVoicePrintGroupResp
       response_cast: UpdateVoicePrintGroupResp
@@ -4812,7 +4809,6 @@ api:
         sample_rate: int
         channel: int
       files_before_body: true
-      blank_line_before_return: true
       force_multiline_signature: true
       response_type: SpeakerIdentifyResp
       response_cast: SpeakerIdentifyResp
@@ -4843,7 +4839,6 @@ api:
         sample_rate: int
         channel: int
       files_before_body: true
-      blank_line_before_return: true
       force_multiline_signature: true
       response_type: CreateVoicePrintGroupFeatureResp
       response_cast: CreateVoicePrintGroupFeatureResp
@@ -4871,7 +4866,6 @@ api:
         sample_rate: int
         channel: int
       files_before_body: true
-      blank_line_before_return: true
       force_multiline_signature: true
       response_type: UpdateVoicePrintGroupFeatureResp
       response_cast: UpdateVoicePrintGroupFeatureResp
@@ -4982,7 +4976,6 @@ api:
         text: str
         space_id: str
         description: str
-      blank_line_before_return: true
       response_type: Voice
       response_cast: Voice
     - path: /v1/conversation/message/create
@@ -5006,7 +4999,6 @@ api:
         content: str
         content_type: MessageContentType
         meta_data: Dict[str, str]
-      blank_line_before_return: true
       response_type: Message
       response_cast: Message
     - path: /v1/conversation/message/delete
@@ -5017,7 +5009,6 @@ api:
       query_builder: raw
       disable_request_body: true
       force_multiline_signature: true
-      blank_line_before_return: true
       response_type: Message
       response_cast: Message
     - path: /v1/conversation/message/modify
@@ -5035,7 +5026,6 @@ api:
         content: str
         content_type: MessageContentType
         meta_data: Dict[str, str]
-      blank_line_before_return: true
       response_type: Message
       response_cast: Message
       data_field: message
@@ -5047,7 +5037,6 @@ api:
       query_builder: raw
       disable_request_body: true
       force_multiline_signature: true
-      blank_line_before_return: true
       response_type: Message
       response_cast: Message
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
@@ -5071,7 +5060,6 @@ api:
         - body
         - cast
         - headers
-      blank_line_before_return: true
       response_type: CreateConversationMessageFeedbackResp
       response_cast: CreateConversationMessageFeedbackResp
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
@@ -5395,7 +5383,6 @@ api:
       no_blank_line_after_headers: true
       force_multiline_request_call: true
       stream_wrap_compact_async_return: true
-      stream_wrap_blank_line_before_return_async: true
       response_type: Stream[ChatEvent]
       async_response_type: AsyncIterator[ChatEvent]
       response_cast: None

@@ -3764,7 +3764,6 @@ func renderOperationMethodWithContext(
 	streamWrapSyncResponseVar := "response"
 	streamWrapCompactAsyncReturn := false
 	streamWrapCompactSyncReturn := false
-	streamWrapBlankLineBeforeAsyncReturn := false
 	bodyFieldValues := map[string]string{}
 	paramAliases := map[string]string{}
 	argTypes := map[string]string{}
@@ -3825,7 +3824,6 @@ func renderOperationMethodWithContext(
 		}
 		streamWrapCompactAsyncReturn = binding.Mapping.StreamWrapCompactAsyncReturn
 		streamWrapCompactSyncReturn = binding.Mapping.StreamWrapCompactSyncReturn
-		streamWrapBlankLineBeforeAsyncReturn = binding.Mapping.StreamWrapBlankLineBeforeAsync
 		bodyCallExprOverride = strings.TrimSpace(binding.Mapping.BodyCallExpr)
 		headersExpr = strings.TrimSpace(binding.Mapping.HeadersExpr)
 		if override := strings.TrimSpace(binding.Mapping.PaginationRequestArg); override != "" {
@@ -4878,9 +4876,6 @@ func renderOperationMethodWithContext(
 			forceMultilineRequestCall = true
 		}
 	}
-	if binding.Mapping != nil && binding.Mapping.BlankLineBeforeReturn {
-		EnsureTrailingNewlines(&buf, 2)
-	}
 	if binding.Mapping != nil && binding.Mapping.ResponseUnwrapListFirst {
 		buf.WriteString(fmt.Sprintf("        res = %s\n", requestExpr))
 		buf.WriteString("        data = res.data[0]\n")
@@ -4920,9 +4915,6 @@ func renderOperationMethodWithContext(
 				buf.WriteString("        ):\n")
 				buf.WriteString("            yield item\n")
 			} else {
-				if streamWrapBlankLineBeforeAsyncReturn {
-					buf.WriteString("\n")
-				}
 				if streamWrapCompactAsyncReturn {
 					asyncStreamArgs := []string{"resp.data"}
 					if len(fieldLiterals) > 0 {

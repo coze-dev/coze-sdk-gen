@@ -588,33 +588,6 @@ func TestRenderOperationMethodStreamWrapCompactAsyncReturn(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodStreamWrapBlankLineBeforeAsyncReturn(t *testing.T) {
-	doc := mustParseSwagger(t)
-	details := openapi.OperationDetails{
-		Path:   "/v1/demo/stream",
-		Method: "post",
-	}
-	binding := pygen.OperationBinding{
-		PackageName: "demo",
-		MethodName:  "stream_call",
-		Details:     details,
-		Mapping: &config.OperationMapping{
-			RequestStream:                  true,
-			ResponseType:                   "Stream[DemoEvent]",
-			AsyncResponseType:              "AsyncIterator[DemoEvent]",
-			ResponseCast:                   "None",
-			StreamWrap:                     true,
-			StreamWrapCompactAsyncReturn:   true,
-			StreamWrapBlankLineBeforeAsync: true,
-		},
-	}
-
-	asyncCode := pygen.RenderOperationMethod(doc, binding, true)
-	if !strings.Contains(asyncCode, "resp: AsyncIteratorHTTPResponse[str] = await self._requester.arequest(\"post\", url, True, cast=None, headers=headers)\n\n        return AsyncStream(") {
-		t.Fatalf("expected a blank line before async stream return:\n%s", asyncCode)
-	}
-}
-
 func TestRenderOperationMethodHeadersExpr(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
