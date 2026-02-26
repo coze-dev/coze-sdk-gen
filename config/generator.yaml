@@ -581,6 +581,10 @@ api:
           module: .collaborators
           sync_class: BotsCollaboratorsClient
           async_class: AsyncBotsCollaboratorsClient
+        - attribute: versions
+          module: .versions
+          sync_class: BotsVersionsClient
+          async_class: AsyncBotsVersionsClient
       extra_imports:
         - module: pydantic
           names:
@@ -1068,6 +1072,54 @@ api:
         - DeleteBotCollaboratorResp
       path_prefixes:
         - /v1/bots/{bot_id}/collaborators
+    - name: bots_versions
+      source_dir: cozepy/bots/versions
+      client_class: BotsVersionsClient
+      async_client_class: AsyncBotsVersionsClient
+      model_schemas:
+        - name: BotVersionUserInfo
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: id
+              type: str
+              required: true
+            - name: name
+              type: str
+              required: true
+        - name: BotVersionInfo
+          allow_missing_in_swagger: true
+          extra_fields:
+            - name: version
+              type: str
+              required: true
+            - name: description
+              type: str
+              required: true
+            - name: created_at
+              type: str
+              required: true
+            - name: updated_at
+              type: str
+              required: true
+            - name: creator
+              type: BotVersionUserInfo
+              required: true
+        - name: _PrivateListBotVersionsData
+          allow_missing_in_swagger: true
+          base_classes:
+            - CozeModel
+            - NumberPagedResponse[BotVersionInfo]
+          extra_fields:
+            - name: items
+              type: List[BotVersionInfo]
+              required: true
+            - name: total
+              type: int
+              required: true
+      override_pagination_classes:
+        - _PrivateListBotVersionsData
+      path_prefixes:
+        - /v1/bots/{bot_id}/versions
     - name: chat
       source_dir: cozepy/chat
       model_schemas:
@@ -4598,6 +4650,35 @@ api:
       disable_request_body: true
       response_type: DeleteBotCollaboratorResp
       response_cast: DeleteBotCollaboratorResp
+    - path: /v1/bots/{bot_id}/versions
+      method: get
+      order: 734
+      sdk_methods:
+        - bots_versions.list
+      query_builder: remove_none_values
+      query_fields:
+        - name: page_num
+          type: int
+          required: true
+          default: "1"
+        - name: page_size
+          type: int
+          required: true
+          default: "10"
+        - name: publish_status
+          type: PublishStatus
+          required: false
+          use_value: true
+        - name: connector_id
+          type: str
+          required: false
+      pagination: number
+      pagination_data_class: _PrivateListBotVersionsData
+      pagination_item_type: BotVersionInfo
+      pagination_items_field: items
+      pagination_total_field: total
+      pagination_page_num_field: page_num
+      pagination_page_size_field: page_size
     - path: /v1/folders/{folder_id}
       method: get
       order: 74
@@ -5581,8 +5662,6 @@ api:
       method: post
     - path: /v3/chat/submit_tool_outputs
       method: post
-    - path: /v1/bots/{bot_id}/versions
-      method: get
   field_aliases:
     chat:
       custom_variables: custom_variables
