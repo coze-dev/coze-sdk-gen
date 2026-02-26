@@ -1296,7 +1296,6 @@ func renderOperationMethodWithContext(
 		callArgs = append(callArgs, item.Expr)
 	}
 	requestExpr := fmt.Sprintf("%s(%s)", requestCall, strings.Join(callArgs, ", "))
-	forceMultilineRequestCall := async && binding.Mapping != nil && binding.Mapping.ForceMultilineRequestCallAsync
 	if binding.Mapping != nil && binding.Mapping.ResponseUnwrapListFirst {
 		buf.WriteString(fmt.Sprintf("        res = %s\n", requestExpr))
 		buf.WriteString("        data = res.data[0]\n")
@@ -1314,15 +1313,7 @@ func renderOperationMethodWithContext(
 			fieldLiterals = append(fieldLiterals, fmt.Sprintf("%q", trimmed))
 		}
 		if async {
-			if forceMultilineRequestCall {
-				buf.WriteString(fmt.Sprintf("        resp: AsyncIteratorHTTPResponse[str] = %s(\n", requestCall))
-				for _, arg := range callArgs {
-					buf.WriteString(fmt.Sprintf("            %s,\n", arg))
-				}
-				buf.WriteString("        )\n")
-			} else {
-				buf.WriteString(fmt.Sprintf("        resp: AsyncIteratorHTTPResponse[str] = %s\n", requestExpr))
-			}
+			buf.WriteString(fmt.Sprintf("        resp: AsyncIteratorHTTPResponse[str] = %s\n", requestExpr))
 			if streamWrapAsyncYield {
 				buf.WriteString("        async for item in AsyncStream(\n")
 				buf.WriteString("            resp.data,\n")
@@ -1348,15 +1339,7 @@ func renderOperationMethodWithContext(
 				buf.WriteString("        )\n")
 			}
 		} else {
-			if forceMultilineRequestCall {
-				buf.WriteString(fmt.Sprintf("        %s: IteratorHTTPResponse[str] = %s(\n", streamWrapSyncResponseVar, requestCall))
-				for _, arg := range callArgs {
-					buf.WriteString(fmt.Sprintf("            %s,\n", arg))
-				}
-				buf.WriteString("        )\n")
-			} else {
-				buf.WriteString(fmt.Sprintf("        %s: IteratorHTTPResponse[str] = %s\n", streamWrapSyncResponseVar, requestExpr))
-			}
+			buf.WriteString(fmt.Sprintf("        %s: IteratorHTTPResponse[str] = %s\n", streamWrapSyncResponseVar, requestExpr))
 			buf.WriteString("        return Stream(\n")
 			buf.WriteString(fmt.Sprintf("            %s._raw_response,\n", streamWrapSyncResponseVar))
 			buf.WriteString(fmt.Sprintf("            %s.data,\n", streamWrapSyncResponseVar))
@@ -1369,15 +1352,7 @@ func renderOperationMethodWithContext(
 			buf.WriteString("        )\n")
 		}
 	} else {
-		if forceMultilineRequestCall {
-			buf.WriteString(fmt.Sprintf("        return %s(\n", requestCall))
-			for _, arg := range callArgs {
-				buf.WriteString(fmt.Sprintf("            %s,\n", arg))
-			}
-			buf.WriteString("        )\n")
-		} else {
-			buf.WriteString(fmt.Sprintf("        return %s\n", requestExpr))
-		}
+		buf.WriteString(fmt.Sprintf("        return %s\n", requestExpr))
 	}
 
 	return buf.String()
