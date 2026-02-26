@@ -1269,9 +1269,6 @@ func renderOperationMethodWithContext(
 			requestBodyType != "" ||
 			strings.EqualFold(requestMethod, "delete") ||
 			(binding.Mapping != nil && len(binding.Mapping.PreBodyCode) > 0)
-		if binding.Mapping != nil && binding.Mapping.NoBlankLineAfterHeaders {
-			needsBlankLine = false
-		}
 		if needsBlankLine {
 			buf.WriteString("        headers: Optional[dict] = kwargs.get(\"headers\")\n\n")
 		} else {
