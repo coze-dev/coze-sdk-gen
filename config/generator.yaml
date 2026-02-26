@@ -4125,6 +4125,8 @@ api:
         format_type: Optional[DocumentFormatType]
       arg_defaults:
         format_type: "DocumentFormatType.DOCUMENT"
+      arg_defaults_async:
+        format_type: "None"
       response_type: ListResponse[Document]
       data_field: document_infos
     - path: /open_api/knowledge/document/update
