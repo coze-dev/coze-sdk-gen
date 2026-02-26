@@ -1,0 +1,112 @@
+openapi: 3.0.3
+info:
+    title: 【Deprecated】查看已发布智能体列表
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/published_bots_list
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/space/published_bots_list:
+        get:
+            operationId: CozeGetpublished_bots_list
+            summary: 【Deprecated】查看已发布智能体列表
+            description: |-
+                查看指定空间发布到 Agent as API 渠道的智能体列表。
+                该 API 即将下线，建议替换为新版的 API 查看智能体列表。
+                此接口仅支持查看已发布为 API 服务的智能体列表。对于创建后从未发布到 API 渠道的 Bot，可以在扣子平台中查看列表及配置。
+
+                调用接口查看指定空间发布到 Agent as API 渠道的智能体列表。
+            tags:
+                - developer_guides
+            parameters:
+                - name: space_id
+                  in: query
+                  description: 智能体所在的空间的 Space ID。Space ID 是空间的唯一标识。 进入指定空间，空间页面 URL 中 space 参数后的数字就是 Space ID。例如https://www.coze.cn/space/736163827687053/bot，Space ID 为736163827687053。
+                  required: true
+                  schema:
+                    type: string
+                - name: page_index
+                  in: query
+                  description: 分页查询时的页码。默认为 1，即从第一页数据开始返回。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: page_size
+                  in: query
+                  description: 分页大小。默认为 20，即每页返回 20 条数据。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子平台中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 状态码。 0代表调用成功。
+                                    data:
+                                        $ref: '#/components/schemas/SpacePublishedBotsInfo'
+                                        description: 智能体列表及总数信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 返回详情。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: GET
+            x-coze-permission: getPublishedBot
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/published_bots_list
+components:
+    schemas:
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+        SpacePublishedBots:
+            type: object
+            properties:
+                bot_id:
+                    type: string
+                    description: 智能体的唯一标识。
+                bot_name:
+                    type: string
+                    description: 智能体的名称。
+                description:
+                    type: string
+                    description: 智能体的描述。
+                icon_url:
+                    type: string
+                    description: 智能体的头像。
+                publish_time:
+                    type: string
+                    description: 智能体的最近一次发布时间，格式为 10 位的 Unixtime 时间戳。此 API 返回的智能体列表按照此字段降序排列。
+        SpacePublishedBotsInfo:
+            type: object
+            properties:
+                space_bots:
+                    type: array
+                    description: 指定空间发布到 Agent as API 渠道的智能体列表。
+                    items:
+                        $ref: '#/components/schemas/SpacePublishedBots'
+                total:
+                    type: integer
+                    format: int32
+                    description: 智能体列表中的智能体总数。

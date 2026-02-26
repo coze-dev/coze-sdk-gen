@@ -1,0 +1,73 @@
+openapi: 3.0.3
+info:
+    title: 执行对话流
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/workflow_chat
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/workflows/chat:
+        post:
+            operationId: CozePostworkflow_chat
+            summary: 执行对话流
+            description: 执行已发布的对话流。
+            tags:
+                - developer_guides
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                additional_messages:
+                                    type: array
+                                    description: 对话中用户问题和历史消息。数组长度限制为 50，即最多传入 50 条消息。 你需要通过此字段传入本次对话中用户的问题，也就是对话流的输入参数 USER_INPUT 的值。 可以同时传入多条历史消息，也就是本次对话的上下文。多条消息应按对话顺序排列，最后一条消息应为 role=user 的记录，也就是本次对话中用户的问题；其他消息为历史消息。 对话流执行到问答节点、输入节点等节点时可能导致对话中断，此时只需再次调用对话流，在 additional_messages 中指定输入内容即可继续对话。
+                                    items:
+                                        $ref: '#/components/schemas/additional_messagesobject'
+                                app_id:
+                                    type: string
+                                    description: 需要关联的低代码应用 ID。调用对话流时，必须指定 app_id 或 bot_id，便于模型调用智能体或应用的数据库、变量等数据处理问题。 进入应用开发界面，开发页面URL中的project-ide参数后的数字就是AppID，例如https://www.coze.cn/space/74421656/project-ide/744208683 ，低代码应用 ID 为744208683。 运行低代码应用中的对话流时，app_id 必选。详细说明可参考接口说明。
+                                bot_id:
+                                    type: string
+                                    description: 需要关联的智能体 ID。 调用对话流时，必须指定 app_id 或 bot_id，便于模型调用智能体或应用的数据库、变量等数据处理问题。 进入智能体开发页面，开发页面 URL 中 bot 参数后的数字就是智能体 ID。例如https://www.coze.cn/space/73428668341/bot/73428668，bot ID 为73428668。 运行资源库中的对话流时，根据对话流执行的位置（智能体或低代码应用）选择设置 bot_id 还是 app_id。详细说明可参考接口说明。
+                                connector_id:
+                                    type: string
+                                    description: 渠道 ID，用于配置该对话流在什么渠道执行。 当智能体或低代码应用发布到某个渠道后，可以通过该参数指定对话流在对应的渠道执行。 扣子编程的渠道 ID 包括： 1024（默认值）：API 渠道。 999：Chat SDK。 998：WebSDK。 10000122：扣子商店。 10000113：微信客服。 10000120：微信服务号。 10000121：微信订阅号。 10000126：抖音小程序。 10000127：微信小程序。 10000011：飞书。 10000128：飞书多维表格。 10000117：掘金。 自定义渠道 ID。自定义渠道 ID 的获取方式如下：在扣子编程左下角单击头像，在账号设置 > 发布渠道 > 企业自定义渠道管理页面查看渠道 ID。 不同渠道的用户数据、会话记录等相互隔离，进行数据分析统计时，不支持跨渠道数据调用。
+                                conversation_id:
+                                    type: string
+                                    description: 对话流对应的会话 ID，对话流产生的消息会保存到此会话中。会话默认为开始节点设置的 CONVERSATION_NAME，也可以通过 conversation_id 参数指定会话。 指定 conversation_id 时，parameters 中设置的 CONVERSATION_NAME 不生效。 会话的创建者必须和执行对话流的用户一致，即 API 访问令牌的创建者一致，否则无法执行对话流。 会话与 app_id、渠道匹配，不同渠道的会话隔离。 指定 bot_id 时，如果没有传入 conversation_id ，扣子编程会创建一个新的 conversation_id。不支持同时指定 bot_id 和 app_id。详细说明可参考接口说明。
+                                ext:
+                                    $ref: '#/components/schemas/MapStringString'
+                                    description: 用于指定一些额外的字段，以 Map[String][String] 格式传入。例如某些插件会隐式用到的经纬度等字段。 目前仅支持以下字段： latitude：String 类型，表示纬度。 longitude：String 类型，表示经度。 user_id：String 类型，表示用户 ID。
+                                parameters:
+                                    $ref: '#/components/schemas/mapStringany'
+                                    description: '设置对话流输入参数中的自定义参数。以 JSON 序列化字符串形式传入。你可以在指定对话流的编排页面查看自定义输入参数列表。 设置文件类型的自定义参数 如果对话流输入参数为 Image 等类型的文件，你可以传入文件 URL 或调用上传文件 API 获取 file_id 后传入 file_id。示例： 上传文件并传入 file_id： 单个文件示例："parameters": { "image": "{\"file_id\":\"1122334455\"}" } 文件数组示例："parameters": { "image": [ "{\"file_id\":\"1122334455\"}" ] }。 传入文件 URL：“parameters” :{"input":"请总结图片内容", "image": "https://example.com/tos-cn-i-mdko3gqilj/example.png" } 会话名称绑定 你可以通过输入参数中的 CONVERSATION_NAME 绑定对应的会话名称，对话流产生的消息将保存到该会话中。推荐使用 conversation_id 绑定会话。 生效范围：此设置仅对低代码应用中的对话流生效。对于资源库对话流，你需要同时传入 app_id 以关联一个低代码应用，该设置才会生效。 获取方法：你可以在应用编排页面的会话管理中查看会话名称，或通过工作流中的查询会话列表节点查询会话名称。 !Image 对话流的输入参数 USER_INPUT 应在 additional_messages 中传入，在 parameters 中的 USER_INPUT 不生效。 如果 parameters 中未指定 CONVERSATION_NAME 或自定义输入参数，则使用参数默认值运行对话流；如果指定了这些参数，则使用指定值。'
+                                workflow_id:
+                                    type: string
+                                    description: 待执行的对话流 ID，此对话流应已发布。 进入对话流编排页面，在页面 URL 中，workflow 参数后的数字就是 Workflow ID。例如 https://www.coze.cn/work_flow?space_id=42463&workflow_id=73505836754923，Workflow ID 为 73505836754923。
+                                workflow_version:
+                                    type: string
+                                    description: 对话流的版本号，仅当运行的对话流属于资源库对话流时有效。未指定版本号时默认执行最新版本的对话流。
+                            required:
+                                - additional_messages
+                                - parameters
+                                - workflow_id
+            responses:
+                "200":
+                    description: Success
+            x-coze-original-method: POST
+            x-coze-permission: run
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/workflow_chat

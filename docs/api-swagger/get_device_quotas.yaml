@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+    title: 查询终端用户的权益配额
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/get_device_quotas
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/commerce/benefit/limitations:
+        get:
+            operationId: CozeGetget_device_quotas
+            summary: 查询终端用户的权益配额
+            description: |-
+                查询已配置的权益配额信息，包括权益配额、状态、激活模式等详细信息。
+                套餐限制：扣子企业旗舰版。
+                角色限制：企业超级管理员和管理员可以调用该 API。
+                调用此 API 查询设备权益配额之前，需要确保企业下的设备已成功上报了设备信息，否则会导致权益配额对该设备无法生效，设备信息的配置方法可参考设置设备信息。
+
+                查询已配置的权益额度信息。
+            tags:
+                - developer_guides
+            parameters:
+                - name: entity_type
+                  in: query
+                  description: 权益配额的生效范围，枚举值： enterprise_all_devices：权益配额对企业下的所有设备生效。 enterprise_all_custom_consumers：权益配额对企业下所有自定义维度的实体生效。 single_device：权益配额对单个设备生效。 single_custom_consumer：权益配额对单个自定义维度的实体生效。
+                  required: true
+                  schema:
+                    type: string
+                - name: entity_id
+                  in: query
+                  description: 该权益配额对哪个实体 ID 生效。 仅在 entity_type 为 single_device 或 single_custom_consumer 时，需填写entity_id，分别为对应的 Device ID 或 custom consumer ID。 entity_type 为其他类型时，无需填写entity_id。
+                  schema:
+                    type: string
+                - name: benefit_type
+                  in: query
+                  description: 权益配额类型，枚举值： resource_point：资源点配额。 voice_unified_duration_system： 语音通话时长配额（系统音色）。 voice_unified_duration_custom： 语音通话时长配额（复刻音色）。
+                  required: true
+                  schema:
+                    type: string
+                - name: status
+                  in: query
+                  description: 设备权益的当前状态，枚举值： valid：（默认值）正常使用。 frozen：已冻结。
+                  schema:
+                    type: string
+                - name: page_token
+                  in: query
+                  description: 翻页标识，表示下一页的起始位置。当查询结果超过 page_size 时，返回的 page_token可用于获取下一页数据。 首次请求不填或置空，后续翻页需带上上一次返回的 page_token。
+                  schema:
+                    type: string
+                - name: page_size
+                  in: query
+                  description: 查询结果分页展示时，此参数用于设置每页返回的数据量。取值范围为 1~200，默认为 20。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 用于指定解析请求正文的格式，表明请求体为 JSON 格式数据。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/ListBenefitLimitationData'
+                                        description: 接口调用成功时，返回的详细数据信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 响应详情信息。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: GET
+            x-coze-permission: listBenefitLimitation
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/get_device_quotas
+components:
+    schemas:
+        BenefitInfo:
+            type: object
+            properties:
+                active_mode:
+                    type: string
+                    description: 激活模式，当前仅支持设置为 absolute_time 模式，即绝对时间。 该模式下，权益生效时间由 started_at 和 ended_at 两个时间确定。
+                benefit_type:
+                    type: string
+                    description: 权益配额类型，枚举值： resource_point：资源点配额。 voice_unified_duration_system： 语音通话时长配额（系统音色）。 voice_unified_duration_custom： 语音通话时长配额（复刻音色）。 增购 AI 智能通话许可（系统音色）​的企业，配置的 voice_unified_duration_system 才生效，购买语音通话时长的详细步骤请参见音视频费用。 增购 AI 智能通话许可（复刻音色）​的企业，配置的 voice_unified_duration_custom 才生效。 未增购 AI 智能通话许可的企业，仅支持配置 resource_point。
+                ended_at:
+                    type: integer
+                    format: int64
+                    description: 该条配额规则的生效截止时间，Unixtime 时间戳格式，单位为秒。过期后，该条配额规则会失效。
+                entity_id:
+                    type: string
+                    description: 该权益配额对哪个实体 ID 生效。仅在 entity_type 为 single_device或 single_custom_consumer 时，会返回对应的实体 ID。
+                entity_type:
+                    type: string
+                    description: 权益配额的生效范围，枚举值： enterprise_all_devices：权益配额对企业下的所有设备生效。 enterprise_all_custom_consumers：权益配额对企业下所有自定义维度的实体生效。若某设备在设备信息中未上报 custom_consumers，则该设备无法生效权益配额。 single_device：权益配额对单个设备生效。 single_custom_consumer：权益配额对单个自定义维度的实体生效。
+                limit:
+                    type: integer
+                    format: int64
+                    description: 可用的额度。 如果权益配额类型为 resource_point，可用额度的单位为资源点。 如果权益配额类型为voice_unified_duration_system或voice_unified_duration_custom，可用额度的单位为秒。
+                started_at:
+                    type: integer
+                    format: int64
+                    description: 该条配额规则的生效起始时间，Unixtime 时间戳格式，单位为秒。
+                status:
+                    type: string
+                    description: 设备权益的当前状态，枚举值： valid：正常使用。 frozen：已冻结。
+                trigger_time:
+                    type: integer
+                    format: int64
+                    description: 权益配额重置周期的频率： 当 trigger_unit 为 never 时，trigger_time 的值为 1，且无意义。 当 trigger_unit 为 minute、hour 或 day 时，trigger_time 表示具体的刷新频率，例如：trigger_unit=day 且 trigger_time = 1，表示每日刷新配额。
+                trigger_unit:
+                    type: string
+                    description: 权益可用额度的重置周期，即额度按指定时间间隔恢复或重新计算。枚举值： never：（默认）不重置额度，适用于设置累计可用额度上限。 minute：以分钟为周期重置额度。 hour：以小时为周期重置额度。 day：以天为周期重置额度。
+        ListBenefitLimitationData:
+            type: object
+            properties:
+                benefit_infos:
+                    type: array
+                    description: 权益配额列表。
+                    items:
+                        $ref: '#/components/schemas/BenefitInfo'
+                has_more:
+                    type: boolean
+                    description: 是否还有下一页。 true：还有下一页。 false：没有下一页。
+                page_token:
+                    type: string
+                    description: 翻页标识。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

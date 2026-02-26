@@ -1,0 +1,49 @@
+openapi: 3.0.3
+info:
+    title: OAuth JWT 授权（企业特权应用）
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/oauth_jwt_privilege
+servers:
+    - url: https://api.coze.cn
+paths:
+    /api/permission/oauth2/enterprise_id/%7Benterprise_id%7D/token:
+        post:
+            operationId: CozePostoauth_jwt_privilege
+            summary: OAuth JWT 授权（企业特权应用）
+            description: |-
+                你可以在企业的默认组织中创建 OAuth JWT 授权（企业特权应用），并根据需要授予 OAuth 应用企业管理、组织管理、空间管理的权限，从而安全、高效地管理企业资源，包括成员、账单、组织及工作空间。你可按需部署多个专项应用，例如财务管理 App 专注账单管理、员工管理 App 负责成员和组织架构维护等。
+                套餐版本：企业版（企业旗舰版、企业标准版）。
+                角色限制：组织的超级管理员、管理员。
+                组织限制：仅支持在默认组织中创建 OAuth JWT 授权（企业特权应用）。
+                # 授权流程
+                授权流程如下：
+                1. 在扣子编程创建 OAuth 应用并完成授权。
+                2. 应用程序通过公钥和私钥签署 JWT。
+                3. 应用程序通过 API，获取访问令牌，具体请参见通过 JWT 获取 Oauth Access Token。
+                4. 应用程序根据访问令牌调用扣子 API。
+                详细步骤如下：
+            tags:
+                - developer_guides
+            responses:
+                "200":
+                    description: Success
+            x-coze-original-method: POST
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/oauth_jwt_privilege
+components:
+    schemas:
+        HeaderPayload:
+            type: object
+            properties:
+                alg:
+                    type: string
+                    description: 签名使用的加密算法。固定为 RS256，即非对称加密算法，一种基于 RSA（非对称加密算法）+ SHA256（安全哈希函数）的签名算法，该算法使用私钥进行签名，公钥进行验证。
+                kid:
+                    type: string
+                    description: OAuth 应用的公钥指纹，可以在OAuth 应用页面找到这个应用，在操作列单击编辑图标，进入配置页面查看公钥指纹。 !Image
+                typ:
+                    type: string
+                    description: 固定为 JWT。
+            required:
+                - alg
+                - kid
+                - typ

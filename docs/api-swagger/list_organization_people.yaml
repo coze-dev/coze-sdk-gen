@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+    title: 查询组织成员列表
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/list_organization_people
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/organizations/:organization_id/members:
+        get:
+            operationId: CozeGetlist_organization_people
+            summary: 查询组织成员列表
+            description: |-
+                查询指定组织中的成员列表。
+
+                查询组织成员列表。
+            tags:
+                - developer_guides
+            parameters:
+                - name: organization_id
+                  in: path
+                  description: 需要查询组织成员列表的组织 ID。 你可以在组织管理 > 组织设置页面查看对应的组织 ID，或通过查询组织列表 API 查询组织 ID。 !Image
+                  required: true
+                  schema:
+                    type: string
+                - name: page_num
+                  in: query
+                  description: 分页查询时的页码。默认为 1，即返回第一页数据。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: page_size
+                  in: query
+                  description: 每页返回的数据条数，用于分页查询。默认值为 20，最大支持 50条。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息参考OAuth JWT 授权（企业特权应用）。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/ListOrganizationPeopleData'
+                                        description: 组织成员列表，包含成员详细信息和总数。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含本次请求的日志信息，用于问题排查和技术支持。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: GET
+            x-coze-permission: Account.listOrganizationPeople
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/list_organization_people
+components:
+    schemas:
+        ListOrganizationPeopleData:
+            type: object
+            properties:
+                items:
+                    type: array
+                    description: 组织成员列表。
+                    items:
+                        $ref: '#/components/schemas/OrganizationPeople'
+                total_count:
+                    type: integer
+                    format: int64
+                    description: 组织中的成员数量。
+        OrganizationPeople:
+            type: object
+            properties:
+                avatar_url:
+                    type: string
+                    description: 用户头像的 URL 地址。
+                created_at:
+                    type: integer
+                    format: int64
+                    description: 用户加入组织的时间戳，格式为 10 位的 Unix 时间戳，单位为秒。
+                is_valid:
+                    type: boolean
+                    description: 标识该组织成员账号状态是否正常。 true：账号状态正常，可正常使用。 false：该成员的火山账号已被删除，不可使用。
+                organization_role_type:
+                    type: string
+                    description: 组织成员在组织中的角色类型，枚举值： organization_super_admin：组织超级管理员。 organization_admin：组织管理员。 organization_member：组织成员。 organization_guest：访客。
+                people_type:
+                    type: string
+                    description: 组织成员在企业中的身份类型，枚举值： employee：企业员工。 guest：访客。
+                user_id:
+                    type: string
+                    description: 扣子用户的 UID。
+                user_nickname:
+                    type: string
+                    description: 用户昵称。
+                user_unique_name:
+                    type: string
+                    description: 扣子用户名。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

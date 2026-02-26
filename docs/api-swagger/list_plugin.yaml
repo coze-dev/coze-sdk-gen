@@ -1,0 +1,219 @@
+openapi: 3.0.3
+info:
+    title: 查询付费插件列表
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/list_plugin
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/stores/plugins:
+        get:
+            operationId: CozeGetlist_plugin
+            summary: 查询付费插件列表
+            description: 查询插件商店中的付费插件列表。
+            tags:
+                - developer_guides
+            parameters:
+                - name: keyword
+                  in: query
+                  description: 插件搜索的关键词，支持模糊匹配。
+                  schema:
+                    type: string
+                - name: is_official
+                  in: query
+                  description: 是否为扣子编程官方插件。默认返回官方插件和三方插件。 true ：官方插件。 false：三方插件。
+                  schema:
+                    type: boolean
+                - name: category_ids
+                  in: query
+                  description: 插件分类 ID 列表，用于筛选指定多个分类下的插件。默认为空，即返回所有分类下的插件。可以通过查询插件分类API 获取对应的插件分类 ID。
+                  schema:
+                    type: array
+                    items:
+                        type: string
+                - name: page_num
+                  in: query
+                  description: 分页查询时的页码。默认为 1，即返回第一页数据。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: page_size
+                  in: query
+                  description: 每页返回的数据条数，用于分页查询。默认值为 20，最大值为 100。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: sort_type
+                  in: query
+                  description: 排序类型，用于指定返回插件的排序方式。支持的排序方式如下所示： heat：最受欢迎。 newest：最近发布。 relative：相关性，仅用于搜索场景。
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/ListPluginData'
+                                        description: 返回的插件列表及其相关信息的对象。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: GET
+            x-coze-permission: 无
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/list_plugin
+components:
+    schemas:
+        ListPluginData:
+            type: object
+            properties:
+                has_more:
+                    type: boolean
+                    description: 是否已返回全部消息。 true：未返回全部信息，可再次调用此接口查看其他分页。 false：已返回全部信息。
+                items:
+                    type: array
+                    description: 插件列表，包含多个插件项的数组。每个插件项包含插件的元信息和运行统计信息。
+                    items:
+                        $ref: '#/components/schemas/ProductPluginInfo'
+        PluginInfo:
+            type: object
+            properties:
+                associated_bots_use_count:
+                    type: integer
+                    format: int64
+                    description: 当前扣子商店中关联了该插件的智能体数量。
+                avg_exec_duration_ms:
+                    type: number
+                    format: double
+                    description: 插件执行的平均耗时，单位为毫秒。
+                bots_use_count:
+                    type: integer
+                    format: int64
+                    description: 该插件在智能体或工作流中的累计关联次数。
+                call_count:
+                    type: integer
+                    format: int64
+                    description: 插件的调用量，表示该插件的累计调用次数。
+                description:
+                    type: string
+                    description: 插件的详细描述信息，用于说明插件的功能、用途和特点。
+                favorite_count:
+                    type: integer
+                    format: int32
+                    description: 插件的收藏量，表示该插件被用户收藏的总次数。
+                heat:
+                    type: integer
+                    format: int32
+                    description: 插件的热度值，用于表示该插件的受欢迎程度或使用频率。数值越大表示热度越高。
+                is_call_available:
+                    type: boolean
+                    description: 标识该插件当前是否可被调用。 true：插件可正常调用。 false：插件暂时不可用，例如已下架。
+                success_rate:
+                    type: number
+                    format: double
+                    description: 插件的调用成功率，以小数形式表示，数值范围为 0 到 1。
+                total_tools_count:
+                    type: integer
+                    format: int32
+                    description: 插件包含的工具总数。
+        ProductCategory:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 插件分类 ID。
+                name:
+                    type: string
+                    description: 插件分类名称。
+        ProductMetainfo:
+            type: object
+            properties:
+                category:
+                    $ref: '#/components/schemas/ProductCategory'
+                    description: 插件所属的分类信息，包含分类 ID 和分类名称。
+                description:
+                    type: string
+                    description: 插件的描述信息，用于说明插件的功能、用途和特点。
+                entity_id:
+                    type: string
+                    description: 插件 ID。
+                entity_type:
+                    type: string
+                    description: 实体类型，当前仅支持 plugin，表示插件。
+                entity_version:
+                    type: string
+                    description: 插件的版本号，用于标识插件的当前版本。
+                icon_url:
+                    type: string
+                    description: 插件的图标 URL。
+                is_official:
+                    type: boolean
+                    description: 标识插件是否为官方发布。 true 表示该插件由扣子编程官方发布。 false表示由第三方开发者发布。
+                listed_at:
+                    type: integer
+                    format: int64
+                    description: 插件上架时间，以 Unix 时间戳格式表示，单位为秒。
+                name:
+                    type: string
+                    description: 插件的名称。
+                paid_type:
+                    type: string
+                    description: 插件的付费类型，固定为 paid，即付费插件。
+                product_id:
+                    type: string
+                    description: 商品的 ID，用于在插件商店中唯一标识该插件商品。
+                user_info:
+                    $ref: '#/components/schemas/ProductUserInfo'
+                    description: 插件开发者的相关信息，包含开发者的用户 ID、昵称、用户名和头像 URL。
+        ProductPluginInfo:
+            type: object
+            properties:
+                metainfo:
+                    $ref: '#/components/schemas/ProductMetainfo'
+                    description: 插件的详细信息。
+                plugin_info:
+                    $ref: '#/components/schemas/PluginInfo'
+                    description: 插件的运行数据和统计信息，包括热度、调用次数、成功率、收藏数等指标，以及被智能体使用的情况。
+        ProductUserInfo:
+            type: object
+            properties:
+                avatar_url:
+                    type: string
+                    description: 插件开发者在扣子编程上的头像 URL，用于展示开发者的头像信息。
+                nick_name:
+                    type: string
+                    description: 插件开发者在扣子编程上的昵称。
+                user_id:
+                    type: integer
+                    format: int64
+                    description: 插件开发者的扣子用户 ID。
+                user_name:
+                    type: string
+                    description: 插件开发者在扣子编程上的用户名。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

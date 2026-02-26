@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+    title: 创建房间
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/create_room
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/audio/rooms:
+        post:
+            operationId: CozePostcreate_room
+            summary: 创建房间
+            description: 创建房间，并将智能体加入房间。
+            tags:
+                - developer_guides
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                bot_id:
+                                    type: string
+                                    description: 智能体 ID。 进入智能体的开发页面，开发页面 URL 中 bot 参数后的数字就是智能体 ID。例如https://www.coze.com/space/341/bot/73428668，bot ID 为73428668。
+                                config:
+                                    $ref: '#/components/schemas/RoomConfig'
+                                    description: 房间内的音视频参数配置。
+                                conversation_id:
+                                    type: string
+                                    description: 会话 ID。后续调用发起对话 API 产生的消息记录都会保存在此对话中。 调用创建会话 API 可以创建一个会话。若未指定会话 ID，扣子编程会默认创建一个新的会话。
+                                uid:
+                                    type: string
+                                    description: 标识当前与智能体对话的用户，由使用方自行定义、生成与维护。uid 用于标识对话中的不同用户，不同的 uid，其对话的数据库等对话记忆数据互相隔离。如果不需要用户数据隔离，可以不传此参数。
+                                voice_id:
+                                    type: string
+                                    description: 智能体使用的音色 ID，默认为柔美女友音色。 你可以通过查看音色列表 API 获取音色 ID。
+                            required:
+                                - bot_id
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 状态码。 0代表调用成功。
+                                    data:
+                                        $ref: '#/components/schemas/CreateRoomData'
+                                        description: 接口返回的业务数据。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 本次请求的详细信息。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: createRoom
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/create_room
+components:
+    schemas:
+        AudioConfig:
+            type: object
+            properties:
+                codec:
+                    type: string
+                    description: 房间音频编码格式，支持设置为： AACLC：AAC-LC 编码格式。 G711A：G711A 编码格式。 OPUS：（默认）Opus 编码格式。 G722：G.722 编码格式。
+        CreateRoomData:
+            type: object
+            properties:
+                app_id:
+                    type: string
+                    description: RTC 应用 ID。
+                room_id:
+                    type: string
+                    description: 已创建的 RTC 房间的房间 ID。
+                token:
+                    type: string
+                    description: 房间密钥，用户加入房间和智能体对话时需要通过 token 进行身份认证和鉴权。
+                uid:
+                    type: string
+                    description: 进入房间的用户 ID，和入参中 uid 一致。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+        RoomConfig:
+            type: object
+            properties:
+                audio_config:
+                    $ref: '#/components/schemas/AudioConfig'
+                    description: 房间音频配置。
+                prologue_content:
+                    type: string
+                    description: 自定义开场白。
+                prologue_delay_duration_ms:
+                    type: integer
+                    format: int32
+                    description: 在进房后等待多长时间播放开场白，单位：ms。 默认为 500ms，取值范围为 0~5000。
+                room_mode:
+                    type: string
+                    description: 房间模式，默认值为 default。枚举值： default：对话模式。 podcast：播客模式。
+                turn_detection:
+                    $ref: '#/components/schemas/TurnDetectionConfig'
+                    description: 语音检测配置，用于控制语音交互的检测方式。
+                video_config:
+                    $ref: '#/components/schemas/VideoConfig'
+                    description: 房间视频配置。
+        TurnDetectionConfig:
+            type: object
+            properties:
+                type:
+                    type: string
+                    description: 语音检测类型，用于控制语音交互的检测方式，默认值为 server_vad。枚举值： server_vad：自由对话模式，扣子编程云端通过语音活动检测（VAD）自动判断语音的开始和结束，实现无缝的自然对话体验。 client_interrupt：按键说话模式，由客户端控制语音的开始与结束，需配合 Realtime 上行事件 input_audio_buffer.start 和 input_audio_buffer.complete使用。 semantic_vad：采用语义判停的自由对话模式（此功能仅对企业旗舰版用户开放），由服务端识别语义来判断是否停止说话。
+        VideoConfig:
+            type: object
+            properties:
+                codec:
+                    type: string
+                    description: 房间视频编码格式，支持设置为： H264：（默认）H264 编码格式。 BYTEVC1：火山引擎自研的视频编码格式。
+                stream_video_type:
+                    type: string
+                    description: 房间视频流类型, 支持 main 和 screen。 main：主流，包括通过摄像头/麦克风的内部采集机制获取的流，以及通过自定义采集方式获取的流。 screen：屏幕流，用于屏幕共享或屏幕录制的视频流。
+                video_frame_expire_duration:
+                    type: integer
+                    format: int32
+                    description: 用户开始说话前，抽取多少秒画面。主要是兼容连贯动作的场景。用于帮模型理解用户没开始说话前在做什么。 单位为秒，默认值为 1，取值范围为 1~10。
+                video_frame_rate:
+                    type: integer
+                    format: int32
+                    description: 每秒抽帧数，在视频通话过程中，摄像头/屏幕共享捕捉画面的频率。捕捉到的画面会作为视觉模型的输入。 默认值为 1，取值范围为 1~24。

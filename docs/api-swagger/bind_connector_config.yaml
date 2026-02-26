@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+    title: 绑定设备
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/bind_connector_config
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/connectors/:connector_id/user_configs:
+        post:
+            operationId: CozePostbind_connector_config
+            summary: 绑定设备
+            description: 将设备与自定义渠道绑定。
+            tags:
+                - developer_guides
+            parameters:
+                - name: connector_id
+                  in: path
+                  description: 企业自定义渠道的渠道 ID。 自定义渠道 ID 的获取方式如下：在扣子编程左下角单击头像，在账号设置 > 发布渠道 > 企业自定义渠道管理页面查看渠道 ID。自定义渠道入驻扣子编程的方式可参考渠道入驻文档。
+                  required: true
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                configs:
+                                    type: array
+                                    description: 设备配置信息列表。
+                                    items:
+                                        $ref: '#/components/schemas/UserConfig'
+                                user_id:
+                                    type: string
+                                    description: 智能体开发者的扣子用户 UID，用于标识设备绑定的扣子用户。 你可以单击扣子编程左下角的头像，选择账号设置，在页面底部查看扣子用户的 UID。
+                            required:
+                                - configs
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: bindConnectorConfig
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/bind_connector_config
+components:
+    schemas:
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+        UserConfig:
+            type: object
+            properties:
+                enums:
+                    type: array
+                    description: 设备信息的数组，可以批量添加该渠道中的所有设备。
+                    items:
+                        $ref: '#/components/schemas/UserConfigEnum'
+                key:
+                    type: string
+                    description: 参数的键值，需要与提供给商务经理的 key 保持一致，用于标识设备配置信息的具体类型。
+            required:
+                - enums
+                - key
+        UserConfigEnum:
+            type: object
+            properties:
+                label:
+                    type: string
+                    description: 设备的显示名称，用于在用户界面中标识设备，方便用户识别和管理。
+                value:
+                    type: string
+                    description: 设备的 ID。
+            required:
+                - label
+                - value

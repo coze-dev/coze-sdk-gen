@@ -1,0 +1,77 @@
+openapi: 3.0.3
+info:
+    title: 执行工作流（流式响应）
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/workflow_stream_run
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/workflow/stream_run:
+        post:
+            operationId: CozePostworkflow_stream_run
+            summary: 执行工作流（流式响应）
+            description: 执行已发布的工作流，响应方式为流式响应。
+            tags:
+                - developer_guides
+            responses:
+                "200":
+                    description: Success
+            x-coze-original-method: POST
+            x-coze-permission: run
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/workflow_stream_run
+components:
+    schemas:
+        Error:
+            type: object
+            properties:
+                状态信息。API 调用失败时可通过此字段查看详细错误信息。:
+                    type: string
+                ? 调用状态码。 0 表示调用成功。 其他值表示调用失败。你可以通过 error_message 字段判断详细的错误原因。
+                :   type: string
+        Interrupt:
+            type: object
+            properties:
+                中断控制内容。:
+                    type: string
+                工作流中断事件 ID，恢复运行时应回传此字段，具体请参见恢复运行工作流（流式响应）。:
+                    type: string
+                ? 工作流中断时需要补充的参数信息，采用键值对（key-value）结构：key为参数名称，value为该参数的值。
+                :   type: string
+                工作流中断类型，恢复运行时应回传此字段，具体请参见恢复运行工作流（流式响应）。:
+                    type: string
+                输出消息的节点名称，例如“问答”。:
+                    type: string
+        Message:
+            type: object
+            properties:
+                当前消息是否为此节点的最后一个数据包。:
+                    type: string
+                此消息在节点中的消息 ID，从 0 开始计数，例如输出节点的第 5 条消息。:
+                    type: string
+                流式输出的消息内容。:
+                    type: string
+                节点每次执行的 ID，用于追踪和识别工作流中特定节点的单次执行情况。:
+                    type: string
+                资源使用情况，包含本次 API 调用消耗的 Token 数量等信息。:
+                    type: string
+                输出消息的节点 ID。:
+                    type: string
+                输出消息的节点名称，例如输出节点、结束节点。:
+                    type: string
+                额外字段。:
+                    type: string
+        usage:
+            type: object
+            properties:
+                input_count:
+                    type: integer
+                    format: int32
+                    description: 输入内容所消耗的 Token 数，包含对话上下文、系统提示词、用户当前输入等所有输入类的 Token 消耗。
+                output_count:
+                    type: integer
+                    format: int32
+                    description: 大模型输出的内容所消耗的 Token 数。
+                token_count:
+                    type: integer
+                    format: int32
+                    description: 本次 API 调用消耗的 Token 总量，包括输入和输出两部分的消耗。

@@ -1,0 +1,230 @@
+openapi: 3.0.3
+info:
+    title: 创建知识库文件
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/create_knowledge_files
+servers:
+    - url: https://api.coze.cn
+paths:
+    /open_api/knowledge/document/create:
+        post:
+            operationId: CozePostcreate_knowledge_files
+            summary: 创建知识库文件
+            description: |-
+                调用此 API 向指定的扣子知识库上传文件。
+
+                调用此接口向指定知识库中上传文件。
+            tags:
+                - developer_guides
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 请求正文的方式。
+                  schema:
+                    type: string
+                - name: Agw-Js-Conv
+                  in: header
+                  description: 防止丢失数字类型参数的精度。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                chunk_strategy:
+                                    $ref: '#/components/schemas/ChunkStrategy'
+                                    description: 分段规则。详见 ChunkStrategy object 每次都需要传入
+                                dataset_id:
+                                    type: string
+                                    description: 扣子知识库 ID。 在扣子编程中打开指定知识库页面，页面 URL 中 knowledge 参数后的数字就是知识库 ID。例如 https://www.coze.cn/space/736142423532160/knowledge/738509371792341，知识库 ID 为 738509371792341。
+                                document_bases:
+                                    type: array
+                                    description: 待上传文件的元数据信息。数组最大长度为 10，即每次最多上传 10 个文件。 支持的上传方式如下： 文本知识库： 通过 Base64 上传本地文件。 上传在线网页。 图片知识库：通过上传文件API 获取的 file_id 上传图片。
+                                    items:
+                                        $ref: '#/components/schemas/DocumentBase'
+                                format_type:
+                                    type: integer
+                                    format: int32
+                                    description: 知识库类型。取值包括： 0：文本类型 2：图片类型
+                            required:
+                                - chunk_strategy
+                                - dataset_id
+                                - document_bases
+                                - format_type
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 状态码。 0 代表调用成功。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 响应详情信息。
+                                    document_infos:
+                                        type: array
+                                        description: 已上传文件的基本信息。
+                                        items:
+                                            $ref: '#/components/schemas/DocumentInfo'
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: createDocument
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/create_knowledge_files
+components:
+    schemas:
+        ChunkStrategy:
+            type: object
+            properties:
+                caption_type:
+                    type: integer
+                    format: int32
+                    description: 图片知识库的标注方式： 0：（默认）系统自动标注描述信息 1：手工标注。上传图片后需要再次调用 API 更新知识库图片描述来手动设置标注。 在空的知识库中首次上传图片时，需要手工设置 caption_type 参数的值，否则会报错。
+                chunk_type:
+                    type: integer
+                    format: int32
+                    description: 分段设置。取值包括： 0：自动分段与清洗。采用扣子编程预置规则进行数据分段与处理。 1：自定义。此时需要通过 separator、max_tokens、remove_extra_spaces 和 remove_urls_emails 分段规则细节。
+                max_tokens:
+                    type: integer
+                    format: int64
+                    description: 最大分段长度，取值范围为 100~2000。 在 chunk_type=1 时必选。
+                remove_extra_spaces:
+                    type: boolean
+                    description: 是否自动过滤连续的空格、换行符和制表符。取值包括： true：自动过滤 false：（默认）不自动过滤 在 chunk_type=1 时生效。
+                remove_urls_emails:
+                    type: boolean
+                    description: 是否自动过滤所有 URL 和电子邮箱地址。取值包括： true：自动过滤 false：（默认）不自动过滤 在 chunk_type=1 时生效。
+                separator:
+                    type: string
+                    description: 分段标识符。 在 chunk_type=1 时必选。
+        DocumentBase:
+            type: object
+            properties:
+                caption:
+                    type: string
+                    description: 当知识库类型为图片类型时，通过该字段设置图片描述。
+                name:
+                    type: string
+                    description: 文件名称。
+                source_info:
+                    $ref: '#/components/schemas/SourceInfo'
+                    description: 文件的元数据信息。 不同的上传方式需要指定不同参数： 本地文件：Base64 形式上传，需要设置参数 file_base64、file_type。 在线网页：需要设置参数 web_url、document_source。 file_id：需要设置参数 source_file_id、document_source。其中 source_file_id 为 上传文件API 的响应参数 file_id。
+                update_rule:
+                    $ref: '#/components/schemas/UpdateRule'
+                    description: 在线网页的更新策略。默认不自动更新。仅上传在线网页时需要设置。
+            required:
+                - name
+                - source_info
+        DocumentInfo:
+            type: object
+            properties:
+                char_count:
+                    type: integer
+                    format: int32
+                    description: 文件内容的总字符数量。
+                chunk_strategy:
+                    $ref: '#/components/schemas/ChunkStrategy'
+                    description: 分段规则。
+                create_time:
+                    type: integer
+                    format: int32
+                    description: 文件的上传时间，格式为 10 位的 Unixtime 时间戳。
+                document_id:
+                    type: string
+                    description: 文件的 ID。
+                format_type:
+                    type: integer
+                    format: int32
+                    description: 文件的格式类型。取值包括： 0：文档类型，例如 txt 、pdf 、在线网页等格式均属于文档类型。 1：表格类型，例如 xls 表格等格式属于表格类型。 2：照片类型，例如 png 图片等格式属于照片类型。
+                hit_count:
+                    type: integer
+                    format: int32
+                    description: 被对话命中的次数。
+                name:
+                    type: string
+                    description: 文件的名称。
+                size:
+                    type: integer
+                    format: int32
+                    description: 文件的大小，单位为字节。
+                slice_count:
+                    type: integer
+                    format: int32
+                    description: 文件的分段数量。
+                source_type:
+                    type: integer
+                    format: int32
+                    description: 文件的上传方式。取值包括： 0：上传本地文件。 1：上传在线网页。
+                status:
+                    type: integer
+                    format: int32
+                    description: 文件的处理状态。取值包括： 0：处理中 1：处理完毕 9：处理失败，建议重新上传
+                tos_uri:
+                    type: string
+                    description: 上传的本地文档的唯一标识。
+                type:
+                    type: string
+                    description: 本地文件格式，即文件后缀，例如 txt。格式支持 pdf、txt、doc、docx 类型。
+                update_interval:
+                    type: integer
+                    format: int32
+                    description: 在线网页自动更新的频率。单位为小时。
+                update_time:
+                    type: integer
+                    format: int32
+                    description: 文件的最近一次修改时间，格式为 10 位的 Unixtime 时间戳。
+                update_type:
+                    type: integer
+                    format: int32
+                    description: 在线网页是否自动更新。取值包括： 0：不自动更新 1：自动更新
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+        SourceInfo:
+            type: object
+            properties:
+                document_source:
+                    type: integer
+                    format: int32
+                    description: 文件的上传方式。支持设置为： 0：本地文件上传。 1：上传在线网页。 5：通过 上传文件 上传图片。
+                file_base64:
+                    type: string
+                    description: 本地文件的 Base64 编码。 上传本地文件时必选。
+                file_type:
+                    type: string
+                    description: 本地文件格式，即文件后缀，例如 txt。格式支持 pdf、txt、doc、docx 类型。 上传的文件类型应与知识库类型匹配，例如 txt 文件只能上传到文档类型的知识库中。 上传本地文件时必选。
+                source_file_id:
+                    type: string
+                    description: 通过上传文件接口获取的文件 ID。
+                web_url:
+                    type: string
+                    description: 网页的 URL 地址。 上传在线网页时必选。
+        UpdateRule:
+            type: object
+            properties:
+                update_interval:
+                    type: integer
+                    format: int32
+                    description: 在线网页自动更新的频率。单位为小时，最小值为 24。
+                update_type:
+                    type: integer
+                    format: int32
+                    description: 在线网页是否自动更新。取值包括： 0：（默认）不自动更新 1：自动更新

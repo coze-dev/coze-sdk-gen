@@ -1,0 +1,77 @@
+openapi: 3.0.3
+info:
+    title: 语音识别
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/audio_transcriptions
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/audio/transcriptions:
+        post:
+            operationId: CozePostaudio_transcriptions
+            summary: 语音识别
+            description: 将音频文件转录为文本。
+            tags:
+                - developer_guides
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                body:
+                                    $ref: '#/components/schemas/File'
+                                    description: 需要语音识别的音频文件的二进制数据，具体文件格式和大小限制请参考接口说明部分。
+                            required:
+                                - body
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 状态码。 0代表调用成功。
+                                    data:
+                                        $ref: '#/components/schemas/AudioTranscriptionsData'
+                                        description: 语音文件对应的文本内容，即语音识别后转换成的文字结果。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: createTranscription
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/audio_transcriptions
+components:
+    schemas:
+        AudioTranscriptionsData:
+            type: object
+            properties:
+                text:
+                    type: string
+                    description: 语音文件对应的文本内容，即语音识别后转换成的文字结果。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

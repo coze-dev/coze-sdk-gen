@@ -1,0 +1,184 @@
+openapi: 3.0.3
+info:
+    title: 查询工作流的版本列表
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/list_workflow_version
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/workflows/:workflow_id/versions:
+        get:
+            operationId: CozeGetlist_workflow_version
+            summary: 查询工作流的版本列表
+            description: |-
+                查询工作流的版本列表。
+                你可以通过本 API 查询某个工作流的所有历史版本记录，包括版本号、版本描述、操作者和发布时间等。
+
+                查询工作流的版本列表。
+            tags:
+                - developer_guides
+            parameters:
+                - name: workflow_id
+                  in: path
+                  description: 待查询的 Workflow ID。 进入 Workflow 编排页面，在页面 URL 中，workflow 参数后的数字就是 Workflow ID。例如 https://www.coze.com/work_flow?space_id=42463&workflow_id=73505836754923，Workflow ID 为 73505836754923。
+                  required: true
+                  schema:
+                    type: string
+                - name: publish_status
+                  in: query
+                  description: 工作流的发布状态，用于筛选不同发布状态的版本。枚举值： all ：所有状态。 published_online ：（默认值）已发布的正式版。 unpublished_draft ：草稿状态。
+                  schema:
+                    type: string
+                - name: page_size
+                  in: query
+                  description: 查询结果分页展示时，此参数用于设置每页返回的数据量。取值范围为 1 ~ 30，默认为 10。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: page_token
+                  in: query
+                  description: 分页查询时的翻页标识，表示下一页的起始位置。默认为 ""，即从第一页数据开始返回。如果要查询下一页，需要使用上一次返回的 next_page_token 作为这次请求的入参。
+                  schema:
+                    type: string
+                - name: include_input_output
+                  in: query
+                  description: 是否在返回结果中返回输入和输出参数的结构体。 true：返回输入输出参数结构体 false：不返回输入输出参数结构体 默认值为 false。
+                  schema:
+                    type: boolean
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/OpenAPIListVersionData'
+                                        description: 包含工作流列表及其相关信息的对象，用于返回查询结果。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: GET
+            x-coze-permission: listVersion
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/list_workflow_version
+components:
+    schemas:
+        OpenAPIListVersionData:
+            type: object
+            properties:
+                has_more:
+                    type: boolean
+                    description: 标识当前返回的版本列表是否还有更多数据未返回。 true ：还有更多未返回的回调应用。 false：已返回所有数据。
+                items:
+                    type: array
+                    description: 工作流的历史版本列表。
+                    items:
+                        $ref: '#/components/schemas/OpenAPIVersionMetaInfo'
+                next_page_token:
+                    type: string
+                    description: 翻页标识，表示下一页的起始位置。当 has_more 为 true 时，表示还有更多数据未返回，可以通过此令牌获取下一页数据。首次请求不填或置空，后续翻页需使用上一次返回的 next_page_token。
+        OpenAPIParameter:
+            type: object
+        OpenAPIUserInfo:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 工作流操作者的扣子用户 UID。
+                name:
+                    type: string
+                    description: 工作流操作者的扣子用户名。
+        OpenAPIVersionMetaInfo:
+            type: object
+            properties:
+                created_at:
+                    type: string
+                    description: 工作流的创建时间，以 Unix 时间戳表示，单位为秒。
+                creator:
+                    $ref: '#/components/schemas/OpenAPIUserInfo'
+                    description: 工作流操作者的信息，包含操作者的用户 UID 和用户名。
+                description:
+                    type: string
+                    description: 工作流的描述。
+                input:
+                    $ref: '#/components/schemas/OpenAPIWorkflowInput'
+                    description: 工作流开始节点的输入参数的结构体。
+                output:
+                    $ref: '#/components/schemas/OpenAPIWorkflowOutput'
+                    description: 工作流结束节点的输出参数的结构体。
+                updated_at:
+                    type: string
+                    description: 工作流的最后更新时间，以 Unix 时间戳表示，单位为秒。
+                version:
+                    type: string
+                    description: 工作流的版本号，用于标识工作流的不同版本。
+                workflow_id:
+                    type: string
+                    description: 工作流 ID。
+        OpenAPIWorkflowInput:
+            type: object
+            properties:
+                parameters:
+                    type: object
+                    description: 开始节点的输入参数结构体。
+                    additionalProperties: true
+        OpenAPIWorkflowOutput:
+            type: object
+            properties:
+                content:
+                    type: string
+                    description: 工作流结束节点返回文本时，智能体回复内容的结构。仅当 terminate_plan 为 use_answer_content 时会返回。
+                parameters:
+                    type: object
+                    description: '工作流结束节点输出变量的数组。以键值对形式存储，格式为 { "变量名称": { "type": "变量类型" } }。'
+                    additionalProperties: true
+                terminate_plan:
+                    type: string
+                    description: 结束节点的返回类型，枚举值： return_variables：返回变量。 use_answer_content：返回文本。
+        Parameters:
+            type: object
+            properties:
+                default_value:
+                    type: string
+                    description: 该参数配置的默认值。
+                description:
+                    type: string
+                    description: 该参数的描述信息。
+                items:
+                    $ref: '#/components/schemas/OpenAPIParameter'
+                    description: 当参数类型为 array 时，该字段用于定义数组元素的子类型。
+                properties:
+                    type: object
+                    description: 当参数类型为 object时，该字段用于定义对象类型的子参数信息，采用键值对（key-value）结构，其中 key 为子参数的名称，value 为该子参数的定义信息（包含类型、是否必填等属性）。
+                    additionalProperties: true
+                required:
+                    type: boolean
+                    description: 标识输入参数是否为必填项。 true：该参数为必填项。 false：该参数为可选项。
+                type:
+                    type: string
+                    description: 该参数的类型。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

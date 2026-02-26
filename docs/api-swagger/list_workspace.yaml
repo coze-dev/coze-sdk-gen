@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info:
+    title: 查看空间列表
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/list_workspace
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/workspaces:
+        get:
+            operationId: CozeGetlist_workspace
+            summary: 查看空间列表
+            description: 查看当前扣子用户或指定扣子用户创建或加入的空间列表。
+            tags:
+                - developer_guides
+            parameters:
+                - name: page_num
+                  in: query
+                  description: 分页查询时的页码。默认为 1，即返回第一页数据。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: page_size
+                  in: query
+                  description: 分页大小，即每页返回多少个工作空间。默认为 20，最大为 50。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: enterprise_id
+                  in: query
+                  description: 企业 ID，你可以在组织管理 > 组织设置页面查看企业 ID。 !Image 如果指定 enterprise_id，则查询对应 EnterpriseId 中，当前账号创建或加入的所有工作空间。 如果不指定 enterprise_id，则查询当前账号创建和加入的所有工作空间，包括个人账号的工作空间和企业/团队账号的工作空间。 仅扣子企业版套餐中的用户支持该参数。个人免费版和个人进阶版不支持该参数。
+                  schema:
+                    type: string
+                - name: user_id
+                  in: query
+                  description: 扣子用户 ID，用于查询特定用户的工作空间信息。 你可以单击扣子编程左下角的头像，选择账号设置，在页面底部查看扣子用户的 UID。 !Image 如果同时指定 user_id 和 coze_account_id，则查询该用户在该组织下加入的工作空间。暂时不支持仅指定user_id 或仅指定coze_account_id。
+                  schema:
+                    type: string
+                - name: coze_account_id
+                  in: query
+                  description: 扣子编程的组织 ID，用于查询特定组织的工作空间信息。 扣子个人版中，coze_account_id 即为 user_id。 扣子企业版中，coze_account_id 为组织 ID。你可以在组织管理 > 组织设置页面查看对应的组织 ID，或通过查询组织列表 API 查询组织 ID。 !Image 如果同时指定 user_id 和 coze_account_id，则查询该用户在该组织下加入的工作空间。暂时不支持仅指定user_id 或仅指定coze_account_id。
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。 0 表示调用成功。 其他值表示调用失败。你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/OpenSpaceData'
+                                        description: 接口响应的业务信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细日志信息，用于问题排查和调试。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: GET
+            x-coze-permission: listWorkspace
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/list_workspace
+components:
+    schemas:
+        OpenSpace:
+            type: object
+            properties:
+                admin_uids:
+                    type: array
+                    description: 空间管理员的用户 UID 列表，用于标识当前空间的所有管理员。
+                    items:
+                        type: string
+                description:
+                    type: string
+                    description: 空间的描述信息。
+                enterprise_id:
+                    type: string
+                    description: 企业 ID。 个人账号下的工作空间，返回的企业 ID 为空。
+                icon_url:
+                    type: string
+                    description: 空间图标的 url 地址。
+                id:
+                    type: string
+                    description: 空间 ID。
+                joined_status:
+                    type: string
+                    description: 用户在空间中的加入状态。枚举值： joined：已加入
+                name:
+                    type: string
+                    description: 空间名称。
+                owner_uid:
+                    type: string
+                    description: 空间所有者的扣子用户 UID。
+                role_type:
+                    type: string
+                    description: 用户在空间中的角色。枚举值包括： owner：所有者 admin：管理员 member：成员
+                workspace_type:
+                    type: string
+                    description: 空间类型。枚举值包括： personal：个人空间 team：工作空间
+        OpenSpaceData:
+            type: object
+            properties:
+                total_count:
+                    type: integer
+                    format: int64
+                    description: 用户加入的空间总数。
+                workspaces:
+                    type: array
+                    description: 用户创建或加入的空间列表。
+                    items:
+                        $ref: '#/components/schemas/OpenSpace'
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

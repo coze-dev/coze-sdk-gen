@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info:
+    title: OAuth PKCE
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/oauth_pkce
+servers:
+    - url: https://www.coze.cn
+paths:
+    /api/permission/oauth2/authorize:
+        get:
+            operationId: CozeGetoauth_pkce
+            summary: OAuth PKCE
+            description: 对于移动设备、本地应用、单页应用等公开客户端，授权码授权模式存在一定安全风险，例如授权码拦截攻击等。对于此类应用，推荐使用 PKCE 扩展协议增强授权码流程的安全性。
+            tags:
+                - developer_guides
+            responses:
+                "200":
+                    description: Success
+            x-coze-original-method: GET
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/oauth_pkce

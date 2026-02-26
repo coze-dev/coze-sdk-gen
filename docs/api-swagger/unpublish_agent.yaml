@@ -1,0 +1,80 @@
+openapi: 3.0.3
+info:
+    title: 下架智能体
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/unpublish_agent
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/bots/:bot_id/unpublish:
+        post:
+            operationId: CozePostunpublish_agent
+            summary: 下架智能体
+            description: |-
+                智能体发布后，你可以调用本 API 从扣子编程官方渠道及自定义渠道下架智能体。
+
+                从扣子编程官方渠道及自定义渠道下架智能体。
+            tags:
+                - developer_guides
+            parameters:
+                - name: bot_id
+                  in: path
+                  description: 待下架的智能体的 ID。你可通过智能体开发页面 URL 中的 bot 参数获取智能体 ID 。例如 URL 为 https://www.coze.com/space/341/bot/73428668 时，智能体 ID 为 73428668。
+                  required: true
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                connector_id:
+                                    type: string
+                                    description: 待下架的渠道 ID。支持下架如下发布渠道中的智能体： 1024：API 渠道。 999：Chat SDK。 10000122：扣子商店。 10000113：微信客服。 10000120：微信服务号。 10000121：微信订阅号。 10000126：抖音小程序。 10000127：微信小程序。 10000011：飞书。 10000128：飞书多维表格。 10000117：掘金。 自定义渠道 ID。自定义渠道 ID 的获取方式如下：在扣子编程左下角单击头像，在账号设置 > 发布渠道 > 企业自定义渠道管理页面查看渠道 ID。
+                                unpublish_reason:
+                                    type: string
+                                    description: 下架渠道的原因说明，用于记录或说明为何执行下架操作。最大支持 1024个字符。 该原因会在扣子编程工作空间 > 发布管理页面对应智能体的渠道右侧展示，建议提供清晰易懂的下架原因。 !Image
+                            required:
+                                - connector_id
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: disconnectBot
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/unpublish_agent
+components:
+    schemas:
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

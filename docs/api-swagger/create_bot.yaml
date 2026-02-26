@@ -1,0 +1,242 @@
+openapi: 3.0.3
+info:
+    title: 创建智能体
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/create_bot
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/bot/create:
+        post:
+            operationId: CozePostcreate_bot
+            summary: 创建智能体
+            description: |-
+                创建一个新的智能体。
+                创建的智能体为未发布的草稿状态，创建后可以在扣子编程智能体列表中查看智能体。调用发布智能体 API 发布智能体后，才能通过查看智能体列表或查看智能体配置 API 查看此智能体。
+                通过 API 方式创建智能体时，支持为智能体设置所在空间、智能体名称和描述、头像、人设与回复逻辑及开场白。
+
+                调用接口创建一个新的智能体。
+            tags:
+                - developer_guides
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                description:
+                                    type: string
+                                    description: 智能体的描述信息。长度为 0~ 500 个字符。默认为空。
+                                icon_file_id:
+                                    type: string
+                                    description: 作为智能体头像的文件 ID。 未指定文件 ID 时，扣子编程默认为智能体指定一个头像。 如需使用自定义头像，应先通过上传文件接口上传本地文件，从接口响应中获取文件 ID。文件 ID 作为智能体头像时，有效期为永久有效。
+                                model_info_config:
+                                    $ref: '#/components/schemas/ModelInfoConfig'
+                                    description: 智能体的模型配置，用于指定智能体绑定的模型 ID 及相关参数。不同模型支持的配置参数及取值范围各不相同，可在扣子编程的模型列表中查看具体参数及取值范围。
+                                name:
+                                    type: string
+                                    description: 智能体的名称。长度为 1~ 20 个字符。
+                                onboarding_info:
+                                    $ref: '#/components/schemas/OnboardingInfo'
+                                    description: 智能体的开场白和预置问题相关设置。
+                                plugin_id_list:
+                                    $ref: '#/components/schemas/PluginIdList'
+                                    description: 智能体的插件配置。
+                                prompt_info:
+                                    $ref: '#/components/schemas/PromptInfo'
+                                    description: 智能体的人设与回复逻辑。
+                                space_id:
+                                    type: string
+                                    description: 智能体所在的空间的 Space ID。Space ID 是空间的唯一标识。 进入指定空间，空间页面 URL 中 w 参数后的数字就是 Space ID。例如https://code.coze.cn/w/75814654762959/projects，Space ID 为 75814654762959。
+                                suggest_reply_info:
+                                    $ref: '#/components/schemas/SuggestReplyInfo'
+                                    description: 配置智能体回复后是否提供用户问题建议。
+                                workflow_id_list:
+                                    $ref: '#/components/schemas/WorkflowIdList'
+                                    description: 智能体绑定的工作流 ID 列表，用于配置智能体关联的工作流。
+                            required:
+                                - name
+                                - space_id
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。 0 表示调用成功。 其他值表示调用失败。你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/CreateDraftBotData'
+                                        description: 已创建的智能体信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: createBot
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/create_bot
+components:
+    schemas:
+        CreateDraftBotData:
+            type: object
+            properties:
+                bot_id:
+                    type: string
+                    description: 创建的智能体 ID。
+        ModelInfoConfig:
+            type: object
+            properties:
+                api_mode:
+                    type: string
+                    description: 模型的 API 协议类型，用于指定智能体与模型交互时使用的 API 协议。枚举值： chat_api（默认值）：智能体需要在请求时带上对话历史作为上下文。适用于日常闲聊、基础咨询、简单文本生成等轻量化需求。 responses_api：模型新推出的 API，不仅延续了 Chat API 的易用性，还原生支持高效的上下文管理和前缀缓存。适用于需要多步推理等复杂任务链处理的场景。 仅部分模型支持responses_api协议，具体支持的模型请参见模型能力差异。
+                cache_type:
+                    type: string
+                    description: 为模型开启或关闭前缀缓存。开启前缀缓存后，扣子编程将自动缓存公共前缀内容，后续调用模型时无需重复发送，从而加快模型的响应速度并降低使用成本。具体用法请参见前缀缓存。枚举值： closed（默认值）：关闭前缀缓存。 prefix：开启前缀缓存。 套餐限制：仅扣子个人付费版、企业版（企业标准版、企业旗舰版）支持开启上下文前缀缓存。 模型限制：仅部分模型支持该参数，具体支持的模型请参见模型能力差异。 其他限制：该参数仅适用于 Context API 协议，Responses API 协议的前缀缓存需要通过 parameters 参数进行配置。
+                context_round:
+                    type: integer
+                    format: int32
+                    description: 携带上下文轮数。
+                frequency_penalty:
+                    type: number
+                    format: double
+                    description: 重复语句惩罚。
+                max_tokens:
+                    type: integer
+                    format: int32
+                    description: 最大回复长度。
+                model_id:
+                    type: string
+                    description: 智能体绑定的模型 ID。 在工作空间的模型管理页面中单击指定模型，模型详情页面 URL 中 model 参数后的数字就是模型 ID。例如https://www.coze.cn/space/7288/model/1716，模型 ID 为 1716。
+                parameters:
+                    type: object
+                    description: 你可以通过该参数配置模型深度思考和responses_api的上下文管理相关配置。 深度思考：开发者可以设置开启或关闭深度思考，从而灵活控制模型在交互过程中的 Token 消耗。 仅部分模型支持深度思考开关，具体支持的模型请参见模型能力差异。 深度思考 thinking_type 的值可以设置为： enabled：开启深度思考。智能体在与用户对话时会先输出一段思维链内容，通过逐步拆解问题、梳理逻辑，提升最终输出答案的准确性。但该模式会因额外的推理步骤消耗更多 Token。 开启深度思考后： 模型不支持 Function Call，即工具调用。 智能体不能使用插件、触发器、变量、数据库、文件盒子、不能添加工作流和对话流。 不支持使用插件和工作流相关的快捷指令。 disabled：关闭深度思考。智能体将直接生成最终答案，不再经过额外的思维链推理过程，可有效降低 Token 消耗，提升响应速度。 auto：启用自动模式后，模型会根据对话内容的复杂度，自动判断是否启用深度思考。 上下文管理：当 api_mode 为 responses_api时，支持配置前缀缓存、存储和存储时长。 仅部分模型支持前缀缓存，具体支持的模型请参见模型能力差异。 上下文管理的具体参数如下： caching.type：你可以设置为 enabled 或disabled，开启或关闭前缀缓存。默认为 disabled。前缀缓存的具体用法请参考前缀缓存。 store：你可以设置为 true 或 false，开启或关闭存储功能。开启后将自动存储输入、输出字段的消息，不存储思维链中的消息。默认为 true 。若需使用前缀缓存功能，需开启存储功能。 caching_expire_time：设置上下文缓存和存储的有效时长，单位：秒。最大为 259200 秒（3天）。默认值：259200。
+                    additionalProperties: true
+                presence_penalty:
+                    type: number
+                    format: double
+                    description: 重复主题惩罚。
+                response_format:
+                    type: string
+                    description: 输出格式。取值： text：文本。 markdown：Markdown格式。 json：JSON 格式。
+                sp_anti_leak:
+                    type: boolean
+                    description: 是否启用 SP 拼接防泄露指令，开启后，当用户尝试获取或复述系统内部的规则、提示词或其他敏感内容时，智能体将礼貌地拒绝用户的请求，确保机密信息不被泄露。 true：开启系统提示词防泄漏。 false：（默认值）关闭系统提示词防泄漏。
+                sp_current_time:
+                    type: boolean
+                    description: 是否在 SP 中包含当前时间信息。 true：智能体在与用户对话时能实时获取并提供准确的时间信息。 false：（默认值）在系统提示词中不会拼接当前时间信息。
+                temperature:
+                    type: number
+                    format: double
+                    description: 生成随机性。 部分模型不支持该参数，具体支持的模型请参见模型能力差异。
+                top_k:
+                    type: integer
+                    format: int32
+                    description: 生成文本时，采样候选集的大小。该参数控制模型在生成每个词时考虑的候选词数量，值越小生成的文本越保守和确定，值越大生成的文本越多样和随机。
+                top_p:
+                    type: number
+                    format: double
+                    description: Top P，即累计概率。该参数控制模型在生成文本时的采样策略，值越小生成的文本越保守和确定，值越大生成的文本越多样和随机。 部分模型不支持该参数，具体支持的模型请参见模型能力差异。
+            required:
+                - model_id
+        OnboardingInfo:
+            type: object
+            properties:
+                prologue:
+                    type: string
+                    description: 智能体的开场白。长度为 0~ 300 个字符。默认无开场白。 开场白中如果设置了用户名称变量{{user_name}}，API 场景中需要业务方自行处理，例如展示开场白时将此变量替换为业务侧的用户名称。
+                suggested_questions:
+                    type: array
+                    description: 智能体的开场白预置问题。每个问题长度为 0~ 50 个字符，问题数量无限制。默认无开场白预置问题。
+                    items:
+                        type: string
+        PluginIdInfo:
+            type: object
+            properties:
+                api_id:
+                    type: string
+                    description: 智能体绑定的插件工具 ID。 在扣子编程中，打开资源库页面，选择目标插件，单击插件下的任意工具，页面 URL 中 tool 参数后的数字是插件工具 ID。例如 https://www.coze.cn/space/731762895654132/plugin/735057533610021/tool/735057536617362，插件工具 ID 为 735057536617362。
+                plugin_id:
+                    type: string
+                    description: 智能体绑定的插件 ID。 在扣子编程中，打开资源库页面，选择目标插件，页面 URL 中 plugin 参数后的数字是插件 ID。例如 https://www.coze.cn/space/728826510807216/plugin/731198934927553，插件 ID 为 731198934927553。
+            required:
+                - api_id
+                - plugin_id
+        PluginIdList:
+            type: object
+            properties:
+                id_list:
+                    type: array
+                    description: 智能体的插件列表配置。
+                    items:
+                        $ref: '#/components/schemas/PluginIdInfo'
+        PrefixPromptInfo:
+            type: object
+            properties:
+                dynamic_prompt:
+                    type: string
+                    description: 非缓存提示词，动态变化的个性化信息，仅针对当前请求生效。
+                prefix_prompt:
+                    type: string
+                    description: 缓存提示词，大量重复出现的固定规则、模板框架或背景信息，用于指引大模型输出格式与风格。扣子编程会将其缓存并复用，大模型无需重新解析这部分固定信息。
+        PromptInfo:
+            type: object
+            properties:
+                prefix_prompt_info:
+                    $ref: '#/components/schemas/PrefixPromptInfo'
+                    description: 通过 cache_type 或 parameters.caching.type开启前缀缓存后，你需要通过该参数设置缓存提示词（prefix_prompt）和 非缓存提示词（dynamic_prompt）。不支持通过 prompt 参数设置提示词。
+                prompt:
+                    type: string
+                    description: 智能体的人设与回复逻辑。长度为 0~ 20,000 个字符。默认为空。 开启前缀缓存后，不支持通过 prompt 参数设置提示词，需要通过 prefix_prompt_info 参数设置提示词。
+                prompt_mode:
+                    type: string
+                    description: 提示词模式，用于指定智能体的人设与回复逻辑的配置方式。枚举值： standard（默认值）：标准模式。未开启前缀缓存时使用该模式。 prefix：前缀缓存模式，提示词会分为缓存提示词和非缓存提示词两部分。开启前缀缓存后需要设置为该模式。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+        SuggestReplyInfo:
+            type: object
+            properties:
+                customized_prompt:
+                    type: string
+                    description: 关于用户问题建议的 Prompt。当 reply_mode 设置为 customized时，需要设置提示词内容。智能体会根据该提示词生成用户问题建议。
+                reply_mode:
+                    type: string
+                    description: 配置智能体回复后，是否提供用户问题建议。枚举值： enable：在智能体回复后，提供最多 3 条用户问题建议。 disable：在每次智能体回复后，不会提供任何用户问题建议。 customized：开启用户问题建议，并根据用户自定义的 Prompt 提供用户问题建议。你需要在 customized_prompt 参数中设置关于用户问题建议的 Prompt。
+        WorkflowIdInfo:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 智能体绑定的工作流 ID。 进入工作流的编排页面，在页面 URL 中，workflow 参数后的数字就是工作流 ID。例如 https://www.coze.com/work_flow?space_id=42463&workflow_id=73505836754923，工作流 ID 为 73505836754923。
+            required:
+                - id
+        WorkflowIdList:
+            type: object
+            properties:
+                ids:
+                    type: array
+                    description: 智能体的工作流列表配置。
+                    items:
+                        $ref: '#/components/schemas/WorkflowIdInfo'

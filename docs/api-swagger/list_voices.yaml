@@ -1,0 +1,174 @@
+openapi: 3.0.3
+info:
+    title: 查看音色列表
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/list_voices
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/audio/voices:
+        get:
+            operationId: CozeGetlist_voices
+            summary: 查看音色列表
+            description: 查看可用的音色列表，包括系统预置音色和自定义音色。
+            tags:
+                - developer_guides
+            parameters:
+                - name: filter_system_voice
+                  in: query
+                  description: 查看音色列表时是否过滤掉系统音色。 true：过滤系统音色 false：（默认）不过滤系统音色
+                  schema:
+                    type: boolean
+                - name: model_type
+                  in: query
+                  description: 音色模型的类型，如果不填，默认都返回。可选值包括： big：大模型 small：小模型
+                  schema:
+                    type: string
+                - name: voice_state
+                  in: query
+                  description: 音色克隆状态，用于筛选特定状态的音色。可选值包括： init：待克隆。 cloned：（默认值）已克隆。 all：全部。
+                  schema:
+                    type: string
+                - name: page_num
+                  in: query
+                  description: 查询结果分页展示时，此参数用于设置查看的页码。最小值为 1，默认为 1。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: page_size
+                  in: query
+                  description: 查询结果分页展示时，此参数用于设置每页返回的数据量。取值范围为 1~100，默认为 100。
+                  schema:
+                    type: integer
+                    format: int32
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 状态码。 0代表调用成功。
+                                    data:
+                                        $ref: '#/components/schemas/ListVoiceData'
+                                        description: 音色的详细信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 本次请求的详细信息。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: GET
+            x-coze-permission: listVoice
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/list_voices
+components:
+    schemas:
+        EmotionInfo:
+            type: object
+            properties:
+                display_name:
+                    type: string
+                    description: 音色支持的情感类型的中文显示名称，用于直观展示情感类型。
+                emotion:
+                    type: string
+                    description: 音色支持的情感类型标识符，仅当音色为多情感音色时返回。枚举值如下： happy：开心。 sad：悲伤。 angry：愤怒。 surprised：惊讶。 fear：恐惧。 hate：厌恶。 excited：兴奋。 coldness：冷漠。 neutral：中性。
+                emotion_scale_interval:
+                    $ref: '#/components/schemas/Interval'
+                    description: 情感强度的取值范围，用于量化情感的强度。
+        Interval:
+            type: object
+            properties:
+                default:
+                    type: number
+                    format: double
+                    description: 情感强度的默认值。
+                max:
+                    type: number
+                    format: double
+                    description: 情感强度的最大值。
+                min:
+                    type: number
+                    format: double
+                    description: 情感强度的最小值。
+        ListVoiceData:
+            type: object
+            properties:
+                has_more:
+                    type: boolean
+                    description: 标识是否还有未返回的音色数据。 true ：当前返回的音色列表未包含所有符合条件的音色。 false：表示已返回所有符合条件的音色数据。
+                voice_list:
+                    type: array
+                    description: 音色列表详情。
+                    items:
+                        $ref: '#/components/schemas/OpenAPIVoiceData'
+        OpenAPIVoiceData:
+            type: object
+            properties:
+                available_training_times:
+                    type: integer
+                    format: int32
+                    description: 当前音色还可训练的次数。包括首次复刻音色在内，每个自定义音色最多被训练 10 次。
+                create_time:
+                    type: integer
+                    format: int32
+                    description: 音色的创建时间，格式为 11 位的 Unixtime 时间戳。
+                is_system_voice:
+                    type: boolean
+                    description: 标识当前音色是否为系统预置音色。 true：系统预置音色。 false：用户自定义音色。
+                language_code:
+                    type: string
+                    description: 此音色的语种代号。
+                language_name:
+                    type: string
+                    description: 此音色的语种名称。
+                model_name:
+                    type: string
+                    description: 模型类型字符串
+                model_type:
+                    type: string
+                    description: 音色模型的类型，枚举值： big：大模型 small：小模型
+                name:
+                    type: string
+                    description: 音色的名称。
+                preview_audio:
+                    type: string
+                    description: 此音色的预览音频。通常是一个公开可访问的网络地址。
+                preview_text:
+                    type: string
+                    description: 此音色预览音频对应的文案。
+                state:
+                    type: string
+                    description: 音色克隆状态。枚举值： init：待克隆。 cloned：已克隆。
+                support_emotions:
+                    type: array
+                    description: 音色支持的情感类型列表，仅当音色为多情感音色时返回。
+                    items:
+                        $ref: '#/components/schemas/EmotionInfo'
+                update_time:
+                    type: integer
+                    format: int32
+                    description: 音色的更新时间，格式为 11 位的 Unixtime 时间戳。
+                voice_id:
+                    type: string
+                    description: 音色的 ID。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

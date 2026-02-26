@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+    title: 复刻音色
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/clone_voices
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/audio/voices/clone:
+        post:
+            operationId: CozePostclone_voices
+            summary: 复刻音色
+            description: 复刻指定音频文件中人声的音色。
+            tags:
+                - developer_guides
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                language:
+                                    type: string
+                                    description: 音频文件中的语种，支持以下语种： zh：中文 en：英文 ja：日语 es：西班牙语 id：印度尼西亚语 pt：葡萄牙语
+                                preview_text:
+                                    type: string
+                                    description: 预览音频的文案。如果成功复刻音色，扣子编程会根据此文案生成一段新音色的预览音频。 未指定文案时，使用默认文案“你好，我是你的专属AI克隆声音，希望未来可以一起好好相处哦"。
+                                space_id:
+                                    type: string
+                                    description: 克隆音色保存的扣子编程工作空间 ID，默认保存在当前账号的个人空间中。 获取方式：进入指定空间，空间页面 URL 中 w 参数后的数字就是 工作空间 ID。例如https://code.coze.cn/w/75814654762959/projects，工作空间 ID 为 75814654762959。
+                                text:
+                                    type: string
+                                    description: 音频文件对应的文案。需要和音频文件中人声朗读的内容大致一致，扣子编程服务会对比音频与该文本的差异，若差异过大会报错 1109 WERError。最大长度为 1024 字节。
+                                voice_id:
+                                    type: string
+                                    description: 需要训练的音色 ID，扣子编程支持重新复刻音色，也就是训练音色，训练后的音色会覆盖原有的音色。 仅在训练音色时需要指定此参数。如果复刻一个新的音色，则无需指定此参数，扣子编程会为新音色分配一个音色 ID。
+                                voice_name:
+                                    type: string
+                                    description: 此音色的名称，长度限制为 128 字节。
+                            required:
+                                - voice_name
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 状态码。 0代表调用成功。
+                                    data:
+                                        $ref: '#/components/schemas/CloneVoiceData'
+                                        description: 新音色的详细信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: createVoice
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/clone_voices
+components:
+    schemas:
+        CloneVoiceData:
+            type: object
+            properties:
+                voice_id:
+                    type: string
+                    description: 复刻后的音色 ID，后续语音生成或重新克隆音色时需要传入该音色 ID。请妥善保存该 ID。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

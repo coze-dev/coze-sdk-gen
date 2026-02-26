@@ -1,0 +1,74 @@
+openapi: 3.0.3
+info:
+    title: 添加发布平台
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/install_channel
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/connectors/:connector_id/install:
+        post:
+            operationId: CozePostinstall_channel
+            summary: 添加发布平台
+            description: 为指定空间添加一个发布渠道。
+            tags:
+                - developer_guides
+            parameters:
+                - name: connector_id
+                  in: path
+                  description: 渠道 ID。 企业自定义渠道：在我的>设置>发布渠道>我的渠道管理页面查看当前登录用户已创建的渠道列表，列表中可查看渠道 ID。企业自定义渠道入驻扣子编程的方式可参考渠道入驻文档。 公开渠道：联系公开平台的管理员获取渠道 ID。
+                  required: true
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                workspace_id:
+                                    type: string
+                                    description: 需要添加新渠道的工作空间 ID。空间 ID 是空间的唯一标识。 进入指定空间，空间页面 URL 中 w 参数后的数字就是 工作空间 ID。例如https://code.coze.cn/w/75814654762959/projects，工作空间 ID 为 75814654762959。
+                            required:
+                                - workspace_id
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。 0 表示调用成功。 其他值表示调用失败。你可以通过 msg 字段判断详细的错误原因。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 本次请求的详细信息。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: installConnector
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/install_channel
+components:
+    schemas:
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

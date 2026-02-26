@@ -1,0 +1,254 @@
+openapi: 3.0.3
+info:
+    title: 提交工具执行结果
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/chat_submit_tool_outputs
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v3/chat/submit_tool_outputs:
+        post:
+            operationId: CozePostchat_submit_tool_outputs
+            summary: 提交工具执行结果
+            description: |-
+                调用此接口提交工具执行的结果。
+
+                调用接口提交工具执行结果。
+            tags:
+                - developer_guides
+            parameters:
+                - name: conversation_id
+                  in: query
+                  description: Conversation ID，即会话的唯一标识。可以在发起对话接口 Response 中查看 conversation_id 字段。
+                  required: true
+                  schema:
+                    type: string
+                - name: chat_id
+                  in: query
+                  description: Chat ID，即对话的唯一标识。可以在发起对话接口 Response 中查看 id 字段，如果是流式响应，则在 Response 的 chat 事件中查看 id 字段。
+                  required: true
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考鉴权方式。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                stream:
+                                    type: boolean
+                                    description: 是否开启流式响应。 true：填充之前对话中的上下文，继续流式响应。 false：（默认）非流式响应，仅回复对话的基本信息。
+                                tool_outputs:
+                                    type: array
+                                    description: 工具执行结果。
+                                    items:
+                                        $ref: '#/components/schemas/ToolOutput'
+                            required:
+                                - tool_outputs
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/ChatV3ChatDetail'
+                                        description: 本次对话的基本信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 响应的详细信息。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: submitToolChat
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/chat_submit_tool_outputs
+components:
+    schemas:
+        ChatV3ChatDetail:
+            type: object
+            properties:
+                bot_id:
+                    type: string
+                    description: 该会话所属的智能体的 ID。
+                completed_at:
+                    type: integer
+                    format: int32
+                    description: 对话结束的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+                conversation_id:
+                    type: string
+                    description: 会话 ID，即会话的唯一标识。
+                created_at:
+                    type: integer
+                    format: int32
+                    description: 对话创建的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+                failed_at:
+                    type: integer
+                    format: int32
+                    description: 对话失败的时间。格式为 10 位的 Unixtime 时间戳，单位为秒。
+                id:
+                    type: string
+                    description: 对话 ID，即对话的唯一标识。
+                last_error:
+                    $ref: '#/components/schemas/LastError'
+                    description: 对话运行异常时，此字段中返回详细的错误信息，包括： Code：错误码。Integer 类型。0 表示成功，其他值表示失败。 Msg：错误信息。String 类型。
+                meta_data:
+                    type: object
+                    description: 发起对话时的附加消息，用于传入使用方的自定义数据，查看对话详情时也会返回此附加消息。 自定义键值对，应指定为 Map 对象格式。长度为 16 对键值对，其中键（key）的长度范围为 1～64 个字符，值（value）的长度范围为 1～512 个字符。
+                    additionalProperties: true
+                required_action:
+                    $ref: '#/components/schemas/RequiredAction'
+                    description: 当对话状态为 requires_action 时，此字段包含需要进一步处理的信息详情，用于继续对话。
+                section_id:
+                    type: string
+                    description: 上下文片段 ID。每次调用清除上下文 API 都会生成一个新的 section_id。
+                status:
+                    type: string
+                    description: 对话的运行状态。取值为： created：对话已创建。 in_progress：智能体正在处理中。 completed：智能体已完成处理，本次对话结束。 failed：对话失败。 requires_action：对话中断，需要进一步处理。 canceled：对话已取消。
+                usage:
+                    $ref: '#/components/schemas/Usage'
+                    description: 预留字段，无需关注，具体消耗的 Token 请查看火山账单。
+        ChatV3MessageDetail:
+            type: object
+            properties:
+                bot_id:
+                    type: string
+                    description: 编写此消息的智能体 ID。此参数仅在对话产生的消息中返回。
+                chat_id:
+                    type: string
+                    description: Chat ID。此参数仅在对话产生的消息中返回。
+                content:
+                    type: string
+                    description: 消息的内容，支持纯文本、多模态（文本、图片、文件混合输入）、卡片等多种类型的内容。 当 role 为 user 时，支持返回多模态内容。 当 role 为 assistant 时，只支持返回纯文本内容。
+                content_type:
+                    type: string
+                    description: 消息内容的类型，取值包括： text：文本。 object_string：多模态内容，即文本和文件的组合、文本和图片的组合。 card：卡片。此枚举值仅在接口响应中出现，不支持作为入参。
+                conversation_id:
+                    type: string
+                    description: 此消息所在的会话 ID。
+                created_at:
+                    type: integer
+                    format: int64
+                    description: 消息的创建时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+                id:
+                    type: string
+                    description: 智能体回复的消息的 Message ID，即消息的唯一标识。
+                meta_data:
+                    type: object
+                    description: 创建消息时的附加消息，查看消息列表时也会返回此附加消息。
+                    additionalProperties: true
+                reasoning_content:
+                    type: string
+                    description: 模型的思维链（CoT），展示模型如何将复杂问题逐步分解为多个简单步骤并推导出最终答案。仅当模型支持深度思考、且智能体开启了深度思考时返回该字段，当前支持深度思考的模型请参考模型能力差异。
+                role:
+                    type: string
+                    description: 发送这条消息的实体。取值： user：代表该条消息内容是用户发送的。 assistant：代表该条消息内容是智能体发送的。
+                section_id:
+                    type: string
+                    description: 上下文片段 ID。每次调用清除上下文 API 都会生成一个新的 section_id。
+                type:
+                    type: string
+                    description: 消息类型。 question：用户输入内容。 answer：智能体返回给用户的消息内容，支持增量返回。如果工作流绑定了 messge 节点，可能会存在多 answer 场景，此时可以用流式返回的结束标志来判断所有 answer 完成。 function_call：智能体对话过程中调用函数（function call）的中间结果。 tool_output：调用工具 （function call）后返回的结果。 tool_response：调用工具 （function call）后返回的结果。 follow_up：如果在智能体上配置打开了用户问题建议开关，则会返回推荐问题相关的回复内容。 verbose：多 answer 场景下，服务端会返回一个 verbose 包，对应的 content 为 JSON 格式，content.msg_type =generate_answer_finish 代表全部 answer 回复完成。 仅发起对话（v3）接口支持将此参数作为入参，且： 如果 autoSaveHistory=true，type 支持设置为 question 或 answer。 如果 autoSaveHistory=false，type 支持设置为 question、answer、function_call、tool_output、tool_response。 其中，type=question 只能和 role=user 对应，即仅用户角色可以且只能发起 question 类型的消息。详细说明可参考消息 type 说明。
+                updated_at:
+                    type: integer
+                    format: int64
+                    description: 消息的更新时间，格式为 10 位的 Unixtime 时间戳，单位为秒（s）。
+        InterruptFunction:
+            type: object
+            properties:
+                arguments:
+                    type: string
+                    description: 当对话状态为 requires_action时，此字段表示需要调用的工具或函数的参数，通常为 JSON 格式的字符串，用于指定工具的具体执行参数。
+                name:
+                    type: string
+                    description: 当对话状态为 requires_action 时，此字段表示需要调用的工具或函数的名称，用于继续对话。通常与 arguments字段配合使用，指定工具的具体执行方法。
+        InterruptPlugin:
+            type: object
+            properties:
+                function:
+                    $ref: '#/components/schemas/InterruptFunction'
+                    description: 当对话状态为 requires_action时，此字段表示需要调用的工具或函数的定义，包含函数名称和参数。通常用于指定工具的具体执行方法。
+                id:
+                    type: string
+                    description: 上报运行结果的 ID。
+                type:
+                    type: string
+                    description: 工具类型，枚举值包括： function：待执行的方法，通常是端插件。触发端插件时会返回此枚举值。 reply_message：待回复的选项。触发工作流问答节点时会返回此枚举值。
+        LastError:
+            type: object
+            properties:
+                code:
+                    type: integer
+                    format: int32
+                    description: 状态码。 0 代表调用成功。
+                msg:
+                    type: string
+                    description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。
+        RequiredAction:
+            type: object
+            properties:
+                submit_tool_outputs:
+                    $ref: '#/components/schemas/SubmitToolOutputs'
+                    description: 当对话状态为 requires_action时，此字段包含需要提交的工具输出信息，用于继续对话。通常包含一个工具调用列表，每个工具调用包含工具类型和参数。
+                type:
+                    type: string
+                    description: 额外操作的类型，枚举值： submit_tool_outputs：需要提交工具输出以继续对话。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+        SubmitToolOutputs:
+            type: object
+            properties:
+                tool_calls:
+                    type: array
+                    description: 当对话状态为 requires_action 时，此字段包含需要提交的工具调用列表，每个工具调用包含工具类型和参数。
+                    items:
+                        $ref: '#/components/schemas/InterruptPlugin'
+        ToolOutput:
+            type: object
+            properties:
+                output:
+                    type: string
+                    description: '工具的执行结果。 如果端插件工具某个请求参数包含 Image 等文件类型，可以先调用上传文件 API 获取 file_id，然后调用此 API 在 output 中以序列化之后的 JSON 格式传入 file_id。例如入参 file 为文件类型，文件的 file_id 为 12345，则 output 可以指定为 "output": "{\"file\": \"12345\"}"。'
+                tool_call_id:
+                    type: string
+                    description: 上报运行结果的 ID。你可以在发起对话（V3）接口响应的 tool_calls 字段下查看此 ID。
+            required:
+                - output
+                - tool_call_id
+        Usage:
+            type: object
+            properties:
+                input_count:
+                    type: integer
+                    format: int32
+                    description: 输入内容所消耗的 Token 数，包含对话上下文、系统提示词、用户当前输入等所有输入类的 Token 消耗。
+                output_count:
+                    type: integer
+                    format: int32
+                    description: 大模型输出的内容所消耗的 Token 数。
+                token_count:
+                    type: integer
+                    format: int32
+                    description: 本次 API 调用消耗的 Token 总量，包括输入和输出两部分的消耗。

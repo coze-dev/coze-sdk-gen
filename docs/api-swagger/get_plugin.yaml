@@ -1,0 +1,108 @@
+openapi: 3.0.3
+info:
+    title: 查询插件详情
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/get_plugin
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/plugins/:plugin_id:
+        get:
+            operationId: CozeGetget_plugin
+            summary: 查询插件详情
+            description: |-
+                查询指定插件的详细信息。
+
+                查询插件详细信息。
+            tags:
+                - developer_guides
+            parameters:
+                - name: plugin_id
+                  in: path
+                  description: 待查询插件详情的插件 ID。支持查询官方插件、三方插件和资源库插件。 获取插件 ID 的方法如下： 调用查询插件列表 API 获取对应的插件 ID，即 entity_id 的值。 资源库自定义插件：在插件编辑页面的 URL 中获取插件 ID。例如在 URL https://www.coze.cn/space/74982048832804/plugin/75331489586134中，plugin 后面的数字即为插件 ID。 不支持通过插件商店 URL 中的插件商品 ID 查询插件详情。
+                  required: true
+                  schema:
+                    type: string
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。你可以在扣子编程中生成访问令牌，详细信息，参考准备工作。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    data.created_at:
+                                        type: number
+                                        description: 插件创建时间，以 Unix 时间戳格式表示，单位为秒。
+                                    data.icon_url:
+                                        type: string
+                                        description: 插件图标的 URL 链接。
+                                    data.is_call_available:
+                                        type: boolean
+                                        description: 标识该插件当前是否可被调用。 true：插件可正常调用。 false：暂时无法调用，三方付费插件未签署协议。
+                                    data.mcp_json:
+                                        type: string
+                                        description: MCP Server 的配置信息，包含 MCP 服务器信息、插件 URL 和访问令牌。 Authorization 中的访问令牌默认生成的是临时访问凭证，有效期为 1 天。 如需使用长期凭证，在 Trae 等支持 MCP Server 的平台配置 MCP 信息时，需要手动替换为你在扣子编程中生成的访问令牌。支持个人访问令牌（PAT）、服务访问令牌（SAT）和 OAuth 鉴权，具体参考获取访问令牌。
+                                    data.name_for_model:
+                                        type: string
+                                        description: 插件在模型内部使用的唯一标识符，用于AI模型在调用插件时快速识别和定位目标插件。
+                                    data.tools:
+                                        type: array
+                                        description: 插件工具的详细信息，包括名称、描述、输入参数和返回参数。
+                                        items:
+                                            $ref: '#/components/schemas/Tools'
+                                    data.updated_at:
+                                        type: number
+                                        description: 插件最后更新时间，以 Unix 时间戳格式表示，单位为秒。
+            x-coze-original-method: GET
+            x-coze-permission: Plugin.getPlugin
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/get_plugin
+components:
+    schemas:
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。
+        Tools:
+            type: object
+            properties:
+                code:
+                    type: integer
+                    format: int64
+                    description: 调用状态码。0 表示调用成功，其他值表示调用失败，你可以通过 msg 字段判断详细的错误原因。
+                description:
+                    type: string
+                    description: 插件工具的描述。
+                detail:
+                    $ref: '#/components/schemas/ResponseDetail'
+                    description: 包含请求的详细信息的对象，主要用于记录请求的日志 ID 以便于排查问题。
+                inputSchema:
+                    type: object
+                    description: 由插件开发者定义的插件工具的输入参数的数据结构，包含参数名称、参数说明、必填项、格式约束等。
+                    additionalProperties: true
+                msg:
+                    type: string
+                    description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+                name:
+                    type: string
+                    description: 插件工具的名称。
+                outputSchema:
+                    type: object
+                    description: 由插件开发者定义的插件工具的输出参数的数据结构，用于描述当前插件工具调用成功后，返回数据的结构，如字段名称、类型、嵌套关系等。
+                    additionalProperties: true
+                参数:
+                    type: string
+                    description: 说明

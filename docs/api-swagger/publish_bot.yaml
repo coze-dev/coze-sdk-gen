@@ -1,0 +1,93 @@
+openapi: 3.0.3
+info:
+    title: 发布智能体
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/publish_bot
+servers:
+    - url: https://api.coze.cn
+paths:
+    /v1/bot/publish:
+        post:
+            operationId: CozePostpublish_bot
+            summary: 发布智能体
+            description: |-
+                将指定智能体发布到 API、Chat SDK 或者自定义渠道。
+
+                调用接口将指定智能体发布到 API、Chat SDK 或者自定义渠道。
+            tags:
+                - developer_guides
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: 用于验证客户端身份的访问令牌。
+                  required: true
+                  schema:
+                    type: string
+                - name: Content-Type
+                  in: header
+                  description: 解释请求正文的方式。
+                  schema:
+                    type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                bot_id:
+                                    type: string
+                                    description: 要发布的智能体 ID。 进入智能体的开发页面，开发页面 URL 中 bot 参数后的数字就是智能体 ID。例如https://www.coze.com/space/341/bot/73428668，bot ID 为73428668。
+                                connector_ids:
+                                    type: array
+                                    description: '智能体的发布渠道 ID 列表。目前支持通过此 API 将智能体发布为 API、Chat SDK 以及自定义渠道。 API: 1024 ChatSDK: 999 自定义渠道: 自定义渠道 ID。自定义渠道 ID 的获取方式如下：在扣子编程左下角单击头像，在账号设置 > 发布渠道 > 企业自定义渠道管理页面查看渠道 ID。'
+                                    items:
+                                        type: string
+                                connectors:
+                                    type: object
+                                    description: 智能体发布自定义渠道时，你可以通过该参数传递自定义参数给渠道。例如，设置将智能体发布到指定设备。格式：{"渠道 ID":{"key":"value"}}，其中 key 为绑定设备 API 中设置的 key 值，value 需要经 JSON 序列化。 智能体发布自定义渠道时，需要同时发布 API 渠道。
+                                    additionalProperties: true
+                            required:
+                                - bot_id
+                                - connector_ids
+            responses:
+                "200":
+                    description: Success
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    code:
+                                        type: integer
+                                        format: int64
+                                        description: 调用状态码。 0 表示调用成功。 其他值表示调用失败。你可以通过 msg 字段判断详细的错误原因。
+                                    data:
+                                        $ref: '#/components/schemas/PublishDraftBotData'
+                                        description: 接口响应的业务信息。
+                                    detail:
+                                        $ref: '#/components/schemas/ResponseDetail'
+                                        description: 包含请求的详细日志信息，用于问题排查和调试。
+                                    msg:
+                                        type: string
+                                        description: 状态信息。API 调用失败时可通过此字段查看详细错误信息。 状态码为 0 时，msg 默认为空。
+            x-coze-original-method: POST
+            x-coze-permission: publish
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/publish_bot
+components:
+    schemas:
+        PublishDraftBotData:
+            type: object
+            properties:
+                bot_id:
+                    type: string
+                    description: 发布的智能体的 ID。
+                version:
+                    type: string
+                    description: 智能体的版本号，用于标识智能体的当前版本号。
+        ResponseDetail:
+            type: object
+            properties:
+                logid:
+                    type: string
+                    description: 本次请求的日志 ID。如果遇到异常报错场景，且反复重试仍然报错，可以根据此 logid 及错误码联系扣子团队获取帮助。详细说明可参考获取帮助和技术支持。

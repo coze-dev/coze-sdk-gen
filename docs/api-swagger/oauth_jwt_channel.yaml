@@ -1,0 +1,65 @@
+openapi: 3.0.3
+info:
+    title: OAuth JWT 授权（渠道场景）
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/oauth_jwt_channel
+servers:
+    - url: https://api.coze.cn
+paths:
+    /api/permission/oauth2/token:
+        post:
+            operationId: CozePostoauth_jwt_channel
+            summary: OAuth JWT 授权（渠道场景）
+            description: |-
+                扣子编程提供标准的生态对接方式和多种对接方案，支持网站、App、应用市场、手机等硬件厂商作为第三方渠道入驻。渠道入驻场景下，渠道侧需要通过 JWT 授权流程获取渠道的 OAuth Access Token。智能体发布到第三方渠道后，可以使用此渠道专属的 OAuth Access Token 调用扣子 OpenAPI，例如查看智能体信息、和智能体对话等。
+                关于发布到自定义渠道的详细说明及步骤，可参考渠道入驻概述。
+                # 示例项目源码
+                使用 JWT 进行鉴权的步骤较为复杂，扣子编程提供了 Python 等多语言 SDK，能够有效简化鉴权流程，支持扣子编程的各种鉴权模式。推荐使用扣子 SDK 实现鉴权。以下是基于扣子 SDK 的 OAuth JWT 授权的示例代码，供参考：
+                # 准备工作
+                创建一个渠道类型的 OAuth 应用，并在渠道侧实现 JWT 的授权流程、具备获取 OAuth Access Token 的能力。
+                在扣子企业版（企业标准版、企业旗舰版）中，仅超级管理员和管理员有权限创建、编辑、删除 OAuth 应用，以及对应用进行授权操作。
+                1. 创建渠道类型的 OAuth 应用。
+                1. 登录扣子编程。
+                2. 在左侧导航栏选择 API & SDK。
+                3. 在顶部单击授权 > OAuth 应用页签。
+                4. 在 OAuth 应用页面右上角单击创建新应用，填写应用的基本信息，并单击创建并继续。
+                5. 填写应用的配置信息。
+                6. 单击确定，完成配置。
+                2. 完成 OAuth 应用授权。
+                授权后，此 OAuth 应用生成的 OAuth Access Token 将具备 OAuth 应用指定的操作权限，例如调用查看智能体信息等 OpenAPI。后续还需要为应用绑定自定义发布渠道，此 OAuth Access Token 将具备所有发布到这个渠道中的智能体的操作权限，例如调用查看智能体信息 API 接口，查看指定智能体的信息。
+                2. 在授权 > OAuth 应用页面找到需要授权的应用。
+                4. 在对应的操作列单击编辑图标。
+                5. 在编辑应用页面左下角单击授权。
+                授权页将显示应用名称、权限列表等重要信息，请务必认真核对信息，确认无误后单击授权。
+                # 授权流程
+                你需要在渠道的服务端中实现 JWT 授权流程，通过 OAuth 应用的私钥签署 JWT，并获取 Oauth Access Token。扣子编程的 JWT 生成方式及各部分参数定义沿用业界统一流程规范。
+                授权流程如下：
+                1. 应用程序通过公钥和私钥签署 JWT。
+                2. 应用程序通过 API：通过 JWT 获取 Oauth Access Token API，获取访问令牌。
+                3. 应用程序根据访问令牌调用扣子 API。
+                详细步骤如下：
+            tags:
+                - developer_guides
+            responses:
+                "200":
+                    description: Success
+            x-coze-original-method: POST
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/oauth_jwt_channel
+components:
+    schemas:
+        HeaderPayload:
+            type: object
+            properties:
+                alg:
+                    type: string
+                    description: 签名使用的加密算法。固定为 RS256，即非对称加密算法，一种基于 RSA（非对称加密算法）+ SHA256（安全哈希函数）的签名算法，该算法使用私钥进行签名，公钥进行验证。
+                kid:
+                    type: string
+                    description: OAuth 应用的公钥指纹，可以在OAuth 应用页面找到这个应用，在操作列单击编辑图标，进入配置页面查看公钥指纹。
+                typ:
+                    type: string
+                    description: 固定为 JWT。
+            required:
+                - alg
+                - kid
+                - typ

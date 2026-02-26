@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+    title: OAuth 授权码授权
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/oauth_code
+servers:
+    - url: https://www.coze.cn
+paths:
+    /api/permission/oauth2/authorize:
+        get:
+            operationId: CozeGetoauth_code
+            summary: OAuth 授权码授权
+            description: |-
+                扣子编程支持应用程序通过 OAuth 授权码授权（Authorization Code Grant）的方式调用扣子编程 API。用户通过浏览器访问包含扣子编程功能的 Web 应用程序时，Web 应用程序重定向用户到扣子编程服务端以获取授权码（code），然后使用授权码向扣子编程服务端交换访问令牌。例如 Web 应用程序通过扣子编程 API 封装了扣子编程的查看 Bot 的详细信息和指定 Bot 对话等功能，用户使用这些功能之前，需要经由扣子编程服务端鉴权。
+                通过 OAuth 授权码方式授权时，应用程序需要拥有可通过 Web 访问的前端页面，否则无法实现重定向等一系列授权流程；同时应有稳定的后端架构，可处理前端请求、安全存储客户端密钥（Client Secret），与 OAuth 授权服务器和 OpenAPI 交互。
+                # 授权流程
+                Web 应用程序授权流程如下图所示。
+                !Image
+                具体流程说明如下：
+                1. 在扣子编程创建 OAuth 应用。
+                2. 应用程序调用 API 获取授权页面 URL和获取 OAuth Access Token，获取 OAuth 访问令牌。
+                3. 应用程序根据访问令牌调用扣子编程 API。
+                详细步骤如下：
+            tags:
+                - developer_guides
+            responses:
+                "200":
+                    description: Success
+            x-coze-original-method: GET
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/oauth_code

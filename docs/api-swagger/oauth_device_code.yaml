@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+    title: OAuth 设备授权
+    version: 1.0.0
+    description: Generated from https://docs.coze.cn/api/open/docs/developer_guides/oauth_device_code
+servers:
+    - url: https://api.coze.cn
+paths:
+    /api/permission/oauth2/device/code:
+        post:
+            operationId: CozePostoauth_device_code
+            summary: OAuth 设备授权
+            tags:
+                - developer_guides
+            responses:
+                "200":
+                    description: Success
+            x-coze-original-method: POST
+            x-coze-source: https://docs.coze.cn/api/open/docs/developer_guides/oauth_device_code
