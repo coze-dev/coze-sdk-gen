@@ -51,21 +51,44 @@ func packageSchemaAliases(doc *openapi.Document, meta PackageMeta) map[string]st
 	return aliases
 }
 
-func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []packageModelDefinition {
+func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta, bindings []OperationBinding) ([]packageModelDefinition, map[string]string) {
 	if meta.Package == nil || doc == nil {
-		return nil
+		return nil, nil
 	}
+	inferredAliases := map[string]string{}
 	result := make([]packageModelDefinition, 0, len(meta.Package.ModelSchemas))
 	includedSchemaNames := map[string]struct{}{}
+	usedModelNames := map[string]struct{}{}
+	modelSignatures := map[string]string{}
 	for _, model := range meta.Package.ModelSchemas {
 		definition, ok := resolveConfiguredModelDefinition(doc, meta.Package, model)
 		if !ok {
 			continue
 		}
 		result = append(result, definition)
+		usedModelNames[definition.Name] = struct{}{}
+		if definition.Schema != nil {
+			modelSignatures[definition.Name] = schemaStructuralSignature(doc, definition.Schema)
+		}
 		schemaName := strings.TrimSpace(definition.SchemaName)
 		if schemaName != "" {
 			includedSchemaNames[schemaName] = struct{}{}
+			inferredAliases[schemaName] = definition.Name
+		}
+	}
+	if len(meta.Package.ModelSchemas) == 0 {
+		autoSeeds := inferOperationRootModels(doc, meta.Package, bindings)
+		for _, definition := range autoSeeds {
+			result = append(result, definition)
+			usedModelNames[definition.Name] = struct{}{}
+			if definition.Schema != nil {
+				modelSignatures[definition.Name] = schemaStructuralSignature(doc, definition.Schema)
+			}
+			schemaName := strings.TrimSpace(definition.SchemaName)
+			if schemaName != "" {
+				includedSchemaNames[schemaName] = struct{}{}
+				inferredAliases[schemaName] = definition.Name
+			}
 		}
 	}
 	for i := 0; i < len(result); i++ {
@@ -91,17 +114,32 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 				continue
 			}
 			includedSchemaNames[schemaName] = struct{}{}
-			result = append(result, packageModelDefinition{
+			next := packageModelDefinition{
 				SchemaName:    schemaName,
 				Name:          inferModelNameFromSchema(meta.Package, schemaName, resolved),
 				Schema:        resolved,
 				IsEnum:        isSchemaEnum(resolved, nil),
 				FieldTypes:    map[string]string{},
 				FieldDefaults: map[string]string{},
-			})
+			}
+			if next.Name == "" {
+				continue
+			}
+			nameSignature := schemaStructuralSignature(doc, next.Schema)
+			if existingSignature, exists := modelSignatures[next.Name]; exists {
+				if existingSignature == nameSignature {
+					inferredAliases[schemaName] = next.Name
+					continue
+				}
+				next.Name = nextAvailableModelName(next.Name, usedModelNames)
+			}
+			usedModelNames[next.Name] = struct{}{}
+			modelSignatures[next.Name] = nameSignature
+			result = append(result, next)
+			inferredAliases[schemaName] = next.Name
 		}
 	}
-	return orderModelDefinitionsByDependencies(doc, result)
+	return orderModelDefinitionsByDependencies(doc, result), inferredAliases
 }
 
 func resolveConfiguredModelDefinition(doc *openapi.Document, pkg *config.Package, model config.ModelSchema) (packageModelDefinition, bool) {
@@ -226,6 +264,9 @@ func inferModelNameCandidate(schemaName string, schema *openapi.Schema) (string,
 	if strings.HasSuffix(candidate, "_basic_info") {
 		return "basic_info", true
 	}
+	if strings.HasSuffix(candidate, "benefit_info_items") {
+		return "info", true
+	}
 	if isSynthetic {
 		candidate = strings.ReplaceAll(candidate, "_properties_", "_")
 		candidate = strings.ReplaceAll(candidate, "_items_", "_")
@@ -276,6 +317,210 @@ func packageModelPrefix(pkg *config.Package) string {
 	default:
 		return name
 	}
+}
+
+func inferOperationRootModels(doc *openapi.Document, pkg *config.Package, bindings []OperationBinding) []packageModelDefinition {
+	if doc == nil || pkg == nil || len(bindings) == 0 {
+		return nil
+	}
+	out := make([]packageModelDefinition, 0, len(bindings))
+	seenSchema := map[string]struct{}{}
+	emptyModelSet := map[string]struct{}{}
+	for _, modelName := range pkg.EmptyModels {
+		trimmed := strings.TrimSpace(modelName)
+		if trimmed == "" {
+			continue
+		}
+		emptyModelSet[trimmed] = struct{}{}
+	}
+	for _, binding := range bindings {
+		if binding.Mapping == nil {
+			continue
+		}
+		modelName := strings.TrimSpace(binding.Mapping.ResponseType)
+		if !isPythonClassName(modelName) {
+			continue
+		}
+		if _, exists := emptyModelSet[modelName]; exists {
+			continue
+		}
+		responseDataSchema, schemaName, ok := resolveMappingResponseDataSchema(doc, binding)
+		if !ok {
+			continue
+		}
+		schemaName = strings.TrimSpace(schemaName)
+		if schemaName == "" {
+			continue
+		}
+		if _, exists := seenSchema[schemaName]; exists {
+			continue
+		}
+		schema := doc.ResolveSchema(responseDataSchema)
+		if schema == nil {
+			continue
+		}
+		seenSchema[schemaName] = struct{}{}
+		out = append(out, packageModelDefinition{
+			SchemaName:    schemaName,
+			Name:          modelName,
+			Schema:        schema,
+			IsEnum:        isSchemaEnum(schema, nil),
+			FieldTypes:    map[string]string{},
+			FieldDefaults: map[string]string{},
+		})
+	}
+	return out
+}
+
+func resolveMappingResponseDataSchema(doc *openapi.Document, binding OperationBinding) (*openapi.Schema, string, bool) {
+	if doc == nil {
+		return nil, "", false
+	}
+	responseSchema := doc.ResolveSchema(binding.Details.ResponseSchema)
+	if responseSchema == nil {
+		return nil, "", false
+	}
+	dataField := "data"
+	if binding.Mapping != nil {
+		if configured := strings.TrimSpace(binding.Mapping.DataField); configured != "" {
+			dataField = configured
+		}
+	}
+	if dataField != "" && responseSchema.Properties != nil {
+		if fieldSchema, ok := responseSchema.Properties[dataField]; ok && fieldSchema != nil {
+			if name, ok := doc.SchemaName(fieldSchema); ok {
+				return doc.ResolveSchema(fieldSchema), name, true
+			}
+			if resolved := doc.ResolveSchema(fieldSchema); resolved != nil {
+				if name, ok := doc.SchemaName(resolved); ok {
+					return resolved, name, true
+				}
+			}
+		}
+	}
+	if name, ok := doc.SchemaName(responseSchema); ok {
+		return responseSchema, name, true
+	}
+	return nil, "", false
+}
+
+func isPythonClassName(value string) bool {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return false
+	}
+	runes := []rune(value)
+	if !(unicode.IsLetter(runes[0]) || runes[0] == '_') {
+		return false
+	}
+	for _, r := range runes[1:] {
+		if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_') {
+			return false
+		}
+	}
+	return true
+}
+
+func nextAvailableModelName(base string, used map[string]struct{}) string {
+	trimmed := strings.TrimSpace(base)
+	if trimmed == "" {
+		trimmed = "GeneratedModel"
+	}
+	if _, exists := used[trimmed]; !exists {
+		return trimmed
+	}
+	for i := 2; ; i++ {
+		candidate := fmt.Sprintf("%s%d", trimmed, i)
+		if _, exists := used[candidate]; !exists {
+			return candidate
+		}
+	}
+}
+
+func schemaStructuralSignature(doc *openapi.Document, schema *openapi.Schema) string {
+	if doc == nil || schema == nil {
+		return ""
+	}
+	visiting := map[*openapi.Schema]struct{}{}
+	var encode func(*openapi.Schema) string
+	encode = func(current *openapi.Schema) string {
+		resolved := doc.ResolveSchema(current)
+		if resolved == nil {
+			return "nil"
+		}
+		if _, seen := visiting[resolved]; seen {
+			return "cycle"
+		}
+		visiting[resolved] = struct{}{}
+		defer delete(visiting, resolved)
+
+		var buf strings.Builder
+		buf.WriteString("type=")
+		buf.WriteString(strings.TrimSpace(resolved.Type))
+		buf.WriteString(";format=")
+		buf.WriteString(strings.TrimSpace(resolved.Format))
+
+		if len(resolved.Required) > 0 {
+			required := append([]string(nil), resolved.Required...)
+			sort.Strings(required)
+			buf.WriteString(";required=")
+			buf.WriteString(strings.Join(required, ","))
+		}
+		if len(resolved.Enum) > 0 {
+			values := make([]string, 0, len(resolved.Enum))
+			for _, item := range resolved.Enum {
+				values = append(values, fmt.Sprintf("%v", item))
+			}
+			sort.Strings(values)
+			buf.WriteString(";enum=")
+			buf.WriteString(strings.Join(values, ","))
+		}
+		if resolved.Items != nil {
+			buf.WriteString(";items=(")
+			buf.WriteString(encode(resolved.Items))
+			buf.WriteString(")")
+		}
+
+		propNames := make([]string, 0, len(resolved.Properties))
+		for name := range resolved.Properties {
+			propNames = append(propNames, name)
+		}
+		sort.Strings(propNames)
+		for _, name := range propNames {
+			buf.WriteString(";prop:")
+			buf.WriteString(name)
+			buf.WriteString("=")
+			buf.WriteString(encode(resolved.Properties[name]))
+		}
+
+		if additional, ok := resolved.AdditionalProperties.(*openapi.Schema); ok {
+			buf.WriteString(";additional=(")
+			buf.WriteString(encode(additional))
+			buf.WriteString(")")
+		}
+
+		appendComposed := func(tag string, list []*openapi.Schema) {
+			if len(list) == 0 {
+				return
+			}
+			signatures := make([]string, 0, len(list))
+			for _, item := range list {
+				signatures = append(signatures, encode(item))
+			}
+			sort.Strings(signatures)
+			buf.WriteString(";")
+			buf.WriteString(tag)
+			buf.WriteString("=(")
+			buf.WriteString(strings.Join(signatures, "|"))
+			buf.WriteString(")")
+		}
+		appendComposed("allOf", resolved.AllOf)
+		appendComposed("anyOf", resolved.AnyOf)
+		appendComposed("oneOf", resolved.OneOf)
+
+		return buf.String()
+	}
+	return encode(schema)
 }
 
 func isSchemaEnum(schema *openapi.Schema, explicitEnumValues []config.ModelEnumValue) bool {

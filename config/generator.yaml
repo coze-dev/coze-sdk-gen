@@ -1827,25 +1827,6 @@ api:
     - name: benefits
       source_dir: cozepy/benefits
       allow_missing_in_swagger: true
-      model_schemas:
-        - schema: properties_data_properties_basic_info
-        - schema: properties_data_properties_benefit_info_items_properties_basic_properties_item_info
-        - schema: properties_data_properties_benefit_info_items_properties_basic
-          field_types:
-            item_info: Optional[BenefitItemInfo]
-        - schema: properties_data_properties_benefit_info_items
-          name: BenefitInfo
-          field_types:
-            basic: Optional[BenefitStatusInfo]
-            extra: Optional[List[BenefitStatusInfo]]
-            effective: Optional[BenefitStatusInfo]
-        - schema: properties_data
-          name: BenefitOverview
-          field_types:
-            basic_info: Optional[BenefitBasicInfo]
-            benefit_info: Optional[List[BenefitInfo]]
-      path_prefixes:
-        - /v1/commerce/benefit/benefits/get
     - name: benefit_limitations
       allow_missing_in_swagger: true
       empty_models:
