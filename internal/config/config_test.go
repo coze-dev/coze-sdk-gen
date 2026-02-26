@@ -357,36 +357,6 @@ api:
 `,
 		},
 		{
-			name: "delegate args without target",
-			content: `
-language: python
-output_sdk: out
-api:
-  operation_mappings:
-    - path: /v3/chat
-      method: post
-      sdk_methods:
-        - chat.create
-      delegate_call_args:
-        - bot_id=bot_id
-`,
-		},
-		{
-			name: "async delegate args without target",
-			content: `
-language: python
-output_sdk: out
-api:
-  operation_mappings:
-    - path: /v3/chat
-      method: post
-      sdk_methods:
-        - chat.stream
-      async_delegate_call_args:
-        - bot_id=bot_id
-`,
-		},
-		{
 			name: "empty pre body code",
 			content: `
 language: python

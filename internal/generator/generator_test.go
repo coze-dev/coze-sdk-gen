@@ -952,57 +952,56 @@ func TestRenderOperationMethodSignatureThresholdByNonKwargs(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodDelegateTo(t *testing.T) {
+func TestRenderOperationMethodAsyncStreamMethodDefaultsToYield(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
-		Path:   "/v3/chat",
+		Path:   "/v1/workflows/chat",
 		Method: "post",
 	}
-
-	syncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
-		PackageName: "chat",
-		MethodName:  "create",
-		Details:     details,
-		Mapping: &config.OperationMapping{
-			DelegateTo:       "_create",
-			DelegateCallArgs: []string{"bot_id=bot_id", "stream=False"},
-			ArgTypes: map[string]string{
-				"bot_id": "str",
-			},
-			BodyFields: []string{"bot_id"},
+	mapping := &config.OperationMapping{
+		RequestStream: true,
+		StreamWrap:    true,
+		StreamWrapFields: []string{
+			"event",
+			"data",
 		},
-	}, false)
-	if !strings.Contains(syncCode, "return self._create(") {
-		t.Fatalf("expected sync delegate return call:\n%s", syncCode)
-	}
-	if strings.Contains(syncCode, "self._requester.request") {
-		t.Fatalf("did not expect direct requester call for delegated method:\n%s", syncCode)
+		ResponseType:      "Stream[ChatEvent]",
+		AsyncResponseType: "AsyncIterator[ChatEvent]",
+		ResponseCast:      "None",
+		BodyBuilder:       "remove_none_values",
+		BodyFields:        []string{"workflow_id"},
+		BodyRequiredFields: []string{
+			"workflow_id",
+		},
+		ArgTypes: map[string]string{
+			"workflow_id": "str",
+		},
 	}
 
-	asyncCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
-		PackageName: "chat",
+	streamCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
+		PackageName: "workflows_chat",
 		MethodName:  "stream",
 		Details:     details,
-		Mapping: &config.OperationMapping{
-			DelegateTo:            "_create",
-			DelegateCallArgs:      []string{"bot_id=bot_id", "stream=True", "**kwargs"},
-			AsyncDelegateCallArgs: []string{"bot_id=bot_id", "additional_messages=additional_messages", "stream=True", "**kwargs"},
-			DelegateAsyncYield:    true,
-			BodyFields:            []string{"bot_id"},
-			ArgTypes: map[string]string{
-				"bot_id": "str",
-			},
-			ResponseType: "AsyncIterator[str]",
-		},
+		Mapping:     mapping,
 	}, true)
-	if !strings.Contains(asyncCode, "async for item in await self._create(") || !strings.Contains(asyncCode, "yield item") {
-		t.Fatalf("expected async delegate yield wrapper:\n%s", asyncCode)
+	if !strings.Contains(streamCode, "async for item in AsyncStream(") || !strings.Contains(streamCode, "yield item") {
+		t.Fatalf("expected async stream method to yield async stream items by default:\n%s", streamCode)
 	}
-	if !strings.Contains(asyncCode, "additional_messages=additional_messages") || !strings.Contains(asyncCode, "stream=True") {
-		t.Fatalf("expected async-specific delegate call args:\n%s", asyncCode)
+	if strings.Contains(streamCode, "return AsyncStream(") {
+		t.Fatalf("did not expect async stream method to return AsyncStream directly:\n%s", streamCode)
 	}
-	if !strings.Contains(asyncCode, "**kwargs,\n        ):") {
-		t.Fatalf("expected kwargs kept at end of async delegate args:\n%s", asyncCode)
+
+	createCode := pygen.RenderOperationMethod(doc, pygen.OperationBinding{
+		PackageName: "workflows_chat",
+		MethodName:  "_create",
+		Details:     details,
+		Mapping:     mapping,
+	}, true)
+	if !strings.Contains(createCode, "return AsyncStream(") {
+		t.Fatalf("expected non-stream async method to keep returning AsyncStream:\n%s", createCode)
+	}
+	if strings.Contains(createCode, "async for item in AsyncStream(") {
+		t.Fatalf("did not expect non-stream async method to auto-yield async stream:\n%s", createCode)
 	}
 }
 

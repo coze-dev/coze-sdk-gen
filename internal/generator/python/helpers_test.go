@@ -263,57 +263,100 @@ func TestOperationHelpersSignatureAndDefaults(t *testing.T) {
 		t.Fatal("OperationArgDefault(nil) expected false")
 	}
 
-	mapping.DelegateCallArgs = []string{"a=a", "  "}
-	callArgs := BuildDelegateCallArgs([]string{"self", "a: str"}, mapping, false)
-	if len(callArgs) != 1 || callArgs[0] != "a=a" {
-		t.Fatalf("BuildDelegateCallArgs(explicit)=%v", callArgs)
+	callArgs := BuildAutoDelegateCallArgs(
+		[]string{"a: str", "b: int", "**kwargs"},
+		[]string{"stream=True"},
+	)
+	expected := []string{"a=a", "b=b", "stream=True", "**kwargs"}
+	if len(callArgs) != len(expected) {
+		t.Fatalf("BuildAutoDelegateCallArgs len=%d args=%v", len(callArgs), callArgs)
 	}
-	callArgs = BuildDelegateCallArgs([]string{"self", "a: str", "**kwargs"}, nil, false)
-	if len(callArgs) != 2 || callArgs[0] != "a=a" || callArgs[1] != "**kwargs" {
-		t.Fatalf("BuildDelegateCallArgs(derived)=%v", callArgs)
-	}
-
-	mapping.DelegateCallArgs = []string{"stream=True"}
-	mapping.AsyncDelegateCallArgs = []string{"a=override_a", "extra=extra"}
-	callArgs = BuildDelegateCallArgs([]string{"self", "a: str", "b: int", "**kwargs"}, mapping, false)
-	expectedSync := []string{"a=a", "b=b", "stream=True", "**kwargs"}
-	if len(callArgs) != len(expectedSync) {
-		t.Fatalf("BuildDelegateCallArgs(sync merge) len=%d args=%v", len(callArgs), callArgs)
-	}
-	for i := range expectedSync {
-		if callArgs[i] != expectedSync[i] {
-			t.Fatalf("BuildDelegateCallArgs(sync merge)[%d]=%q want=%q", i, callArgs[i], expectedSync[i])
+	for i := range expected {
+		if callArgs[i] != expected[i] {
+			t.Fatalf("BuildAutoDelegateCallArgs[%d]=%q want=%q", i, callArgs[i], expected[i])
 		}
 	}
 
-	callArgs = BuildDelegateCallArgs([]string{"self", "a: str", "b: int", "**kwargs"}, mapping, true)
-	expectedAsync := []string{"a=override_a", "b=b", "stream=True", "extra=extra", "**kwargs"}
-	if len(callArgs) != len(expectedAsync) {
-		t.Fatalf("BuildDelegateCallArgs(async merge) len=%d args=%v", len(callArgs), callArgs)
-	}
-	for i := range expectedAsync {
-		if callArgs[i] != expectedAsync[i] {
-			t.Fatalf("BuildDelegateCallArgs(async merge)[%d]=%q want=%q", i, callArgs[i], expectedAsync[i])
-		}
+	buf := &bytes.Buffer{}
+	RenderDelegatedCall(buf, "_create", callArgs, true, true)
+	if got := buf.String(); !strings.Contains(got, "async for item in await self._create(") || !strings.Contains(got, "stream=True") {
+		t.Fatalf("RenderDelegatedCall(async yield)=%q", got)
 	}
 }
 
-func TestRenderDelegatedCall(t *testing.T) {
-	buf := &bytes.Buffer{}
-	RenderDelegatedCall(buf, "apps.list", nil, false, false)
-	if got := buf.String(); got != "        return self.apps.list()\n" {
-		t.Fatalf("RenderDelegatedCall(sync no args)=%q", got)
+func TestRenderOperationMethodAutoDelegatesToPrivateCreate(t *testing.T) {
+	doc := &openapi.Document{}
+	details := openapi.OperationDetails{
+		Path:   "/v3/chat",
+		Method: "post",
+	}
+	classMethods := map[string]struct{}{
+		"_create": {},
 	}
 
-	buf.Reset()
-	RenderDelegatedCall(buf, "apps.list", []string{"a=a"}, true, false)
-	if got := buf.String(); !strings.Contains(got, "return await self.apps.list(") || !strings.Contains(got, "a=a") {
-		t.Fatalf("RenderDelegatedCall(async)=%q", got)
+	createCode := renderOperationMethodWithContext(
+		doc,
+		OperationBinding{
+			PackageName: "chat",
+			MethodName:  "create",
+			Details:     details,
+			Mapping: &config.OperationMapping{
+				BodyFields: []string{"bot_id", "user_id"},
+				BodyRequiredFields: []string{
+					"bot_id",
+					"user_id",
+				},
+				BodyFixedValues: map[string]string{"stream": "False"},
+				ArgTypes: map[string]string{
+					"bot_id":  "str",
+					"user_id": "str",
+				},
+				ResponseType: "Chat",
+			},
+		},
+		false,
+		"",
+		"",
+		config.CommentOverrides{},
+		classMethods,
+	)
+	if !strings.Contains(createCode, "return self._create(") || !strings.Contains(createCode, "stream=False") {
+		t.Fatalf("expected sync create to auto delegate to _create:\n%s", createCode)
+	}
+	if strings.Contains(createCode, "self._requester.request(") {
+		t.Fatalf("did not expect direct request code for delegated create:\n%s", createCode)
 	}
 
-	buf.Reset()
-	RenderDelegatedCall(buf, "apps.stream", []string{"a=a"}, true, true)
-	if got := buf.String(); !strings.Contains(got, "async for item in await self.apps.stream(") || !strings.Contains(got, "yield item") {
-		t.Fatalf("RenderDelegatedCall(async yield)=%q", got)
+	streamCode := renderOperationMethodWithContext(
+		doc,
+		OperationBinding{
+			PackageName: "chat",
+			MethodName:  "stream",
+			Details:     details,
+			Mapping: &config.OperationMapping{
+				BodyFields: []string{"bot_id", "user_id"},
+				BodyRequiredFields: []string{
+					"bot_id",
+					"user_id",
+				},
+				BodyFixedValues: map[string]string{"stream": "True"},
+				ArgTypes: map[string]string{
+					"bot_id":  "str",
+					"user_id": "str",
+				},
+				ResponseType: "AsyncIterator[ChatEvent]",
+			},
+		},
+		true,
+		"",
+		"",
+		config.CommentOverrides{},
+		classMethods,
+	)
+	if !strings.Contains(streamCode, "async for item in await self._create(") || !strings.Contains(streamCode, "stream=True") {
+		t.Fatalf("expected async stream to auto delegate to _create with yield:\n%s", streamCode)
+	}
+	if strings.Contains(streamCode, "await self._requester.arequest(") {
+		t.Fatalf("did not expect direct request code for delegated stream:\n%s", streamCode)
 	}
 }

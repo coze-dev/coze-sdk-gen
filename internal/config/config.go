@@ -155,10 +155,6 @@ type OperationMapping struct {
 	Method                         string            `yaml:"method"`
 	Order                          int               `yaml:"order"`
 	SDKMethods                     []string          `yaml:"sdk_methods"`
-	DelegateTo                     string            `yaml:"delegate_to"`
-	DelegateCallArgs               []string          `yaml:"delegate_call_args"`
-	AsyncDelegateCallArgs          []string          `yaml:"async_delegate_call_args"`
-	DelegateAsyncYield             bool              `yaml:"delegate_async_yield"`
 	AllowMissingInSwagger          bool              `yaml:"allow_missing_in_swagger"`
 	HTTPMethodOverride             string            `yaml:"http_method_override"`
 	DisableRequestBody             bool              `yaml:"disable_request_body"`
@@ -505,25 +501,6 @@ func (c *Config) Validate() error {
 		}
 		if len(mapping.SDKMethods) == 0 {
 			return fmt.Errorf("api.operation_mappings[%d].sdk_methods should not be empty", i)
-		}
-		if strings.TrimSpace(mapping.DelegateTo) == "" && len(mapping.DelegateCallArgs) > 0 {
-			return fmt.Errorf("api.operation_mappings[%d].delegate_call_args requires delegate_to", i)
-		}
-		if strings.TrimSpace(mapping.DelegateTo) == "" && len(mapping.AsyncDelegateCallArgs) > 0 {
-			return fmt.Errorf("api.operation_mappings[%d].async_delegate_call_args requires delegate_to", i)
-		}
-		if strings.TrimSpace(mapping.DelegateTo) == "" && mapping.DelegateAsyncYield {
-			return fmt.Errorf("api.operation_mappings[%d].delegate_async_yield requires delegate_to", i)
-		}
-		for j, arg := range mapping.DelegateCallArgs {
-			if strings.TrimSpace(arg) == "" {
-				return fmt.Errorf("api.operation_mappings[%d].delegate_call_args[%d] should not be empty", i, j)
-			}
-		}
-		for j, arg := range mapping.AsyncDelegateCallArgs {
-			if strings.TrimSpace(arg) == "" {
-				return fmt.Errorf("api.operation_mappings[%d].async_delegate_call_args[%d] should not be empty", i, j)
-			}
 		}
 		for j, field := range mapping.QueryFields {
 			if strings.TrimSpace(field.Name) == "" {
