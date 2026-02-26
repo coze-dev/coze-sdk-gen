@@ -5238,7 +5238,7 @@ api:
       order: 90
       sdk_methods:
         - workflows_runs.create
-      body_builder: raw
+      body_builder: remove_none_values
       body_fields:
         - workflow_id
         - parameters
@@ -5258,7 +5258,6 @@ api:
         ext: Dict[str, Any]
       arg_defaults:
         is_async: "False"
-      body_call_expr: remove_none_values(body)
       response_type: WorkflowRunResult
       response_cast: WorkflowRunResult
     - path: /v1/workflow/stream_run
@@ -5266,7 +5265,7 @@ api:
       order: 91
       sdk_methods:
         - workflows_runs.stream
-      body_builder: raw
+      body_builder: remove_none_values
       body_fields:
         - workflow_id
         - parameters
@@ -5281,7 +5280,6 @@ api:
         bot_id: str
         app_id: str
         ext: Dict[str, Any]
-      body_call_expr: remove_none_values(body)
       request_stream: true
       stream_wrap: true
       stream_wrap_handler: _workflow_stream_handler

@@ -1116,7 +1116,7 @@ func TestRenderOperationMethodPreBodyCode(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodBodyCallExprOverride(t *testing.T) {
+func TestRenderOperationMethodBodyBuilderRawUsesBodyDirectly(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/workflow/run",
@@ -1134,14 +1134,13 @@ func TestRenderOperationMethodBodyCallExprOverride(t *testing.T) {
 				"workflow_id": "str",
 				"parameters":  "Dict[str, Any]",
 			},
-			BodyCallExpr: "remove_none_values(body)",
 		},
 	}, false)
 	if !strings.Contains(code, "body = {") {
 		t.Fatalf("expected raw body map assignment:\n%s", code)
 	}
-	if !strings.Contains(code, "body=remove_none_values(body)") {
-		t.Fatalf("expected body call expression override in request call:\n%s", code)
+	if !strings.Contains(code, "body=body") {
+		t.Fatalf("expected request call to pass raw body directly:\n%s", code)
 	}
 }
 

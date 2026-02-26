@@ -484,7 +484,6 @@ func renderOperationMethodWithContext(
 	bodyFieldValues := map[string]string{}
 	paramAliases := map[string]string{}
 	argTypes := map[string]string{}
-	bodyCallExprOverride := ""
 	headersExpr := ""
 	paginationRequestArg := "params"
 	if binding.Mapping != nil && len(binding.Mapping.ParamAliases) > 0 {
@@ -549,7 +548,6 @@ func renderOperationMethodWithContext(
 		}
 		streamWrapCompactAsyncReturn = binding.Mapping.StreamWrapCompactAsyncReturn
 		streamWrapCompactSyncReturn = binding.Mapping.StreamWrapCompactSyncReturn
-		bodyCallExprOverride = strings.TrimSpace(binding.Mapping.BodyCallExpr)
 		headersExpr = strings.TrimSpace(binding.Mapping.HeadersExpr)
 		if override := strings.TrimSpace(binding.Mapping.PaginationRequestArg); override != "" {
 			paginationRequestArg = override
@@ -1325,15 +1323,7 @@ func renderOperationMethodWithContext(
 		optionalArgs = append(optionalArgs, requestCallArg{Expr: "headers=headers"})
 	}
 	if bodyArgExpr != "" {
-		bodyExpr := bodyArgExpr
-		if bodyCallExprOverride != "" {
-			if strings.Contains(bodyCallExprOverride, "{body}") {
-				bodyExpr = strings.ReplaceAll(bodyCallExprOverride, "{body}", bodyArgExpr)
-			} else {
-				bodyExpr = bodyCallExprOverride
-			}
-		}
-		optionalArgs = append(optionalArgs, requestCallArg{Expr: fmt.Sprintf("body=%s", bodyExpr)})
+		optionalArgs = append(optionalArgs, requestCallArg{Expr: fmt.Sprintf("body=%s", bodyArgExpr)})
 	}
 	if filesExpr != "" || len(filesFieldNames) > 0 {
 		optionalArgs = append(optionalArgs, requestCallArg{Expr: "files=files"})

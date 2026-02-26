@@ -201,7 +201,6 @@ type OperationMapping struct {
 	StreamWrapCompactAsyncReturn   bool              `yaml:"stream_wrap_compact_async_return"`
 	StreamWrapCompactSyncReturn    bool              `yaml:"stream_wrap_compact_sync_return"`
 	QueryBuilder                   string            `yaml:"query_builder"`
-	BodyCallExpr                   string            `yaml:"body_call_expr"`
 	BodyFieldValues                map[string]string `yaml:"body_field_values"`
 	HeadersExpr                    string            `yaml:"headers_expr"`
 	BlankLineAfterHeaders          bool              `yaml:"blank_line_after_headers"`
