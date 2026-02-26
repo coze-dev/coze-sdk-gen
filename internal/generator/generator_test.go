@@ -621,7 +621,7 @@ func TestRenderOperationMethodHeadersExpr(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodPaginationRequestArg(t *testing.T) {
+func TestRenderOperationMethodPaginationRequestArgInferredFromMethod(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/demo/list",
@@ -639,7 +639,6 @@ func TestRenderOperationMethodPaginationRequestArg(t *testing.T) {
 			PaginationTotalField:    "total",
 			PaginationPageNumField:  "page",
 			PaginationPageSizeField: "size",
-			PaginationRequestArg:    "json",
 			ParamAliases: map[string]string{
 				"page": "page_num",
 				"size": "page_size",
