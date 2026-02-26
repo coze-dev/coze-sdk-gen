@@ -54,7 +54,7 @@ func TestGeneratePythonAudioTranscriptionsAsyncCreateFromMapping(t *testing.T) {
 	if got := strings.Count(module, "async def create("); got != 1 {
 		t.Fatalf("expected exactly one async create method, got %d", got)
 	}
-	if !strings.Contains(module, "files = {\"file\": _try_fix_file(file)}") {
+	if !strings.Contains(module, "files = {\"file\": _try_fix_file(file)} if file else {}") {
 		t.Fatalf("expected generated files payload from mapping/rendering, got:\n%s", module)
 	}
 	if !strings.Contains(module, "return await self._requester.arequest(") {
@@ -1306,7 +1306,7 @@ func TestRenderOperationMethodPageSizeDefaultAsyncOverride(t *testing.T) {
 	}
 }
 
-func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
+func TestRenderOperationMethodFilesAfterBody(t *testing.T) {
 	doc := mustParseSwagger(t)
 	details := openapi.OperationDetails{
 		Path:   "/v1/demo/{group_id}/features",
@@ -1328,10 +1328,9 @@ func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
 		MethodName:  "create",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			BodyBuilder:     "remove_none_values",
-			BodyFields:      []string{"name"},
-			FilesFields:     []string{"file"},
-			FilesBeforeBody: true,
+			BodyBuilder: "remove_none_values",
+			BodyFields:  []string{"name"},
+			FilesFields: []string{"file"},
 			ArgTypes: map[string]string{
 				"group_id": "str",
 				"name":     "str",
@@ -1342,10 +1341,10 @@ func TestRenderOperationMethodFilesBeforeBody(t *testing.T) {
 
 	code := pygen.RenderOperationMethod(doc, binding, false)
 	headersIdx := strings.Index(code, "headers: Optional[dict] = kwargs.get(\"headers\")")
-	filesIdx := strings.Index(code, "files = {\"file\": _try_fix_file(file)}")
+	filesIdx := strings.Index(code, "files = {\"file\": _try_fix_file(file)} if file else {}")
 	bodyIdx := strings.Index(code, "body = remove_none_values(")
-	if headersIdx < 0 || filesIdx < 0 || bodyIdx < 0 || !(headersIdx < filesIdx && filesIdx < bodyIdx) {
-		t.Fatalf("expected files assignment before body assignment:\n%s", code)
+	if headersIdx < 0 || filesIdx < 0 || bodyIdx < 0 || !(headersIdx < bodyIdx && bodyIdx < filesIdx) {
+		t.Fatalf("expected files assignment after body assignment:\n%s", code)
 	}
 }
 
