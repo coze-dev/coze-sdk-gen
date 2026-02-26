@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/coze-dev/coze-sdk-gen/internal/config"
 	"github.com/coze-dev/coze-sdk-gen/internal/openapi"
@@ -1091,15 +1093,114 @@ func extractSwaggerRichText(raw string) string {
 	}
 	fragments := make([]string, 0, 32)
 	collectRichTextInserts(node, &fragments)
-	parts := make([]string, 0, len(fragments))
+	var buf strings.Builder
+	var lastRune rune
+	hasLastRune := false
+	hasContent := false
+	appendNewline := func() {
+		if !hasContent {
+			return
+		}
+		if hasLastRune && lastRune == '\n' {
+			return
+		}
+		buf.WriteByte('\n')
+		lastRune = '\n'
+		hasLastRune = true
+	}
+	appendText := func(text string) {
+		if text == "" {
+			return
+		}
+		firstRune, _ := utf8.DecodeRuneInString(text)
+		if hasContent && hasLastRune && shouldInsertRichTextSpace(lastRune, firstRune) {
+			buf.WriteByte(' ')
+			lastRune = ' '
+			hasLastRune = true
+		}
+		buf.WriteString(text)
+		r, _ := utf8.DecodeLastRuneInString(text)
+		lastRune = r
+		hasLastRune = true
+		hasContent = true
+	}
 	for _, fragment := range fragments {
-		line := strings.TrimSpace(fragment)
-		if line == "" || line == "*" {
+		text := strings.ReplaceAll(fragment, "\r\n", "\n")
+		text = strings.ReplaceAll(text, "\r", "\n")
+		trimmed := strings.TrimSpace(text)
+		if trimmed == "" {
+			if strings.Contains(text, "\n") {
+				appendNewline()
+			}
 			continue
 		}
-		parts = append(parts, line)
+		if trimmed == "*" {
+			// Rich text exports use "*" as list/heading markers. Treat it as a line break.
+			appendNewline()
+			continue
+		}
+		appendText(text)
 	}
-	return strings.TrimSpace(strings.Join(parts, " "))
+	if !hasContent {
+		return ""
+	}
+
+	rawText := strings.TrimSpace(buf.String())
+	if rawText == "" {
+		return ""
+	}
+
+	lines := strings.Split(rawText, "\n")
+	normalized := make([]string, 0, len(lines))
+	prevBlank := true
+	for _, rawLine := range lines {
+		line := strings.TrimSpace(rawLine)
+		if line == "" {
+			if !prevBlank && len(normalized) > 0 {
+				normalized = append(normalized, "")
+				prevBlank = true
+			}
+			continue
+		}
+		if strings.HasPrefix(line, "*") {
+			line = strings.TrimSpace(strings.TrimPrefix(line, "*"))
+			if line == "" {
+				if !prevBlank && len(normalized) > 0 {
+					normalized = append(normalized, "")
+					prevBlank = true
+				}
+				continue
+			}
+		}
+		normalized = append(normalized, line)
+		prevBlank = false
+	}
+
+	for len(normalized) > 0 && normalized[len(normalized)-1] == "" {
+		normalized = normalized[:len(normalized)-1]
+	}
+	return strings.Join(normalized, "\n")
+}
+
+func shouldInsertRichTextSpace(prev rune, next rune) bool {
+	if unicode.IsSpace(prev) || unicode.IsSpace(next) {
+		return false
+	}
+	if prev == '\n' || next == '\n' {
+		return false
+	}
+	// CJK text generally does not need synthetic spaces between fragments.
+	if unicode.In(prev, unicode.Han, unicode.Hiragana, unicode.Katakana, unicode.Hangul) {
+		return false
+	}
+	if unicode.In(next, unicode.Han, unicode.Hiragana, unicode.Katakana, unicode.Hangul) {
+		return false
+	}
+	if (unicode.IsLetter(prev) || unicode.IsDigit(prev)) &&
+		(unicode.IsLetter(next) || unicode.IsDigit(next)) {
+		return true
+	}
+	return false
 }
 
 func collectRichTextInserts(node interface{}, fragments *[]string) {
