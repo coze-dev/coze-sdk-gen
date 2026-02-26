@@ -3680,7 +3680,6 @@ api:
         - data
       response_type: Stream[ChatEvent]
       async_response_type: AsyncIterator[ChatEvent]
-      response_cast: None
     - path: /v3/chat/retrieve
       method: get
       order: 3
@@ -4225,7 +4224,6 @@ api:
               stacklevel=2,
           )
       response_type: List[Document]
-      response_cast: "[Document]"
       data_field: document_infos
     - path: /open_api/knowledge/document/update
       method: post
@@ -5190,7 +5188,6 @@ api:
       stream_wrap_compact_sync_return: true
       response_type: Stream[WorkflowEvent]
       async_response_type: AsyncIterator[WorkflowEvent]
-      response_cast: None
     - path: /v1/workflow/stream_resume
       method: post
       order: 92
@@ -5223,14 +5220,12 @@ api:
       stream_wrap_compact_sync_return: true
       response_type: Stream[WorkflowEvent]
       async_response_type: AsyncIterator[WorkflowEvent]
-      response_cast: None
     - path: /v1/workflows/{workflow_id}/run_histories/{execute_id}
       method: get
       order: 93
       sdk_methods:
         - workflows_runs_run_histories.retrieve
       response_type: WorkflowRunHistory
-      response_cast: ListResponse[WorkflowRunHistory]
       response_unwrap_list_first: true
     - path: /v1/workflows/{workflow_id}/run_histories/{execute_id}/execute_nodes/{node_execute_uuid}
       method: get
@@ -5304,7 +5299,6 @@ api:
         - data
       response_type: Stream[ChatEvent]
       async_response_type: AsyncIterator[ChatEvent]
-      response_cast: None
     - path: /v1/workflows/chat
       method: post
       order: 97
@@ -5340,7 +5334,6 @@ api:
         - data
       response_type: Stream[ChatEvent]
       async_response_type: AsyncIterator[ChatEvent]
-      response_cast: None
     - path: /v1/workspaces
       method: get
       order: 969

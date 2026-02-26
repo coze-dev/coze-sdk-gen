@@ -170,7 +170,6 @@ type OperationMapping struct {
 	ArgTypes                       map[string]string `yaml:"arg_types"`
 	ResponseType                   string            `yaml:"response_type"`
 	AsyncResponseType              string            `yaml:"async_response_type"`
-	ResponseCast                   string            `yaml:"response_cast"`
 	QueryFields                    []OperationField  `yaml:"query_fields"`
 	QueryFieldValues               map[string]string `yaml:"query_field_values"`
 	ArgDefaults                    map[string]string `yaml:"arg_defaults"`
