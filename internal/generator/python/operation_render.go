@@ -472,7 +472,6 @@ func renderOperationMethodWithContext(
 	paginationMode := ""
 	returnType, returnCast := ReturnTypeInfo(doc, details.ResponseSchema)
 	requestBodyType, bodyRequired := RequestBodyTypeInfo(doc, details.RequestBodySchema, details.RequestBody)
-	ignoreHeaderParams := binding.Mapping != nil && binding.Mapping.IgnoreHeaderParams
 	streamWrap := binding.Mapping != nil && binding.Mapping.StreamWrap
 	streamWrapHandler := ""
 	streamWrapFields := []string{}
@@ -541,11 +540,11 @@ func renderOperationMethodWithContext(
 			}
 		}
 	}
-	paginationRequestArg = inferPaginationRequestArg(requestMethod)
-	returnCast = inferResponseCast(binding.Mapping, returnType, returnCast)
-	if ignoreHeaderParams {
+	if headersExpr != "" {
 		details.HeaderParameters = nil
 	}
+	paginationRequestArg = inferPaginationRequestArg(requestMethod)
+	returnCast = inferResponseCast(binding.Mapping, returnType, returnCast)
 	dataField := ""
 	requestStream := false
 	queryBuilder := "dump_exclude_none"

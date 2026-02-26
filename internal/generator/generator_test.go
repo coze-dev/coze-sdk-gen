@@ -453,7 +453,7 @@ func TestRenderOperationMethodAdvancedOptions(t *testing.T) {
 			},
 			BodyFields:         []string{"name"},
 			BodyRequiredFields: []string{"name"},
-			IgnoreHeaderParams: true,
+			HeadersExpr:        "kwargs.get(\"headers\")",
 			RequestStream:      true,
 			DataField:          "data.items",
 		},
@@ -464,7 +464,7 @@ func TestRenderOperationMethodAdvancedOptions(t *testing.T) {
 		t.Fatalf("did not expect explicit headers signature arg:\n%s", code)
 	}
 	if strings.Contains(code, "X-Trace-Id") {
-		t.Fatalf("did not expect header parameter merge when IgnoreHeaderParams=true:\n%s", code)
+		t.Fatalf("did not expect header parameter merge when headers_expr suppresses swagger header args:\n%s", code)
 	}
 	if !strings.Contains(code, "data_field=\"data.items\"") {
 		t.Fatalf("expected data_field in request call:\n%s", code)
@@ -601,10 +601,9 @@ func TestRenderOperationMethodHeadersExpr(t *testing.T) {
 		MethodName:  "create",
 		Details:     details,
 		Mapping: &config.OperationMapping{
-			BodyBuilder:        "raw",
-			BodyFields:         []string{"name"},
-			IgnoreHeaderParams: true,
-			HeadersExpr:        "{\"Agw-Js-Conv\": \"str\"}",
+			BodyBuilder: "raw",
+			BodyFields:  []string{"name"},
+			HeadersExpr: "{\"Agw-Js-Conv\": \"str\"}",
 		},
 	}
 

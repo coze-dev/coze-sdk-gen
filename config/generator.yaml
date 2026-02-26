@@ -4047,7 +4047,7 @@ api:
       body_builder: raw
       body_fields:
         - document_ids
-      ignore_header_params: true
+      headers_expr: kwargs.get("headers")
       response_type: ListResponse[DocumentProgress]
       data_field: data.data
     - path: /v1/connectors/{connector_id}/bots/{bot_id}
@@ -4105,7 +4105,6 @@ api:
       sdk_methods:
         - datasets_documents.create
       body_builder: raw
-      ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - dataset_id
@@ -4134,7 +4133,6 @@ api:
         - datasets_documents.update
       allow_missing_in_swagger: true
       body_builder: raw
-      ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - document_id
@@ -4153,7 +4151,6 @@ api:
       sdk_methods:
         - datasets_documents.delete
       body_builder: raw
-      ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - document_ids
@@ -4166,7 +4163,6 @@ api:
       sdk_methods:
         - datasets_documents.list
       query_builder: raw
-      ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       param_aliases:
         page: page_num
@@ -4198,7 +4194,6 @@ api:
       sdk_methods:
         - knowledge_documents.create
       body_builder: raw
-      ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - dataset_id
@@ -4231,7 +4226,6 @@ api:
         - knowledge_documents.update
       allow_missing_in_swagger: true
       body_builder: raw
-      ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - document_id
@@ -4258,7 +4252,6 @@ api:
       sdk_methods:
         - knowledge_documents.delete
       body_builder: raw
-      ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       body_fields:
         - document_ids
@@ -4279,7 +4272,6 @@ api:
       sdk_methods:
         - knowledge_documents.list
       query_builder: raw
-      ignore_header_params: true
       headers_expr: '{"Agw-Js-Conv": "str"}'
       param_aliases:
         page: page_num
