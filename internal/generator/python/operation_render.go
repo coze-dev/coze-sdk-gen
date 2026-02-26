@@ -572,7 +572,6 @@ func renderOperationMethodWithContext(
 	bodyFieldNames := make([]string, 0)
 	bodyFixedValues := map[string]string{}
 	filesFieldNames := make([]string, 0)
-	filesFieldValues := map[string]string{}
 	filesBeforeBody := false
 	if binding.Mapping != nil && len(binding.Mapping.BodyFields) > 0 {
 		bodyFieldNames = append(bodyFieldNames, binding.Mapping.BodyFields...)
@@ -584,11 +583,6 @@ func renderOperationMethodWithContext(
 	}
 	if binding.Mapping != nil && len(binding.Mapping.FilesFields) > 0 {
 		filesFieldNames = append(filesFieldNames, binding.Mapping.FilesFields...)
-	}
-	if binding.Mapping != nil && len(binding.Mapping.FilesFieldValues) > 0 {
-		for k, v := range binding.Mapping.FilesFieldValues {
-			filesFieldValues[k] = v
-		}
 	}
 	if binding.Mapping != nil {
 		filesBeforeBody = binding.Mapping.FilesBeforeBody
@@ -1118,10 +1112,7 @@ func renderOperationMethodWithContext(
 		if len(filesFieldNames) == 1 {
 			fieldName := filesFieldNames[0]
 			argName := OperationArgName(fieldName, paramAliases)
-			valueExpr := argName
-			if override, ok := filesFieldValues[fieldName]; ok && strings.TrimSpace(override) != "" {
-				valueExpr = strings.TrimSpace(override)
-			}
+			valueExpr := fmt.Sprintf("_try_fix_file(%s)", argName)
 			if !bodyRequiredSet[fieldName] {
 				buf.WriteString(fmt.Sprintf("        files = {%q: %s} if %s else {}\n", fieldName, valueExpr, argName))
 				return true
@@ -1133,10 +1124,7 @@ func renderOperationMethodWithContext(
 		buf.WriteString("        files = {\n")
 		for _, filesField := range filesFieldNames {
 			argName := OperationArgName(filesField, paramAliases)
-			valueExpr := argName
-			if override, ok := filesFieldValues[filesField]; ok && strings.TrimSpace(override) != "" {
-				valueExpr = strings.TrimSpace(override)
-			}
+			valueExpr := fmt.Sprintf("_try_fix_file(%s)", argName)
 			buf.WriteString(fmt.Sprintf("            %q: %s,\n", filesField, valueExpr))
 		}
 		buf.WriteString("        }\n")
