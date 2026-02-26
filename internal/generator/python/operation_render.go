@@ -478,6 +478,7 @@ func renderOperationMethodWithContext(
 	streamWrapHandler := ""
 	streamWrapFields := []string{}
 	streamWrapAsyncYield := false
+	// Keep a stable sync stream response variable name after removing mapping override.
 	streamWrapSyncResponseVar := "response"
 	streamWrapCompactAsyncReturn := false
 	streamWrapCompactSyncReturn := false
@@ -543,9 +544,6 @@ func renderOperationMethodWithContext(
 			streamWrapFields = append(streamWrapFields, binding.Mapping.StreamWrapFields...)
 		}
 		streamWrapAsyncYield = binding.Mapping.StreamWrapAsyncYield
-		if varName := strings.TrimSpace(binding.Mapping.StreamWrapSyncResponseVar); varName != "" {
-			streamWrapSyncResponseVar = varName
-		}
 		streamWrapCompactAsyncReturn = binding.Mapping.StreamWrapCompactAsyncReturn
 		streamWrapCompactSyncReturn = binding.Mapping.StreamWrapCompactSyncReturn
 		headersExpr = strings.TrimSpace(binding.Mapping.HeadersExpr)
