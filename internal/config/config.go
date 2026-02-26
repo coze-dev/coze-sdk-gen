@@ -225,7 +225,6 @@ type OperationMapping struct {
 	PaginationHTTPMethod           string            `yaml:"pagination_http_method"`
 	PaginationRequestArg           string            `yaml:"pagination_request_arg"`
 	PaginationInitPageTokenExpr    string            `yaml:"pagination_init_page_token_expr"`
-	PaginationParamsVariable       bool              `yaml:"pagination_params_variable"`
 }
 
 type OperationField struct {

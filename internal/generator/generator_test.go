@@ -1151,6 +1151,9 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenOverrides(t *testing
 	if !strings.Contains(syncCode, "params=dump_exclude_none(") {
 		t.Fatalf("expected sync query builder override:\n%s", syncCode)
 	}
+	if strings.Contains(syncCode, "params = dump_exclude_none(") {
+		t.Fatalf("expected sync token pagination params to be inlined:\n%s", syncCode)
+	}
 	if !strings.Contains(syncCode, "page_token=page_token or \"\"") {
 		t.Fatalf("expected custom pagination token init expr in sync code:\n%s", syncCode)
 	}
@@ -1166,6 +1169,9 @@ func TestRenderOperationMethodPaginationQueryBuilderAndTokenOverrides(t *testing
 	}
 	if !strings.Contains(asyncCode, "params=dump_exclude_none(") {
 		t.Fatalf("expected async query builder to follow query_builder:\n%s", asyncCode)
+	}
+	if strings.Contains(asyncCode, "params = dump_exclude_none(") {
+		t.Fatalf("expected async token pagination params to be inlined:\n%s", asyncCode)
 	}
 	if !strings.Contains(asyncCode, "page_token=page_token or \"\"") {
 		t.Fatalf("expected custom pagination token init expr in async code:\n%s", asyncCode)

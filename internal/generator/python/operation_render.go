@@ -911,7 +911,6 @@ func renderOperationMethodWithContext(
 
 	if isTokenPagination(paginationMode) && binding.Mapping != nil {
 		dataClass := strings.TrimSpace(binding.Mapping.PaginationDataClass)
-		paginationParamsVariable := binding.Mapping.PaginationParamsVariable
 		pageTokenField := strings.TrimSpace(binding.Mapping.PaginationPageTokenField)
 		if pageTokenField == "" {
 			pageTokenField = "page_token"
@@ -936,75 +935,40 @@ func renderOperationMethodWithContext(
 		EnsureTrailingNewlines(&buf, 2)
 		if async {
 			buf.WriteString("        async def request_maker(i_page_token: str, i_page_size: int) -> HTTPRequest:\n")
-			if paginationParamsVariable {
-				if queryBuilder == "raw" {
-					buf.WriteString("            params = {\n")
-				} else {
-					buf.WriteString(fmt.Sprintf("            params = %s(\n", queryBuilder))
-					buf.WriteString("                {\n")
-				}
-				itemIndent := "                    "
-				if queryBuilder != "raw" {
-					itemIndent = "                    "
-				}
-				for _, field := range queryFields {
-					valueExpr := field.ValueExpr
-					if strings.TrimSpace(valueExpr) == "" {
-						valueExpr = field.ArgName
-					}
-					if field.RawName == pageTokenField {
-						valueExpr = "i_page_token"
-					}
-					if field.RawName == pageSizeField {
-						valueExpr = "i_page_size"
-					}
-					buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
-				}
-				if queryBuilder == "raw" {
-					buf.WriteString("            }\n")
-				} else {
-					buf.WriteString("                }\n")
-					buf.WriteString("            )\n")
-				}
-			}
 			buf.WriteString("            return await self._requester.amake_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
 			if headersBeforePaginationParams && includePaginationHeaders {
 				buf.WriteString("                headers=headers,\n")
 			}
-			if paginationParamsVariable {
-				buf.WriteString(fmt.Sprintf("                %s=params,\n", paginationRequestArg))
+			if queryBuilder == "raw" {
+				buf.WriteString(fmt.Sprintf("                %s={\n", paginationRequestArg))
 			} else {
-				if queryBuilder == "raw" {
-					buf.WriteString(fmt.Sprintf("                %s={\n", paginationRequestArg))
-				} else {
-					buf.WriteString(fmt.Sprintf("                %s=%s(\n", paginationRequestArg, queryBuilder))
-					buf.WriteString("                    {\n")
+				buf.WriteString(fmt.Sprintf("                %s=%s(\n", paginationRequestArg, queryBuilder))
+				buf.WriteString("                    {\n")
+			}
+			itemIndent := "                        "
+			if queryBuilder == "raw" {
+				itemIndent = "                    "
+			}
+			for _, field := range queryFields {
+				valueExpr := field.ValueExpr
+				if strings.TrimSpace(valueExpr) == "" {
+					valueExpr = field.ArgName
 				}
-				itemIndent := "                        "
-				if queryBuilder == "raw" {
-					itemIndent = "                    "
+				if field.RawName == pageTokenField {
+					valueExpr = "i_page_token"
 				}
-				for _, field := range queryFields {
-					valueExpr := field.ValueExpr
-					if strings.TrimSpace(valueExpr) == "" {
-						valueExpr = field.ArgName
-					}
-					if field.RawName == pageTokenField {
-						valueExpr = "i_page_token"
-					}
-					if field.RawName == pageSizeField {
-						valueExpr = "i_page_size"
-					}
-					buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
+				if field.RawName == pageSizeField {
+					valueExpr = "i_page_size"
 				}
-				if queryBuilder == "raw" {
-					buf.WriteString("                },\n")
-				} else {
-					buf.WriteString("                    }\n")
-					buf.WriteString("                ),\n")
-				}
+				buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
+			}
+			if queryBuilder == "raw" {
+				buf.WriteString("                },\n")
+			} else {
+				buf.WriteString("                    }\n")
+				buf.WriteString("                ),\n")
 			}
 			if includePaginationHeaders {
 				if paginationCastBeforeHeaders && !headersBeforePaginationParams {
@@ -1032,75 +996,40 @@ func renderOperationMethodWithContext(
 			buf.WriteString("        )\n")
 		} else {
 			buf.WriteString("        def request_maker(i_page_token: str, i_page_size: int) -> HTTPRequest:\n")
-			if paginationParamsVariable {
-				if queryBuilder == "raw" {
-					buf.WriteString("            params = {\n")
-				} else {
-					buf.WriteString(fmt.Sprintf("            params = %s(\n", queryBuilder))
-					buf.WriteString("                {\n")
-				}
-				itemIndent := "                    "
-				if queryBuilder != "raw" {
-					itemIndent = "                    "
-				}
-				for _, field := range queryFields {
-					valueExpr := field.ValueExpr
-					if strings.TrimSpace(valueExpr) == "" {
-						valueExpr = field.ArgName
-					}
-					if field.RawName == pageTokenField {
-						valueExpr = "i_page_token"
-					}
-					if field.RawName == pageSizeField {
-						valueExpr = "i_page_size"
-					}
-					buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
-				}
-				if queryBuilder == "raw" {
-					buf.WriteString("            }\n")
-				} else {
-					buf.WriteString("                }\n")
-					buf.WriteString("            )\n")
-				}
-			}
 			buf.WriteString("            return self._requester.make_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
 			if headersBeforePaginationParams && includePaginationHeaders {
 				buf.WriteString("                headers=headers,\n")
 			}
-			if paginationParamsVariable {
-				buf.WriteString(fmt.Sprintf("                %s=params,\n", paginationRequestArg))
+			if queryBuilder == "raw" {
+				buf.WriteString(fmt.Sprintf("                %s={\n", paginationRequestArg))
 			} else {
-				if queryBuilder == "raw" {
-					buf.WriteString(fmt.Sprintf("                %s={\n", paginationRequestArg))
-				} else {
-					buf.WriteString(fmt.Sprintf("                %s=%s(\n", paginationRequestArg, queryBuilder))
-					buf.WriteString("                    {\n")
+				buf.WriteString(fmt.Sprintf("                %s=%s(\n", paginationRequestArg, queryBuilder))
+				buf.WriteString("                    {\n")
+			}
+			itemIndent := "                        "
+			if queryBuilder == "raw" {
+				itemIndent = "                    "
+			}
+			for _, field := range queryFields {
+				valueExpr := field.ValueExpr
+				if strings.TrimSpace(valueExpr) == "" {
+					valueExpr = field.ArgName
 				}
-				itemIndent := "                        "
-				if queryBuilder == "raw" {
-					itemIndent = "                    "
+				if field.RawName == pageTokenField {
+					valueExpr = "i_page_token"
 				}
-				for _, field := range queryFields {
-					valueExpr := field.ValueExpr
-					if strings.TrimSpace(valueExpr) == "" {
-						valueExpr = field.ArgName
-					}
-					if field.RawName == pageTokenField {
-						valueExpr = "i_page_token"
-					}
-					if field.RawName == pageSizeField {
-						valueExpr = "i_page_size"
-					}
-					buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
+				if field.RawName == pageSizeField {
+					valueExpr = "i_page_size"
 				}
-				if queryBuilder == "raw" {
-					buf.WriteString("                },\n")
-				} else {
-					buf.WriteString("                    }\n")
-					buf.WriteString("                ),\n")
-				}
+				buf.WriteString(fmt.Sprintf("%s%q: %s,\n", itemIndent, field.RawName, valueExpr))
+			}
+			if queryBuilder == "raw" {
+				buf.WriteString("                },\n")
+			} else {
+				buf.WriteString("                    }\n")
+				buf.WriteString("                ),\n")
 			}
 			if includePaginationHeaders {
 				if paginationCastBeforeHeaders && !headersBeforePaginationParams {

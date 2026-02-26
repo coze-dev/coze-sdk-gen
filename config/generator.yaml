@@ -5425,7 +5425,6 @@ api:
       pagination_page_token_field: page_token
       pagination_page_size_field: page_size
       pagination_init_page_token_expr: page_token or ""
-      pagination_params_variable: true
     - path: /v1/workflows/{workflow_id}/collaborators/{user_id}
       method: delete
       order: 951
