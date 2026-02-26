@@ -5109,6 +5109,37 @@ api:
       force_multiline_signature: true
       response_type: Message
       response_cast: Message
+    - path: /v1/conversation/message/list
+      method: post
+      order: 841
+      sdk_methods:
+        - conversations_message._list_page
+      query_builder: raw
+      query_fields:
+        - name: conversation_id
+          type: str
+          required: true
+      body_builder: raw
+      body_fields:
+        - order
+        - chat_id
+        - before_id
+        - after_id
+        - limit
+      body_field_values:
+        before_id: before_id if before_id else None
+        after_id: after_id if after_id else None
+      arg_defaults:
+        order: '"desc"'
+        limit: "50"
+      arg_types:
+        order: str
+        chat_id: Optional[str]
+        before_id: Optional[str]
+        after_id: Optional[str]
+        limit: int
+      response_type: _PrivateListMessageResp
+      response_cast: _PrivateListMessageResp
     - path: /v1/conversations/{conversation_id}/messages/{message_id}/feedback
       method: post
       order: 88
@@ -5550,8 +5581,6 @@ api:
       response_cast: User
       allow_missing_in_swagger: true
   ignore_apis:
-    - path: /v1/conversation/message/list
-      method: post
   field_aliases:
     chat:
       custom_variables: custom_variables
