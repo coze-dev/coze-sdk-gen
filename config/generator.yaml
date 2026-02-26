@@ -3850,7 +3850,6 @@ api:
       pagination: token
       pagination_data_class: _PrivateListAPIAppsData
       pagination_item_type: APIApp
-      pagination_cast_before_headers: true
     - path: /v1/apps
       method: get
       order: 50
@@ -4691,7 +4690,6 @@ api:
       pagination_next_token_field: next_page_token
       pagination_page_token_field: page_token
       pagination_page_size_field: page_size
-      pagination_cast_before_headers: true
     - path: /v1/audio/rooms
       method: post
       order: 79

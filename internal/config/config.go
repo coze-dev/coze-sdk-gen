@@ -189,7 +189,6 @@ type OperationMapping struct {
 	PaginationPageNumField         string            `yaml:"pagination_page_num_field"`
 	PaginationPageSizeField        string            `yaml:"pagination_page_size_field"`
 	PaginationPageTokenField       string            `yaml:"pagination_page_token_field"`
-	PaginationCastBeforeHeaders    bool              `yaml:"pagination_cast_before_headers"`
 	AsyncIncludeKwargs             bool              `yaml:"async_include_kwargs"`
 	IgnoreHeaderParams             bool              `yaml:"ignore_header_params"`
 	DataField                      string            `yaml:"data_field"`

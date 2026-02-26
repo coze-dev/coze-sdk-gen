@@ -475,8 +475,6 @@ func renderOperationMethodWithContext(
 	ignoreHeaderParams := binding.Mapping != nil && binding.Mapping.IgnoreHeaderParams
 	streamWrap := binding.Mapping != nil && binding.Mapping.StreamWrap
 	asyncIncludeKwargs := async && binding.Mapping != nil && binding.Mapping.AsyncIncludeKwargs
-	paginationCastBeforeHeaders := binding.Mapping != nil && binding.Mapping.PaginationCastBeforeHeaders
-	headersBeforePaginationParams := !paginationCastBeforeHeaders
 	streamWrapHandler := ""
 	streamWrapFields := []string{}
 	streamWrapAsyncYield := false
@@ -921,7 +919,7 @@ func renderOperationMethodWithContext(
 			buf.WriteString("            return await self._requester.amake_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
-			if headersBeforePaginationParams && includePaginationHeaders {
+			if includePaginationHeaders {
 				buf.WriteString("                headers=headers,\n")
 			}
 			if queryBuilder == "raw" {
@@ -953,19 +951,7 @@ func renderOperationMethodWithContext(
 				buf.WriteString("                    }\n")
 				buf.WriteString("                ),\n")
 			}
-			if includePaginationHeaders {
-				if paginationCastBeforeHeaders && !headersBeforePaginationParams {
-					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-					buf.WriteString("                headers=headers,\n")
-				} else if headersBeforePaginationParams {
-					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-				} else {
-					buf.WriteString("                headers=headers,\n")
-					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-				}
-			} else {
-				buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-			}
+			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 			if dataField != "" {
 				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
 			}
@@ -982,7 +968,7 @@ func renderOperationMethodWithContext(
 			buf.WriteString("            return self._requester.make_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
-			if headersBeforePaginationParams && includePaginationHeaders {
+			if includePaginationHeaders {
 				buf.WriteString("                headers=headers,\n")
 			}
 			if queryBuilder == "raw" {
@@ -1014,19 +1000,7 @@ func renderOperationMethodWithContext(
 				buf.WriteString("                    }\n")
 				buf.WriteString("                ),\n")
 			}
-			if includePaginationHeaders {
-				if paginationCastBeforeHeaders && !headersBeforePaginationParams {
-					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-					buf.WriteString("                headers=headers,\n")
-				} else if headersBeforePaginationParams {
-					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-				} else {
-					buf.WriteString("                headers=headers,\n")
-					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-				}
-			} else {
-				buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-			}
+			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 			if dataField != "" {
 				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
 			}
@@ -1067,7 +1041,7 @@ func renderOperationMethodWithContext(
 			buf.WriteString("            return await self._requester.amake_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
-			if headersBeforePaginationParams && includePaginationHeaders {
+			if includePaginationHeaders {
 				buf.WriteString("                headers=headers,\n")
 			}
 			if queryBuilder == "raw" {
@@ -1099,19 +1073,7 @@ func renderOperationMethodWithContext(
 				buf.WriteString("                    }\n")
 				buf.WriteString("                ),\n")
 			}
-			if includePaginationHeaders {
-				if paginationCastBeforeHeaders && !headersBeforePaginationParams {
-					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-					buf.WriteString("                headers=headers,\n")
-				} else if headersBeforePaginationParams {
-					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-				} else {
-					buf.WriteString("                headers=headers,\n")
-					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-				}
-			} else {
-				buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-			}
+			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 			if dataField != "" {
 				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
 			}
@@ -1128,7 +1090,7 @@ func renderOperationMethodWithContext(
 			buf.WriteString("            return self._requester.make_request(\n")
 			buf.WriteString(fmt.Sprintf("                %q,\n", paginationRequestMethod))
 			buf.WriteString("                url,\n")
-			if headersBeforePaginationParams && includePaginationHeaders {
+			if includePaginationHeaders {
 				buf.WriteString("                headers=headers,\n")
 			}
 			if queryBuilder == "raw" {
@@ -1160,19 +1122,7 @@ func renderOperationMethodWithContext(
 				buf.WriteString("                    }\n")
 				buf.WriteString("                ),\n")
 			}
-			if includePaginationHeaders {
-				if paginationCastBeforeHeaders && !headersBeforePaginationParams {
-					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-					buf.WriteString("                headers=headers,\n")
-				} else if headersBeforePaginationParams {
-					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-				} else {
-					buf.WriteString("                headers=headers,\n")
-					buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-				}
-			} else {
-				buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
-			}
+			buf.WriteString(fmt.Sprintf("                cast=%s,\n", dataClass))
 			if dataField != "" {
 				buf.WriteString(fmt.Sprintf("                data_field=%q,\n", dataField))
 			}
