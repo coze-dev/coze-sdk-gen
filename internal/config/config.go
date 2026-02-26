@@ -435,10 +435,12 @@ func (c *Config) Validate() error {
 			}
 		}
 		for j, model := range pkg.ModelSchemas {
-			if strings.TrimSpace(model.Name) == "" {
-				return fmt.Errorf("api.packages[%d].model_schemas[%d].name is required", i, j)
+			modelName := strings.TrimSpace(model.Name)
+			schemaName := strings.TrimSpace(model.Schema)
+			if modelName == "" && schemaName == "" {
+				return fmt.Errorf("api.packages[%d].model_schemas[%d] must set name or schema", i, j)
 			}
-			if strings.TrimSpace(model.Schema) == "" && !model.AllowMissingInSwagger {
+			if schemaName == "" && !model.AllowMissingInSwagger {
 				return fmt.Errorf("api.packages[%d].model_schemas[%d].schema is required when allow_missing_in_swagger is false", i, j)
 			}
 			if strings.TrimSpace(model.EnumBase) != "" {

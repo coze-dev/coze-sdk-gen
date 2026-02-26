@@ -35,14 +35,14 @@ type packageModelDefinition struct {
 	ExcludeUnordered      bool
 }
 
-func packageSchemaAliases(meta PackageMeta) map[string]string {
+func packageSchemaAliases(doc *openapi.Document, meta PackageMeta) map[string]string {
 	aliases := map[string]string{}
 	if meta.Package == nil {
 		return aliases
 	}
 	for _, model := range meta.Package.ModelSchemas {
 		schemaName := strings.TrimSpace(model.Schema)
-		modelName := strings.TrimSpace(model.Name)
+		modelName := inferConfiguredModelName(doc, meta.Package, model)
 		if schemaName == "" || modelName == "" {
 			continue
 		}
@@ -58,7 +58,7 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 	result := make([]packageModelDefinition, 0, len(meta.Package.ModelSchemas))
 	includedSchemaNames := map[string]struct{}{}
 	for _, model := range meta.Package.ModelSchemas {
-		definition, ok := resolveConfiguredModelDefinition(doc, model)
+		definition, ok := resolveConfiguredModelDefinition(doc, meta.Package, model)
 		if !ok {
 			continue
 		}
@@ -93,7 +93,7 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 			includedSchemaNames[schemaName] = struct{}{}
 			result = append(result, packageModelDefinition{
 				SchemaName:    schemaName,
-				Name:          NormalizeClassName(schemaName),
+				Name:          inferModelNameFromSchema(meta.Package, schemaName, resolved),
 				Schema:        resolved,
 				IsEnum:        isSchemaEnum(resolved, nil),
 				FieldTypes:    map[string]string{},
@@ -104,9 +104,9 @@ func resolvePackageModelDefinitions(doc *openapi.Document, meta PackageMeta) []p
 	return orderModelDefinitionsByDependencies(doc, result)
 }
 
-func resolveConfiguredModelDefinition(doc *openapi.Document, model config.ModelSchema) (packageModelDefinition, bool) {
+func resolveConfiguredModelDefinition(doc *openapi.Document, pkg *config.Package, model config.ModelSchema) (packageModelDefinition, bool) {
 	schemaName := strings.TrimSpace(model.Schema)
-	modelName := strings.TrimSpace(model.Name)
+	modelName := inferConfiguredModelName(doc, pkg, model)
 	if modelName == "" {
 		return packageModelDefinition{}, false
 	}
@@ -167,6 +167,115 @@ func resolveConfiguredModelDefinition(doc *openapi.Document, model config.ModelS
 	definition.Schema = resolved
 	definition.IsEnum = isSchemaEnum(resolved, enumValues)
 	return definition, true
+}
+
+func inferConfiguredModelName(doc *openapi.Document, pkg *config.Package, model config.ModelSchema) string {
+	modelName := strings.TrimSpace(model.Name)
+	if modelName != "" {
+		return modelName
+	}
+	schemaName := strings.TrimSpace(model.Schema)
+	if schemaName == "" {
+		return ""
+	}
+	return inferModelNameFromSchema(pkg, schemaName, resolvedSchemaByName(doc, schemaName))
+}
+
+func inferModelNameFromSchema(pkg *config.Package, schemaName string, schema *openapi.Schema) string {
+	candidate, addPackagePrefix := inferModelNameCandidate(schemaName, schema)
+	if strings.TrimSpace(candidate) == "" {
+		candidate = strings.TrimSpace(schemaName)
+	}
+	if addPackagePrefix {
+		packagePrefix := packageModelPrefix(pkg)
+		if packagePrefix != "" && !strings.HasPrefix(candidate, packagePrefix+"_") {
+			candidate = packagePrefix + "_" + candidate
+		}
+	}
+	return NormalizeClassName(candidate)
+}
+
+func inferModelNameCandidate(schemaName string, schema *openapi.Schema) (string, bool) {
+	trimmed := strings.TrimSpace(schemaName)
+	if trimmed == "" {
+		return "", false
+	}
+	if schemaHasAllProperties(schema, "status", "item_info") {
+		return "status_info", true
+	}
+	if schemaHasAllProperties(schema, "used", "total", "start_at", "end_at", "strategy") {
+		return "item_info", true
+	}
+	if schemaHasAllProperties(schema, "user_level") && len(schema.Properties) == 1 {
+		return "basic_info", true
+	}
+
+	candidate := trimmed
+	isSynthetic := false
+	if strings.HasPrefix(candidate, "properties_data_properties_") {
+		candidate = strings.TrimPrefix(candidate, "properties_data_properties_")
+		isSynthetic = true
+	}
+	if strings.HasPrefix(candidate, "properties_") {
+		candidate = strings.TrimPrefix(candidate, "properties_")
+		isSynthetic = true
+	}
+	if strings.HasSuffix(candidate, "_properties_item_info") {
+		return "item_info", true
+	}
+	if strings.HasSuffix(candidate, "_basic_info") {
+		return "basic_info", true
+	}
+	if isSynthetic {
+		candidate = strings.ReplaceAll(candidate, "_properties_", "_")
+		candidate = strings.ReplaceAll(candidate, "_items_", "_")
+		candidate = strings.Trim(candidate, "_")
+		return candidate, true
+	}
+	return candidate, false
+}
+
+func resolvedSchemaByName(doc *openapi.Document, schemaName string) *openapi.Schema {
+	if doc == nil {
+		return nil
+	}
+	schema, ok := doc.Components.Schemas[strings.TrimSpace(schemaName)]
+	if !ok || schema == nil {
+		return nil
+	}
+	return doc.ResolveSchema(schema)
+}
+
+func schemaHasAllProperties(schema *openapi.Schema, propertyNames ...string) bool {
+	if schema == nil || len(propertyNames) == 0 {
+		return false
+	}
+	for _, name := range propertyNames {
+		if schema.Properties == nil || schema.Properties[name] == nil {
+			return false
+		}
+	}
+	return true
+}
+
+func packageModelPrefix(pkg *config.Package) string {
+	if pkg == nil {
+		return ""
+	}
+	name := strings.Trim(ToSnake(strings.TrimSpace(pkg.Name)), "_")
+	if name == "" {
+		return ""
+	}
+	switch {
+	case strings.HasSuffix(name, "ies") && len(name) > 3:
+		return strings.TrimSuffix(name, "ies") + "y"
+	case strings.HasSuffix(name, "sses") && len(name) > 4:
+		return strings.TrimSuffix(name, "es")
+	case strings.HasSuffix(name, "s") && !strings.HasSuffix(name, "ss") && len(name) > 1:
+		return strings.TrimSuffix(name, "s")
+	default:
+		return name
+	}
 }
 
 func isSchemaEnum(schema *openapi.Schema, explicitEnumValues []config.ModelEnumValue) bool {

@@ -601,7 +601,7 @@ func RenderPackageModuleWithComments(
 		childClientsForAsync = append([]childClient(nil), meta.ChildClients...)
 	}
 	modelDefs := resolvePackageModelDefinitions(doc, meta)
-	schemaAliases := packageSchemaAliases(meta)
+	schemaAliases := packageSchemaAliases(doc, meta)
 	for _, model := range modelDefs {
 		schemaName := strings.TrimSpace(model.SchemaName)
 		modelName := strings.TrimSpace(model.Name)

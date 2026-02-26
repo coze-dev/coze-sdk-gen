@@ -1829,11 +1829,8 @@ api:
       allow_missing_in_swagger: true
       model_schemas:
         - schema: properties_data_properties_basic_info
-          name: BenefitBasicInfo
         - schema: properties_data_properties_benefit_info_items_properties_basic_properties_item_info
-          name: BenefitItemInfo
         - schema: properties_data_properties_benefit_info_items_properties_basic
-          name: BenefitStatusInfo
           field_types:
             item_info: Optional[BenefitItemInfo]
         - schema: properties_data_properties_benefit_info_items
@@ -3782,7 +3779,7 @@ api:
       method: get
       order: 734
       sdk_methods:
-        - benefits.get
+        - benefits.retrieve
       disable_request_body: true
       query_builder: remove_none_values
       query_fields:

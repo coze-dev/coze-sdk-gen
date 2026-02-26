@@ -387,6 +387,19 @@ api:
             - ""
 `,
 		},
+		{
+			name: "model schema missing name and schema",
+			content: `
+language: python
+output_sdk: out
+api:
+  packages:
+    - name: datasets
+      source_dir: a
+      model_schemas:
+        - allow_missing_in_swagger: true
+`,
+		},
 	}
 
 	for _, tc := range cases {
@@ -395,6 +408,25 @@ api:
 				t.Fatalf("expected Parse() to fail for case %s", tc.name)
 			}
 		})
+	}
+}
+
+func TestValidateConfigAllowsModelSchemaWithoutNameWhenSchemaProvided(t *testing.T) {
+	cfg, err := Parse([]byte(`
+language: python
+output_sdk: out
+api:
+  packages:
+    - name: benefits
+      source_dir: cozepy/benefits
+      model_schemas:
+        - schema: properties_data_properties_basic_info
+`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	if got := strings.TrimSpace(cfg.API.Packages[0].ModelSchemas[0].Name); got != "" {
+		t.Fatalf("expected empty configured name, got %q", got)
 	}
 }
 
